@@ -1,0 +1,869 @@
+What is Apache Kafka?
+    Real time event streaming is rapidly growing across many business types, currently in all markets everything is driven by events. Simple way to think about is event streaming enables companies to analyze and respond to that event in real time, vast number of business events can create huge amount of data which can make real time decisions difficult, companies must be reliable that can lead to quick decisions and enhance customer experience, all of these and more can done through event streaming 
+    There are many event streaming platforms available in market, and most popular platform for event streaming is apache kafka 
+
+What is Apache Kafka?
+    It is an open source, free of cost distributed event streaming platform 
+    - Event streaming means capturing the data in real time from event sources like databases, sensors, file system, external appl in the stream of event form, storing processing in real time and directing to other applications or system as when needed
+    - It ensures continuous flow of data so right information is reached at right place 
+    - Most common usecases of event streaming are to process finanical, stock market related transaction or to capture social media activities or to gather data from IOT devices like traffic cameras for penalities calculation 
+
+Architecture
+    - It is a high level architecture of apache kafka, it is a distributed system that means it runs as a cluster of one or more servers 
+    - On lefthand side we have producers which push the data to kafka topics, while on right hand side we have consumers or subscribers which reads the data from kafka topic and feed to other applications. 
+    - Please note producer and consumer are independent of each other, they are highly decoupled so they may run on different machines and read or push the data in different rate 
+
+Limitations
+   - Despite of many features, it is more of publish and subscribe platform, it does not have entire data processing and operation tools
+   - Also when it comes to data storing capabilities, u need to use on cloud or on premises platform
+
+So what comes to rescue, there is another product called Confluent platform
+
+What is Confluent?
+   - It is full scale event streaming platform built on apache kafka with additional features
+   - It expands the benefits of kafka with enterprise grade features with removing burder of management and monitoring 
+   - It simplifies connecting data sources to kafka, building streaming appl, securing, managing kafka infrastructure
+   - It let you focus on business value of data rather than underlying mechanics
+   - Please note confluent platform is licensed product that means there is cost associated with it 
+
+Confluent Architecture
+    - It uses apache kafka as base and added development, monitoring, scalability, security features as toppings on it 
+    - Including key capabilities like publish and subscribe, storing stream of events, processing stream of events, it does add schema registry, REST proxy, built in Kafka connectors, ksql db type of features 
+
+Confluent 				Apache
+1. more features than      1. comes with limited concept
+apache kafka
+2. licensed product        2. free of cost
+cost to business
+
+Connect Kafka broker using Spring boot appl
+    - Here we create Kakfa producer to publish String and JSON schema messages to kafka topic using spring boot appl
+
+1. start confluent server, we are using confluent server as same as apache server
+
+2. Create topic called spring_boot_kafka_topic_v1
+C:>kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic spring_boot_kafka_topic_v1
+
+3. To check whether topic is created or not
+C:>kafka-topics --describe --zookeeper localhost:2181 --topic spring_boot_kafka_topic_v1
+
+Now we use this topic in spring boot appl to push the message
+
+4. Create SpringBoot-Kafka-Producer project 
+
+In main class, add @EnableKafka annotation which comes from Spring Kafka dependency, so it specifies spring boot appl is going to connect to kafka based services
+
+5. Add kafka specific properties to application.yml file 
+
+- Spring boot have enough support in order to connect to confluent or apache kafka using the properties
+
+server:
+   port: 1111
+
+spring:
+   kafka:
+     producer:
+       bootstrap-server: "localhost:9092"  #kafka server
+       key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+       value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+Next property is key-serializer and value-serializer. First we try to push the message as string, so in order to add string serializer we have added the dependency of spring kafka, so we have one class called "StringSerializer"(press ctrl shft T), so both kafka key and value both are strings
+      So this is initial setup, so bootstrap server will connect to your confluent server and key serializer, value serializer will infer that we are going to push string values into ur kafka topic. So spring.kafka.producer will automatically enable that u r going to create spring kafka producer 
+
+   To know where this value go and bind to, there is class called "KafkaProperties class(press ctrl shift T)", inside that we have Producer class where we see property like bootstrap server, keyserializer, value serializer. So all property given in application.yml is bind to Producer class property under KafkaProperties class. In top we can see prefix="spring.kafka", in this way spring boot identifies where the property should bind 
+
+
+6. Create custom producer class called SpringBootKafkaProducer and from there we can send messages to topic 
+   - Create this class as service using @Service
+   - Next we create KafkaTemplate which is responsible to send messages to kafka topic. Now we autowire as in default created as soon as spring identifies spring.kafka properties in application.yml. 
+     In KafkaTemplate we mention key value pair which is string for both 
+   @Autowired
+   public KafkaTemplate<String,String> kafkaTemplate;
+
+  - We create custom method called sendMessage(), which takes String value that will send using send(), which takes first parameter as topic name, then value and key will automatically created when we push the value. send() will return a ListenableFuture and add a callback on it with 2 methods called onSuccess and onFailure
+   So when u send the topic, in case failure comes what action to take and if success comes what action to take.
+
+@Service
+public class SpringBootKafkaProducer {
+	
+	@Autowired
+	public KafkaTemplate<String,String> kafkaTemplate;
+	
+	public void sendMessage(String value) {
+		ListenableFuture<SendResult<String,String>> future=kafkaTemplate.send("spring_boot_kafka_topic_v1",value);
+		future.addCallback(new ListenableFutureCallback<Object>() {
+
+			@Override
+			public void onSuccess(Object result) {
+				System.out.println("Messages successfully pushed on topic");
+			}
+
+			@Override
+			public void onFailure(Throwable ex) {
+				System.out.println("Messages failed to push on topic");
+			}
+			
+		});
+	}
+
+}
+
+7. Create Rest controller to expose our API 
+      Once we call "/send/{message}" api, we will receive the message and pass it to SpringBootKafkaProducer, so we inject it using @Autowired. Now we pass the message so that it will push to kafka topic 
+
+@RestController
+public class SpringBootKafkaController {
+
+	@Autowired
+	SpringBootKafkaProducer springBootKafkaProducer;
+	
+	@GetMapping("/send/{message}")
+	public void send(@PathVariable("message")String message) {
+		springBootKafkaProducer.sendMessage(message);
+	}
+}
+
+8. Start the application
+9. Run http://localhost:1111/send/helloworld
+       - u can see "Message pushed to topic" in console, so that message is successfully pushed into topic  
+
+10. Now we try to send custom object called Person with certain properties and push person object message as json  to kafka topic 
+
+11. Now we create another method in producer to send Person message
+
+public void sendMessage(Person person) {
+		ListenableFuture<SendResult<String,Person>> future=kafkaTemplate1.send("spring_boot_kafka_topic_v1",person);
+		future.addCallback(new ListenableFutureCallback<Object>() {
+
+			@Override
+			public void onSuccess(Object result) {
+				System.out.println("Messages successfully pushed on topic");
+			}
+
+			@Override
+			public void onFailure(Throwable ex) {
+				System.out.println("Messages failed to push on topic");
+			}
+			
+		});
+	}
+
+12. Create another endpoint in controller 
+
+@PostMapping("/send")
+	public void send(@RequestBody Person person) {
+		springBootKafkaProducer.sendMessage(person);
+	}
+
+13. In application.yml we change value serializer as JsonSerializer
+
+valueSerializer: "org.springframework.kafka.support.serializer.JsonSerializer"
+
+14. Start the application
+
+15. In postman, localhost:1111/send with POST request give in body - raw - json
+{
+   "id":"100",
+   "name":"Ram",
+   "age":20
+}
+
+Now we can see message is successfully pushed into topic
+
+
+Creating Kafka Consumer with Spring Boot
+    - Now we read string and json object from kafka topic
+
+1. Create SpringBoot-Kafka-Consumer project 
+
+2. Now we create consumer along with producer properties in application.yml using spring.kafka.consumer property
+   When you consume the value from topic we need to deserialize it, so we have a keydeserializer and  valuedeserializer, in our case we read string info so we use the class "StringDeserializer"
+   Next property is group id, we need to group the consumers by specific id using "group-id" and we can give any custom name to your group 
+   Next we create a custom property to declare the topic name, so 
+
+topic:
+   name: "provide the topic name from where we read messages"
+
+server:
+   port: 2222
+
+spring:
+   kafka:
+     producer:
+       bootstrap-server: "localhost:9092"  
+       key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+       value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+       #value-serializer: "org.springframework.kafka.support.serializer.JsonSerializer"
+     consumer:
+       bootstrap-server: "localhost:9092"
+       key-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+       value-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+       group-id: "spring-boot-kafka-consumer"
+
+topic:
+  name: "spring_boot_kafka_topic_v1"
+
+3. Next we create Config class with @Configuration so it is configuration class
+   - First we need to create ConsumerFactory which is bean, which returns DefaultKafkaConsumerFactory, now this consumer factory will read the property of type consumer 
+    As we see all consumer properties are mapped to java class called "KafkaProperties" and that will be add as argument to it. As soon as passing as argument to method it will automatically autowired
+   Now we pass kafkaProperties to DefaultKafkaConsumerFactory constructor and call buildConsumerProperties() which will extract all consumer related properties and create consumerfactory 
+
+@Bean
+public ConsumerFactory<String,String> consumerFactory(KafkaProperties kafkaProperties){
+   return new DefaultKafkaConsumerFactory<>(kafkaProperties.buildConsumerProperties());
+}
+
+   Now we create another bean called ContainerFactory  which is required for listener purpose. Inside that we create object of ConcurrentKafkaListenerContainerFactory , with this factory we have setConsumerFactory()
+
+@Bean
+public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String,String>> kafkaListenerContainerFactory(KafkaProperties kafkaProperties){
+   ConcurrentKafkaListenerContainerFactory<String,String> factory=new ConcurrentKafkaListenerContainerFactory<>();
+   factory.setConsumerFactory(consumerFactory(kafkaProperties));
+   return factory;
+}
+
+4. Now we create listener part called SpringBootKafkaConsumer with @Service annotation
+   - Now we add method listen() with string argument and we print the value whatever we are reading 
+   - This method has to annotate with KafkaListener within it,we need to provide topic name under "topics" attribute and provide the value which we created in application.yml file 
+   - Next we need to provide containerFactory which we provide in Config file 
+
+@Service
+public class SpringBootKafkaConsumer {
+ 
+    @KafkaListener(topics="${topic.name}", containerFactory="kafkaListenerContainerFactory")
+public void listen(String value){
+    System.out.println("Message received: "+value);
+}
+}
+
+5. Start both the application
+
+6. Now run http://localhost:1111/send/helloworld
+     - You can see the messages are received on consumer side 
+     - you can see messages successfully pushed to topic on producer side 
+
+So consumer is reading the message from topic when message is published 
+
+7. Now we read json message, in Config class we will override the key and value deserializer from application.yml using another constructor of DefaultKafkaConsumerFactory.
+   So now read all message in form of Json rather than string values
+
+@Bean
+	public ConsumerFactory<String,Person> consumerFactory1(KafkaProperties kafkaProperties){
+	   return new DefaultKafkaConsumerFactory<>(kafkaProperties.buildConsumerProperties(),new StringDeserializer(),new JsonDeserializer<>(Person.class));
+	}
+	
+	@Bean
+	public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String,Person>> kafkaListenerContainerFactory1(KafkaProperties kafkaProperties){
+	   ConcurrentKafkaListenerContainerFactory<String,Person> factory=new ConcurrentKafkaListenerContainerFactory<>();
+	   factory.setConsumerFactory(consumerFactory1(kafkaProperties));
+	   return factory;
+	}
+
+8. In SpringBootKafkaConsumer, we add new method to listen to person json object
+
+@KafkaListener(topics = "${topic.name}", containerFactory = "kafkaListenerContainerFactory1")
+	public void listen1(Person value) {
+		System.out.println("Message received: " + value);
+	}
+
+9. Start Consumer appl
+
+10. In postman, localhost:1111/send with POST request give in body - raw - json
+{
+   "id":"100",
+   "name":"Ram",
+   "age":20
+}
+
+Now we can see json message is successfully received on consumer side, as well we can send string message also
+
+
+Produce Avro messages on Kafka with Spring Boot
+    - We use Schema registry provided by Confluent platform to deal with avro schemas 
+
+1. start confluent server, we are using confluent server as same as apache server
+
+2. Create topic called spring_boot_kafka_topic_v1
+C:>kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic spring_boot_kafka_avro_topic_v1
+
+3. Create SpringBoot-AvroProducer project
+
+4. In pom.xml, we have spring-kafka that supports kafka 
+   - We have spring-starter-web in order to expose the rest services
+   - Rest of dependency is related to confluent and avro, since we are going to produce avro message on confluent platform 
+    kafka-avro-serializer used when you are producing the avro message, you need to serialize them in order to push  into the topic 
+    Kafka-schema-registry-client is needed since  we talk to schema registry service 
+    Avro dependency which is specific to creating the avro schemas
+    In build we added one plugin called avro-maven-plugin to generate the java classes out of avro schema and it refers source dir path from src/main/resources and output dir is src/main/java.
+   Any avro schemas present under resources, it will compile that avro schema and generate java classes under src/main/java 
+
+5. In src/main/resources, we create a folder avro.schemas and within it there is avro file(StockHistory.avsc)
+
+namespace: represent the package where java class has to            create 
+fields: attributes of that java class when it generates
+
+We use to publish messages on the kafka topic. So when we compile this project, this stockHistory file will compile together and generate the java class file 
+
+SpringBoot-AvroProducer>mvn clean install
+
+After build success, when we refresh the project we can see schema package is created with StockHistory.java is created. This class is created based on avro file and it will contain all the fields present in avsc file as properties in this class 
+
+6. In application.yml, we add producer related properties 
+
+- Here we use String as keyserializer and for valueserializer we are producing the avro messages, so for that purpose we specify AvroSerializer(press ctrl shft T)
+
+- Next we need to add properties to mention schema registry server which is by default running in 8081 port
+
+- Next we create a custom topic name where we produce the message
+
+server:
+  port: 9081
+
+spring:
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    producer:
+      keySerializer: "org.apache.kafka.common.serialization.StringSerializer"
+      valueSerializer: "io.confluent.kafka.serializers.KafkaAvroSerializer"
+      properties:
+        schema:
+          registry:
+            url: "http://localhost:8081"
+
+avro:
+  topic:
+    name: "spring_boot_kafka_avro_topic_v1"
+
+
+7. Create SpringAvroProducer class and provide with @Service
+   - Next we access topic name from yml file and store in topicName variable
+        @Value("${avro.topic.name}")
+        String topicName;
+
+   - Next we autowire KafkaTemplate with key value as String and StockHistory avro schema
+          @Autowired
+    private KafkaTemplate<String, StockHistory> kafkaTemplate;
+
+   - Next create method called send() with StockHistory as argument and we need to mention how to push the message
+    Now we need to send message using kafkaTemplate.send() with topicname as first argument, key as id from stockHistory and value as stockHistory object. This method returns ListenableFuture, and then add callback on that future object and provide the methods for success and failure 
+
+ public void send(StockHistory stockHistory){
+       ListenableFuture<SendResult<String,StockHistory>> future=  kafkaTemplate.send(topicName,String.valueOf(stockHistory.getTradeId()),stockHistory);
+       future.addCallback(new ListenableFutureCallback<SendResult<String, StockHistory>>() {
+           @Override
+           public void onFailure(Throwable ex) {
+               System.out.println("Message failed to produce");
+           }
+
+           @Override
+           public void onSuccess(SendResult<String, StockHistory> result) {
+               System.out.println("Avro message successfully produced");
+           }
+       });
+
+8. Create StockHistoryModel class with same properties as schema 
+
+9. Create SpringAvroRestController with post mapping 
+    - Once we get model field value as input and we get those object using @RequestBody. Now we will transfer all values from model to StockHistory schema 
+    So first we create object of StockHistory class and call newBuilder() and we set all the values 
+   - Now StockHistory avro is ready and now we push this avro message to topic using SpringAvroProducer send()
+
+10. Start the application
+
+11. Goto postman and try to send StockHistory 
+
+http://localhost:9081/sendStockHistory with POST request - Body - raw - JSON
+
+{
+   "tradeQuantity":100,
+   "tradeMarket":"NST",
+   "stockName":"Tata",
+   "tradeType":"SEL",
+   "price":250.5,
+   "amount":20000
+}
+ 
+Now it will "Avro message successfully produced" in producer console, means avro message is sent to topic 
+
+Consume Avro message
+
+1. In application.yml, we configure all consumer related properties 
+    We provide group-id, keyDeserializer as StringDeserializer and valueDeserializer as KafkaAvroDeserializer 
+    Next we give autoOffsetReset property which tells the consumer how to read the data from kafka topic (ie) when u publish data on kafka topic that means you are adding on to the offset, now that offset will increase as in when you add the data. Now when you build the consumer from where you want to read the data, whether you want to read from the start of the offset or from latest offset.
+   There are 2 possible values,  
+       1. "earliest" which means when you build this consumer for the first time, read the messages from kafka topic from first offset (ie) from 0 
+       2. "latest" which means read the messages from kafka topic from latest offset, it can be anything 1 or 10
+  - Next we need to specify one more property telling consumer that we going to read avro messages 
+
+consumer:
+      group-id: "spring-boot-avro-consumer-id"
+      keyDeserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+      valueDeserializer: "io.confluent.kafka.serializers.KafkaAvroDeserializer"
+      autoOffsetReset: "earliest"
+      properties:
+        schema:
+          registry:
+            url: "http://localhost:8081"
+        specific:
+          avro:
+            reader: "true"
+   
+2. Next we create Config class with @Configuration so it is configuration class
+   - First we need to create ConsumerFactory which is bean, which returns DefaultKafkaConsumerFactory, now this consumer factory will read the property of type consumer 
+    As we see all consumer properties are mapped to java class called "KafkaProperties" and that will be add as argument to it. As soon as passing as argument to method it will automatically autowired
+   Now we pass kafkaProperties to DefaultKafkaConsumerFactory constructor and call buildConsumerProperties() which will extract all consumer related properties and create consumerfactory 
+
+  @Bean
+    public ConsumerFactory<String, StockHistory> consumerFactory(KafkaProperties kafkaProperties) {
+        return new DefaultKafkaConsumerFactory<>(kafkaProperties.buildConsumerProperties());
+    }
+
+Now we create another bean called ContainerFactory  which is required for listener purpose. Inside that we create object of ConcurrentKafkaListenerContainerFactory , with this factory we have setConsumerFactory()
+
+ @Bean
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, StockHistory>> kafkaListenerContainerFactory(KafkaProperties kafkaProperties) {
+        ConcurrentKafkaListenerContainerFactory<String, StockHistory> factory = new ConcurrentKafkaListenerContainerFactory<String, StockHistory>();
+        factory.setConsumerFactory(consumerFactory(kafkaProperties));
+        return factory;
+    }
+
+3. Next we create SpringBootAvroConsumer class with KafkaListener with topicname and containerFactory
+    - we create read() which takes ConsumerRecord class as argument with String as key and StockHistory as value. ConsumerRecord is a class which holds kafka data in key value pairs and access key and value when you listen the message for any particular process 
+
+@Service
+public class SpringBootAvroConsumer {
+
+    @KafkaListener(topics = "${avro.topic.name}", containerFactory = "kafkaListenerContainerFactory")
+    public void read(ConsumerRecord<String, StockHistory> record){
+        String key=record.key();
+        StockHistory history=record.value();
+        System.out.println("Avro message received for key : "+key+ " value : "+history.toString());
+    }
+
+}
+
+4. Start the application
+
+5. Goto postman and try to send StockHistory 
+
+http://localhost:9081/sendStockHistory with POST request - Body - raw - JSON
+
+{
+   "tradeQuantity":100,
+   "tradeMarket":"NST",
+   "stockName":"Tata",
+   "tradeType":"SEL",
+   "price":250.5,
+   "amount":20000
+}
+
+Now it will print the message and also consume the message and prints in console 
+
+
+What is Avro?
+   - Avro is a data serialization system, now what does serialization means, consider we are using Java and we created some objects but when we want to transfer data over the network or we want 
+
+   - Avro gets used in Hadoop as well as Kafka etc
+   - Avro is defined by schema and that schema is written in json. Schema is nothing its just like a simple contract which consists of some fields, say when u publishing data on kafka then u publishing json object with 4 fields then u defining that in schema or contract with its name, datatype, its properties like nullable or non nullable
+    So when publishing ur data, it would get verified by that schema if ur data is correct or not, so that we wont publishing bad data in kafka which creates problem for subscribers or consumers   
+
+Advantages
+1. Data is fully typed
+       When u r using the schema, the data is fully typed, you cant put any random value in ur objects 
+
+2. Data is compressed automatically
+       When u r using avro serialization and deserializaion so data gets compressed, when u put it in Kafka so it lessens ur resource usage
+
+3. Documentation is embedded in schema
+      When u r creating avro schema, there u can define the documentation as well, consider we have json with 2 fields name and age these are quite self-explanatory fields, but if there is any field which is not very self-explanatory then we need to add some liner documentation for it, you can put it in schema and user get an definite idea for that field
+
+4. Schema can evolve over time 
+       Its not like that if you have made a contract then  its gonna last for a lifetime and we cant change it, you can definitely evolve over time but with set of rules, you cant change anything you like in the schema, there are defined rules for evolving ur schema 
+
+5. Provides support for maintaining compatability on schema evolution 
+
+6. Avro schema helps in keeping ur data clean and robust 
+       Avro supports platform like Kafka that has multiple producers and consumers which get evolved over time and every schema helps in keeping ur data clean and robust 
+
+Disadvantage
+1. Data is not readable, it will need some tool or deserialization to read it
+    If you have seen the event through some kafka client  that you put in kafka, those are very readable events, we can read it in string or json. But when u serialize it using kafka that dosent remains to be readable, you have to deserialize to read it so we need some tool
+
+2. Performance is good unless u r going above 1 million records per second
+     
+Schema Evolution
+    - It is all about dealing with changes in ur message record over time
+    - It is a key feature of Avro in this case, schema can change over time for instance
+    1. Adding a field    2. Removing a field 
+
+1. Consider we collecting employee data and ur original schema looks like below 
+      
+{ "type": "record",
+  "name": "Employee",
+  "fields": [
+     {"name": "emp_id", "type": "int"},
+     {"name": "empName", "type": ["string", "null"]},
+     {"name": "address", "type": ["string", "null"]},
+   ]
+}
+
+So we have producer and sending the data to kafka and we have consumers which reading this data from Kafka and doing some analysis 
+
+   - We had this system in place for few months, and later u decide to upgrade ur schema like below 
+{ "type": "record",
+  "name": "Employee",
+  "fields": [
+     {"name": "emp_id", "type": "int"},
+     {"name": "empName", "type": ["string", "null"]},
+     {"name": "address", "type": ["string", "null"]},
+     {"name": "qualification", "type": ["string", "null"]},
+     {"name": "city", "type": ["string", "null"]}
+   ]
+}
+
+The problem starts here, if u r changing the schema, u need to create a new Producer because we want to send some new fields. But I dont want to change current producers and consumers because that will be too much of work, so we want to support both old and new schema simultaneously 
+    In standard case if u change ur schema, u have to change everything ur producers, consumers, serializers and deserializers. After making these changes we cant read old messages because we change the code and any attempt to read old messages using new code will leads an exception 
+    In summary we need to have combination of old and new producers as well as mix of old and new consumers. Kafka should able to store both types of messages on same topic and consumer should able to read both types of messages without any error, this is called scheme evolution 
+
+How to handle Schema evolution?
+      The industry solution to handle schema evolution is to include schema with data, so someone writing data they write schema and data both, so someone want to read the data, they first read the schema and read data based on the schema. If we follow this approach we can keep changing schema as frequently as required without change our code because we are reading schema before the data 
+      There are prebuild and reusable serialization system to simplify the whole process of transmitting messages according to schema and embedded schema info in message record 
+     Avro is one of them, it is most popular serialization system. Kafka uses Avro to handle schema evolution problem 
+
+Avro offers 4 things
+  1. Allows you to define a schema for your data, and schema defined through json  
+
+{ "type": "record",
+  "name": "Employee",
+  "fields": [
+     {"name": "emp_id", "type": "int"},
+     {"name": "empName", "type": ["string", "null"]},
+     {"name": "address", "type": ["string", "null"]},
+     {"name": "medicalrecords", "type": ["string", "null"],default:"None"}
+   ]
+}
+
+Here emp_id is mandatory, however empName, address can have null value, medicalrecords have a default value as none
+
+  2. Generates codes for ur schema - create Employee.java 
+  3. Provides API's to serialize your data according to the schema and embed schema info in the data
+   So I can use Employee.java generated in step2 to create the data objects and use Avro Api like KafkaAvroSerializer to serialize and send to kafka broker 
+  4. Provide API's to extract schema info and deserialize ur data based on the schema 
+   Similarly on receiving end can use Avro Api like KafkaAvroDeserializer to deserialize those messages back to Employee object 
+
+
+So far we learnt KafkaAvroSerializer takes care of all serialization work at producer end and KafkaAvroDeserializer will take care of deserialization work at consumer end, but how they will communicate with each other about schema. The deserializer should know the schema, without knowing the schema it cant deserialize the raw bytes back to object, thats where schema registry is useful
+     KafkaAvroSerializer will store the schema details in schema registry and include the id of schema into message record. When kafkaAvroDeserializer receives the message it takes schema id from message and get schema details from registry. Once we have schema details and message bytes it is simple to deserialize 
+
+1. C:>kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic avro_topic_v1
+2. Create maven project AvroSchema-V1
+3. Create employee.avsc inside schema folder
+4. mvn clean install, so it creates Employee.java for avro file
+5. Create AvroProducer.java
+6. Create AvroConsumer.java
+7. Run AvroConsumer
+8. Run AvroProducer
+     Now it will display the employee object from topic to consumer console
+
+   But whole point of using Avro is to support schema evolution
+Now we modify our schema and create a new version of prior schema and then we create new Producer to send some messages based on new schema 
+   This example show us schema evolution, we will see old producer, new producer and old consumer working together in same system, finally we create new consumer which will read both type of messages without any exception 
+
+1. In same project we update the schema, but schema name and type will not change, however we change the record structure. Now we added some extra fields like city,qualification into schema as below
+
+{ "type": "record",
+  "name": "Employee",
+  "fields": [
+     {"name": "emp_id", "type": "int"},
+     {"name": "empName", "type": ["string", "null"]},
+     {"name": "address", "type": ["string", "null"]},
+     {"name": "medicalrecords", "type": ["string", "null"],default:"None"},
+      {"name": "qualification", "type": ["string", "null"]},
+     {"name": "city", "type": ["string", "null"]}
+   ]
+}
+
+But we cannot free to evolve schema in random fashion, avro provides some rules for compatiability of schema 
+
+3. Now we want to create new producer called AvroProducerV2 and send some messages in new format, but this time we create new Employee object based on new schema, then setting the value and finally sending to kafka broker  
+
+4. Run AvroConsumer 
+5. Run AvroProducerV2 
+   Now we can see old consumer can read message from new producer
+6. Run AvroProducer 
+    Now also old consumer can read message from old producer also 
+
+So using Avro and schema registry we can quickly build a system where producers and consumers can read all type of messages
+
+
+Avro Schema Compatability 
+
+1. Backward compatiable change
+       - Data written by an older schema can be read by a newer schema, eg: v1 message can be read by v2
+
+- Create customer.avsc with firstName and lastName fields
+- Create Consumer1.java
+- Create Producer1.java
+- Run Consumer1 and then Producer1
+      It will print the output
+-Now we add a field called middleName 
+-Now when we run Producer1, it will throw an exception called " Schema being registered is incompatible with an earlier schema; error code: 409"
+   The first version of schema we created is not compatiable with new changes we made it 
+- http://localhost:8081/config - by default it shows compatiability as "BACKWARD" (ie) every stream must adhere to backward compatibility 
+    Which means data written by older schema can be read by newer schema, so if any message is already in system which has firstName, lastName and you are making a change into the schema and that new schema has middlename and if older message comes to this schema, they wont able to map it so its saying it is not backward compatibility with new schema
+   So what confluent says is we can define a default value, so for middlename we can define as null, but middlename type is string so it can accept only string, so in type we can define ["null","string"], so it can either null or string for middlename, since first value is null we can define default value as null
+   If we change the order like ["string","null"] and if we say default value is null, it shows error. So whatever default value we give, it have to match the first element in type 
+   {
+        "name": "middleName",
+        "type": ["null","string"],
+        "default": null
+    }   
+Now when we run there will be no error. So this new schema is backward compatibility if older producer produces any message, then it will consider default value for middleName 
+
+2. Forward compatiable change
+       - Data written by a new schema cant be read by a older schema, eg: v2 message can be read by v1
+
+- Now in new schema, we are going to rename the lastName field and it is no longer exist in new schema, we want to call it as "surname"
+- Now we change the compatibility in POSTMAN with PUT request - Body - Json - "http://localhost:8081/config"
+{
+  "compatibility":"FORWARD"
+}
+- Now if we run Producer1, then again it shows an error as "Schema is incompatibile with earlier schema"
+   So if this new schema produce any message with surname and older schema is still expecting that the value would have lastname, so simply the message will fail. 
+   So we can use "surName" instead of "lastName" by using "aliases" property and whenever you creaye a new property always define the default value 
+ {
+        "name": "lastName",
+        "type": "string",
+        "aliases": ["surName"]
+    }
+- Now when we run the producer it will shoow the output
+
+3.{
+  "compatibility":"FULL"
+}
+4. {
+  "compatibility":"NONE"
+}
+
+5. What cant be migrated?
+       - Changing the datatype of field
+       - Modifying the values of an enum
+       - Removing a field which does not have default value
+
+6. What can be migrated?
+       - Fields with default values specified can later be removed without affecting the previous schema
+       - Fields can be renamed by supplying an alias
+
+Rules
+1. Make primary key required
+2. Give default value to fields that could be removed in future
+3. Be careful when using enums as they cant evolve over time
+4. Dont rename fields, you can add aliasesinsyead of other name
+5. When evolving a schema, always give default value
+6. when evolving a schema, never delete a required filld
+
+
+Schema Evolution
+    You have different producer producing data for same topic and we have different consumers which are receiving the same data, so how schema can evolve on producers and consumers without affecting each other, so there should some policy to evolve schema without affective each other
+
+Schema Compatibility policy
+     - Defines the rule of how the schema can evolve
+     - Subsequent version updates has to honor the schema's original version
+     - Backward,Forward,Full,None
+
+Backward Compatibility
+     - New version of a schema would backward compatible with earlier version of that schema
+     - Data written from earlier version of the version, can be read with a new version of the schema
+     - Delete fields or add optional fields only
+     - Consider we have version1 with id and color
+{
+  "type" : "record",
+  "name" : "book",
+  "namespace" : "com.pack",
+  "fields" : [
+       {
+          "name" : "id",
+          "type" : "int"
+       },
+       {
+          "name" : "color",
+          "type" : "string",
+          "default" : "blue"
+       }
+    ]
+}
+
+   - Consider we create another version with one more field called pages with default value
+{
+  "type" : "record",
+  "name" : "book",
+  "namespace" : "com.pack",
+  "fields" : [
+       {
+          "name" : "id",
+          "type" : "int"
+       },
+       {
+          "name" : "color",
+          "type" : "string",
+          "default" : "blue"
+       },
+       {
+          "name" : "pages",
+          "type" : "int",
+          "default" : -1
+       }
+    ]
+}
+    
+- So we get data from v1 where pages field is not there, so on reader side it acts pages field with default value without breaking the schema  
+
+2. Forward Compatibility
+      - Existing schema is compatible with future version of the schema, that means data written from new version of the schema can still be read with old version of the schema 
+      - Add fields or delete optional fields 
+
+- Consider we have version1 with id and color
+{
+  "type" : "record",
+  "name" : "book",
+  "namespace" : "com.pack",
+  "fields" : [
+       {
+          "name" : "id",
+          "type" : "int"
+       },
+       {
+          "name" : "color",
+          "type" : "string",
+          "default" : "blue"
+       }
+    ]
+}
+
+   - Consider we create another version with one more field called pages 
+{
+  "type" : "record",
+  "name" : "book",
+  "namespace" : "com.pack",
+  "fields" : [
+       {
+          "name" : "id",
+          "type" : "int"
+       },
+       {
+          "name" : "color",
+          "type" : "string",
+          "default" : "blue"
+       },
+       {
+          "name" : "pages",
+          "type" : "int"
+       }
+    ]
+}
+- So on consumer side it will have pages field also but it will drop it, so whenever we forward compatibility we add new fields with default value 
+
+3. Full compatibility
+       - New version of schema provides both backward and forward compatibility 
+
+
+Schema Composition
+    - Schema can be shared and reused
+
+{
+   "name" : "uuid",
+   "type" : "record",
+   "namespace" : "com.pack",
+   "fields" : [
+       {
+         "name" : "value",
+         "type" : "string",
+         "default" : ""
+       }
+    ]
+}
+
+{
+   "name" : "account",
+   "namespace" : "com.pack",
+   "includeSchemas" : [
+       {
+           "name" : "uuid"
+       }
+    ],
+    "type" : "record",
+    "fields" : []
+}
+
+
+Topic, partitions and offsets
+    - In Kafka we have topics, topics represent a particular stream of data, so kafka topic is similar to table in a db without all constraints, so if u have many tables in db we have many topics in kafka
+   - You can have as many topics as you want, a topic is identified by its unique name 
+   - Topics are split into partitions, so when u create kafka topic, u need to specify how many partitions we want for our kafka topics, each partition is going to be stream of data and each partition will have data in it and being ordered 
+   - Each message within partition will get an incremental id, which is position of message in partition and it is called as offset 
+   - For example, if we take a kafka topic with 3 partition, if we look at partition 0, it will have the message with offset 0, then message with offset 1,2,3 etc all way to 11 and the next message will be written is going to be offset number 12 
+     Partition 1 also part of kafka topic and this also have offsets going from 0 all the way to 7 and next message is written from offset 8
+     Partition 2 has message offsets going from 0 all to 9 and next message should be written is number 10 
+
+            Partition 0  0 1 2 3 4 5 6 7 8 9 10 11
+Kafka Topic Partition 1  0 1 2 3 4 5 6 7 8
+            Partition 2  0 1 2 3 4 5 6 7 8 9 10
+   
+So as we see partitions are independent, we will be writing to each partition independently at its own speed, and offsets in each partition are indepenednt  and again message has coordinates of a topic name, partition id and an offset 
+
+What goes into Kafka?     
+    Consider we have group of trucks in truck company and what we want to do is to have the truck position in kafka, since we need stream of truck position for dashborad or some alerting, so we create kafka topic called trucks_gps which contain the position of all trucks in real time
+    Each truck is going to send kafka every 20secs, their position which will be included as part of message and each message will contain truck id as well as truch position like latitude, longitude, speed, ,weight of truck etc. So we create the topic with 10 partition and as many u can 
+    From their consumer appl are going to be location dashboard for mobile appl or notification service 
+
+1. Offset only have a meaning for a specific partition, so offset 3 in partititon 0 does not represent the same data or same message as offset 3 in partition 1
+2. Also if we look at ordering of messages, the order will be guaranteed only within the partition, so across partition we have no ordering guaranteed, so we have ordering only at partition level 
+3. Data in kafka by default is kept only for one week (ie) after one week the data is going to be erased from the partition, so this allows kafka to make sure it doesnt run out of disk and stream the latest data 
+4. Kafka is immutable, once the data is written to partition it cannot be changed 
+
+Kafka Producers
+    - Kafka producers are going to write data to topics which are made of partitions 
+    - Now the producers in kafka, they will automatically know to which broker and partition to write to, based on ur message. In case there is a kafka broker failure in ur cluster, the producers will automatically recover from it which makes kafka resilient 
+
+How does producer know how to send the data to a topic?
+     - We can use message keys, so along the message value we can choose to send message key, a key can be anything like string, number etc. If we dont send the key, then key is null, then the data is send as round robin fashion (ie) ur first message will sent to partition 0, second message to partition 1 etc
+     - In case if we send key with ur message, then all the messages that share the same key will always go to same partition 
+     - If u need ordering for a specific field, for example if you have our trucks and you want to get all gps position in order for that specific truck, then u need to have message key sets as unique identifier for ur truck. So in our truck gps example we need to choose message key as truck_id so that we have all the truck positions for that one specific truck in order as part of same partition 
+
+Kakfa Messages
+    - Kafka messages are created by producer, the key can be null and type of key is binary, so binary is 0's and 1's, as we said it can be string or numbers, and it will convert string or numbers to binary 
+     So we have key which is binary field which can be null and then we have the value which is content of ur message, again this can be null. So key,value are most important part in message, but there are other things in message, for example ur message can be compressed, so the compression type can be indicated as part of message like none, gzip, snappy, lz4, zstd. We also have optional headers for your message, so headers are pairs of key value
+    Once the message is sent into a kafka topic  then it will receive partition number and offset id, so the partition and the offset are going to be the part of the kafka message and then finally timestamp alongside the message will be added either by the user or system, then that message will be sent to kafka 
+
+Producer Serializer
+     When we start writing some messages in Kakfa, we are going to use some higher level objects, and to transform these objects into binaries, we will use producer serializer 
+     So serializer will indicate how to transform these objects into bytes, they will be used for key abd value 
+     For example we have value="Helloworld" as a string and key=123 thats an integer, in that case we beed to set key serializer to be IntegerSerializer and internally it will convert that integer into bytes, and these bytes will be part of the key which will be binary. 
+     In case of value which is string we use StringSerializer as value serializer to convert that string into bytes will be part of value which is binary format
+
+Consumers 
+     - Consumers read data from a topic, identified by name. Consumers know from which broker to read from and which partitions to read from 
+     - In case of broker failures, consumer knows to recover 
+     - Data for the consumers is going to read in order within each partitions
+     Consider consumer is consuming from topic A/partition 0, then it will first read message 0 then 1,2 etc till 11. If another consumer is reading from 2 partitions (ie) partition 1 and partition 2, is going to read both partitions in order, so within partition the data is going to be read in order but across partitions, we have no way of saying which one is going to be read first or second and this is why there is no Ordering across partitions
+
+Consumer Deserializer
+     - Consumers are going to be reading our messages from Kafka which are made of bytes, so deserializer is needed for the consumer to indicate how to transform these bytes back into some objects or data  
+
+
+Avro Producer
+1. Create project AvroProducer
+2. Run producer appl
+      When we run, it prints Customer0@0 (ie) paritition 0 and offset 0
+      When we run once again, it prints Customer0@1 (ie) paritition 0 and offset 1
+3. Run consumer in console 
+>kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer-avro_1 --from-beginning --property schema.registry.url=http://localhost:8081
+
+
+
+
+
+
+
+
+
+
