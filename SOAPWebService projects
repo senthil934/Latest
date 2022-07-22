@@ -1,0 +1,1487 @@
+SOAPExample
+1.pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.pack</groupId>
+  <artifactId>SOAPExample</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>war</packaging>
+ <dependencies>
+       <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>7.0</version>
+       </dependency>
+  </dependencies>
+  <build>
+      <plugins>
+          <plugin>
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.3</version>
+             <configuration>
+                  <source>1.8</source>
+                  <target>1.8</target>
+                  <encoding>UTF-8</encoding>
+             </configuration>
+          </plugin>
+          <plugin>
+             <groupId>org.codehaus.mojo</groupId>
+             <artifactId>jaxws-maven-plugin</artifactId>
+             <version>1.12</version>
+             <executions>
+                  <execution>
+                     <id>generate-wsclient</id>
+                     <goals>
+                         <goal>wsimport</goal>
+                     </goals>
+                     <configuration>
+                         <wsdlUrls>
+                             <wsdlUrl>http://wsgeoip.lavasoft.com/ipservice.asmx?WSDL</wsdlUrl>
+                         </wsdlUrls>
+                         <target>2.1</target>
+                         <xjcArgs>
+                              <xjcArg>-XautoNameResolution</xjcArg>
+                         </xjcArgs>
+                         <bindingDirectory>src/jaxws/wsdl</bindingDirectory>
+                         <keep>true</keep>
+                         <sourceDestDir>${project.build.directory}/generated-sources/jaxws-wsimport</sourceDestDir>
+                         <packageName></packageName>
+                     </configuration>
+                  </execution>
+             </executions>
+          </plugin>
+      </plugins>
+  </build>
+</project>
+
+2. Main.java
+
+import com.lavasoft.GeoIPService;
+import com.lavasoft.GeoIPServiceSoap;
+
+public class Main {
+
+	public static void main(String[] args) {
+		String ip=args[0];
+		  GeoIPService ipService=new GeoIPService();
+		  GeoIPServiceSoap ip1=ipService.getGeoIPServiceSoap();
+		  System.out.println(ip1.getIpLocation(ip));
+
+	}
+
+}
+
+In Run configuration - provide IP address - ping google.com and get IP address
+
+JAXWS Project  - JDK1.7, Tomcat 7
+1.  index.jsp
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>SOAP Service Application</h1>
+</body>
+</html>
+
+2. ProductCatalog.java
+
+package com.pack;
+
+import java.util.List;
+
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+import com.pack.model.Product;
+import com.pack.service.ProductServiceImpl;
+
+@WebService(endpointInterface="com.pack.ProductCatalogIntf",portName="TestCatalogPort", serviceName="TestCatalogService")
+public class ProductCatalog implements ProductCatalogIntf{
+	
+   ProductServiceImpl productService = new ProductServiceImpl();
+	
+   
+   public List<String> getProductCategories(){
+  	   return productService.getProductCategories();
+   }
+   
+   //@WebMethod(exclude=true)
+   //@WebMethod
+   public List<String> getProducts(String category){
+	   return productService.getProducts(category);
+   }
+   
+   //@WebMethod(exclude=true)
+   //@WebMethod
+   public boolean addProduct(String category, String product) {
+	   return productService.addProduct(category, product);
+   }
+   
+   //@WebMethod
+   public List<Product> getProductsV2(String category){
+	   return productService.getProductsV2(category);
+   }
+}
+
+
+3. ProductCatalogIntf.java
+
+package com.pack;
+
+import java.util.List;
+
+import javax.jws.WebMethod;
+import javax.jws.WebResult;
+import javax.jws.WebService;
+
+import com.pack.model.Product;
+
+@WebService(name="TestCatalog",targetNamespace="http://www.testmart.com")
+public interface ProductCatalogIntf {
+ 
+	@WebMethod(action="fetch_categories",operationName = "fetchCategories")
+	public List<String> getProductCategories();
+	
+	@WebMethod
+	public List<String> getProducts(String category);
+	
+	@WebMethod
+	public boolean addProduct(String category, String product);
+	
+	@WebMethod
+	@WebResult(name="Product")
+	public List<Product> getProductsV2(String category);
+}
+
+
+4. ShopInfo.java
+package com.pack;
+
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebResult;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+import javax.jws.soap.SOAPBinding.Style;
+
+@WebService
+@SOAPBinding(style=Style.RPC)
+public class ShopInfo {
+	
+	/*@WebMethod
+	@WebResult(partName="lookupOutput")
+	public String getShopInfo(@WebParam(partName="lookupInput")String property) {
+		String response = "Invalid property";
+		if("shopname".equals(property)) {
+			response = "Test Mart";
+		}
+		else if("since".equals(property)) {
+			response = "2020";
+		}
+		return response;
+	}*/
+	
+	@WebMethod
+	@WebResult(partName="lookupOutput")
+	public String getShopInfo(@WebParam(partName="lookupInput")String property) throws InvalidInputException {
+		String response = null;
+		if("shopname".equals(property)) {
+			response = "Test Mart";
+		}
+		else if("since".equals(property)) {
+			response = "2020";
+		}
+		else {
+			throw new InvalidInputException("Invalid input", property+" is not a valid input");
+		}
+		return response;
+	}
+}
+
+5. TestMartPublisher.java
+package com.pack;
+
+import javax.xml.ws.Endpoint;
+
+public class TestMartPublisher {
+
+	public static void main(String[] args) {
+		Endpoint.publish("http://localhost:1234/productcatalog", new ProductCatalog());
+	}
+
+}
+
+6. InvalidInputException.java
+package com.pack;
+
+public class InvalidInputException extends Exception {
+	private String errorDetails;
+	
+	public InvalidInputException(String reason, String errorDetails) {
+	     super(reason);
+	     this.errorDetails=errorDetails;
+	}
+	
+	public String getFaultInfo() {
+        return errorDetails;
+    }
+}
+
+7. Product.java
+package com.pack.model;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
+@XmlRootElement(name="Product")
+@XmlType(propOrder = {"price","sku","name"})
+public class Product {
+    private String name;
+    private String sku;
+    private Double price;
+    
+    @XmlElement(name="ProductName")
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getSku() {
+		return sku;
+	}
+	public void setSku(String sku) {
+		this.sku = sku;
+	}
+	public Double getPrice() {
+		return price;
+	}
+	public void setPrice(Double price) {
+		this.price = price;
+	}
+	public Product(String name, String sku, Double price) {
+		super();
+		this.name = name;
+		this.sku = sku;
+		this.price = price;
+	}
+	public Product() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+    
+    
+}
+
+8. ProductServiceImpl.java
+package com.pack.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.pack.model.Product;
+
+public class ProductServiceImpl {
+	
+	 List<String> bookList=new ArrayList<>();
+	 List<String> movieList=new ArrayList<>();
+	 List<String> musicList=new ArrayList<>();
+	 
+	 public ProductServiceImpl() {
+		 bookList.add("Java");
+		 bookList.add("J2EE");
+		 bookList.add("J2ME");
+		 
+		 movieList.add("Spiderman");
+		 movieList.add("IT");
+		 movieList.add("Nun");
+		 
+		 musicList.add("Rock");
+		 musicList.add("Jazz");
+		 musicList.add("Pop");
+	 }
+	
+	 public List<String> getProductCategories(){
+	  	 List<String> list=new ArrayList<>();
+	  	 list.add("Books");
+	  	 list.add("Movies");
+	  	 list.add("Music");
+	  	 return list;
+	   }
+	 
+	 public List<String> getProducts(String category){
+		 switch(category.toLowerCase()) {
+		 case "books":
+		     return bookList;
+		 case "music":
+			 return musicList;
+		 case "movies":
+			 return movieList;
+		 }
+		 return null;
+	 }
+
+	 public boolean addProduct(String category,String product) {
+		 switch(category.toLowerCase()) {
+		 case "books":
+		     bookList.add(product);
+		     break;
+		 case "music":
+			 musicList.add(product);
+			 break;
+		 case "movies":
+			 movieList.add(product);
+			 break;
+	     default:
+	    	 return false;
+		 }
+		 return true;
+	 }
+	 
+	 public List<Product> getProductsV2(String category){
+		 List<Product> productList = new ArrayList<>();
+		 productList.add(new Product("Powder","ABC",234.34));
+		 productList.add(new Product("Perfume","Axe",334.34));
+		 return productList;
+		 
+	 }
+}
+
+
+SoapService project
+1. CalculatorIntf.java
+
+public interface CalculatorIntf {
+   int add(int a,int b);
+   int subtract(int a,int b);
+}
+
+2. CalculatorImpl.java
+package com.pack;
+
+public class CalculatorImpl implements CalculatorIntf{
+
+	@Override
+	public int add(int a, int b) {
+		return a+b;
+	}
+
+	@Override
+	public int subtract(int a, int b) {
+		// TODO Auto-generated method stub
+		return a-b;
+	}
+
+}
+
+
+Axis1-CalculatorClient project
+1. CalculatorClient.java
+
+package com.pack;
+
+import java.net.URL;
+
+import org.apache.axis.client.Service;
+
+public class CalculatorClient {
+
+	public static void main(String[] args) throws Exception {
+		URL url=new URL("http://localhost:8088/SOAPService/services/CalculatorImpl");
+		Service service=new Service();
+		CalculatorImplSoapBindingStub stub=new CalculatorImplSoapBindingStub(url, service);
+		int result = stub.add(10,20);
+		int result1 = stub.subtract(30, 10);
+		System.out.println(result+" "+result1);
+
+	}
+
+}
+
+
+Axis2SoapService project
+1. HelloService.java
+package com.pack.axis2;
+
+public class HelloService {
+    public String hello(String name) {
+    	return "Hello "+name+", Welcome to SOAP Web Service";
+    }
+}
+
+Axis2SoapClient project
+1. HelloClient.java
+
+import com.pack.axis2.HelloServiceStub;
+
+public class HelloClient {
+
+	public static void main(String[] args) throws Exception {
+		HelloServiceStub stub=new HelloServiceStub();
+		HelloServiceStub.Hello input=new HelloServiceStub.Hello();
+		input.setName("Ram");
+		
+		HelloServiceStub.HelloResponse output=stub.hello(input);
+		String result=output.get_return();
+		System.out.println(result);
+
+	}
+
+}
+
+
+Axis2-TopApproach project
+1. BookService.wsdl
+
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="BookService" targetNamespace="http://www.example.org/service/BookService/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:book="http://www.example.org/entities/Book" xmlns:tns="http://www.example.org/service/BookService/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://www.example.org/service/BookService/">
+        <xsd:import namespace="http://www.example.org/entities/Book" schemaLocation="book.xsd"/>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="BookResponse">
+    <wsdl:part name="parameters" element="book:BookResponseType">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="BookRequest">
+    <wsdl:part name="parameters" element="book:BookRequestType">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="IBookService">
+    <wsdl:operation name="getBookByISBNRequestNumber">
+      <wsdl:input message="tns:BookRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:BookResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BookServiceSOAPBinding" type="tns:IBookService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getBookByISBNRequestNumber">
+      <soap:operation soapAction=""/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="BookService">
+    <wsdl:port name="BookServicePort" binding="tns:BookServiceSOAPBinding">
+      <soap:address location="http://localhost:8088/Axis2TopDownService/services/book/BookService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
+
+2. book.xsd
+
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://www.example.org/entities/Book" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.example.org/entities/Book">
+    <xsd:element name="BookRequestType">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="isbnNumber" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="BookResponseType">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="bookISBN" type="xsd:string"/>
+                <xsd:element name="bookName" type="xsd:string"/>
+                <xsd:element name="author" type="xsd:string"/>
+                <xsd:element name="category" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+</xsd:schema>
+
+
+3. In BookServiceSkeleton.java
+
+ BookResponseType book=new BookResponseType();
+                book.setBookISBN(bookRequestType.getIsbnNumber());
+                book.setBookName("SOAP WebService");
+                book.setAuthor("ABC");
+                book.setCategory("Book");
+                return book;
+
+Axis-TopDownAreaService project
+1. AreaService.wsdl
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+xmlns:tns="http://www.example.org/AreaService/" 
+xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+name="AreaService" targetNamespace="http://www.example.org/AreaService/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://www.example.org/AreaService/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+      <xsd:element name="area" type="xsd:float"/>
+      <xsd:element name="parameters" type="tns:dimensions"/>
+      <xsd:complexType name="dimensions">
+          <xsd:sequence>
+               <xsd:element name="width" type="xsd:float"></xsd:element>
+               <xsd:element name="height" type="xsd:float"></xsd:element>
+          </xsd:sequence>
+      </xsd:complexType>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="CalculateRectAreaRequest">
+    <wsdl:part element="tns:parameters" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="CalculateRectAreaResponse">
+    <wsdl:part element="tns:area" name="area"/>
+  </wsdl:message>
+  <wsdl:portType name="AreaService">
+    <wsdl:operation name="CalculateRectArea">
+      <wsdl:input message="tns:CalculateRectAreaRequest"/>
+      <wsdl:output message="tns:CalculateRectAreaResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="AreaServiceSOAP" type="tns:AreaService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="CalculateRectArea">
+      <soap:operation soapAction="http://www.example.org/AreaService/NewOperation"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="AreaService">
+    <wsdl:port binding="tns:AreaServiceSOAP" name="AreaServiceSOAP">
+      <soap:address location="http://www.example.org/"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
+
+2. In AreaServiceSOAPImpl.java
+
+return parameters.getHeight() * parameters.getWidth();
+
+
+JAXWS_Server project
+1. HelloServiceIntf.java
+
+package com.pack.ws;
+
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+@WebService
+public interface HelloServiceIntf {
+    
+	@WebMethod
+	public String helloworld();
+	
+	@WebMethod
+	public String getMessage(String name);
+}
+
+2. HelloServiceImpl.java
+
+package com.pack.ws;
+
+import javax.jws.WebService;
+
+@WebService(endpointInterface = "com.pack.ws.HelloServiceIntf")
+public class HelloServiceImpl implements HelloServiceIntf{
+
+	@Override
+	public String helloworld() {
+		// TODO Auto-generated method stub
+		return "Hello World";
+	}
+
+	@Override
+	public String getMessage(String name) {
+		// TODO Auto-generated method stub
+		return "Hello "+name;
+	}
+
+}
+
+3. Main.java
+
+package com.pack;
+
+import javax.xml.ws.Endpoint;
+
+import com.pack.ws.HelloServiceImpl;
+import com.pack.ws.StudentServiceImpl;
+
+public class Main {
+
+	public static void main(String[] args) {
+		try {
+			Endpoint.publish("http://localhost:1112/ws/HelloService", new HelloServiceImpl());
+ Endpoint.publish("http://localhost:1112/ws/StudentService", new StudentServiceImpl());
+			System.out.println("Success");
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+
+	}
+
+}
+
+4. Student.java
+package com.pack.model;
+
+public class Student {
+    @Override
+	public String toString() {
+		return "Student [id=" + id + ", name=" + name + ", mark=" + mark + "]";
+	}
+	private Integer id;
+    private String name;
+    private Integer mark;
+	public Integer getId() {
+		return id;
+	}
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public Integer getMark() {
+		return mark;
+	}
+	public void setMark(Integer mark) {
+		this.mark = mark;
+	}
+	public Student(Integer id, String name, Integer mark) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.mark = mark;
+	}
+	public Student() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+    
+}
+
+5. StudentDao.java
+package com.pack.dao;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.pack.model.Student;
+
+public class StudentDao {
+	
+    public Student find() {
+    	return new Student(1,"Ram",56);
+    }
+    
+    public List<Student> findAll(){
+    	List<Student> list=new ArrayList<Student>();
+    	list.add(new Student(2,"Sam",66));
+    	list.add(new Student(3,"Jim",76));
+    	list.add(new Student(4,"Jack",86));
+    	return list;
+    }
+}
+
+6. StudentWS.java
+package com.pack.ws;
+
+import java.util.List;
+
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+import com.pack.model.Student;
+
+@WebService
+public interface StudentWS {
+   
+	@WebMethod
+	public Student find();
+	
+	@WebMethod
+	public List<Student> findAll();
+}
+
+7. StudentServiceImpl.java
+package com.pack.ws;
+
+import java.util.List;
+
+import javax.jws.WebService;
+
+import com.pack.dao.StudentDao;
+import com.pack.model.Student;
+
+@WebService(endpointInterface = "com.pack.ws.StudentWS")
+public class StudentServiceImpl implements StudentWS{
+
+	private StudentDao stuDao=new StudentDao();
+	
+	@Override
+	public Student find() {
+		// TODO Auto-generated method stub
+		return this.stuDao.find();
+	}
+
+	@Override
+	public List<Student> findAll() {
+		// TODO Auto-generated method stub
+		return this.stuDao.findAll();
+	}
+
+}
+
+
+JAXWS_Client project
+1. Main.java
+package com.pack;
+
+import com.pack.ws.HelloServiceImplService;
+import com.pack.ws.HelloServiceImplServiceLocator;
+import com.pack.ws.HelloServiceIntf;
+
+public class Main {
+
+	public static void main(String[] args) {
+		try {
+			HelloServiceImplService service=new HelloServiceImplServiceLocator();
+			HelloServiceIntf h=service.getHelloServiceImplPort();
+			System.out.println(h.helloworld());
+			System.out.println(h.getMessage("Ram"));
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+
+	}
+
+}
+
+2. Main1.java
+package com.pack;
+
+import com.pack.ws.Student;
+import com.pack.ws.StudentServiceImplService;
+import com.pack.ws.StudentServiceImplServiceLocator;
+import com.pack.ws.StudentWS;
+
+public class Main1 {
+
+	public static void main(String[] args) {
+		try {
+			StudentServiceImplService service=new StudentServiceImplServiceLocator();
+			StudentWS stud=service.getStudentServiceImplPort();
+			Student student=stud.find();
+			System.out.println(student.getId()+" "+student.getName()+" "+student.getMark());
+			
+			Student stulist[]=stud.findAll();
+			for(Student st:stulist) {
+				System.out.println(st.getId()+" "+st.getName()+" "+st.getMark());
+			}
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+	}
+
+}
+
+
+MyApp project
+1. pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.pack</groupId>
+  <artifactId>MyApp</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>war</packaging><dependencies>
+    <dependency>
+        <groupId>com.sun.xml.ws</groupId>
+        <artifactId>jaxws-rt</artifactId>
+        <version>2.3.2</version>
+    </dependency>
+</dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.2.3</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
+2. Hello.java
+
+package com.pack;
+
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+import javax.jws.soap.SOAPBinding.Style;
+
+@WebService
+@SOAPBinding(style=Style.RPC)
+public class Hello {
+
+	@WebMethod
+	public String getMessage(String name) {
+		return "Hello "+name;
+	}
+}
+
+3. sun-jaxws.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<endpoints xmlns="http://java.sun.com/xml/ns/jax-ws/ri/runtime" version="2.0">
+    <endpoint name="HelloWebService" implementation="com.pack.Hello"
+          url-pattern="/ws/hello" />
+</endpoints>
+
+4. web.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/j2ee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>MyApp</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+  <listener>
+     <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
+  </listener>
+  <servlet>
+      <servlet-name>JAXWSServlet</servlet-name>
+      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+      <servlet-name>JAXWSServlet</servlet-name>
+      <url-pattern>/ws/*</url-pattern>
+  </servlet-mapping>
+</web-app>
+
+
+MyJAXWSClient project 
+1. Main.java
+
+package com.pack.client;
+
+public class Main {
+
+	public static void main(String[] args) {
+		HelloService service=new HelloService();
+		Hello hello=service.getHelloPort();
+		String res=hello.getMessage("Ram");
+		System.out.println(res);
+	}
+
+}
+
+
+JAXWSClient-Maven project
+1. pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.pack.client</groupId>
+  <artifactId>JAXWSClient-Maven</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>JAXWSClient-Maven</name>
+  
+  <dependencies>
+       <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>7.0</version>
+       </dependency>
+  </dependencies>
+  <build>
+      <plugins>
+          <plugin>
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.3</version>
+             <configuration>
+                  <source>1.8</source>
+                  <target>1.8</target>
+                  <encoding>UTF-8</encoding>
+             </configuration>
+          </plugin>
+          <plugin>
+             <groupId>org.codehaus.mojo</groupId>
+             <artifactId>jaxws-maven-plugin</artifactId>
+             <version>1.12</version>
+             <executions>
+                  <execution>
+                     <id>generate-wsclient</id>
+                     <goals>
+                         <goal>wsimport</goal>
+                     </goals>
+                     <configuration>
+                         <wsdlUrls>
+                             <wsdlUrl>http://localhost:8088/MyApp/ws/hello?wsdl</wsdlUrl>
+                         </wsdlUrls>
+                         <target>2.1</target>
+                         <xjcArgs>
+                              <xjcArg>-XautoNameResolution</xjcArg>
+                         </xjcArgs>
+                         <bindingDirectory>src/jaxws/wsdl</bindingDirectory>
+                         <keep>true</keep>
+                         <sourceDestDir>${project.build.directory}/generated-sources/jaxws-wsimport</sourceDestDir>
+                         <packageName></packageName>
+                     </configuration>
+                  </execution>
+             </executions>
+          </plugin>
+      </plugins>
+  </build>
+</project>
+
+2. Main.java
+
+package com.pack;
+
+public class Main {
+
+	public static void main(String[] args) {
+		HelloService service=new HelloService();
+		Hello hello=service.getHelloPort();
+		String res=hello.getMessage("Sam");
+		System.out.println(res);
+
+	}
+
+}
+
+
+JAXWS-CRUD 
+
+https://tutorialspedia.com/java-jax-ws-soap-web-service-step-by-step-tutorial-for-crud-operations-using-eclipse-mysql/
+
+
+1. pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.pack</groupId>
+	<artifactId>JAXWS-CRUD</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>javax.xml.ws</groupId>
+			<artifactId>jaxws-api</artifactId>
+			<version>2.2.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.xml.ws</groupId>
+			<artifactId>jaxws-rt</artifactId>
+			<version>2.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.24</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxws-maven-plugin</artifactId>
+				<version>1.12</version>
+				<executions>
+					<execution>
+						<id>generate-wsclient</id>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+						<configuration>
+							<wsdlUrls>
+								<wsdlUrl></wsdlUrl>
+							</wsdlUrls>
+							<target>2.1</target>
+							<xjcArgs>
+								<xjcArg>-XautoNameResolution</xjcArg>
+							</xjcArgs>
+							<bindingDirectory>src/jaxws/wsdl</bindingDirectory>
+							<keep>true</keep>
+							<sourceDestDir>${project.build.directory}/generated-sources/jaxws-wsimport
+							</sourceDestDir>
+							<packageName></packageName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+2. userWS.wsdl
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://www.user.com/userWS/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="userWS" targetNamespace="http://www.user.com/userWS/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://www.user.com/userWS/">
+      <xsd:element name="AddUser">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="User" type="tns:UserType"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="AddUserResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ResponseMessage" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    
+      <xsd:complexType name="UserType">
+      	<xsd:sequence>
+      		<xsd:element name="UserID" type="xsd:int"></xsd:element>
+      		<xsd:element name="userName" type="xsd:string"></xsd:element>
+      		<xsd:element name="userCategory" type="xsd:string"></xsd:element>
+      		<xsd:element name="userLevel" type="xsd:double"></xsd:element>
+      		<xsd:element name="userActiveStatus" type="xsd:boolean"></xsd:element>
+      	</xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="DeleteUser">
+      	<xsd:complexType>
+      		<xsd:sequence>
+      			<xsd:element name="UserID" type="xsd:int"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="DeleteUserResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="ResponseMessage" type="xsd:string"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="UpdateUser">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="User" type="tns:UserType"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="UpdateUserResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="ResponseMessage" type="xsd:string"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetUser">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="userID" type="xsd:int"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetUserResponse">
+      	<xsd:complexType>
+      		<xsd:sequence>
+
+      			<xsd:element name="User" type="tns:UserType"></xsd:element>
+      		</xsd:sequence>
+      	</xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="AddUserRequest">
+    <wsdl:part element="tns:AddUser" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="AddUserResponse">
+    <wsdl:part element="tns:AddUserResponse" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="DeleteUserRequest">
+  	<wsdl:part name="parameters" element="tns:DeleteUser"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="DeleteUserResponse">
+  	<wsdl:part name="parameters" element="tns:DeleteUserResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="UpdateUserRequest">
+  	<wsdl:part name="parameters" element="tns:UpdateUser"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="UpdateUserResponse">
+  	<wsdl:part name="parameters" element="tns:UpdateUserResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="GetUserRequest">
+  	<wsdl:part name="parameters" element="tns:GetUser"></wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="GetUserResponse">
+  	<wsdl:part name="parameters" element="tns:GetUserResponse"></wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="userWS">
+    <wsdl:operation name="AddUser">
+      <wsdl:input message="tns:AddUserRequest"/>
+      <wsdl:output message="tns:AddUserResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteUser">
+    	<wsdl:input message="tns:DeleteUserRequest"></wsdl:input>
+    	<wsdl:output message="tns:DeleteUserResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UpdateUser">
+    	<wsdl:input message="tns:UpdateUserRequest"></wsdl:input>
+    	<wsdl:output message="tns:UpdateUserResponse"></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUser">
+    	<wsdl:input message="tns:GetUserRequest"></wsdl:input>
+    	<wsdl:output message="tns:GetUserResponse"></wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="userWSSOAP" type="tns:userWS">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="AddUser">
+      <soap:operation soapAction="http://www.user.com/userWS/AddUser"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteUser">
+      <soap:operation soapAction="http://www.user.com/userWS/DeleteUser"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UpdateUser">
+      <soap:operation soapAction="http://www.user.com/userWS/UpdateUser"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUser">
+      <soap:operation soapAction="http://www.user.com/userWS/GetUser"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="userWS">
+    <wsdl:port binding="tns:userWSSOAP" name="userWSSOAP">
+      <soap:address location="http://www.user.com/"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
+
+
+3. sun-jaxws.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<endpoints xmlns="http://java.sun.com/xml/ns/jax-ws/ri/runtime" version="2.0">
+    <endpoint name="UserWS" implementation="com.pack.UserWSImpl"
+          url-pattern="/users/user" />
+</endpoints>
+
+4. web.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/j2ee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <listener>
+     <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
+  </listener>
+  <servlet>
+      <servlet-name>JAXWSCRUD</servlet-name>
+      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+      <servlet-name>JAXWSCRUD</servlet-name>
+      <url-pattern>/users/*</url-pattern>
+  </servlet-mapping>
+</web-app>
+
+5. UserWSImpl.java
+
+package com.pack;
+
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebResult;
+import javax.jws.WebService;
+
+import com.pack.service.UserType;
+import com.pack.service.UserWS;
+
+@WebService
+public class UserWSImpl implements UserWS {
+	UserDAO userdao;
+
+	@Override
+	@WebMethod
+	@WebResult(name = "ResponseMessage")
+	public String addUser(@WebParam(name = "User") UserType addRequest) {
+
+		return new UserDAO().addUser(addRequest);
+
+	}
+
+	@Override
+	@WebMethod
+	@WebResult(name = "ResponseMessage")
+	public String deleteUser(@WebParam(name = "UserID") int userID) {
+
+		return new UserDAO().deleteUser(userID);
+	}
+
+	@Override
+	@WebMethod
+	@WebResult(name = "ResponseMessage")
+	public String updateUser(UserType updateUserRequest) {
+
+		return new UserDAO().updateUser(updateUserRequest);
+	}
+
+	@Override
+	@WebMethod
+	@WebResult(name = "User")
+	public UserType getUser(@WebParam(name = "userID") int userID) {
+
+		return new UserDAO().getUser(userID);
+	}
+
+
+}
+
+
+6. UserDAO.java
+
+package com.pack;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import com.pack.service.UserType;
+
+public class UserDAO {
+
+	static final String DB_DRIVER = "com.mysql.jdbc.Driver";
+	static final String DB_URL = "jdbc:mysql://localhost:3306/jpa";
+	static final String DB_USERNAME = "root";
+	static final String DB_PASSWORD = "root";
+
+	Connection connection;
+	Statement statement;
+
+	public UserDAO() {
+		initialize();
+	}
+
+	/*
+	 * This initialize method will initialize database connection to MySQL database
+	 */
+	public void initialize() {
+		try {
+			System.out.println("Initializing DB Connection");
+			Class.forName(DB_DRIVER);
+			connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+			System.out.println("Connected");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/*
+	 * This method adds a user object in the database
+	 */
+	public String addUser(UserType u) {
+		String ResponseMessage = "";
+		try {
+
+			statement = connection.createStatement();
+			String addSQL = "INSERT INTO TBL_USERS VALUES (" + u.getUserID() + ",'" + u.getUserName() + "','"
+					+ u.getUserCategory() + "'," + u.isUserActiveStatus() + "," + u.getUserLevel() + ")";
+			System.out.println(addSQL);
+			int count = statement.executeUpdate(addSQL);
+			ResponseMessage = (count == 1) ? "User Added Successfully" : "Error Inserting Database";
+			return ResponseMessage;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			ResponseMessage = "Error Inserting Database";
+			return ResponseMessage;
+		} finally {
+			if (connection != null)
+				try {
+					connection.close();
+				} catch (Exception e) {
+				}
+		}
+	}
+
+	/*
+	 * This method returns a user object based on the userName. In real scenarios,
+	 * we can have multiple users with same name and for such cases, userId should
+	 * be used instead but here for the sake of simplicity, we will use userName as
+	 * argument.
+	 */
+	public UserType getUser(int userID) {
+		UserType u = null;
+		try {
+			String getuser_sql = "SELECT USER_ID, USER_NAME, USER_CATEGORY, USER_LEVEL, USER_ACTIVE_STATUS FROM TBL_USERS WHERE USER_ID='"
+					+ userID + "'";
+			System.out.println(getuser_sql);
+			statement = connection.createStatement();
+			ResultSet resultset = statement.executeQuery(getuser_sql);
+
+			while (resultset.next()) {
+				u = new UserType();
+				u.setUserID(resultset.getInt(1));
+				u.setUserName(resultset.getString(2));
+				u.setUserCategory(resultset.getString(3));
+				u.setUserLevel(resultset.getDouble(4));
+				u.setUserActiveStatus(resultset.getBoolean(5));
+				break; // As we want to get only one record
+			}
+			return u;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return u;
+		} finally {
+			if (connection != null)
+				try {
+					connection.close();
+				} catch (Exception e) {
+				}
+		}
+
+	}
+
+	/*
+	 * This method is used to update any existing user
+	 */
+
+	public String updateUser(UserType u) {
+		String ResponseMessage = "";
+		try {
+
+			statement = connection.createStatement();
+			String update_sql = "UPDATE TBL_USERS SET USER_NAME='" + u.getUserName() + "', USER_CATEGORY='"
+					+ u.getUserCategory() + "', USER_LEVEL=" + u.getUserLevel() + ", USER_ACTIVE_STATUS="
+					+ u.isUserActiveStatus() + " WHERE USER_ID=" + u.getUserID();
+
+			System.out.println(update_sql);
+			int count = statement.executeUpdate(update_sql);
+			ResponseMessage = (count == 1) ? "User Updated Successfully" : "Error Updating User";
+			System.out.println("Returning response message: " + ResponseMessage);
+			return ResponseMessage;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			ResponseMessage = "Error Updating User";
+			return ResponseMessage;
+		} finally {
+			if (connection != null)
+				try {
+					connection.close();
+				} catch (Exception e) {
+				}
+		}
+	}
+
+	/*
+	 * This method will delete a user from database based on the provided user id
+	 */
+	public String deleteUser(int uid) {
+		String ResponseMessage = "";
+		try {
+
+			statement = connection.createStatement();
+			String delete_sql = "DELETE FROM TBL_USERS WHERE USER_ID=" + uid;
+
+			System.out.println(delete_sql);
+			int count = statement.executeUpdate(delete_sql);
+			ResponseMessage = (count == 1) ? "User deleted Successfully" : "Error deleting User";
+			System.out.println("Returning response message: " + ResponseMessage);
+			return ResponseMessage;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			ResponseMessage = "Error deleting User";
+			return ResponseMessage;
+		} finally {
+			if (connection != null)
+				try {
+					connection.close();
+				} catch (Exception e) {
+				}
+		}
+	}
+
+	
+	
+}
