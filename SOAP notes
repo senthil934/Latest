@@ -1,0 +1,1338 @@
+C:\SpringBoot\SoapService>mvn clean install -Dhttps.protocols=TLSv1.2
+
+
+Introduction to Web Services
+     In general, there are 2 types of web services 
+1. SOAP webservice - older
+2. Rest service - new entry to web service 
+
+In Java world, there are 2 different specifications
+  1. JAXWS(Java API for XML Web Services), JAX-ROC (Java API for XML - Remote Procedure Call), JAX-M (Java API for XML Messaging) for SOAP
+  2. JAXRS for REST
+
+- All these API are given by SUN to implement web services
+- These are called specifications or interface
+
+Web services is basically a service thats made available over the network and its accessed with the network, because everything u access online is a service that provided over the network. For example if we go to social media website so we use that service to interact with ur friends, we go to ecommerce website we use that service to purchase products, so can we call them as web services
+   But the difference between standard website and webservice is that, a website is meant for human consumption while webservice is meant for code consumption or appl level consumption
+   Consider we write some code for ecommerce appl and we have written business service to get list of products called getProducts(), now this business service is deployed on ur app server which hosts the other parts of the appl that could be other services or other codes. 
+   All these classes and other pieces of code are free to call this method to get list of products, since this deploy on the same app server, its a simple java method call, so any of these classes can use this functionality by calling this method. 
+   Now we want to provide this feature to ur users, so we could have like MVC module which makes available as web appl, so users could actually enter the url and see list of products on their web browsers. So MVC module probably has a call to getProducts() and it shows the list of products in HTML format. Now we created as a web appl, so any user can use this appl to see list of products  
+   Now we another developer where he has deployed his appl in another app server, now he want to call getProducts() and show the list of all of ur products in his appl. This is completely different appl server and developer wants to make call to ur business service 
+  One way we could achieve this by packaging ur business service into a jar file, and handling this jar file to another developer, so that developer then deploy into his app server and then his appl will makes a call to method in the jar file, this might not work because getProducts() is making a call to a database which has list of products and this db is hosted along with app server on ur infrastructure 
+   Another disadvantage is, let we update ur getProducts() business service, now we have to repackage this as new jar file and give it to another appl and then redeploy to work with new functionalities 
+   So best approach is if another developer able to call the instance of getProducts() that deployed on the app server, so it works by using web service.
+   So web service allows two different machines, two different pieces of code, two different appl running on two different servers to be able to communicate with each other over the network. We can write webservice with different technologies and communicate with each other (ie) interoperability 
+
+Web Service concepts
+     Consider we are writing Java implementation class Impl, and we want to share this implementation with other developers of the project so how could we share
+     Lets say we have Consumer class, now we want to share Impl with this Consumer class, so the best way to share such implementation classes using Interface, so any Consumer would consume this Impl through the interface, so they know the argument, what are the methods, what are the return types through the interface and they actually call the methods of Impl
+   Consumer ------ Interface ----- Impl
+So interface is a standard way in which u can share any contract to consumer 
+
+1. WSDL
+   Now consider we have webservice implementation, now we want to share the details of webservice to the consumer, will interface work, it wont work because we have already discussed that we dont know what technology does consumer is, it could be C++ or .net appl. If webservice is written in Java we want to give some kind of interface that a consumer irrespective of technology can actually consume, so this contract we are going to share with webservice consumer has to be technology independent 
+   Webservice ----- Interface ----- Consumer  (not possible)
+   So when we create webservice and we want to share the contract of the webservice, we actually share that contract as an XML document, this XML document is called as WSDL which contains the contract to ur web service 
+   Webservice ------ WSDL ------- Consumer 
+   So when we create web service we share WSDL document of that webservice to the consumer. You can do it manually but there are some tools which generate the WSDL for our web service. The contents of WSDL is similar to an interface, it has methods which is called as operations, what are the arguments and what is its return type 
+
+2. UDDI
+    Consider we have client appl and from their we call some web services, so how do we know what web services to call, we know that one way to get info about the web service is WSDL which is interface to web service but how do you get hold of WSDL 
+    We have directories or yellow pages of web services where you can query and get info about web services and these directories are called UDDI. It is registry of webservice and anybody wants to consume that webservice can actually query this directory and use the webservice 
+
+3. SOAP
+   Consider we have queried UDDI and got the WSDL and now we are writing ur client appl that calls ur webservice. 
+   So anything we write in ur client appl is plain Java classes, then how exchange happens, we got WSDL and we know what info needs to be sent and what is return type, so how we send this info
+   Consider the input argument is String sent from Java appl and need to send it to webservice, let say the return type is list, because webservice is C++ application and String in Java is obviously different in C++, so how do you exchange this data between the client appl and web service
+   So when you are exchanging any info like input argument or return type, we need to exchange it in the format that all these different technologies can understand irrespective of actual implementation technology 
+   So whenever u r sending any info across the network from client to web service and return type back to the client, it has to be in XML format or protocol which is called as SOAP. It is a way in which different technology can access objects or data 
+   Whenever client appl calls a method in the web service, the web service will automatically generate SOAP message which will have the necessary details ogf the data which will be sent from the web service to the client appl
+   Proxy objects of the appl will prepare SOAP format like STUB, SKELETON
+   In consumer app, object data is converting to SOAP and SOAP is converting into object called STUB
+   In provider app, object data is converting to SOAP and SOAP is converting into object called SKELETON
+
+<envelop> - root elt of SOAP 
+<header/> - optional elt, authentication credentials, contains the defination of complex types
+<body></body> - mandatory elt, whatever request we are transferring from consumer to provider, that request data will come under <body>,
+          whatever response is giving by provider appl to consumer, that response also hold inside <body>
+<envelop>
+
+4. SEI
+  Now we know what needs to be sent, how to send it using SOAP, now who does this conversion
+  We have string object from client appl, so how we convert from Java object to SOAP message, which is done by intermediate class called SEI(Service Endpoint Interface) which converts all ur objects into SOAP message 
+   SEI will acts as an interface at client appl to ur web service endpoint which translates the whole web service call to a SOAP message and make sure the other thing able to understand this message. We can have interface that specific to what you are developing, if client is Java appl we can have SEI that specific to Java appl so it knows to convert Java objects to SOAP message.
+   Consider we are writing C++ appl calling the same webservice, so we have SEI for C++ and that knows how to convert C++ objects to SOAP message 
+   This is not need to done manually, it will done automatically 
+
+Web service Jorgans
+1. WSDL which describes what is web services in an XML format so different technologies can understand
+2. UDDI is a directory where any publisher can publish their web services and consumer can query this directory and get access to different web services
+3. SOAP is a protocol or language or XML format that is used to encode and decode different messages when u make calls to webservices, it ends up as a SOAP message that gets transmitted over the network 
+4. SEI is an interface to the web service that provides a way for ur client appl irrespective of the technology to call the web service 
+
+JAX-WS API
+    1. To develop synchronous web service
+    2. develop soap based web service or client service
+    3. Implementation for this API
+       1. JAXWS - reference implementation by SUN
+       2. Metro implementation by SUN
+       3. Glassfish implementation(Metro) by Sun
+       4. JBOSS implementation by REDHAT
+       5. Weblogic implementation by BEA(now oracle)
+       6. Websphere implementation by IBM 
+       7. Axis2 implementation - Apache foundation - default in eclipse ide 
+       8. Apache CXF implementation - Apache foundation - default in eclipse ide
+
+JAX-RPC API
+      1. This specification is given by Sun microsystem
+      2. To develop synchronous web service
+    3. develop soap based web service or client service
+    4. Implementation for this API
+       - JAX-RPC by Sun implementation
+       - Axis 1 implementation by Apache foundation
+       - JBOSS implementation by REDHAT
+       - Weblogic implementation by BEA(now oracle)
+       - Websphere implementation by IBM
+
+JAX-M API
+     1. To develop asynchronous web service
+     2. We never use this to build async webservice . if still want to develop we use JMS 
+
+SOAP Web Service Design Approaches
+1. Top down approach or Contract first
+        First WSDL is created first, the complete service defination, message format, transport protoco;, security is described in WSDL. Then service is written after the WSDL. Using that wsdl the skeleton code is generated automatically and after that the service code is filled up
+    - WSDL first then Java code
+
+2. Bottom up approach or code first or contract last
+        Where we first define the logic of a web service and then using that we will buildthe interface. Service code is written first and then the WSDL is created using service code
+       - Java code first then WSDL 
+
+Stub and Skeleton
+      - Skeleton belongs to server side, stub belongs to client side
+      - At lower level stub and skeleton communicate with each other
+      - From client side the business objects communicate with stub objects and stubs takes the responsibility to form the soap message and invoke the web service
+      Once the invoking is done, at server side skeleton is the parallel object for stub and it receives the request message and understands  it andd passes on the info to server side business objects.
+
+Writing Web service client
+   - We are creating webservice client that uses an existing web service and consumes the result
+
+1. We take existing webservice called GeoIPService which takes IP address as an input and returns the country name as output 
+
+http://wsgeoip.lavasoft.com/ipservice.asmx
+
+2. So WSDL is the interface that tells about the webservice, what are the parameters, what are the return types 
+
+http://wsgeoip.lavasoft.com/ipservice.asmx?WSDL
+
+Under that we have <wsdl:service name="GeoIPService"> which gives the name of the service, we have port names as "GeoIPServiceSoap"
+
+3. Create Java project "SOAPExample" with main class which takes IP address as argument and makes call to GeoIPService and returns country name as output.
+   Now we want to call remote service, so we use SEI. So we no need to write that interface, we can generate it for us, so there are tools which Java provides which takes WSDL and generates classes for us which is called as stub. The stub will internally translates this to webservice call 
+
+4. Now we use tool called "wsimport" which is tool that actually comes with JavaSE
+
+>mkdir sei
+>cd sei
+>wsimport "wsdlurl"
+
+>wsimport http://wsgeoip.lavasoft.com/ipservice.asmx?WSDL
+    This will generate SEI code, then its compiling the code and generates only class files
+
+In case if we want to retain the java files also, then we create src folder inside sei folder
+
+>wsimport -keep -s src http://wsgeoip.lavasoft.com/ipservice.asmx?WSDL
+
+From Java8, wsimport dosent support so we created using maven project 
+
+5. Copy all generated 9 java files inside src/main/java package of eclipse.
+   Amoung those 9 java files which is used as stub, for that in WSDL file we can saw <wsdl:service> and under that we have <wsdl:port> called "GeoIpServiceSoap", we use these 2 names in order to find the class we need to use
+   First we create object of GeoIPService and we use method called getGeoIPServiceSoap() of GeoIPService, to get the instance of GeoIPServiceSoap class. 
+   GeoIPServiceSoap class is a stub which contains getIpLocation() which takes string as argument 
+
+ String ip=args[0];
+		  GeoIPService ipService=new GeoIPService();
+		  GeoIPServiceSoap ip1=ipService.getGeoIPServiceSoap();
+		  System.out.println(ip1.getIpLocation(ip));
+
+
+Creating our own WebService 
+1. Setting Java EE with eclipse comes with inbuilt server called Glassfish which creates a domain called domain1 with port 4848
+
+Download jdk7 from https://www.oracle.com/in/java/technologies/javase/javase7-archive-downloads.html
+
+Download javaee sdk7 from "https://www.oracle.com/java/technologies/java-ee-sdk-7-jdk-7u21-downloads.html"
+
+2. Now we access admin console of glassfish 
+            http://localhost:4848
+Which opens glassfish admin console where we can deploy our appl
+   To manually start and stop glassfish admin console we use
+
+C:\glassfish4\bin>asadmin start-domain domain1
+
+To stop the console
+C:\glassfish4\bin>asadmin stop-domain domain1     
+
+3. Create JAXWS project as dynamic web project with jdk1.7 and tomcat 7
+
+4. Create index.jsp file
+
+5. Create ProductCatalog class which returns list of products.
+   Now we want to make this class as webservice using @WebService which has getProductCategorirs() whuch returns list of products but as a soap response to soap request 
+   @WebMethod is optional whenever we define @WebService it exposes all methods as web services
+
+@WebService
+public class ProductCatalog {
+   @WebMethod
+   public List<String> getProductCategories(){
+  	 List<String> list=new ArrayList<>();
+  	 list.add("Books");
+  	 list.add("Movies");
+  	 list.add("Music");
+  	 return list;
+   }
+}
+
+6. Export project as war file
+
+6. Now we open glassfish admin console and eploy the appl 
+ - >asadmin start-domain
+ - Run localhost:4848
+ - Click Application - Deploy - Browse war file - Click Ok 
+ - Click on Deploy appl - Click view endpoint - Click on generated WSDL file
+ - Click on Tester link which generate by glassfish
+ - Now we can see webservice method - click it
+ - You can see the SOAP response and SOAP request  
+
+7. Previously we created webservice ProductCatalog by annotating with @WebService with getProductCategories() which return hard coded value of categories 
+     Now we remove logic from this class and put it into business service class and make webservice class to call business service class to get the values instead of having the code directly.
+     The reason is, in real world appl there are different ways in which you want the users to use the appl, so it would be an MVC layer so that users can use appl as web appl or it can be exposed as webservice so that different other appl can send soap request and consume soap response
+
+8. So we create ProductServiceImpl class as service class 
+
+public class ProductServiceImpl {
+	
+	 public List<String> getProductCategories(){
+	  	 List<String> list=new ArrayList<>();
+	  	 list.add("Books");
+	  	 list.add("Movies");
+	  	 list.add("Music");
+	  	 return list;
+	   }
+
+}
+
+9. In ProductCatalog class we create an instance of ProductServiceImpl
+
+@WebService
+public class ProductCatalog {
+	
+   ProductServiceImpl productService = new ProductServiceImpl();
+	
+   @WebMethod
+   public List<String> getProductCategories(){
+  	   return productService.getProductCategories();
+   }
+}
+
+10. Now we create another webservice method which gives category and returns value for that category, so we hard coded some values 
+
+List<String> bookList=new ArrayList<>();
+	 List<String> movieList=new ArrayList<>();
+	 List<String> musicList=new ArrayList<>();
+	 
+	 public ProductServiceImpl() {
+		 bookList.add("Java");
+		 bookList.add("J2EE");
+		 bookList.add("J2ME");
+		 
+		 movieList.add("Spiderman");
+		 movieList.add("IT");
+		 movieList.add("Nun");
+		 
+		 musicList.add("Rock");
+		 musicList.add("Jazz");
+		 musicList.add("Pop");
+	 }
+	
+
+11. Now we create business service method called getProducts() which takes category as argument 
+
+public List<String> getProducts(String category){
+		 switch(category.toLowerCase()) {
+		 case "books":
+		     return bookList;
+		 case "music":
+			 return musicList;
+		 case "movies":
+			 return movieList;
+		 }
+		 return null;
+	 }
+
+12. Now we want to expose this method also as webservice, so we create new method in ProductCatalog class 
+
+public List<String> getProducts(String category){
+	   return productService.getProducts(category);
+   }
+
+13. Now we create method to add new product to product list 
+
+public boolean addProduct(String category,String product) {
+		 switch(category.toLowerCase()) {
+		 case "books":
+		     bookList.add(product);
+		     break;
+		 case "music":
+			 musicList.add(product);
+			 break;
+		 case "movies":
+			 movieList.add(product);
+			 break;
+	     default:
+	    	 return false;
+		 }
+		 return true;
+	 }
+
+14. Now we want to expose that method also as webservice 
+
+public boolean addProduct(String category, String product) {
+	   return productService.addProduct(category, product);
+   }
+
+15. Now deploy this appl in glassfish and run the appl using test link 
+
+Service first and Contract first web services
+     We discussed @Webservice annotation is used to write single web service, but useful only in simple scenario. But there are lot of scenarios just annotating with @Webservice could not be enough
+     So when we write new code did we write interface first or implementation first?
+     Normally we always write the interface first, Consider we are writing Calculator program and we want to provide functionality to add two numbers, so we always write a interface with a method which adds two number and returns a number. So we always write interface first then we write the implementation.
+  client code ------- Interface --------Implementation
+    The advantage of this approach is first we fix the interface with method name, argument and return type, so the reason for fixing the interface is that we can change the implementation the way we want but since interface is fixed, the client code does not have to change everytime we change the implementation. So we have fixed interface, fixed client code and we change the implementation however we want 
+    In Web service technology, we have web service implementation and interface here is WSDL, so client code refers to the WSDL to find out what webservice is providing, so to make calls to web service implementation, it uses WSDL to find out what are method name, input argument and return type.
+  Client code ------ WSDL ----- Web service impl
+   So how we lock down the interface we lock down the WSDL so we are not going to change it. The advantage of locking WSDL is irrespective of how many clients refers to WSDL and making call to webservice, since we are not going to change WSDL, the client code do not change and change the web service implementation u want
+   But when u do @WebService annotation on web service implementation class, so WSDL is actually generated after webservice implementation class, so here we are not writing interface first, we are writing implemention first and we are autogenerating the interface, this could be a problem
+   Now lets say we want to change all method names of my webservice, so my WSDL also changes. Now if we have 100 different client who are making call to WSDL, so any changes we do in implementation class will impact all these clients which is a problem
+   Now we want to make changes to implementation class, but we want to fix down WSDL, so we dont want WSDL to change.
+   So instead of generating WSDL from java classes file, we want to write WSDL first and from WSDL generate the service impl class. So the advantage is that we write WSDL first which dosent change and generate service impl, then we modify service impl without having modify WSDL 
+    These are two ways of writing webservices
+1. Service first - write service first and generate WSDL 
+2. Contract first - Write WSDL first and then service 
+
+
+Understanding WSDL
+     If u want to create webservice, we need to annotate wirth @WebService, so Glassfish will create WSDL out of it, creates tester and deploy the appl as a web service 
+     So when u code in Java and u want to share the details of ur class with ur client, u send an interface. But in case of webservice, u cannot share Java interfaces because we have no idea what technology client is using, so we send an xml file called WSDL which is similar to Java interface but in XML format
+     Consider we create Calculator interface with 2 methods add and multiply 
+
+     package com.pack;
+     public interface Calculator {
+          int add(int a,int b);
+          int multiply(int a,int b);
+     }
+
+We have package and name of interface, these two will help JVM to identify the interface, we have public which is a scope. Next it will have method declarations with name of method, input arguments and return type. So ur WSDL should have info about these methods, input arguments for those methods and return types 
+
+
+1. In ProductCatalog, we make 2 webmethods as exclude and check the WSDL syntax.
+
+@WebMethod(exclude=true)
+   public List<String> getProducts(String category){
+	   return productService.getProducts(category);
+   }
+   
+   @WebMethod(exclude=true)
+   public boolean addProduct(String category, String product) {
+	   return productService.addProduct(category, product);
+   }
+
+2. Now generate the war file and deploy the appl in glassfish 
+ 
+3. Open WSDL file 
+
+1. <portType name="ProductCatalog">
+        Under this we have operation which is ur method name getProductCategories() that takes an input and returns an output
+        This is what we saw as an interface, so we have operations to find which take input and output
+
+<portType name="ProductCatalog">
+<operation name="getProductCategories">
+<input wsam:Action="http://pack.com/ProductCatalog/getProductCategoriesRequest" message="tns:getProductCategories"/>
+<output wsam:Action="http://pack.com/ProductCatalog/getProductCategoriesResponse" message="tns:getProductCategoriesResponse"/>
+</operation>
+</portType>
+
+2. <types>
+       Consider previous interface Calculator, which takes 2 int as an argument. Lets say instead of an int, if we pass custom datatype called MyDataType and add() accept these 2 objects and adds them both and returns an object of MyDataType 
+    MyDataType add(MyDataType a, MyDataType b);
+   So it is not adding of 2 numbers, its adding of 2 objects of MyDataType  
+   <types> tag is used to define custom datatype, input and output from <operation> tag is just reference to those types 
+
+3. In WSDL, for <operation> tag (ie) method, there is only one input and one output tag, because there could be multiple inputs to an operation
+    If there are multiple input argument to any method, they are bundled together into whats called as "message". So every method in WSDL takes one message as input and one message as output 
+    So if we look WSDL, input is of the message getProductCategories and output is of the message getProductCategoriesResponse
+
+<input wsam:Action="http://pack.com/ProductCatalog/getProductCategoriesRequest" message="tns:getProductCategories"/>
+<output wsam:Action="http://pack.com/ProductCatalog/getProductCategoriesResponse" message="tns:getProductCategoriesResponse"/>
+
+These messages are also defined separately
+
+<message name="getProductCategories">
+<part name="parameters" element="tns:getProductCategories"/>
+</message>
+<message name="getProductCategoriesResponse">
+<part name="parameters" element="tns:getProductCategoriesResponse"/>
+</message>
+
+4. <binding>
+       Binding is basically how a webservice accepts these requests and give the response 
+      - We have element <soap:binding> which says the transport is HTTP, which means that this webservice accepts soap requests over http. 
+
+5. <service>
+       Service itself is a list of ports, so ProductCatalogService defines a port which is ProductCatalogPort which is available at the given address. The service has a port which follows binding which defined above 
+
+<service name="ProductCatalogService">
+<port name="ProductCatalogPort" binding="tns:ProductCatalogPortBinding">
+<soap:address location="http://lp-5cd151g7gc:8080/JAXWS/ProductCatalogService"/>
+</port>
+</service>
+
+So whenever glassfish sees a class with @WebService, it takes name of the class and creates a service and then creates a port for it. The port has bindings which tell how webservice is called using http.
+   Now inside this port it looks at all the methods annotated with @WebMethod, it will create operations for that which is nothing but method name, irrespective of whether this takes arguments or not, it creates an input message and an output message for each operation
+   Now input message consists of as many types as there to send, but it would be just one message, so input message will consists of all the input arguments bundled as a message and then return type would be an output message 
+   Each message would have types, and message would point to a type 
+
+We have service with port, Port define bindings, binding points to a port type which has operations, each operation has an input and output, input has a message and output has a message and each message refers to types and the types are defined in its own section
+
+Customizing WSDL
+     In second approach of developing webservice, we are actually doing WSDL first but then just to get all verbose XML generated for us we write java class first.
+    So we have written the class, we know what are the operations that we need and we have generated WSDL, but this WSDL is not final, we want to make some changes to it. Once we finalize the WSDL we going to lock that down and then we are going to customize our java class to match that WSDL. 
+    In real time we wont sit and type WSDL from scratch, always we have starting point as basic Java class and then we do customize our WSDL. A lot of the customizations arise from @WebService annotation itself 
+
+@WebService(name="TestCatalog")  
+      represents name of webservice, used as name of <wsdl:porttype>. In WSDL file, portType instead of ProductCatalog it will display TestCatalog. So if we change anything in webservice class it is not going to affect WSDL file 
+   
+@WebService(portName="TestCatalogPort")
+@WebService(serviceName="TestCatalogService") - represents service name in url 
+@WebService(targetNamespace="http://www.testmart.com") - namespace is kind of package in Java, so we are grouping all xml types together. The whole WSDL is encapsulated by <definations> tag, so all elements we discussed are encapsulated inside <definations> tag 
+    <definations> tag has targetNamespace which ensures that all the types that are defined in this WSDL are not going to be overridden by another WSDL of same type. This namespace will be auto derived from name of the package and reverse the order. So if we want to change this then we go for targetNamespace attribute  
+
+@WebMethod(exclude="true/false",action="fetch_categories",operationName="fetchOperations")
+    - Which will change operation for operationName and soapAction for action
+
+public class ProductCatalog {
+	
+   ProductServiceImpl productService = new ProductServiceImpl();
+	
+   @WebMethod(action="fetch_categories",operationName = "fetchCategories")
+   public List<String> getProductCategories(){
+  	   return productService.getProductCategories();
+   }
+}
+
+Now export as war file and deploy in Glassfish and check the changes in WSDL file 
+
+
+Schema Types and Binding styles
+1. Create new class ShopInfo.java as webservice and we want to get shop related info using method getShopInfo() which takes a property as argument and returns value of that property 
+
+@WebService
+public class ShopInfo {
+	
+	@WebMethod
+	public String getShopInfo(String property) {
+		String response = "Invalid property";
+		if("shopname".equals(property)) {
+			response = "Test Mart";
+		}
+		else if("since".equals(property)) {
+			response = "2020";
+		}
+		return response;
+	}
+}
+
+Now export as war and deploy the appl in glassfish and check the WSDL file
+
+2. We have already discussed, <types> refers all the data types that are required for WSDL. 
+   In the above program, we have input as String and output also as string 
+   If we look <types> in WSDL, which has an element called <xsd:schema> and importing a schema from specific schema location, so actually type information is not in WSDL file and it is in different file which is getting imported 
+  Now if we access that file, we can see separate schema file which contains type declaration, one type for input and another one for output, so this is what get imported into our WSDL 
+  The message which is actually pointed to types is actually referring to the types defined in schema file. So this is roundabout way to say that we just need String as an input and String as output.
+  Inorder to make it simple by overriding what is happening default, we use @SOAPBinding which is similar to <binding> section in WSDL file which configure what goes into webservice and what comes out of webservice 
+   @SOAPBinding has parameter called "style" which takes anyone of value called DOCUMENT or RPC. This are two ways where we configure the webservice, DOCUMENT is by default. So document style means it creates a new xsd document and referring to that, but in RPC we have all types inline. 
+   Now we choose the binding style to be RPC, so that in WSDL file we wont be able to see <types> section, instead we have <message> section which has the types inside. The <message> has an element called <part> inside it, it does not referring to any external type 
+
+@WebService
+@SOAPBinding(style=Style.RPC)
+public class ShopInfo {
+	
+	@WebMethod
+	public String getShopInfo(String property) {
+		String response = "Invalid property";
+		if("shopname".equals(property)) {
+			response = "Test Mart";
+		}
+		else if("since".equals(property)) {
+			response = "2020";
+		}
+		return response;
+	}
+}
+
+Export the appl as war and redeploy the appl in glassfish and check WSDL file. 
+You cant see <types> or it dosent go to any different xsd document to get the information about the input and output types. In <binding> section it says <soap:binding> style is "rpc" whereas in previous case by default it takes as "document"
+   
+3. In <message> section we have <part> which gives info about input as "arg0" and output as "return"  which comes by default. Now we want to change it using @WebParam for input and @WebResult for output 
+
+@WebMethod
+	@WebResult(partName="lookupOutput")
+	public String getShopInfo(@WebParam(partName="lookupInput")String property) {
+		String response = "Invalid property";
+		if("shopname".equals(property)) {
+			response = "Test Mart";
+		}
+		else if("since".equals(property)) {
+			response = "2020";
+		}
+		return response;
+	}
+
+Now deploy the appl and check in wsdl file whether name in <part> has changed for input and output 
+
+4. @SOAPBinding has few other properties like parameterStyle and use
+   "use" actually takes either "ENCODED" or "LITERAL". "LITERAL" means the values that u pass and the values that get responded are literally in XML and "ENCODED" means which makes values to be encoded. Mostly we wont use encoded, by default it is literal 
+   In style we have DOCUMENT or RPC, which one to use. The reason DOCUMENT is default because in DOCUMENT style it creates a separate XSD file, and it not only say the input and output, it also says other details like complexType, sequence etc. So the framework can actually validate whether correct value is going inside and coming outside, but in RPC that it is not possible, so it is recommended to use DOCUMENT so ur soaprequest and soapresponse gets validated against this schema 
+
+Service Interface and Custom Types
+1. Remove all exclude options in @WebMethods
+
+2. We take getProducts() which takes category as argument and returns list of string (ie)product names. But now we want to get some extra info about the product, so we create Product model class and now getProduct() returns List<Product>
+
+3. Create Product class 
+public class Product {
+    private String name;
+    private String sku;
+    private Double price;
+    //Getter and Setter
+    //constructors 
+}
+
+So now getProducts() is going to return List<Product> instead of List<String>
+    Lets say we have this webservice deployed in production and there are lot of clients who are using it, now if we change from List<String> to List<Product> so WSDL will change and all the clients have to make changes. If they happen to use old version of code when we deploy the new version of the code, it would be a problem.
+    We saw different annotations which make sure that WSDL does not change when we change our code but something like changing the signature will obviously change the WSDL, there is no way around. So in this situation we will create a new version, who want to migrate to the new version can use new changes done.
+    In ProductCatalog we create new version of getProduct() which returns list of products and its implementation 
+
+ @WebMethod
+   public List<Product> getProductsV2(String category){
+	   return productService.getProductsV2(category);
+   }
+
+public List<Product> getProductsV2(String category){
+		 List<Product> productList = new ArrayList<>();
+		 productList.add(new Product("Powder","ABC",234.34));
+		 productList.add(new Product("Perfume","Axe",334.34));
+		 return productList;
+		 
+	 }
+
+Now we are returning a custom datatype called Product, so how it is going to translated to XML 
+
+4. Now when we deploy the appl in glassfish and run the testing application
+   If we give input as products and click getProductsV2 button, it will return XML structure which is actual representation of Product class 
+
+5. Now we create an interface called ProductCatalogIntf and all webservice annotations are defined inside that interface 
+
+@WebService(name="TestCatalog",targetNamespace="http://www.testmart.com")
+public interface ProductCatalogIntf {
+ 
+	@WebMethod(action="fetch_categories",operationName = "fetchCategories")
+	public List<String> getProductCategories();
+	
+	@WebMethod
+	public List<String> getProducts(String category);
+	
+	@WebMethod
+	public boolean addProduct(String category, String product);
+	
+	@WebMethod
+	public List<Product> getProductsV2(String category);
+}
+
+
+Next we implement that interface in ProductCatalog implementation class with overridden methods
+
+public class ProductCatalog implements ProductCatalogIntf{
+}
+
+It is actually recommended to use this kind of an interface for ur webservice, because we can achieve a kind of decoupling, you dont have to worry about making changes here to this webservice because we have isolated it out, similar to concept of using interfaces in Java code 
+
+This interface which created with @WebService annotation is called service endpoint interface which we use for the client. When we implement the client we did a wsimport which creates a stubs for us and also an interface that we called as SEI 
+
+6. Now we need to have one annotation in the actual implementation class to tell the framework what is service endpoint interface 
+
+@WebService(endpointInterface="com.pack.ProductCatalogIntf",portName="TestCatalogPort", serviceName="TestCatalogService")
+public class ProductCatalog implements ProductCatalogIntf{
+
+}
+
+endpointInterface is String property which takes fullpath of interface. An endpoint interface can have multiple implementations and because of that reason the service name and port name is being picked from the service implementation.
+
+7. Export war file and deploy the appl in glassfish and check the execution as well as WSDL
+
+Using JAXB(Java Architecture for XML Binding) annotation
+    We discussed previously the return type is custom datatype called Product. This is the custom datatype that webservice returned so we created a new method called getProductsV2() which returns list of products in XML format.
+   Here Java bean is just converted into XML, like for each of member variables we have different XML elements created. But it would be difficult if the member variables are list or set or another class, in that case it is easy to map an instance of a Java object to XML that contains all the info that Java object contains by using JAXB
+    JAXB actually bind different parts of a Java object to different parts of XML structure and vice versa
+   Consider we have Java class with 3 member variables
+
+public class ClassName {
+   int var1;
+   int var2;
+   String var3;
+}
+
+So JAXB will convert this java class to XML straightforward
+     <ClassName>
+        <var1>value</var1>
+        <var2>value</var2>
+        <var3>value</var3>
+     </ClassName>
+So by default there is no need to give lot of info to JAXB to do conversion. One scenario where you would need to give extra info to JAXB, if we want to change from default, for example we want to provide some custom name instead of name of the variable, so we have to give additional info to JAXB when you convert this particular member variable to XML, dont use name of member variable instead use my own specific name.
+   Consider we have an instance of Java class which has JAXB annotations, so at runtime when u give this object to JAXB runtime which look at these annotations and knows how to convert java object to XML 
+
+1. In Product.java, we didnt give any specific inputs to JAXB to do conversion but we have seen it creates a XML structure with member variables of Product class 
+   In Product class, we use custom JAXB input in order to override some of default behaviour like we want to change name of root elt, name of child elt etc 
+   - @XmlRootElement which tells JAXB which is root element of XML 
+   - @XmlType - Normally @XmlRootElement specifies root element but this root elt could contain some other class as member variable. But in Product class is just String and Double, but if Product class contains a member variable with another class, then that class would not be a root element, that class would be just XML type 
+   Why we are annotating the same class with both @XmlRootElement and @XmlType because by using XmlType we can customize few other things 
+   1. propOrder - gives me a way to customize the order in which these properties are getting displayed in XML, so instead of name,sku,price we need to display price, sku and name 
+    - @XmlElement - used to change the name of the element in XML, it is applied before getter method  
+    - When u annotate any classes with these JAXB annotations, you need to make sure that it has a public no argument constructor, since JAXB need to initialize a new instance of this class and if you have only one constructor with some arguments, JAXB dosent know what arguments to pass to these things, so we need to create class with no argument constructor
+
+@XmlRootElement(name="Product")
+@XmlType(propOrder = {"price","sku","name"})
+public class Product {
+    private String name;
+    private String sku;
+    private Double price;
+    
+    @XmlElement(name="ProductName")
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getSku() {
+		return sku;
+	}
+	public void setSku(String sku) {
+		this.sku = sku;
+	}
+	public Double getPrice() {
+		return price;
+	}
+	public void setPrice(Double price) {
+		this.price = price;
+	}
+	public Product(String name, String sku, Double price) {
+		super();
+		this.name = name;
+		this.sku = sku;
+		this.price = price;
+	}
+	public Product() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+    
+    
+}
+
+2. Export as war file and deploy the appl in glassfish
+ Click getProductsV2 button, by giving input as products and you can see response in XML format 
+ But all info would be changed but root element will not be changed 
+
+3. Inorder to change the root element, in ProductCatalogIntf interface, we need to specify @WebResult annotation, so that it will display as root element in XML file   
+
+        @WebMethod
+	@WebResult(name="Product")
+	public List<Product> getProductsV2(String category);
+
+4. Export as war file and deploy the appl in glassfish
+ Click getProductsV2 button, by giving input as products and you can see response in XML format  
+
+
+Handling Faults
+1.   In ShopInfo webservice which takes String as input and String as output,in case if there is a possibility that the output might not happen, if the method throws an exception 
+  So during the execution of this method, there is an exception thats thrown and string never returned as part of this method and output message is never constructed  
+   So getShopInfo() takes string property like shopname and since as input and depending on the property it returns an output response. If the property is something that this method dosent recognize then the method returns "Invalid property"
+  If the input property is neither of these two that we are checking over here, we want to throw an exception instead of returning an exception
+
+@WebMethod
+	@WebResult(partName="lookupOutput")
+	public String getShopInfo(@WebParam(partName="lookupInput")String property) throws InvalidInputException {
+		String response = null;
+		if("shopname".equals(property)) {
+			response = "Test Mart";
+		}
+		else if("since".equals(property)) {
+			response = "2020";
+		}
+		else {
+			throw new InvalidInputException("Invalid input", property+" is not a valid input");
+		}
+		return response;
+	}
+
+2. When writing exception class for soap webservice, we need to do some specific things.
+   - We want to store info about the error as a string
+          private String errorDetails;
+   - Next we have constructor which takes 2 argument, one is reason for error and other is errordetails  
+     public InvalidInputException(String reason, String errorDetails) {
+     super(reason);
+     this.errorDetails=errorDetails;
+  }
+   - Next we create getFaultInfo() method in which we return the errorDetails we caught. It is called by the framework to get the fault information that we have sent 
+    public String getFaultInfo() {
+             return errorDetails;
+    }
+
+public class InvalidInputException extends Exception {
+	private String errorDetails;
+	
+	public InvalidInputException(String reason, String errorDetails) {
+	     super(reason);
+	     this.errorDetails=errorDetails;
+	}
+	
+	public String getFaultInfo() {
+        return errorDetails;
+    }
+}
+
+3. Export as war and deploy the appl in glassfish and open WSDL file
+   - We can see in <operation> tag, apart from input, output there is 3rd message called fault because we have declared this method which throws an exception. So WSDL that gets generated automatically knows that there is a possible fault that gets generated out of this operation
+    So fault is the webservice terminology for exceptions, if something goes wrong you get a fault message. So if we have an input message which needs to be sent for the operation to execute, if the operation executes successfully you have an output message thats declared over here and if operation fails and we get an InvalidInputException 
+    In case if ur method throws multiple exception then there would be multiple fault messages. Like how input and output messages refers to types, fault message also refers to type 
+    So if we open schema location of WSDL file, we can see additional complex type called InalidInputException which has two elements called faultInfo and message 
+
+4. Export as war and deploy the appl in glassfish and run tester file
+    If we give input as "shopname" it will display the output as XML response and if we give input as "invalid" then it will display the exception as XML format. Now glassfish will display exception trace
+   
+
+Using SoapUI
+    We are testing our webservices that we have deployed in Glassfish, we are using this tester page which identifies what are methods and what are the input arguments, so whenever u give input and click the button it gives soap request and response.
+   It is used to test our webservices that we have deployed in glassfish but if we want to test webservice which is deployed on other server, in that case we have lot of tools available in market to test soap web services like SOAP UI
+   
+1. Goto windows - showview - soapui - soap navigator
+
+2. Right click Project - New SOAPUI project 
+   Project name: TestSoapClient
+   WSDL location: copy wsdl location from glassfish 
+        Click ok
+
+Now soapui will look at WSDL and identify the operations and creates sample request for each of the operations. 
+
+3. Based on WSDL it will create request for input message in XML format
+   <arg0>since<arg0> provide the value instead of ? and click run option, it will generate soap response 
+
+Using Webservice Explorer
+    It is a tool that comes with eclipse itself
+
+1. click on Launch Web service explorer 
+2. Click on WSDL Page icon - WSDL Main - Paste wsdl - click Go
+    It will show the service, port and individual operations 
+3. If we want to testit, u can click on any one of operation provide the input and check the response 
+
+
+Using Endpoint
+    So far we have written webservices and deployed it in glassfish server, so it is ideal in production mode where we would use JavaEE appl server in order to deploy ur webservices
+   There is another way to test webservices in development env without depending on Glassfish or any external servers. So Java provides support for webservices in JDK itself 
+
+1. Create Java class TestMartPublisher with main method
+   We use a class called Endpoint which has publish() with 2 arguments. publish() takes in first arg as address where u want the webservice to published, second argument is instance of class that is the webservice
+
+public class TestMartPublisher {
+	public static void main(String[] args) {
+		Endpoint.publish("http://localhost:1234/productcatalog", new ProductCatalog());
+	}
+}
+
+2. Run the program as Java application
+3. Paste the url http://localhost:1234/productcatalog and it will create a page with service name and link for WSDL 
+
+Till now we create webservice just by deployingn ann appl to Glassfish and glassfish is responsible for doing all work. Now without using Glassfish or any server, now who is responsible for doing all work
+    So JAXWS standard tells us what annotation we need to use to write webservices, but then there is some implementation code that looks at ur webservice,looks at these annotations make sure they are following the standard, if they follow the standard that code actually does the work of publishing the webservice 
+   So JAXWS is a standard which provides guideline for us to write webservices and then there is other part of it which is actual implementation which takes the code that we have written following the standard and then it actually does the work of publishing 
+   There are lot of webservice implementations and one of standard implementation is called as "Metro", so metro is called as reference implementation which is an implementation that strictly follows the standard. So as long as we have written code that follows JAXWS standard, you can use Metro to publish ur webservice.
+   So metro is reference implementation that comes bundled with glassfish, which is why the code that we write following JAXWS standard can be deployed in Glassfish, so it is not Glassfish doing the work, its metro thats bundled inside glassfish which is actually doing the work, so metro looks the class with @WebService annotation and metro publishes the webservice 
+   Metro also comes bundled with JDK, which is why we can able to publish the webservice using JDK. Endpoint in JDK is not suited for prod scenario as it is single threaded one 
+
+wsimport revisited
+     WSimport is the tool we used to generate client stubs, previously we used this tool for free external webservice 
+     Now we will write client for our webservice (ie) TestCatalogService. WSImport utility that comes with the JDK, when you run WSImport with WSDL url it creates some classes which are called stubs that hides the web service calling complexity for you. You just call a method on this generated class and then that class does the complete web service call and gives you the response as a return type
+   So stubs have one method for every web service operation making any web service call is literally as simple as calling a method on that generated class. 
+   There are few options to customize wsimport while generating the stubs
+
+1. c:/Angular>mkdir tmp
+2. c:/Angular/tmp> wsimport http://localhost:1234/productcatalog?wsdl
+    It creates the classes inside the packages 
+
+3. Even we can create stubs from WSDL file locally also, save the wsdl file locally
+c:/Angular/tmp> wsimport productCatalog.wsdl
+    It also works and create the classes inside packages 
+
+4. wsimport -d <directory> - specify the output dir where you want the generated classes to go 
+
+5. wsimport -keep 
+       - which lets wsimport to save the source files, by default wsimport deletes all java files after it compiles, but if we use -keep it saves java files 
+
+6. wsimport -s <directory>
+        -d specify the dir where you want class files to be saved and -s specifies where you want the source java files to be saved, -s option will automatically turn on -keep flag
+
+7. wsimport -verbose - gives more detailed output 
+8. wsimport -quiet - gives little output 
+
+9. wsimport -p <packagename>
+       When we deploy the webservice, the package was picked up into WSDL as namespaces, when WSDL was generated
+      When we run wsimport that was automatically getting picked as packagenames by WSimport output, but if we need to overwrite this during wsimport (ie) you can change the package name of generated classes by using -p option
+    >wsimport -p com.hcl productCatalog.wsdl
+ 
+10. wsimport -B
+        wsimport generates java code and it compiles it, so wsimport tool guarantee that the code it generates will compile successfully
+        Java class names it generates it copies the names from types name in WSDL, so xsd type name becomes corresponding generated class name, because some names that valid in xsd is not valid on java side, so wsimport generates the code using those names, the java files will be generated but when it tries to compile then it shows the error 
+       So problem is with type names, we can have multiple schema types that use the same name but when they get converted to corresponding java classes in same package then it will be compiler error 
+       To avoid this problem we can use concept called Binding files. 
+       Binding files are xml file that let you specify custom overrides to the way in which the code is generated by wsimport. We write all these overrides in xml file (binding_file.xml) and then supply that to wsimport using -B option 
+    >wsimport -B binding_file.xml productcatalog.wsdl 
+
+
+SOAP UI
+    - used to test SOAP and restful webservices 
+
+Soap web service using Axis2 implementation
+1. Create SoapService dynamic web project
+
+2. Create interface CalculatorIntf with add and subtract method
+
+public interface CalculatorIntf {
+    int add(int a,int b);
+    int subtract(int a,int b);
+}
+
+3. Create class which implements CalculatorIntf 
+4. Now we want to expose add and subtract methods as web service, so we convert dynamic web project to web service, 
+
+Right click project - Web service - Web Service - Select bottom up (where first we develop implementation class then wsdl will be generated, it is called bottom up/code first/contract last)
+
+Service Implementation: select service class 
+
+Server runtime: choose the server
+Web service runtime: Apache axis
+    Eclipse by default provide 3 implementation Apache axis, apache axis2 and apache CXF 
+   click Finish
+
+This step will automatically do the following
+    1. Generate WSDL file
+    2. Adding skeleton to web.xml
+    3. Generate server side "service-config.wsdd" file
+    4. Adding implementation of specific jar file to lib folder 
+
+5. Now deploy the appl by restarting the server
+6. Go to WSDL file, copy url from <wsdlsoap:address> location attribute and append with ?wsdl
+
+http://localhost:8088/SOAPService/services/CalculatorImpl?WSDL
+
+Check whether WSDL file is opened properly 
+
+7. Test webservice using SOAP UI
+      - Create new SOAP project
+      - Give wsdl url - click ok
+      - Expand add - click Request 1
+      - You can see soap request, in that give input instead of ? - Click Run 
+      - You can see SOAP response 
+
+
+Types of Web Service Client - 2 types
+1. Proxy based client
+        If webservice client generating the stubs or proxies in the client side and client uses it to invoke the web services, then it is called proxy based client
+        Stubs are nothing but the class that actually holds the business logic method implementation in the service layer. We generate this Java files on client side and use that class to invoke the web service 
+
+2. DII client
+        Dynamic Invocation Interface client, here client never creates the stubs instead API provider will give the stubs to call the webservices. Third party like Axis, Axis2 to call the webservices
+
+Creating web service client using Axis1
+1. Create Java project - Axis1-CalculatorClient 
+2. Copy wsdl file from SOAPService project and paste inside Axis1-CalculatorClient project 
+3. Generate Stubs or proxies from eclipse
+Right click src of Axis1-CalculatorClient - New - Web service - Web Service Client - Next
+  Service Defination - click browse and locate WSDL file of Axis1-CalculatorClient
+  Server Runtime - Apache Tomcat
+  Webservice Runtime - Apache Axis
+  Click Finish
+
+In will add all the stubs for our webservice inside src folder
+   Normally stubs are created from WSDL file, the stub class is created from <binding> tag in WSDL and package name is coming from targetNamespace in reverse order of <defination> tag 
+
+4. Create CalculatorClient.java class with main() and use generated stubs in main() to call webservice 
+    Now access the url from <wsdlsoap:address> and use in URL class 
+
+URL url=new URL("http://localhost:8088/SOAPService/services/CalculatorImpl");
+		Service service=new Service();
+		CalculatorImplSoapBindingStub stub=new CalculatorImplSoapBindingStub(url, service);
+		int result = stub.add(10,20);
+		int result1 = stub.subtract(30, 10);
+		System.out.println(result+" "+result1);
+
+
+SOAP Web Service using Axis2 Implementation
+1. Download axis2 for eclipse
+http://archive.apache.org/dist/axis/axis2/java/core/1.6.2/
+
+2. Configure axis2 inside eclipse
+Goto windows - Preference - Web Service - Axis2 Preference - 
+ Axis2 Runtime Location - http://archive.apache.org/dist/axis/axis2/java/core/1.6.2/
+    Click Apply
+
+3. Create dynamic web project called "Axis2SoapService" with Dynamic web module as 2.5
+
+4. Create service class with a method which u want to use as service 
+
+public class HelloService {
+    public String hello(String name) {
+    	return "Hello "+name+", Welcome to SOAP Web Service";
+    }
+}
+
+5. Convert this service class as webservice using Axis2 implementation
+Right click Axis2SoapService project - New - Web services - Web Service 
+  Web Service Type: Bottom Up
+  Service Implementation: Browse HelloService class
+  Server runtime: Apache tomcat
+  Web service runtime: Apache Axis2
+   Click Finish 
+
+It will generate few files like 
+    1. Generate WSDL file
+    2. Configure skeleton in web.xml file
+    3. Generate respective files
+    4. Add specific jar files inside lib 
+
+6. Deploy the appl in tomcat server
+   Right click project - Run as - Run on server 
+
+It will open apache page - Click Services - Click HelloService - You can see WSDL file 
+
+7. Test webservice in SOAP UI 
+
+Create SOAP webservice client using Axis2 implementation
+1. Create dynamic web project called  Axis2SoapClient   with dynamic web module 2.5
+2. Copy WSDL URL by running Axis2SoapService project
+3. Generate Stubs 
+Right click Axis2SoapClient - New - Web Services - Web Service Client
+    Service Defination: Paste WSDL
+    Server runtime: Apache tomcat
+    Webservice runtime: Apache Axis2
+    Click Finish 
+It will create all stub files from wsdl file <wsdl:service> tag 
+
+4. Create java class with main(), use generated strub to call service method 
+
+HelloServiceStub stub=new HelloServiceStub();
+		HelloServiceStub.Hello input=new HelloServiceStub.Hello();
+		input.setName("Ram");
+		
+		HelloServiceStub.HelloResponse output=stub.hello(input);
+		String result=output.get_return();
+		System.out.println(result);
+
+5. Run Java class and check 
+
+Apache Axis2 - JAXWS based webservice using top down approach
+1. Create dynamic web project called Axis2-TopApproach with dynamic module 2.5
+ - Next - Add folder - resources - click finish
+
+2. Add required WSDL and associated schema file under resources folder 
+
+3. Convert the project to web service using Axis2 implementation 
+Right click project - New - Web Services - Web Service
+    Web Service Type: Top down approach
+    Service Implementation: browse wsdl file
+    Server runtime: Apache tomcat
+    Webservice runtime: Apache Axis2
+    Click Finish 
+
+In will generate following files
+   1. Generate stubs/skeleton java files
+   2. Configure skeletomn in web.xml
+   3. Generate services xml file
+   4. Adding implementation jars files to lib folder 
+
+4. We want to add business logic in getBookByISBNRequestNumber() of BookServiceSkeleton.java
+
+ BookResponseType book=new BookResponseType();
+                book.setBookISBN(bookRequestType.getIsbnNumber());
+                book.setBookName("SOAP WebService");
+                book.setAuthor("ABC");
+                book.setCategory("Book");
+                return book;
+
+5. Deploy the appl in tomcat server, it opens apache page, click BookService we can see WSDL file
+6. Test the appl using SOAP UI 
+
+
+Building SOAP based Web service using Top down approach and JAX-WS
+1. Create dynamic web project "Axis-TopDownAreaService" with dynamic module 2.5
+2. Paste required WSDL file inside webcontent folder 
+       In WSDL, service name is AreaService, each service will have an operation called "CalculateRectArea". This operation has one input and one output message, this message is define under types 
+       tns:area refers datatype element called area of type float and request type parameters will refer datatype called dimensions which has width and height 
+
+3. Convert the project into webservice using Axis1 implementation 
+
+Right click project - New - Web Services - Web Service
+    Web Service Type: Top down approach
+    Service Implementation: browse wsdl file
+    Server runtime: Apache tomcat
+    Webservice runtime: Apache Axis
+    Click Finish 
+
+In will generate following files
+   1. Generate stubs/skeleton java files
+   2. Configure skeletomn in web.xml
+   3. Generate services xml file
+   4. Adding implementation jars files to lib folder 
+
+4. Provide the business logic inside AreaServiceSOAPImpl class
+
+return parameters.getHeight() * parameters.getWidth();
+
+5. Deploy the appl in tomcat server and check wsdl using
+
+http://localhost:8088/Axis-TopDownAreaService/services/AreaServiceSOAP?wsdl
+
+Consuming webservice using WebService Client - Axis1
+1. Right click AreaServiceSOAP.wsdl from wsdl folder of "Axis-TopDownAreaService" project 
+    New - Web service - Web service client -
+    Move Client slider to Test Client 
+    Server runtime: Apache tomcat
+    Webservice runtime: Apache Axis
+    Client project: Change Client projectname - Axis-TopDownAreaServiceClient
+    Client project type: Dynamic web project 
+    Click Finish 
+
+Once finished, the generated sample JSP web appl will appear in browser view 
+
+2. Click calculateRectArea and provide the parameters and click invoke 
+
+Marshalling and Demarshalling
+    When client send the request to the server, client would format the info regarding the operation call and any arguments into a SOAP message and sends it to the server as part of an HTTP request, this process of encapsulating the data into SOAP message is called as marshalling
+    The server would then unwrap the message sent by the client, and then send the appropriate response back to the client as a SOAP message is known as demarshalling
+
+
+Building Java web service using JAX-WS
+1. Create JAXWS_Server java project
+2. Create interface HelloService which acts like webservice 
+
+@WebService
+public interface HelloServiceIntf {
+    
+	@WebMethod
+	public String helloworld();
+	
+	@WebMethod
+	public String getMessage(String name);
+}
+
+3. Create HelloServiceImpl class which implements HelloServiceIntf
+
+@WebService(endpointInterface = "com.pack.ws.HelloServiceIntf")
+public class HelloServiceImpl implements HelloServiceIntf{
+
+	@Override
+	public String helloworld() {
+		// TODO Auto-generated method stub
+		return "Hello World";
+	}
+
+	@Override
+	public String getMessage(String name) {
+		// TODO Auto-generated method stub
+		return "Hello "+name;
+	}
+
+}
+
+
+4. Create main class to access web service
+public class Main {
+
+	public static void main(String[] args) {
+		try {
+			Endpoint.publish("http://localhost:1111/ws/HelloService", new HelloServiceImpl());
+			System.out.println("Success");
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+
+	}
+
+}
+
+Execute it as java appl, it will print success
+
+5. Copy the endpoint url with ?wsdl and check for wsdl file 
+http://localhost:1111/ws/HelloService?wsdl
+
+6. Create JAXWS_Client project
+7. Right click JAXWS_Client project - New - Web Service - Web Service Client - Copy wsdl url - Finish
+8. Now it will generate all skeleton files in Jaxws_Client 
+9. Create main class
+public class Main {
+
+	public static void main(String[] args) {
+		try {
+			HelloServiceImplService service=new HelloServiceImplServiceLocator();
+			HelloServiceIntf h=service.getHelloServiceImplPort();
+			System.out.println(h.helloworld());
+			System.out.println(h.getMessage("Ram"));
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+
+	}
+
+}
+
+10. Run above program as java application 
+
+11. Create model class Student in JAXWS_Server
+public class Student {
+    private Integer id;
+    private String name;
+    private Integer mark;
+}
+
+12. Create StudentDao class
+public class StudentDao {
+	
+    public Student find() {
+    	return new Student(1,"Ram",56);
+    }
+    
+    public List<Student> findAll(){
+    	List<Student> list=new ArrayList<Student>();
+    	list.add(new Student(2,"Sam",66));
+    	list.add(new Student(3,"Jim",76));
+    	list.add(new Student(4,"Jack",86));
+    	return list;
+    }
+}
+
+13. Create interface StudentWS which acts as web service
+
+@WebService
+public interface StudentWS {
+   
+	@WebMethod
+	public Student find();
+	
+	@WebMethod
+	public List<Student> findAll();
+}
+
+14. Create implementation class 
+@WebService(endpointInterface = "com.pack.ws.StudentWS")
+public class StudentServiceImpl implements StudentWS{
+
+	private StudentDao stuDao=new StudentDao();
+	
+	@Override
+	public Student find() {
+		// TODO Auto-generated method stub
+		return this.stuDao.find();
+	}
+
+	@Override
+	public List<Student> findAll() {
+		// TODO Auto-generated method stub
+		return this.stuDao.findAll();
+	}
+
+}
+
+15. Create main class 
+public class Main {
+
+	public static void main(String[] args) {
+		try {
+			Endpoint.publish("http://localhost:1112/ws/HelloService", new HelloServiceImpl());
+			Endpoint.publish("http://localhost:1112/ws/StudentService", new StudentServiceImpl());
+			System.out.println("Success");
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+
+	}
+
+}
+
+16. Run the appl, it will print success. Now copy the url and see wsdl file
+
+http://localhost:1112/ws/StudentService?wsdl
+
+17. Right click JAXWS_Client project - New - Web Service - Web Service Client - Copy wsdl url - Finish
+18. Now it will generate all skeleton files in Jaxws_Client y
+19. Create Main1 class and execute it 
+
+public class Main1 {
+
+	public static void main(String[] args) {
+		try {
+			StudentServiceImplService service=new StudentServiceImplServiceLocator();
+			StudentWS stud=service.getStudentServiceImplPort();
+			Student student=stud.find();
+			System.out.println(student.getId()+" "+student.getName()+" "+student.getMark());
+			
+			Student stulist[]=stud.findAll();
+			for(Student st:stulist) {
+				System.out.println(st.getId()+" "+st.getName()+" "+st.getMark());
+			}
+		}
+		catch(Exception e) {
+			System.out.println(e);
+		}
+	}
+
+}
+
+
+Deploy JAXWS on Tomcat(JDK1.8, Tomcat 7)
+1. Create dynamic web project called MyApp
+2. Right click MyApp - Configure - Convert to Maven project 
+    Group Id: com.pack
+    Click Finish 
+
+3. Configure JAXWS dependency in pom.xml
+<dependencies>
+    <dependency>
+        <groupId>com.sun.xml.ws</groupId>
+        <artifactId>jaxws-rt</artifactId>
+        <version>2.3.2</version>
+    </dependency>
+</dependencies>
+
+4. Create Java XML webservice
+@WebService
+@SOAPBinding(style=Style.RPC)
+public class Hello {
+
+	@WebMethod
+	public String getMessage(String name) {
+		return "Hello "+name;
+	}
+}
+
+5. Configure webservices endpoint, inside WEB-INF create sun-jaxws.xml
+<endpoints xmlns="http://java.sun.com/xml/ns/jax-ws/ri/runtime" version="2.0">
+    <endpoint name="HelloWebService" implementation="com.pack.Hello"
+          url-pattern="/ws/hello" />
+</endpoints>
+
+6. Configure JAX-WS Listener and Servlet in web.xml
+        - In web.xml, change javaee to j2ee then error goes
+
+<listener>
+     <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
+  </listener>
+  <servlet>
+      <servlet-name>JAXWSServlet</servlet-name>
+      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+      <servlet-name>JAXWSServlet</servlet-name>
+      <url-pattern>/ws/*</url-pattern>
+  </servlet-mapping>
+
+7. Run the appl in tomcat, and run 
+http://localhost:8088/MyApp/ws/hello
+    - Now click on WSDL and check 
+
+8. Now create client project to test the webservice
+         - Create MyJAXWSClient java project 
+
+9. Generate stub from wsdl file using wsimport
+c:/MyJAXWSClient/src>wsimport -keep -p com.pack.client http://localhost:8088/MyApp/ws/hello?wsdl
+    Now refresh MyJAXWSClient project it will create with 2 stub classes
+
+10. Create main class to test webservice using the below code
+
+              HelloService service=new HelloService();
+		Hello hello=service.getHelloPort();
+		String res=hello.getMessage("Ram");
+		System.out.println(res);
+
+Create JAXWS client from WSDL using Maven
+1. Create maven project JAXWSClient-Maven with jar pkg
+2. Configure pom.xml with WSDL file from previous project
+
+3. mvn clean install
+4. It will create stubs from wsdl inside target/generated-sources/jaxws-import/ 
+5. Create main class to test webservice
+
+HelloService service=new HelloService();
+		Hello hello=service.getHelloPort();
+		String res=hello.getMessage("Sam");
+		System.out.println(res);
+
+
+How to Generate WSDL file in eclipse?
+1. Create WSDLDemo java project 
+2. Right click project - New - WSDL file - EmployeeService.wsdl
+     TargetNamespace: http://www.employeeService.com/EmployeeService
+     prefix: emp
+     Soap Binding option: Document literal
+     Click Finish
+3. In source, u can see the generated WSDL file, but u can do changes in Design view
+4. So we know each WSDL will have one operation. You can change "New Operation" as "GetEmployee"
+   Each operation will have an input and output, by clicking arrow it will go to related input and output 
+5. For input parameter, if we click on arrow it will go to inline schema, by default it takes a String, so we change it to
+      EmpID - int
+6. Now if we click on output arrow, it will go to GetEmployeeResponse schema, by default it is String output 
+   We dont want to use this, so we right click and delete. 
+   Now right click and click Add element to add all element
+    EmployeeName - String
+    EmployeeDep - String
+    Salary  - double, right click Set multiplicity as 0..1
+  Now we add one more complex elt, again right click - Add Element - Click New - SkillsType
+     Skills - SkillsType
+
+7. Click icon on top right corner, it will open complete schema
+   Click SkillsType - Right click Add element
+         SkillID - Int
+         SkillDesc - string
+
+8. Save it and click Source tab and check wsdl file
+
+9. Instead of adding individual elements for input and output, we create new type called "EmployeeType"
+    Click on EmployeeType - Right click AddElement
+        EmpID - int
+        EmpName - string
+        Skills - Browse SkillsType
+
+10. Now we change response of GetEmployeeResponse, instead of defining them individually we delete all element and refer to new element we created called EmployeeType
+    Employee - Browse EmployeeType
+
+11. Now we add another operation
+    Add operation - AddEmployee
+
+12. For AddEmployee input, we change as
+        Employee - Browse EmployeeType
+    For AddEmployeeResponse output, we change as
+        ResponseMessage - String
+
+
