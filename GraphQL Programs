@@ -1,0 +1,2704 @@
+1. SpringBoot-GraphQL
+
+pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.7.5</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBoot-GraphQL</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBoot-GraphQL</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.r2dbc</groupId>
+			<artifactId>r2dbc-h2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java</artifactId>
+			<version>15.0</version>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+schema.sql
+CREATE TABLE books(
+	id VARCHAR(255) PRIMARY KEY,
+	name VARCHAR(255),
+	pages INT,
+	category VARCHAR(255)
+);
+
+CREATE TABLE authors(
+	id VARCHAR(255) PRIMARY KEY,
+	name VARCHAR(255),
+	age INT,
+	book_id VARCHAR(255) UNIQUE NOT NULL,
+	
+	CONSTRAINT book_author_fk FOREIGN KEY(book_id) REFERENCES books(id)
+);
+
+schema.graphql
+
+type Query{
+	getBook(id:String!):Book
+	getBooks:[Book]
+}
+
+"""
+type Mutation{
+	createBook(name:String, pages:Int):String
+} 
+
+type Mutation{
+	createBook(bookName:String, pages:Int, authorName:String, age:Int):String
+}
+
+type Book {
+	id:String
+	name:String
+	pages:Int
+}
+
+type Book {
+	id:String
+	name:String
+	pages:Int
+	author: Author
+}
+"""
+
+type Mutation{
+	createBook(bookName:String, pages:Int, category:Category, authorName:String, age:Int):String
+}
+
+type Book {
+	id:String
+	name:String
+	pages:Int
+	author: Author
+	category: Category
+}
+
+type Author {
+	id:String
+	name:String
+	age:Int
+}
+
+enum Category {
+    HORROR,
+    COMEDY,
+    FANTASY
+}
+
+
+SpringBootGraphQLApplication.java
+
+package com.pack.SpringBootGraphQL;
+
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
+
+import com.pack.SpringBootGraphQL.service.AuthorService;
+import com.pack.SpringBootGraphQL.service.BookService;
+
+import graphql.GraphQL;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.idl.SchemaGenerator;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.TypeRuntimeWiring;
+
+@SpringBootApplication
+public class SpringBootGraphQlApplication {
+	
+	@Autowired
+	private BookService bookService;
+	
+	@Autowired
+	private AuthorService authorService;
+	
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootGraphQlApplication.class, args);
+	}
+
+	/*@Bean
+	public ConnectionFactoryInitializer connectionFactoryInitializer(ConnectionFactory factory) {
+		ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
+		initializer.setConnectionFactory(factory);
+		ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource("data.sql"));
+		initializer.setDatabasePopulator(populator);
+		return initializer;
+	}*/
+	
+	@Bean
+	public GraphQL graphQL() throws IOException {
+		SchemaParser schemaParser = new SchemaParser();
+		ClassPathResource schema = new ClassPathResource("schema.graphql");
+		TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema.getInputStream());
+		
+		RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
+		.type(TypeRuntimeWiring.newTypeWiring("Query").dataFetcher("getBook", bookService.getBook()))
+		.type(TypeRuntimeWiring.newTypeWiring("Query").dataFetcher("getBooks", bookService.getBooks()))
+		.type(TypeRuntimeWiring.newTypeWiring("Mutation").dataFetcher("createBook", bookService.createBook()))
+		.type(TypeRuntimeWiring.newTypeWiring("Book").dataFetcher("author", authorService.authorDataFetcher()))
+		.build();
+		
+		SchemaGenerator generator = new SchemaGenerator();
+		GraphQLSchema graphQLSchema = generator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
+		return GraphQL.newGraphQL(graphQLSchema).build();
+	}
+}
+
+
+Category.java
+package com.pack.SpringBootGraphQL.constant;
+
+public enum Category {
+	HORROR,
+    COMEDY,
+    FANTASY
+}
+
+
+GraphQLController.java
+package com.pack.SpringBootGraphQL.controller;
+
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.pack.SpringBootGraphQL.model.GraphQLRequestBody;
+
+import graphql.ExecutionInput;
+import graphql.ExecutionResult;
+import graphql.GraphQL;
+import reactor.core.publisher.Mono;
+
+@RestController
+public class GraphQLController {
+	
+	@Autowired
+	private GraphQL graphql;
+	
+	/*@PostMapping(value="graphql", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public void execute(@RequestBody GraphQLRequestBody body) {
+		graphql.executeAsync(ExecutionInput.newExecutionInput().query(body.getQuery()).operationName(body.getOperationName()).variables(body.getVariables()).build());	
+	}*/
+	
+	@PostMapping(value="graphql", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Map<String,Object>> execute(@RequestBody GraphQLRequestBody body) {
+		return Mono.fromCompletionStage(graphql.executeAsync(ExecutionInput.newExecutionInput().query(body.getQuery())
+				.operationName(body.getOperationName()).variables(body.getVariables()).build()))
+				.map(ExecutionResult::toSpecification);
+	}
+}
+
+
+Author.java
+package com.pack.SpringBootGraphQL.model;
+
+import java.util.UUID;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("authors")
+public class Author {
+	@Id
+	private UUID id;
+	private String name;
+	private int age;
+	
+	@Column("book_id")
+	private UUID bookId;
+	
+	public Author() { }
+
+	public UUID getId() {
+		return id;
+	}
+
+	public void setId(UUID id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	public UUID getBookId() {
+		return bookId;
+	}
+
+	public void setBookId(UUID bookId) {
+		this.bookId = bookId;
+	}
+}
+
+
+Book.java
+
+package com.pack.SpringBootGraphQL.model;
+
+import java.util.UUID;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import com.pack.SpringBootGraphQL.constant.Category;
+
+@Table("books")
+public class Book {
+	
+	//@Id
+	//private int id;
+	@Id
+	private UUID id;
+	private String name;
+	private int pages;
+	
+	private Category category;
+	
+	
+	public Category getCategory() {
+		return category;
+	}
+
+	public void setCategory(Category category) {
+		this.category = category;
+	}
+
+	public Book() { }
+
+	public Book(String name, int pages) {
+		this.name = name;
+		this.pages = pages;
+	}
+	
+	/*public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}*/
+	
+	
+
+	public String getName() {
+		return name;
+	}
+	public UUID getId() {
+		return id;
+	}
+
+	public void setId(UUID id) {
+		this.id = id;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getPages() {
+		return pages;
+	}
+	public void setPages(int pages) {
+		this.pages = pages;
+	}
+}
+
+
+GraphQLRequestBody.java
+
+package com.pack.SpringBootGraphQL.model;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+
+public class GraphQLRequestBody {
+	
+	private String query;
+	private String operationName;
+	private Map<String, Object> variables;
+	
+	public String getQuery() {
+		return query;
+	}
+	public void setQuery(String query) {
+		this.query = query;
+	}
+	public String getOperationName() {
+		return operationName;
+	}
+	public void setOperationName(String operationName) {
+		this.operationName = operationName;
+	}
+	public Map<String, Object> getVariables() {
+		return Objects.requireNonNullElseGet(variables, Collections::emptyMap);
+	}
+	public void setVariables(Map<String, Object> variables) {
+		this.variables = variables;
+	}
+}
+
+
+AuthorRepository.java
+
+package com.pack.SpringBootGraphQL.repository;
+
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import com.pack.SpringBootGraphQL.model.Author;
+
+import reactor.core.publisher.Mono;
+
+@Repository
+public class AuthorRepository {
+	
+	@Autowired
+	private R2dbcEntityTemplate template;
+	
+	public Mono<UUID> createAuthor(Author author) {
+		UUID authorId = UUID.randomUUID();
+		author.setId(authorId);
+		return template.insert(Author.class).using(author).thenReturn(authorId);
+	}
+	
+	public Mono<Author> getAuthor(UUID bookId) {
+		return template.select(Author.class).matching(Query.query(Criteria.where("book_id").is(bookId))).one();
+	}
+}
+
+BookRepository.java
+
+package com.pack.SpringBootGraphQL.repository;
+
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import com.pack.SpringBootGraphQL.model.Book;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@Repository
+public class BookRepository {
+	
+	@Autowired
+	private R2dbcEntityTemplate template;
+	
+	/*public Mono<Book> getBook(int id) {
+		return template.select(Book.class).matching(Query.query(Criteria.where("id").is(id))).one();
+	}*/
+
+	public Mono<Book> getBook(UUID id) {
+		return template.select(Book.class).matching(Query.query(Criteria.where("id").is(id))).one();
+	}
+	
+	public Flux<Book> getBooks() {
+		return template.select(Book.class).all();
+	} 
+	
+	public Mono<UUID> createBook(Book book) {
+		UUID bookId = UUID.randomUUID();
+		book.setId(bookId);
+		return template.insert(Book.class).using(book).thenReturn(bookId);
+	}
+}
+
+
+AuthorService.java
+
+package com.pack.SpringBootGraphQL.service;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL.model.Author;
+import com.pack.SpringBootGraphQL.model.Book;
+import com.pack.SpringBootGraphQL.repository.AuthorRepository;
+
+import graphql.schema.DataFetcher;
+import reactor.core.publisher.Mono;
+
+@Service
+public class AuthorService {
+	
+	@Autowired
+	private AuthorRepository repository;
+	
+	public Mono<String> createAuthor(String authorName, int age, UUID bookId) {
+		Author author = new Author();
+		author.setAge(age);
+		author.setName(authorName);
+		author.setBookId(bookId);
+		return repository.createAuthor(author).map(Object::toString);
+	}
+	
+	public DataFetcher<CompletableFuture<Author>> authorDataFetcher() {
+		return env -> {
+			Book book = env.getSource();
+			return repository.getAuthor(book.getId()).toFuture();
+		};
+	}
+}
+
+
+BookService.java
+
+package com.pack.SpringBootGraphQL.service;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL.constant.Category;
+import com.pack.SpringBootGraphQL.model.Book;
+import com.pack.SpringBootGraphQL.repository.BookRepository;
+
+import graphql.schema.DataFetcher;
+
+@Service
+public class BookService {
+	
+	@Autowired
+	private BookRepository bookRepository;
+	
+	@Autowired
+	private AuthorService authorService;
+
+	
+	public DataFetcher<CompletableFuture<Book>> getBook() {
+		return env -> {
+			//int bookId = env.getArgument("id");
+			//return bookRepository.getBook(bookId).toFuture();
+			String bookId = env.getArgument("id");
+			return bookRepository.getBook(UUID.fromString(bookId)).toFuture();
+		};
+	}
+	
+	public DataFetcher<CompletableFuture<List<Book>>> getBooks() {
+		return env -> bookRepository.getBooks().collectList().toFuture();
+	}
+	
+	/*public DataFetcher<CompletableFuture<String>> createBook() {
+		return env -> {
+			String bookName = env.getArgument("name");
+			int pages = env.getArgument("pages");
+			
+			Book book = new Book();
+			book.setName(bookName);
+			book.setPages(pages);
+			
+			return bookRepository.createBook(book).map(Object::toString).toFuture();
+		};
+	}*/
+	
+	/*public DataFetcher<CompletableFuture<String>> createBook() {
+		return env -> {
+			String bookName = env.getArgument("bookName");
+			String authorName = env.getArgument("authorName");
+			
+			int pages = env.getArgument("pages");
+			int age = env.getArgument("age");
+			
+			Book book = new Book();
+			book.setName(bookName);
+			book.setPages(pages);
+			
+			return bookRepository.createBook(book).flatMap(
+					bookId -> authorService.createAuthor(authorName, age, bookId)
+					.map(authorId -> bookId.toString()))
+			.toFuture();
+		};
+	}*/
+	
+	public DataFetcher<CompletableFuture<String>> createBook() {
+		return env -> {
+			String bookName = env.getArgument("bookName");
+			String authorName = env.getArgument("authorName");
+			
+			int pages = env.getArgument("pages");
+			int age = env.getArgument("age");
+			Category category = Category.valueOf(env.getArgument("category"));
+			
+			Book book = new Book();
+			book.setName(bookName);
+			book.setPages(pages);
+			book.setCategory(category);
+			
+			return bookRepository.createBook(book).flatMap(
+					bookId -> authorService.createAuthor(authorName, age, bookId)
+					.map(authorId -> bookId.toString()))
+			.toFuture();
+		};
+	}
+}
+
+
+2. SpringBoot-GraphQL1
+
+pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.7.0</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBoot-GraphQL1</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBoot-GraphQL1</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-graphql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.r2dbc</groupId>
+			<artifactId>r2dbc-h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.graphql</groupId>
+			<artifactId>spring-graphql-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+application.properties
+
+spring.graphql.graphiql.enabled=true
+spring.graphql.websocket.path=/graphql
+#graphql.url = /graphql
+
+schema.sql
+create table department(id serial primary key, name varchar(255) not null);
+create table employee(id serial primary key, name varchar(255) not null, salary varchar(255) not null, department_id smallint not null)
+
+data.sql
+insert into department(name) values('software')
+insert into department(name) values('mechanical')
+insert into department(name) values('chemical')
+insert into department(name) values('civil')
+insert into department(name) values('electronics')
+insert into department(name) values('management')
+
+
+graphql/schema.graphqls
+
+type Employee {
+    id: ID!
+    name: String
+    salary: String
+    departmentId: ID!
+}
+
+type Department {
+    id: ID!
+    name: String
+    employees: [Employee]
+}
+
+type Query {
+    employeeByName(employeeName: String): [Employee]
+    allDepartment: [Department]
+}
+
+type Mutation {
+    addEmployee(addEmployeeInput: AddEmployeeInput): Employee
+    updateSalary(updateSalaryInput: UpdateSalaryInput): Employee
+}
+
+type Subscription {
+    allEmployee: Employee
+}
+
+input AddEmployeeInput {
+    name: String
+    salary: String
+    departmentId: ID!
+}
+
+input UpdateSalaryInput {
+    employeeId: ID!
+    salary: String!
+}
+
+
+SpringBootGraphQL1Application.java
+package com.pack.SpringBootGraphQL1;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.graphql.client.HttpGraphQlClient;
+
+@SpringBootApplication
+@Configuration
+public class SpringBootGraphQl1Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootGraphQl1Application.class, args);
+	}
+	
+	@Bean
+	public HttpGraphQlClient httpGraphQlClient() {
+		return HttpGraphQlClient.builder().url("http://localhost:8080/graphql").build();
+	}
+	
+}
+
+
+GraphQIServerInterceptor.java
+
+package com.pack.SpringBootGraphQL1;
+
+import org.springframework.graphql.server.WebGraphQlInterceptor;
+import org.springframework.graphql.server.WebGraphQlInterceptor.Chain;
+import org.springframework.graphql.server.WebGraphQlRequest;
+import org.springframework.graphql.server.WebGraphQlResponse;
+import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
+
+@Component
+@Slf4j
+public class GraphQlServerInterceptor implements WebGraphQlInterceptor {
+
+	@Override
+	public Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, Chain chain) {
+		log.info("interceptor logs {}", request.getDocument());
+		return chain.next(request);
+	}
+}
+
+
+GraphQLController.java
+
+package com.pack.SpringBootGraphQL1.controller;
+
+import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.graphql.client.HttpGraphQlClient;
+import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.BatchMapping;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.SubscriptionMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.pack.SpringBootGraphQL1.model.AddEmployeeInput;
+import com.pack.SpringBootGraphQL1.model.Department;
+import com.pack.SpringBootGraphQL1.model.Employee;
+import com.pack.SpringBootGraphQL1.model.UpdateSalaryInput;
+import com.pack.SpringBootGraphQL1.repository.DepartmentRepository;
+import com.pack.SpringBootGraphQL1.repository.EmployeeRepository;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@RestController
+public class GraphQLController {
+	
+	@Autowired
+	EmployeeRepository employeeRepository;
+	@Autowired
+	DepartmentRepository departmentRepository;
+	
+	@Autowired
+	HttpGraphQlClient httpGraphQlClient;
+	
+	Function<AddEmployeeInput, Employee> mapping = aei -> {
+		var employee = new Employee();
+		employee.setName(aei.getName());
+		employee.setSalary(aei.getSalary());
+		employee.setDepartmentId(aei.getDepartmentId());
+		return employee;
+	};
+	
+	@MutationMapping
+	public Mono<Employee> addEmployee(@Argument AddEmployeeInput addEmployeeInput) {
+		return this.employeeRepository.save(mapping.apply(addEmployeeInput));
+	}
+
+	@QueryMapping
+	public Flux<Employee> employeeByName(@Argument String employeeName) {
+		return this.employeeRepository.getEmployeeByName(employeeName);
+	}
+	
+	@MutationMapping
+	public Mono<Employee> updateSalary(@Argument UpdateSalaryInput updateSalaryInput) {
+		return this.employeeRepository.findById(updateSalaryInput.getEmployeeId())
+				.flatMap(employee -> {
+					employee.setSalary(updateSalaryInput.getSalary());
+					return this.employeeRepository.save(employee);
+				});
+	}
+	
+	@QueryMapping
+	public Flux<Department> allDepartment() {
+		return this.departmentRepository.findAll();
+	}
+	
+	/*@SchemaMapping(typeName="Department", field="employees")
+	public Flux<Employee> employees(Department department){
+	   return this.employeeRepository.getAllEmployeeByDepartmentId(department.getId());
+	} */
+	
+	@BatchMapping
+	public Mono<Map<Department, Collection<Employee>>> employees(List<Department> departments) {
+		return Flux.fromIterable(departments)
+				.flatMap(department -> this.employeeRepository.getAllEmployeeByDepartmentId(department.getId()))
+				.collectMultimap(employee -> departments.stream().filter(department -> department.getId().equals(employee.getDepartmentId())).findFirst().get());
+	}
+
+	@SubscriptionMapping
+	public Flux<Employee> allEmployee() {
+		return this.employeeRepository.findAll().delayElements(Duration.ofSeconds(3));
+	}
+	
+	@GetMapping("/employeeByName")
+	public Mono<List<Employee>> employeeByName() {
+		var document = "query {\n" +
+				"  employeeByName(employeeName: \"Ram\") {\n" +
+				"    id, name, salary\n" +
+				"  }\n" +
+				"}";
+		return this.httpGraphQlClient.document(document)
+				.retrieve("employeeByName")
+				.toEntityList(Employee.class);
+	}
+
+
+}
+
+AddEmployeeInput.java
+
+package com.pack.SpringBootGraphQL1.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AddEmployeeInput {
+    private String name, salary;
+    private Integer departmentId;
+}
+
+Department.java
+
+package com.pack.SpringBootGraphQL1.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Department {
+    @Id
+    private Integer id;
+    private String name;
+    private List<Employee> employees = new ArrayList<>();
+}
+
+Employee.java
+
+package com.pack.SpringBootGraphQL1.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Employee {
+
+    @Id
+    private Integer id;
+    private String name, salary;
+	@Column("department_id")
+    private Integer departmentId;
+}
+
+UpdateSalaryInput.java
+
+package com.pack.SpringBootGraphQL1.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateSalaryInput {
+    private Integer employeeId;
+    private String salary;
+}
+
+
+DepartmentRepository.java
+
+package com.pack.SpringBootGraphQL1.repository;
+
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+
+import com.pack.SpringBootGraphQL1.model.Department;
+
+public interface DepartmentRepository extends ReactiveCrudRepository<Department, Integer> {
+	
+}
+
+
+EmployeeRepository.java
+
+package com.pack.SpringBootGraphQL1.repository;
+
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+
+import com.pack.SpringBootGraphQL1.model.Employee;
+
+import reactor.core.publisher.Flux;
+
+public interface EmployeeRepository extends ReactiveCrudRepository<Employee, Integer> {
+	Flux<Employee> getEmployeeByName(String name);
+	Flux<Employee> getAllEmployeeByDepartmentId(Integer departmentId);
+}
+
+
+3. SpringBoot-GraphQL2
+
+pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.5.2</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBoot-GraphQL2</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBoot-GraphQL2</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-spring-boot-starter</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphiql-spring-boot-starter</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webflux</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java-tools</artifactId>
+			<version>5.1.0</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+application.properties
+spring.graphql.graphiql.enabled=true
+server.port=1111
+
+schema/home.graphqls
+type Query {
+    hello: String
+}
+
+
+SpringBootGraphQL2Application.java
+
+package com.pack.SpringBootGraphQL2;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SpringBootGraphQl2Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootGraphQl2Application.class, args);
+	}
+
+}
+
+
+MyResolver.java
+
+package com.pack.SpringBootGraphQL2.resolver;
+
+import org.springframework.stereotype.Service;
+
+import com.coxautodev.graphql.tools.GraphQLQueryResolver;
+
+@Service
+public class MyResolver implements GraphQLQueryResolver {
+    
+	 public String hello() {
+		 return "Hello World";
+	 }
+}
+
+
+4. SpringBoot-GraphQL4
+
+pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.5.2</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBoot-GraphQL3</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBoot-GraphQL3</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java-kickstart</groupId>
+			<artifactId>graphql-spring-boot-starter</artifactId>
+			<version>6.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java-kickstart</groupId>
+			<artifactId>graphql-java-tools</artifactId>
+			<version>5.7.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java-kickstart</groupId>
+			<artifactId>graphiql-spring-boot-starter</artifactId>
+			<version>7.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+application.yml
+
+graphql:
+  servlet:
+    mapping: /graphql
+    enabled: true
+    corsEnabled: true
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2
+
+schema.graphqls
+
+scalar LocalDate
+
+type Book{
+    title: String!
+    isbn: String!
+    publishedDate: LocalDate
+    authors: [Author]
+}
+
+input BookWrapper{
+    title: String!
+    isbn: String!
+    publishedDate: LocalDate
+}
+
+
+type Query{
+    getBook(isbn: String!): Book
+}
+
+type Mutation{
+    createBook(bookWrapper: BookWrapper): Book
+    createAuthor(author: AuthorWrapper): Author
+    addAuthor(authorId: Int, isbn: String): Book
+}
+
+input AuthorWrapper{
+    name: String!
+}
+
+type Author{
+    id: Int!
+    name: String!
+    books: [Book]
+}
+
+type Subscription {
+     books:[Book]
+}
+
+
+SpringBootGraphQL3Application.java
+
+package com.pack.SpringBootGraphQL3;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import com.pack.SpringBootGraphQL3.model.Author;
+import com.pack.SpringBootGraphQL3.model.Book;
+import com.pack.SpringBootGraphQL3.repository.AuthorRepository;
+import com.pack.SpringBootGraphQL3.repository.BookRepository;
+
+@SpringBootApplication
+public class SpringBootGraphQl3Application implements ApplicationRunner {
+	
+	 @Autowired
+	 private BookRepository bookRepository;
+	 @Autowired
+	 private AuthorRepository authorRepository;
+
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootGraphQl3Application.class, args);
+	}
+
+	@Override
+    public void run(ApplicationArguments args) {
+      Book book = new Book("Learning GraphQL: Declarative Data Fetching for Modern Web Apps", "978-1492030713");
+      book.setPublishedDate(LocalDate.of(2019, 11, 4));
+       Author eve = new Author("Eve Porcello");
+       Author alex = new Author("Alex Banks");
+        book.addAuthor(eve);
+       book.addAuthor(alex);
+
+       authorRepository.saveAll(Arrays.asList(eve, alex));
+       bookRepository.save(book);
+
+       Book book1 = new Book("The Road to GraphQL: Your journey to master pragmatic GraphQL in JavaScript with React.js and Node.js", "978-1730853937");
+       Author robin = new Author("Robin Wieruch");
+       book1.addAuthor(robin);
+       book1.setPublishedDate(LocalDate.of(2020, 1, 10));
+       authorRepository.save(robin);
+       bookRepository.save(book1);
+    }
+}
+
+
+GraphQLLocalDate.java
+
+package com.pack.SpringBootGraphQL3;
+
+import java.time.LocalDate;
+
+import org.springframework.stereotype.Component;
+
+import graphql.language.StringValue;
+import graphql.schema.Coercing;
+import graphql.schema.CoercingParseLiteralException;
+import graphql.schema.CoercingParseValueException;
+import graphql.schema.CoercingSerializeException;
+import graphql.schema.GraphQLScalarType;
+
+@Component
+public class GraphQLLocalDate extends GraphQLScalarType {
+
+    public GraphQLLocalDate() {
+        super("LocalDate", "Local Date Type", new Coercing<LocalDate, String>() {
+
+            @Override
+            public String serialize(Object result) throws CoercingSerializeException {
+                if (result instanceof LocalDate) {
+                    return ((LocalDate) result).toString();
+                }
+                return null;
+            }
+
+            @Override
+            public LocalDate parseValue(Object input) throws CoercingParseValueException {
+                if (input instanceof String) {
+                    return LocalDate.parse((String) input);
+                }
+                return null;
+            }
+
+            @Override
+            public LocalDate parseLiteral(Object input) throws CoercingParseLiteralException {
+                if (!(input instanceof StringValue)) return null;
+                return LocalDate.parse(((StringValue) input).getValue());
+            }
+        });
+    }
+}
+
+
+GraphQLErrorHandler.java
+
+package com.pack.SpringBootGraphQL3.error;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
+import graphql.ExceptionWhileDataFetching;
+import graphql.GraphQLError;
+
+@Component
+public class GraphQLErrorHandler implements graphql.kickstart.execution.error.GraphQLErrorHandler {
+
+	@Override
+	public List<GraphQLError> processErrors(List<GraphQLError> errors) {
+		return errors.stream().map(this::getNested).collect(Collectors.toList());
+	}
+
+	private GraphQLError getNested(GraphQLError e) {
+		if(e instanceof ExceptionWhileDataFetching) {
+			ExceptionWhileDataFetching ex=(ExceptionWhileDataFetching)e;
+			if(ex.getException() instanceof GraphQLError) {
+				return (GraphQLError)ex.getException();
+			}
+		}
+		return e;
+	}
+}
+
+
+ResourceNotFoundException.java
+
+package com.pack.SpringBootGraphQL3.error;
+
+import java.util.List;
+
+import graphql.ErrorClassification;
+import graphql.ErrorType;
+import graphql.GraphQLError;
+import graphql.language.SourceLocation;
+
+public class ResourceNotFoundException extends RuntimeException implements GraphQLError{
+    
+	public ResourceNotFoundException(String message) {
+		super(message);
+	}
+	
+	@Override
+	public List<SourceLocation> getLocations() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ErrorClassification getErrorType() {
+		// TODO Auto-generated method stub
+		return ErrorType.DataFetchingException;
+	}
+
+}
+
+
+Author.java
+package com.pack.SpringBootGraphQL3.model;
+
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+
+@Entity
+public class Author {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @ManyToMany(
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            },
+            mappedBy = "authors"
+    )
+    private Set<Book> books;
+
+    public Author() {
+    }
+
+    public Author(String name) {
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
+}
+
+AuthorWrapper.java
+package com.pack.SpringBootGraphQL3.model;
+
+public class AuthorWrapper {
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+Book.java
+package com.pack.SpringBootGraphQL3.model;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+
+@Entity
+public class Book {
+    private String title;
+    @Id
+    private String isbn;
+    private LocalDate publishedDate;
+    
+    @ManyToMany(
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            },
+            fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "book_author",
+            joinColumns = @JoinColumn(name = "isbn"),
+            inverseJoinColumns = @JoinColumn(name = "author_id")
+    )
+    private Set<Author> authors;
+
+    public Book() {
+    }
+
+    public Book(String title, String isbn) {
+        this.title = title;
+        this.isbn = isbn;
+    }
+
+    public void addAuthor(Author author) {
+        if (this.authors == null) {
+            this.authors = new HashSet<>();
+        }
+        this.authors.add(author);
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public Set<Author> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(Set<Author> authors) {
+        this.authors = authors;
+    }
+
+	public LocalDate getPublishedDate() {
+		return publishedDate;
+	}
+
+	public void setPublishedDate(LocalDate publishedDate) {
+		this.publishedDate = publishedDate;
+	}
+    
+}
+
+
+BookWrapper.java
+package com.pack.SpringBootGraphQL3.model;
+
+import java.time.LocalDate;
+
+public class BookWrapper {
+    private String title;
+    private String isbn;
+    private LocalDate publishedDate;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public LocalDate getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(LocalDate publishedDate) {
+        this.publishedDate = publishedDate;
+    }
+}
+
+
+AuthorRepository.java
+package com.pack.SpringBootGraphQL3.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.pack.SpringBootGraphQL3.model.Author;
+
+@Repository
+public interface AuthorRepository extends JpaRepository<Author, Long> {
+	
+}
+
+
+BookRepository.java
+package com.pack.SpringBootGraphQL3.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.pack.SpringBootGraphQL3.model.Book;
+
+@Repository
+public interface BookRepository extends JpaRepository<Book, String> {
+}
+
+AuthorMutationResolver.java
+
+package com.pack.SpringBootGraphQL3.resolver;
+
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.coxautodev.graphql.tools.GraphQLMutationResolver;
+import com.pack.SpringBootGraphQL3.model.Author;
+import com.pack.SpringBootGraphQL3.model.AuthorWrapper;
+import com.pack.SpringBootGraphQL3.repository.AuthorRepository;
+
+@Component
+public class AuthorMutationResolver implements GraphQLMutationResolver {
+
+	@Autowired
+    AuthorRepository repository;
+
+    public Author createAuthor(AuthorWrapper wrapper) {
+        Author author = new Author(wrapper.getName());
+        return repository.save(author);
+    }
+}
+
+
+BookListSubscriptionResolver.java
+
+package com.pack.SpringBootGraphQL3.resolver;
+
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver;
+import com.pack.SpringBootGraphQL3.model.Book;
+import com.pack.SpringBootGraphQL3.repository.BookRepository;
+
+@Component
+public class BookListSubscriptionResolver implements GraphQLSubscriptionResolver{
+
+	@Autowired
+	BookRepository bookRepo;
+	
+	public Publisher<List<Book>> books(){
+		return subscriber -> Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()->{
+			List<Book> books=bookRepo.findAll();
+			subscriber.onNext(books);
+			subscriber.onComplete();
+		},0,2,TimeUnit.SECONDS);
+	}
+}
+
+
+BookMutationResolver.java
+
+package com.pack.SpringBootGraphQL3.resolver;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.coxautodev.graphql.tools.GraphQLMutationResolver;
+import com.pack.SpringBootGraphQL3.model.Author;
+import com.pack.SpringBootGraphQL3.model.Book;
+import com.pack.SpringBootGraphQL3.model.BookWrapper;
+import com.pack.SpringBootGraphQL3.repository.AuthorRepository;
+import com.pack.SpringBootGraphQL3.repository.BookRepository;
+
+import graphql.GraphQLException;
+
+@Component
+public class BookMutationResolver implements GraphQLMutationResolver{
+	
+	@Autowired
+	BookRepository bookRepo;
+	@Autowired
+	AuthorRepository authorRepo;
+	
+	public Book createBook(BookWrapper bw) {
+		Book book=new Book(bw.getTitle(), bw.getIsbn());
+		 book.setPublishedDate(bw.getPublishedDate());
+		return bookRepo.save(book);
+	}
+	
+	public Book addAuthor(Long authorId, String isbn) {
+        Optional<Author> author = authorRepo.findById(authorId);
+        Optional<Book> book = bookRepo.findById(isbn);
+        if (author.isPresent() && book.isPresent()) {
+            Set<Author> authors = new HashSet<>();
+            authors.add(author.get());
+            book.get().setAuthors(authors);
+            bookRepo.save(book.get());
+            return book.get();
+        }
+        throw new GraphQLException("couldn't add author");
+    }
+
+}
+
+
+BookResolver.java
+
+package com.pack.SpringBootGraphQL3.resolver;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.coxautodev.graphql.tools.GraphQLQueryResolver;
+import com.pack.SpringBootGraphQL3.error.ResourceNotFoundException;
+import com.pack.SpringBootGraphQL3.model.Book;
+import com.pack.SpringBootGraphQL3.repository.BookRepository;
+
+@Component
+public class BookResolver implements GraphQLQueryResolver{
+	
+	@Autowired
+	BookRepository bookRepo;
+	
+	/*
+	 * public Book getBook(String isbn) { // return new Book("Java","3848484");
+	 * return bookRepo.findById(isbn).get(); }
+	 */
+	
+	   public Book getBook(String isbn) {
+	       Optional<Book> opt=bookRepo.findById(isbn);
+	       if(opt.isPresent()) {
+	    	   return opt.get();
+	       }
+			throw new ResourceNotFoundException("There is no book with isbn: "+isbn);
+	    }
+	
+	/*
+	 * public Connection<Book> books(int first, String after,
+	 * DataFetchingEnvironment env) { List<Book> books = bookRepo.findAll(); return
+	 * new SimpleListConnection<>(books).get(env); }
+	 */
+
+}
+
+
+5. SpringBoot-GraphQL4
+
+pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.2.6.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBoot-GraphQL4</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBoot-GraphQL4</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>2.4.0</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Graphql dependencies -->
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-spring-boot-starter</artifactId>
+			<version>5.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java-tools</artifactId>
+			<version>5.2.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphiql-spring-boot-starter</artifactId>
+			<version>5.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.3.4.RELEASE</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+application.properties
+
+spring.datasource.driver-class-name=org.hsqldb.jdbc.JDBCDriver
+spring.datasource.url=jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=create
+
+graphql.servlet.corsEnabled=true
+graphql.servlet.mapping=/graphql
+graphql.servlet.enabled=true
+
+graphql/schema.graphqls
+
+schema {
+    query: Query,
+    mutation: Mutation,
+    subscription: Subscription
+}
+
+type Actor {
+    actorId : ID!,
+    firstName :String,
+    lastName :String,
+    dob:String,
+    address:String,
+    filmId : Int,
+    film: Film
+}
+
+type Film {
+    filmId : ID!,
+    name : String,
+    dateOfLaunch : String
+}
+
+type Query{
+    getAllActors:[Actor],
+    getActorById(actorId:Int):Actor
+}
+
+input AddressInput{
+    actorId:Int,
+    address:String
+}
+
+type Mutation {
+    updateAddress(id:Int,address:String):Actor,
+    updateAddressByInputObject(input:AddressInput):Actor
+}
+
+type Subscription{
+     onActorUpdate(actorId:Int):Actor
+}
+
+SpringBootGraphQlApplication.java
+
+package com.pack.SpringBootGraphQL4;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SpringBootGraphQl4Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootGraphQl4Application.class, args);
+	}
+
+}
+
+
+Actor.java
+package com.pack.SpringBootGraphQL4.model;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "ACTOR")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Actor {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "ACTOR_ID")
+    private Integer actorId;
+    @Column(name = "FIRST_NAME")
+    private String firstName;
+    @Column(name = "LAST_NAME")
+    private String lastName;
+    @Column(name = "DOB")
+    private Date dob;
+    @Column(name = "ADDRESS")
+    private String address;
+    @Column(name = "FILM_ID")
+    private Integer filmId;
+    
+	public Actor(String firstName, String lastName, Date dob, String address, Integer filmId) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.dob = dob;
+		this.address = address;
+		this.filmId = filmId;
+	}
+
+}
+
+AddressInput.java
+package com.pack.SpringBootGraphQL4.model;
+
+import graphql.schema.GraphQLInputType;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class AddressInput implements GraphQLInputType{
+
+	@Override
+	public String getName() {
+		return "addressUpdate";
+	}
+	
+	private Integer actorId;
+	private String address;
+
+}
+
+
+Film.java
+package com.pack.SpringBootGraphQL4.model;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "FILM")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Film {
+    @Id
+    @Column(name = "FILM_ID")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer filmId;
+    @Column(name = "NAME")
+    private String name;
+    @Column(name = "DATE_OF_LAUNCH")
+    private Date dateOfLaunch;
+    
+	public Film(String name, Date dateOfLaunch) {
+		super();
+		this.name = name;
+		this.dateOfLaunch = dateOfLaunch;
+	}
+    
+}
+
+
+ActorRepository.java
+package com.pack.SpringBootGraphQL4.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL4.model.Actor;
+
+@Service
+public interface ActorRepository extends JpaRepository<Actor,Integer> {
+
+    public Actor findActorByFirstNameLike(String name);
+}
+
+FilmRepository.java
+
+package com.pack.SpringBootGraphQL4.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL4.model.Film;
+
+@Service
+public interface FilmRepository extends JpaRepository<Film,Integer> {
+
+}
+
+
+ActorService.java
+package com.pack.SpringBootGraphQL4.service;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.transaction.Transactional;
+
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.coxautodev.graphql.tools.GraphQLMutationResolver;
+import com.coxautodev.graphql.tools.GraphQLQueryResolver;
+import com.coxautodev.graphql.tools.GraphQLSubscriptionResolver;
+import com.pack.SpringBootGraphQL4.model.Actor;
+import com.pack.SpringBootGraphQL4.model.AddressInput;
+import com.pack.SpringBootGraphQL4.model.Film;
+import com.pack.SpringBootGraphQL4.repository.ActorRepository;
+import com.pack.SpringBootGraphQL4.repository.FilmRepository;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+
+@Service
+public class ActorService implements GraphQLQueryResolver, GraphQLMutationResolver, GraphQLSubscriptionResolver
+ {
+
+    private ConcurrentHashMap<Integer,FluxSink<Actor>> subscribers=new ConcurrentHashMap<>();
+    
+    @Autowired
+    private ActorRepository actorRepository;
+
+     @Autowired
+     private FilmRepository filmRepository;
+
+     public List<Actor> getAllActors(){
+         return actorRepository.findAll();
+     }
+
+     public Actor getActorById(Integer actorId){
+         return actorRepository.findById(actorId).get();
+     }
+     
+     @Transactional
+     public Actor updateAddress(Integer id, String address) {
+    	 Actor actor=actorRepository.findById(id).get();
+    	 actor.setAddress(address);
+    	 actorRepository.save(actor);
+    	 if(subscribers.get(id)!=null){
+             subscribers.get(id).next(actor);
+         }
+    	 return actor;  	 
+     }
+     
+     @Transactional
+     public Actor updateAddressByInputObject(AddressInput input) {
+    	 Actor actor=actorRepository.findById(input.getActorId()).get();
+    	 actor.setAddress(input.getAddress());
+    	 actorRepository.save(actor);
+    	 if(subscribers.get(input.getActorId())!=null){
+             subscribers.get(input.getActorId()).next(actor);
+         }
+    	 return actor;  	 
+     }
+     
+     public Publisher<Actor> onActorUpdate(Integer actorId){
+         return Flux.create(subscriber-> subscribers.put(actorId,subscriber.onDispose(()->subscribers.remove(actorId,subscriber))), FluxSink.OverflowStrategy.LATEST);
+     }
+
+      /*public Actor getActorByNameLike(String name){
+          return actorRepository.findActorByFirstNameLike(name);
+      }
+
+     public List<Film> getAllFilms(){
+        return filmRepository.findAll();
+     }*/
+
+}
+
+DateLoaderService.java
+package com.pack.SpringBootGraphQL4.service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL4.model.Actor;
+import com.pack.SpringBootGraphQL4.model.Film;
+import com.pack.SpringBootGraphQL4.repository.ActorRepository;
+import com.pack.SpringBootGraphQL4.repository.FilmRepository;
+
+@Service
+public class DataLoaderService {
+
+    @Autowired
+    private FilmRepository filmRepository;
+
+    @Autowired
+    private ActorRepository actorRepository;
+
+    @PostConstruct
+    public void loadData(){
+        String [] actors = {"ShahRukh Khan","Salman Khan","Aamir Khan","Amitabh Bacchan"};
+        Map<String,String> films = new HashMap<String, String>(){
+            {
+                put("ShahRukh Khan","Kuch Kuch Hota Hai");
+                put("Salman Khan","Dabang");
+                put("Aamir Khan","Dangal");
+                put("Amitabh Bacchan","Sholey");
+            }
+        };
+        for (String actorName :actors){
+            String [] names = actorName.split(" ");
+
+            Date dateOfBirth = DataLoaderService.between(new Date(1960,01,01),new Date(1980,01,01));
+            Date dateOfLaunch = DataLoaderService.between(new Date(1990,01,01),new Date(2000,01,01));
+            Film film = new Film(films.get(actorName),dateOfLaunch);
+            filmRepository.save(film);
+            Actor actor = new Actor(names[0],names[1],dateOfBirth,"Mumbai India",film.getFilmId());
+            actorRepository.save(actor);
+
+        }
+
+
+    }
+
+    public static Date between(Date startInclusive, Date endExclusive) {
+        long startMillis = startInclusive.getTime();
+        long endMillis = endExclusive.getTime();
+        long randomMillisSinceEpoch = ThreadLocalRandom
+                .current()
+                .nextLong(startMillis, endMillis);
+
+        return new Date(randomMillisSinceEpoch);
+    }
+}
+
+FilmService.java
+package com.pack.SpringBootGraphQL4.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.coxautodev.graphql.tools.GraphQLResolver;
+import com.pack.SpringBootGraphQL4.model.Actor;
+import com.pack.SpringBootGraphQL4.model.Film;
+import com.pack.SpringBootGraphQL4.repository.FilmRepository;
+
+@Service
+public class FilmService implements GraphQLResolver<Actor> {
+
+    @Autowired
+    private FilmRepository repository;
+
+
+    public Film getFilm(Actor actor){
+        return repository.findById(actor.getFilmId()).get();
+    }
+}
+
+
+6. SpringBoot-GraphQL5
+
+pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.2.6.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBoot-GraphQL5</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBoot-GraphQL5</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+            <groupId>io.leangen.graphql</groupId>
+            <artifactId>graphql-spqr-spring-boot-starter</artifactId>
+            <version>0.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.3.4.RELEASE</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+application.properties
+spring.datasource.driver-class-name=org.hsqldb.jdbc.JDBCDriver
+spring.datasource.url=jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=create
+
+server.port=9090
+graphql.spqr.gui.enabled=true
+
+
+SpringBootGraphQl5Application.java
+
+package com.pack.SpringBootGraphQL5;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SpringBootGraphQl5Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootGraphQl5Application.class, args);
+	}
+
+}
+
+
+Actor.java
+package com.pack.SpringBootGraphQL5.model;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import io.leangen.graphql.annotations.types.GraphQLType;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "ACTOR")
+@Getter
+@Setter
+@NoArgsConstructor
+@GraphQLType
+public class Actor {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "ACTOR_ID")
+    private Integer actorId;
+    @Column(name = "FIRST_NAME")
+    private String firstName;
+    @Column(name = "LAST_NAME")
+    private String lastName;
+    @Column(name = "DOB")
+    private Date dob;
+    @Column(name = "ADDRESS")
+    private String address;
+    @Column(name = "FILM_ID")
+    private Integer filmId;
+    
+	public Actor(String firstName, String lastName, Date dob, String address, Integer filmId) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.dob = dob;
+		this.address = address;
+		this.filmId = filmId;
+	}
+
+}
+
+
+AddressInputType.java
+package com.pack.SpringBootGraphQL5.model;
+
+import lombok.Getter;
+import lombok.Setter;
+
+
+@Getter
+@Setter
+public class AddressInputType {
+
+	private Integer id;
+	private String address;
+	
+}
+
+
+Film.java
+package com.pack.SpringBootGraphQL5.model;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import io.leangen.graphql.annotations.types.GraphQLType;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "FILM")
+@Getter
+@Setter
+@NoArgsConstructor
+@GraphQLType
+public class Film {
+    @Id
+    @Column(name = "FILM_ID")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer filmId;
+    @Column(name = "NAME")
+    private String name;
+    @Column(name = "DATE_OF_LAUNCH")
+    private Date dateOfLaunch;
+    
+	public Film(String name, Date dateOfLaunch) {
+		super();
+		this.name = name;
+		this.dateOfLaunch = dateOfLaunch;
+	}
+    
+}
+
+
+ActorRepository.java
+package com.pack.SpringBootGraphQL5.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL5.model.Actor;
+
+@Service
+public interface ActorRepository extends JpaRepository<Actor,Integer> {
+
+    public Actor findActorByFirstNameLike(String name);
+}
+
+
+FilmRepository.java
+package com.pack.SpringBootGraphQL5.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL5.model.Film;
+
+@Service
+public interface FilmRepository extends JpaRepository<Film,Integer> {
+
+}
+
+
+ActorService.java
+package com.pack.SpringBootGraphQL5.service;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL5.model.Actor;
+import com.pack.SpringBootGraphQL5.model.AddressInputType;
+import com.pack.SpringBootGraphQL5.repository.ActorRepository;
+
+import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLInputField;
+import io.leangen.graphql.annotations.GraphQLMutation;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import io.leangen.graphql.annotations.GraphQLSubscription;
+import io.leangen.graphql.spqr.spring.annotations.GraphQLApi;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+
+@Service
+@GraphQLApi
+public class ActorService {
+	
+	private ConcurrentHashMap<Integer,FluxSink<Actor>> subscribers=new ConcurrentHashMap<>();
+	
+    @Autowired
+    private ActorRepository actorRepository;
+
+    @GraphQLQuery
+    public Actor getActorById(@GraphQLArgument(name = "id") Integer id){
+        return actorRepository.findById(id).get();
+    }
+
+    @GraphQLQuery
+    public List<Actor> getAllActors(){
+        return actorRepository.findAll();
+    }
+    
+   /* @GraphQLMutation
+    public Actor updateAddress(@GraphQLArgument(name="id") Integer id,@GraphQLArgument(name="address")String address){
+        Actor actor = actorRepository.findById(id).get();
+        actor.setAddress(address);
+        actorRepository.save(actor);
+        return actor;
+    }*/
+    
+    @GraphQLMutation
+    public Actor updateAddress(@GraphQLArgument(name="id") Integer id,@GraphQLArgument(name="address")String address){
+        Actor actor = actorRepository.findById(id).get();
+        actor.setAddress(address);
+        actorRepository.save(actor);
+        if(subscribers.get(id)!=null){
+        	   subscribers.get(id).next(actor);
+        }
+        return actor;
+    }
+    
+    @GraphQLMutation
+    public Actor updateAddressByInputType(@GraphQLInputField(name="addressInput") AddressInputType address){
+        Actor actor = actorRepository.findById(address.getId()).get();
+        actor.setAddress(address.getAddress());
+        actorRepository.save(actor);
+        return actor;
+    }
+    
+    @GraphQLSubscription
+    public Publisher<Actor> onAddressUpdate(@GraphQLArgument(name="actorId") Integer actorId){
+        return Flux.create(subscriber -> subscribers.put(actorId, subscriber.onDispose(()->subscribers.remove(actorId,subscriber))),FluxSink.OverflowStrategy.LATEST); 
+    }
+}
+
+DataLoaderService.java
+package com.pack.SpringBootGraphQL5.service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL5.model.Actor;
+import com.pack.SpringBootGraphQL5.model.Film;
+import com.pack.SpringBootGraphQL5.repository.ActorRepository;
+import com.pack.SpringBootGraphQL5.repository.FilmRepository;
+
+@Service
+public class DataLoaderService {
+
+    @Autowired
+    private FilmRepository filmRepository;
+
+    @Autowired
+    private ActorRepository actorRepository;
+
+    @PostConstruct
+    public void loadData(){
+        String [] actors = {"ShahRukh Khan","Salman Khan","Aamir Khan","Amitabh Bacchan"};
+        Map<String,String> films = new HashMap<String, String>(){
+            {
+                put("ShahRukh Khan","Kuch Kuch Hota Hai");
+                put("Salman Khan","Dabang");
+                put("Aamir Khan","Dangal");
+                put("Amitabh Bacchan","Sholey");
+            }
+        };
+        for (String actorName :actors){
+            String [] names = actorName.split(" ");
+
+            Date dateOfBirth = DataLoaderService.between(new Date(1960,01,01),new Date(1980,01,01));
+            Date dateOfLaunch = DataLoaderService.between(new Date(1990,01,01),new Date(2000,01,01));
+            Film film = new Film(films.get(actorName),dateOfLaunch);
+            filmRepository.save(film);
+            Actor actor = new Actor(names[0],names[1],dateOfBirth,"Mumbai India",film.getFilmId());
+            actorRepository.save(actor);
+
+        }
+
+
+    }
+
+    public static Date between(Date startInclusive, Date endExclusive) {
+        long startMillis = startInclusive.getTime();
+        long endMillis = endExclusive.getTime();
+        long randomMillisSinceEpoch = ThreadLocalRandom
+                .current()
+                .nextLong(startMillis, endMillis);
+
+        return new Date(randomMillisSinceEpoch);
+    }
+}
+
+
+FilmService.java
+package com.pack.SpringBootGraphQL5.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.SpringBootGraphQL5.model.Actor;
+import com.pack.SpringBootGraphQL5.model.Film;
+import com.pack.SpringBootGraphQL5.repository.FilmRepository;
+
+import io.leangen.graphql.annotations.GraphQLContext;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import io.leangen.graphql.spqr.spring.annotations.GraphQLApi;
+
+@Service
+@GraphQLApi
+public class FilmService {
+
+    @Autowired
+    private FilmRepository repository;
+
+    @GraphQLQuery
+    public Film getFilm(@GraphQLContext Actor actor){
+        return repository.findById(actor.getFilmId()).get();
+    }
+}
+
+
