@@ -1,0 +1,2581 @@
+Handson
+1. Create Spring boot application to implement profiles likes prod,dev and print value of message from properties file. 
+Note: create all profiles in single file
+ 
+2. Create Spring boot application to read and print all user information from user.properties file present in local machine(ie)C:/handson folder
+ 3
+ 
+RestTemplate - allows to call other spring web services  from local Spring appl. 
+   - Makes integration with other web services and binded to custom data type 
+RestTemplate r=new RestTemplate(); 
+String s=r.getForObject("http://lh:8070",String.class); 
+ 
+Before going to Spring boot v understand Spring framework and y it is so famous, to understand this we go to year 2000 so in that time if u want to create project in Java for enterprise appl, u will be using lot of EE features one of them is EJB.
+    -EJB  is one of famous and best tech at that time and provides many features like messages, lookup for the entities. The only problem is very difficult to manage them and ofcourse we working with entity so it is heavy and that’s where people comes with the concept of POJO’s and achieve those features with POJO’s and they have included in Spring.
+•	   - Now Spring framework provide with the feature of working with pojos, feature of DI and AOP etc, so it is a framework where u can achieve any business purpose and best part of Spring is to integrate with other frameworks like Hibernate, Structs etc
+   - One of the problem is whenever we build large appl in Spring we need more jar files and external configuration because if u r working on project u want to focus more on coding part not on configuration
+   - So the thing Spring is good but we need to focus on coding so the people have introduce Spring boot
+  - So it is not replacement  of Spring, we still use Spring framework, just to help u we use Spring Boot. So main idea of Spring boot to give production ready appl so not need to do any configuration.
+Spring Boot 
+Spring boot is an open source java based framework to create faster appl. It is developed by Pivotal team 
+Advantage 
+1. easy to understand and develop spring appl 
+2. increase productivity 
+3. reduces ur development time 
+4. To avoid xml configuration 
+5. In Spring boot everything is autoconfigured, no manual configuration 
+6. Spring boot comes with inbuild server like tomcat(default),jetty,undertow 
+7. Spring-boot-starter-logging - default logging support provided in spring boot which uses Logback,slf4j
+Disadvantage
+Migration efforts – Migrationfrom already existing spring project to Spring boot is not straight forward
+Deploying Spring Boot appl to Websphere/weblogic and other app servers are also not very simple
+Spring boot has been developed keeping Microservice and cloudnative in mind
+Spring 
+1. used to Java EE framework for building appl (client +server) 
+2. it aims to simplify Java EE development that makes devepoment more productive 
+3. main feature is dependency injection 
+4.develop loosely coupled appl 
+5.write lots of boilerplate code 
+6. In spring, we have to explicitly confWe'd achieve more if we chased our dreams instead of our competition. - Happy Morning ☺️🍫🤩igure tomcat server 
+7. spring doesnt provide any in memory database 
+8. developers manually deine dependencies in pom.xml 
+9. deployment descriptor/web.xml is must in spring mvc 
+10. It requires bean configuration in xml manaually 
+Spring Boot 
+1. used to develop REST API (server part) 
+2. it aims to shorten the code length and provide easiet way to develop web appl 
+3. main feature is autoconfiguration 
+4. create stand alone appl with less configuration 
+5. it reduces boilerplate code 
+6. offers embedded servers 
+7. spring boot provide with in memory database called H2 database 
+8. spring boot comes with concept of starter in pom.xml that internally takes care of downloading the dependencies JAR in spring boot appl
+9. There is no requirment of web.xml/deployment descriptor 
+10. There is no need for xml configuration 
+Spring Boot dependency management 
+    - manages dependencies and configuration automatically 
+     - This list of dependencies provided as a part of BOM(Bill of Materials) that can be used with maven 
+     -- no need to specify the version of the dependencies 
+     -- It provides centralize of dependency info by specifying spring boot version 
+     -- it avoids mismatch of different version of spring boot libraries 
+spring-boot-starter-parent is a project starter, provides all default configuration for ur application 
+If we work with Spring MVC we know we need to add more than one dependency to get Spring MVC to work, so now we managing with 1 dependency 
+   Spring boot created group of dependency that will work together, u need to pick correct group.
+   If we add parent without any dependency, there will be no maven dependency, parent will just pull the configuration. This configuration informs maven what jars to pull when u do specify dependency
+   So dependency section tells maven what jars to download and parent section tells what version of jars to download 
+   So if we change version of starter parent so jars will not change instead version of jars will be changed
+  This preset list of possible combination of jar files is called Bill of Materials so we know that certain combination of jars and their version will work well and been approved by Spring boot 
+ 
+ 
+Spring boot framework comes with built in mechanism for application confgiuration inside application.properties/ application.yml
+Develop Spring boot appl 
+1. Spring initializer (spring.starter.io) 
+2. Spring tool suite 
+3. spring command line interface 
+Spring Boot annotation 
+1. Core Annotation of Spring 
+     1.@Required    
+     2.@Qualifier 
+     3. @Autowired 
+     4. @Configuration 
+     5. @Bean 
+     6. @ComponentScan 
+     7. @Controller, @Service, @Repository, @Component 
+2. Spring Boot 
+     1. @SpringBootApplication= @EnableAutoConfiguration + @ComponentScan + @Configuration 
+@EnableAutoConfiguration - @EnableAutoConfiguration is to enable automatic configuration features of the Spring Boot application, which automatically configures things if certain classes are present in classpath e.g., it can configure Thymeleaf TemplateResolver and ViewResolver if Thymeleaf is present in the classpath.For example, if we have tomcat-embedded.jar on the classpath, we are likely to want a TomcatServletWebServerFactory.
+@ImportAutoConfiguration and @EnableAutoConfiguration is that later attempts to configure beans that are found in the classpath during scanning, whereas @ImportAutoConfiguration only runs the configuration classes that we provide in the annotation.
+@ComponentScan("path.to.your.controllers") 
+@ImportAutoConfiguration({WebMvcAutoConfiguration.class 
+    ,DispatcherServletAutoConfiguration.class 
+    ,EmbeddedServletContainerAutoConfiguration.class 
+    ,ServerPropertiesAutoConfiguration.class 
+    ,HttpMessageConvertersAutoConfiguration.class}) 
+public class App 
+{ 
+    public static void main(String[] args) 
+    { 
+        SpringApplication.run(App.class, args); 
+    } 
+} 
+@Configuration annotation indicates that a class declares one or more @Bean methods and may be processed by the Spring container to generate bean definitions and service requests for those beans at runtime.
+3. Spring MVC 
+1.@RestController = @Controller + @ResponseBody 
+2. @RequestMapping(value="/",method=RequestMethod.GET) 
+3.@GetMapping,@PostMapping,@PutMapping,@DeleteMapping 
+4. @RequestParam - anything that passed between ? and & 
+5. @PathVariable - to get the value from the url 
+  @GetMapping("/edit/{id}") 
+  public void edit(@PathVariable("id") int eid){ 
+  } 
+ 
+1. SpringBoot-AllBeans 
+2. SpringBoot-HelloWorld 
+         - change of property in application.properties file 
+SpringApplication sp=new SpringApplication(SpringBootHelloWorldApplication.class); 
+Map<String,Object> configMap = new HashMap<>(); 
+                configMap.put("SERVER_PORT", 8585); 
+                
+                sp.setDefaultProperties(configMap); 
+                sp.run(args); 
+ 
+ spring.mvc.view.prefix=/WEB-INF/view/
+spring.mvc.view.suffix=.jsp
+#prefix+viewname+suffix
+server.servlet.context-path=/MVC
+ 
+server.port=8443
+         - In case we give some wrong url, it shows white label error page 
+         - To avoid that we implement ErrorController and override getErrorPath() 
+
+@RestController 
+public class EmployeeController implements ErrorController{ 
+        private static final String PATH="/error"; 
+        
+         @GetMapping("/hello") 
+    public String getHello() 
+    { 
+           System.out.println("hello"); 
+      return "Hello World from EmployeeController"; 
+    } 
+   
+        @RequestMapping(value=PATH,method=RequestMethod.GET) 
+        public String defaultErrorMessage(){ 
+                return "Requested Resource is not found!!!"; 
+        } 
+        @Override 
+        public String getErrorPath() { 
+                return PATH; 
+        } 
+} 
+3. Spring boot - JSP View 
+<dependency>
+   <groupId>javax.servlet</groupId>
+   <artifactId>jstl</artifactId>
+</dependency>
+<dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+4. Springboot- Jetty 
+ Comment spring-boot-starter-tomcat
+<dependency>
+                                           <groupId>org.springframework.boot</groupId>
+                                           <artifactId>spring-boot-starter-web</artifactId>
+                                           <exclusions>
+                                                          <exclusion>
+                                                                        <groupId>org.springframework.boot</groupId>
+                                                                        <artifactId>spring-boot-starter-tomcat</artifactId>
+                                                          </exclusion>
+                                           </exclusions>
+                             </dependency>
+                             <dependency>
+                                           <groupId>org.springframework.boot</groupId>
+                                           <artifactId>spring-boot-starter-jetty</artifactId>
+                             </dependency>
+<dependency>
+   <groupId>org.eclipse.jetty</groupId>
+   <artifactId>apache-jsp</artifactId>
+</dependency>
+<dependency>
+   <groupId>org.eclipse.jetty</groupId>
+   <artifactId>apache-jstl</artifactId>
+</dependency>
+4. Spring Boot - Devtools 
+       - Livereload 
+5. Spring boot - External tomcat 
+1.Change the packaging type. 
+<packaging>war</packaging> 
+2.Add spring-boot-starter-tomcat as the provided scope 
+  <dependency> 
+      <groupId>org.springframework.boot</groupId> 
+      <artifactId>spring-boot-starter-tomcat</artifactId> 
+      <scope>provided</scope> 
+  </dependency> 
+3.Spring Boot Application or Main class extends SpringBootServletInitializer 
+4. mvn clean install 
+5. Run the appl using http://localhost:8080/App/users 
+6. Copy the war file and paste inside webapps folder 
+7. start tomcat 
+8. Run http://localhost:8080/SpringBootExternalTomcat/users 
+7. Spring boot- command line runner 
+      - In spring boot application we can execute any task just before spring boot finishes its startup. To do so we need to create spring bean using CommandLineRunner
+In Spring boot we can execute any task before spring boot finishes its startup for that we need to create ApplicationRunner or CommandLineRunner interface. The difference is only the arguments 
+public void run(String...arg)
+public void run(ApplicationArgument a)
+@SpringBootApplication
+@ComponentScan(basePackages= {"com.example","com.pack.SpringbootExample"})
+@Order(value=2)
+public class SpringbootExampleApplication implements CommandLineRunner{
+                
+                protected final static Log logger=LogFactory.getLog(SpringbootExampleApplication.class);
+                
+                public static void main(String[] args) {      
+                                SpringApplication.run(SpringbootExampleApplication.class, args);
+                                logger.info("Inside Spring boot main method");
+                }
+ 
+                @Override
+                public void run(String... args) throws Exception {
+                                logger.info("Inside CommandLineRunner method");
+                }
+ 
+}
+ 
+@Component
+@Order(value=3)
+public class CommandLineRunner1 implements CommandLineRunner{
+                protected final static Log logger=LogFactory.getLog(CommandLineRunner1.class);
+ 
+                @Override
+                public void run(String... args) throws Exception {
+                                logger.info("Inside CommandLineRunner1 method");
+                }
+ 
+}
+ 
+@Component
+@Order(value=1)
+public class CommandLineRunner2 implements CommandLineRunner{
+                protected final static Log logger=LogFactory.getLog(CommandLineRunner2.class);
+ 
+                @Override
+                public void run(String... args) throws Exception {
+                                logger.info("Inside CommandLineRunner2 method");
+                }
+ 
+}
+8. Spring boot - profiling 
+      - As we know today in every enterprise appl we have many env like dev,qa,prod etc and env required separate configuration that is specific to them. That is called profiles
+      - Here if we give spring.active.profile=dev, it will invoke that particular profiles 
+      - If we can programtically control files, so we create AppConfig file and use @Profile("prod"), which means this will execute only when prod profile is executed 
+      - If we use @Profile("!prod"), then that file will executed for other env 
+@RestController
+public class ExampleController {
+              @Value("${message}")
+              private String message; 
+              @GetMapping("/message")
+              public String getMessage() {
+                             return message;
+              }
+}
+message= welcome default user 
+spring.profiles.active=prod
+ 
+message= welcome development user 
+server.port=8081
+ 
+message= welcome production user 
+server.port=9090
+ 
+@Configuration
+@Profile("prod")
+public class AppConfig {
+              @PostConstruct
+              public void print() {
+                             System.out.println("Welcome to Spring boot profile");
+              }
+}
+9. Difference between application.properties and application.yml 
+1.) .properties file : It store data in sequential format. .yml file : It store data in hierarchical format. 
+2.) .properties file : It supports only key-value pair basically string values. .yml file : It supports key-value pair as well as map, list & scalar type values.
+3.) .properties file : This file specifically used for JAVA. .yml file : This file type are used by many of the languages like JAVA, Python, ROR, etc.
+4.) If you want to handle multiple profiles, .properties file : In this case you need to manage individual file for each profile. .yml file : In this file type you just need to manage single file and place configuration data of specific profile inside it.
+5.) For Spring project, .properties file : @PropertySource annotation support this file type. .yml file : @PropertySource annotation can't support this file type.
+application.properties and bootstrap.properties both are same, but first bootstrap.properties will be executed first then appl.properties
+10. Spring boot - ExternalProperties 
+https://www.boraji.com/spring-boot-configurationproperties-example
+https://newbedev.com/spring-boot-multiple-similar-configurationproperties-with-different-prefixes
+@ConfigurationProperties annotation allows us to map the resource files such as properties or YAML files to Java Bean object.
+https://developpaper.com/differences-between-springboot-value-and-configuration-properties/
+Difference between the two	@ConfigurationProperties	@Value
+function	Bulk injection of properties in configuration files	Specify one by one
+Loose Binding (Loose Grammar)	Support	I won’t support it
+SpEL	I won’t support it	Support
+JSR303 Data Check	Support (validation)	I won’t support it
+Complex type encapsulation	Support (List, Arrays)	I won’t support it
+Loose grammar
+Loose grammar means that an attribute can have more than one attribute name in the configuration file, for example, the first Name attribute in the student class, which can be called first Name, first-name, first_name and FIRST_NAME in the configuration file. Configuration Properties supports this naming, while @Value does not. Let’s take firstName as an example to test it. 
+custom.first_name=ram
+custom.age=12
+ 
+@Configuration
+@PropertySource("classpath:person.properties")
+@ConfigurationProperties(prefix="custom")
+public class MyProps {
+  private String firstname;
+  private Integer age;
+}
+SpEL
+SpEL uses #{…} as a delimiter, and all characters in braces are considered SpEL. SpEL facilitates dynamic assignment of bean attributes.
+@Value
+As described above, when using the @Value annotation, there is a code like this:
+@Value("#{12*2}") // #{SpEL}
+private Integer age;
+Prove that @Value supports SpEL expressions.
+@ConfigurationProperties
+Because # in YML is treated as a comment, it doesn’t work. So we create a new application. properties file. To annotate the contents of the YML file, we write the age attribute in the properties file as follows:
+student.age=#{12*2}
+ 
+@ConfigurationProperties - used to map its resource from the properties files to a java bean object 
+ 
+@PropertySource - used to read single custom property 
+@PropertySources - used to read multiple custom property
+ 
+@Configuration
+//@PropertySource("classpath:student.properties")
+//@PropertySource("file:\\C:\\Training\\student1.properties")
+@PropertySources({
+                @PropertySource("classpath:student.properties"),
+                @PropertySource(file:\\C:\\Training\\student1.properties)
+})
+@ConfigurationProperties(prefix="student")
+public class StudentProps {
+   private String firstname;
+   private Integer age;
+   private String address;
+   private String course;
+ 
+    //getter and setter method   
+}
+ 
+ 
+@Value
+1. injecting properties one by one
+2. Loose binding/loose grammar not support (ie) attribute name should be matching
+3. SpEL used in @Value
+4. Validation is not supported
+5. supports only scalar type
+ 
+@ConfigurationProperties
+1. Bulk injection of properties
+2. Loose binding is supported (ie) special characters and cases
+3. Dosent support SpEL
+4. Validation is supported
+ 
+<dependency>
+                                                <groupId>org.hibernate.validator</groupId>
+                                                <artifactId>hibernate-validator</artifactId>
+                                                <version>6.0.5.Final</version>
+                                </dependency>
+                                <dependency>
+                                                <groupId>javax.validation</groupId>
+                                                <artifactId>validation-api</artifactId>
+                                                <version>2.0.0.Final</version>
+                                </dependency>
+ 
+#scalar type
+mail.to=abc@gmail.com
+mail.from=xyz@gmail.com
+mail.age=34
+ 
+#complex type
+mail.cc=pqr@gmail.com,cdf@gmail.com
+mail.bcc=mno@gmail.com,uvw@gmail.com
+ 
+#Nesting type
+mail.credential.username=ramu
+mail.credential.password=abcd123
+ 
+ 
+@Validated - to d o validation
+@Valid - to da validation for nesting of properties 
+ 
+5. support complex type like List, Arrays and nesting of properties
+ 
+@Configuration
+@PropertySource("classpath:email.properties")
+@ConfigurationProperties(prefix="mail")
+@Validated
+public class MailProps {
+    @NotBlank
+                private String to;
+                private String from;
+                @Min(value=20)
+                @Max(value=30)
+                private Integer age;
+                
+                private String[] cc;
+                private List<String> bcc;
+                
+                @Valid
+                private Credential credential = new Credential();
+                
+                
+                class Credential {
+                                @NotBlank
+                                private String username;
+                                @Size(max=8,min=4)
+                                private String password;
+                                public String getUsername() {
+                                                return username;
+                                }
+                                public void setUsername(String username) {
+                                                this.username = username;
+                                }
+                                public String getPassword() {
+                                                return password;
+                                }
+                                public void setPassword(String password) {
+                                                this.password = password;
+                                }
+                                
+                                
+                }
+}
+ 
+ 
+Spring Boot Interceptors
+      - used to intercept client request and process them 
+      - Interceptor are similar to filters, but interceptors is only applied to request that are sending to controller
+      - we have implement an interface HandlerInterceptor with 3 methods
+  - preHandle() - perform operation before sending request to controller
+  - postHandle() - perform operation before sending response to client
+- afterCompletion() - perform operation after completing the request and response
+      - interceptor run between the request, filter run before rendering the view
+      - interceptor is related to spring boot, filter related to servlet api 
+ 
+We will create one interceptor called ExecutionTimeInterceptor to check how much time is taken by request to complete
+@RestController
+@Slf4j
+public class EmployeeController {
+              //private static final Logger log=LoggerFactory.getLogger(EmployeeController.class);
+              @GetMapping("/employee")
+              public String getEmployee() {
+                             //log.info("Inside controller");
+                             log.info("Inside Controller");
+                             return "Employee fetched";
+              }
+}
+ 
+@Component
+//@Slf4j
+public class TimeInterceptor implements HandlerInterceptor {
+              
+              private static final Logger log=LoggerFactory.getLogger(TimeInterceptor.class);
+              @Override
+              public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+                                           throws Exception {
+                             log.info("----prehandle----");
+                             log.info("Request URI "+request.getRequestURI());          
+                             request.setAttribute("startTime", System.currentTimeMillis());
+                             return true;
+              }
+ 
+              @Override
+              public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
+                                           ModelAndView modelAndView) throws Exception {
+                             log.info("----posthandle----");
+                             log.info("Request URI "+request.getRequestURI());          
+              }
+ 
+              @Override
+              public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+                                           throws Exception {
+                             log.info("----after completion----");
+                             log.info("Request URI "+request.getRequestURI());          
+                             long executed=System.currentTimeMillis()-(long)request.getAttribute("startTime");
+                             log.info("Executed time in ms "+executed);
+              }
+}
+This class implements WebMvcConfigurer which has set of difrferent methods to register different appl to the registry. Before Spring 5 we extends WebMvcConfigurerAdapter so after Spring 5 WebMvcConfigurerAdapter is deprecated so we use WebMvcConfigurer interface
+   We overridden method called addInterceptor(), here we add our interceptor to the registry. Here we autowired RequestHandlerInterceptor and adding interceptor to the registry. 
+  @Configuration annotation indicates that this class have one or more bean creation methods
+@Configuration
+public class EmployeeConfig implements WebMvcConfigurer {
+              @Autowired
+              TimeInterceptor timeInterceptor;
+ 
+              @Override
+              public void addInterceptors(InterceptorRegistry registry) {
+                             //registry.addInterceptor(timeInterceptor);
+                  registry.addInterceptor(timeInterceptor).addPathPatterns("/employee");
+              }
+}
+ 
+ 
+
+11. Spring boot - External property1 
+12. Spring boot - HTTPS 
+ Spring Cloud            <-> Spring Boot    
+ 
+2020.0.x (aka Ilford)   <-> 2.4.x
+ 
+Hoxton                  <-> 2.2.x, 2.3.x (Starting with SR5)
+ 
+Greenwich               <-> 2.1.x
+ 
+Finchley                <-> 2.0.x
+ 
+ 
+ 
+Spring Data JPA
+    -- used for persistence purpose- to store in the database
+Creating repositories that use the Java persistence API is a tedicuous process that it takes lot of time and requires lot of boilerplate code 
+Spring Data JPA - it is a library/framework that adds an extra layer of abstraction on the top of the JPA provider
+Contains 3 layers
+1. Spring Data JPA - provides support for creating JPA repositories by extending the Spring Data repository interfaces.
+   1. JpaRepository<Entityclass,Primarykey> - provides some JPA-related methods such as flushing the persistence context and deleting records in a batch.
+  2. JpaSpecificationExecutor<Entityclass> - retrieve the data based on some specification which like criteria API
+2. Spring Data Commons -  provides the infrastructure that is shared by the datastore specific Spring Data projects.
+1. Repository<Entityclass,Primarykey> interface - marker interface
+2. CrudRepository<Entityclass,Primarykey> extends Repository - provides CRUD operation for entity
+3. PagingAndSortingRepository<Entityclass,Primarykey> - declares the methods used for sort and paginate entities that are retrieved from the database 
+3. JPA Provider -  implements the Java Persistence API.
+ 
+CrudRepository
+CrudRepository is a base interface and extends the Repository interface.
+CrudRepository mainly provides CRUD (Create, Read, Update, Delete) operations.
+Return type of saveAll() method is Iterable.
+Use Case - To perform CRUD operations, define repository extending CrudRepository.
+JpaRepository
+JpaRepository extends PagingAndSortingRepository that extends CrudRepository.
+JpaRepository provides CRUD and pagination operations, along with additional methods like flush(), saveAndFlush(), and deleteInBatch(), etc.
+Return type of saveAll() method is a List.
+Use Case - To perform CRUD as well as batch operations, define repository extends JpaRepository.
+ 
+ 
+Repository
+CrudRepository
+PagingAndSortingRepositorye
+JPARepository
+ 
+Dependency
+spring-boot-starter-data-jpa, database dependency
+ 
+Hibernate is a JPA provider(ie) a vendor means it provides the implementation for the JPA specification
+JPA specification used for mapping java objects with database table using @Entity,@Table, @Id
+Spring Data JPA is an abstraction that makes it easier to work with JPA provider. It is a library that adds additional wrapper code on top of the provider to cut through additional boiler plate code that requires to interact with the database
+Spring Data JPA 
+JPA Provider - Hibernate,TopLink,ibatis - we have to more configurtaion
+JPA
+ 
+Spring Data JPA Features
+1. Spring data JPA generates automatic implementation (ie) we dont want dao layer manually - dao layer completely removed
+2. reduces boilerplate code to interact with db, so we can able to create persistence part very faster
+ 
+CrudRepository interface                                                                                           JpaRepository interface
+1. Object save(Object) - store single object                                                           1. void flush()
+2. Iterable<Object> saveAll(Iterable<Object>)                                                 2. Object saveAndFlush(Object s)
+3. Iterable findAll() - return all objects                                                                    3. Void deleteAllInBatch(Iterable)
+4. Optional findById(int id)
+4. boolean existsById(int id)
+6. void delete(Object)
+7. void deleteAll()
+8. void deleteById(int id)
+ 
+Derived query
+1.name of the query method has to be start with findBy,readBy,queryBy, getBy, countBy
+2. if we want to limit the number of returned query results then we have to add First,Top keyword (eg) findTopBy,findTop1By,findFirstBy,findFirst1By
+3. want to select unique result using distinct keyword, eg: findTitleByDistinctByJava
+If we want to write any complex queries we cant rely on query methods in that case we can use @Query - only select query
+We can write the query in Entity class by giving a name - @NamedQuery
+ 
+1. Using predefined methods 
+2. we created our own query method based on findBy,getBy,readBy,queryBy,countBy, Top,First,Distinct
+3. In case complex queries, we can use @Query - select query based on HQL
+4. Queries in entity class with name - @NamedQuery - select query based on HQL
+5. Native Query - select query based on SQL using @Query nativeQuery=true
+6. select query based on SQL in entity class by providing name @NativeNamedQuery
+7. We passed the parameters to the queries using ?1 (positional parameter)
+8. @Param is also used to pass the parameters to the query :eid - named parameter
+9. Using SpEL Expressions,Spring Data JPA supports a variable called entityNam
+#entityname - used to fetch the entity class automatically
+10. if we want to perform DML statement(update,delete,insert) then we have to use @Modifying 
+11. To use this class as a projection with plain JPA, you need to use a constructor expression in your query. It describes a call of the constructor. It starts with the keyword new, followed by the DTO class’s fully-qualified class name and a list of constructor parameters.
+@Query(value=”select new com.pack.GenderCount(
+List<GenderCount> findGenderWise()
+12. For dynamic sorting, Spring Data JPA allows you to add a special parameter of type Sort to the custom method definition. 
+Sort class is used to display the output in sorted manner
+Iterable findAll(Sort s) -- used for sorting 
+Page findAll(Pageable p) - used for pagination
+ 
+Pageable interface - to provide pagination
+    1.Pageable first()
+    2. Pageable next()
+    3. int getPageNumber()
+    4. int getPageSize()
+    5. boolean hasPrevious()
+ 
+Page interface - to get info abt the position of entire list
+   1. long getTotalElements()
+   2. long getTotalPages()
+ 
+Page interface extends Slice
+   Slice iterface - only indicates whether there is a next or previous page 
+ 
+How to create Pageable object?
+1.Pageable paging = PageRequest.of(pageNo, pageSize);
+2.Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by("email"));
+3.Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by("email").ascending()); 
+ 
+Page
+Use when UI/GUI expects to displays all the results at the initial stage of the search/query itself, with page numbers to traverse(ex., bankStatement with pagenumbers)
+Slice
+Use when UI/GUI expects to doesnot interested to show all the results at the initial stage of the search/query itself, but intent to show the records to traverse based on scrolling or next button click event (ex., facebook feed search)
+ 
+What is monolithic architecture ?
+   -- entire software is composed as single piece of software (ie) it is self contained that all components are interconnected or interdependent
+   -- it will give a tightly coupled software where each component and its associated component must be present in order to execute the entire code
+ 
+It is basically big container or it is not divided into small small components, so that we have tightly coupled appl
+ 
+Advantages
+1. very simple to develop
+2. simple to deploy because we have to deploy executable file(war file) at runtime to launch the appl
+3. to scale ur appl, we have to run multiple copy of appl behind the loadbalancer
+ 
+Drawbacks
+1. not suitable for large and complex appl - if we have large appl, it really complex to understand and modify the appl, as the result development slows down, modularity breaks down, quality of code is declined 
+2. Slow development - complex appl, more team members, difficult to understand and modify the code
+3. Blocks continuous development - to update one component we have to redeploy all services,there also a chance the component havent been updates will fail to start correctly because of some dependency issues
+4. Unscalable - each copy of appl instance will get access to all data which makes caching less effective and more memory consumption
+    Also different services needs different requirement, if we want to increase only for customer service we need to do for both product and cart service 
+5. unreliable  -- because of tightly coupled components if one component is failed then entire appl will goes down
+6. Inflexiable - Monolicthic architecture becomes difficult to adopt new framework and languages
+ 
+ 
+Microservice architecture
+    -- It structures an appl as a collection of small small services
+    -- If we have large appl, it can broken down into small small multiple services that together access one large system 
+    -- In microservice architecture,all components are divided into separate modules which communicate with each other using well defines interface using REST API or messaging 
+    -- Each microservice is responsible for its own data because of which interaction with each microservice is handled by different instance, here we have multiple instance for each microservice 
+    -- Services are small independent and loosely coupled. Each service have separate code and managed by separate team and deployed separately. The team can update the existing service without rebuilding and deploying the entire appl.
+    --Service are responsible for persisting its own data, so internal implementation of each service are hidden from other servcie, they dont need to share the same technology stack, librares, framework etc
+    -- Service Registry/Discovery - maintain list of services which nodes they are located. It enables service lookup to find endpoints of the services
+    -- Api Gateway -- entry point for clients, the client dosent call all services directly, to goes to api gateway which forward the call to the appropriate service on backend 
+ 
+Service Registry - Eureka(Netflix),Consul,zookeeper
+Api Gateway - Zuul Proxy (Netflix)
+ 
+ 
+Advantages
+1. Small focused - simplicity, so that it can rewritten and maintain without any extra effort from the development team
+2. Loosely coupled - Each microservice is independent of each other 
+3. Language neutral - what kind of prg lang we are using it dosent affect the other service
+4. Bounded context - each microservice dosent need to understand the implementation of other microservice 
+5. Independent deployment - each microsevice can be developed independently and deployed independently
+6. Fault isolation - If one microservice goes down, it wont take the entire appl goes down 
+7. Mixed technology stack - we can use any technology 
+8. Granular scaling - If we to scale only one service then we can scale that service alone
+ 
+Companies using Microservcies - Amazon, uber, epay, paybal,netflix
+ 
+ 
+ 
+1. AccountProducer - eureka server run on 1111
+  Eureka server - by default run in 8761 port no
+registerwitheureka= false - it dosent try to register itself as eureka client
+fetchRegistry: false -- A Eureka instance is also a eureka client as it fetches the registry from eureka server containing the details of other clients 
+ A Eureka instance is also a Eureka client as it fetches the registry from Eureka server containing the details of other instances. In order to enable it, eureka. client. fetch-registry is set to true (by default, true). As soon as a service registers itself with the server, it fetches the registry and catches it.
+   AccountConsumer - client with run 2222
+   AccountWebClient - run in 8080 with localhost:8080/
+ 
+RestTemplate - allows to call other spring web services  from local Spring appl. 
+   - Makes integration with other web services and binded to custom data type 
+RestTemplate r=new RestTemplate(); 
+String s=r.getForObject("http://lh:8070",String.class); 
+ 
+Discovery service concept in spring cloud is implemented in different ways like Eureka, consul, zookeeper etc. If you are using Eureka by Netflix then @EnableEurekaClient is specifically for that. But if you are using any other service discovery including Eureka you can use @EnableDiscoveryClient
+ 
+CIRCUIT BREAKER IN MICROSERVICE (Hysterix, Spring Retry,Resilience 4J)
+Circuit breaker is a design pattern used in modern software development. It is used to detect failures and encapsulates the logic of preventing a failure from constantly recurring, during maintenance, temporary external system failure or unexpected system difficulties.
+To avoid such failures and to make application more resilient, to make appl more fault proof so only we have circuit breaker design pattern
+In enterprise appl, we have multiple service layers, so one user request coming is pass through first 3 service layer and goes to service 4 and in service 4 there is failure happens, so that failure lead to service3 and from there to service 2 and service 1 respectively and all way goes to user, and user is impacted then our business will be impacted. To avoid this we have circuit breaker design pattern which will provide the solution to trace the critical problem.
+   Circuit breaker design pattern is similar to how circuit works in electrical board, we have different states like open, close and half open.  For example, if u have circuit open ur current dosent pass through ur circuit and light is always switched off, which means something is broken. If the circuit is closed (ie) electricity pass through the circuit and light glows so typically in successful scenario ur circuit is closed. Initially ur circuit will be closed and it open if there is failure. Hystrix consolidates all these circuit breaker design pattern and shows up in Hystrix dashboard.
+ 
+For example in IRCTC website if u refresh again and again, sometimes it immediately fails this happens because there is fault tolerant or circuit breaker which is implemented which will break the circuit, it will not send till the server, it will say the 1st request fails so we are going to fail for next 5 continuous request until the circuit is going to function.
+   Let take ecommerce application where the request comes from different source to different microservices, what happens if one service goes down, the related source crashes instead we have to create fault tolerant api where it returns empty response or error message to user, we should not crash UI if something crashes 
+ 
+Hystrix is a library created by Netflix used to handle failures and do some fallbacks when there is a failure. Hystrix is fault tolerant framework similar to catch block in a try catch exception. Hystrix have fallback mechanism with which we can do fallback, additionally we can configure this fallback using circuit breaker design pattern.
+ 
+2. HystrixApplication project 
+1.            Create project with dependency web,actuator, hystrix, hystrix dashboard
+2.            Configure @EnableCircuitBreaker and @EnableHystrixDashboaard
+3.            In RestController.java we created hello(), in this method we created some artificial failures by using RandomUtils nextBoolean() which randomly give true or false and based on that it throws Exception. In normal application if we don’t have Hystrix implementation enabled, it shows exception in UI however we don’t want to do that so we enable hystrix.
+      In order to make hello() to be fault tolerant we add @HystrixCommand with fallbackMethod which is nothing but failure scenario which will be invoked when there is exception in this particular method. We also give commandKey and groupKey which is used to identify the method in Hystrix dashboard 
+4.            We implement fallback(), the signature should be exactly same where we added @HystrixCommand annotation, if there is failure there is fallback and if no error means it returns “Hello world”
+5.            Run the application and actuator will have 2 paths (ie) 
+       /hystrix – will open the dashboard
+     /hystrix.stream – which contains all streaming information
+6.            Open the hystrix using http://localhost:8092/hystrix
+7.            In that provide http://localhost:8092/hystrix.stream
+Which contains the streaming information and it dosent contain anything
+8.            In another tab, run REST endpoint http://localhost:8092/rest/hello, now in hystrix dashboard it shows the status of circuit 
+ 
+ 
+SPRING BOOT TURBINE
+Turbine is an open-source tool from Netflix for aggregating multiple streams into a single stream.
+Consider we have two microservice application running, and if we want to see the metrics of both application we have open separate hystrix dashboard and see the metrics. So for application with many microservice it is difficult to open separate hystrix dashboard, so if u want to combine all ther metrics in single dashboard we can use Turbine.
+ 
+  @EnableTurbine internally uses Eureka server and access all the clients that are registered inside server.
+ 
+Example: Refere Turbine-EurekaServer, Turbine-Hystrix, Turbine-Recommendationservice, Turbine-UserService
+1.            Run all application
+2.            Run eureka registry as http://localhost:8761
+3.            Run userservice as localhost:8060/personalized/1, 
+then run the hystrix dashboard separately using http://localhost:9090/hystrix and give http://localhost:8060/actuator/hystrix.stream
+4.            Run recommendationservice as localhost:8070/recommendations, 
+then run the hystrix dashboard separately using http://localhost:9090/hystrix and give http://localhost:8070/actuator/hystrix.stream
+ 
+Instead of running hystrix twice to see, use turbine to see all services at a time
+ 
+5.            Run Hystrix http://localhost:9090/hystrix in that use 
+http://localhost:9090/turbine.stream?cluster=default
+It displays both user service and recommendation service.
+If nothing display hit both service once again and try
+6.            If u want to access individual service in hystrix, define
+turbine.aggregator.clusterConfig= USER-SERVICE,RECOMMENDATION-SERVICE in application.properties file of TurbineHystrix
+and access like
+      http://localhost:9090/turbine.stream?cluster=USER-SERVICE
+ 
+http://localhost:9090/turbine.stream?cluster=RECOMMENDATION-SERVICE
+ 
+Resilience4j provides higher order functions called decorators to enhance any functional interface, lambda expr or method reference with 
+      1. Circuit breaker
+      2. Rate Limiter
+      3. Retry
+      4. Bulkhead
+So Hysrix provide only circuit breaker but with resilience we have other features also.
+ 
+Circuit Breaker 
+     We have 2 services S1 and S2 and both are communicating with each other. We have circuit breaker, if it is closed state the communication is happening properly and if it is opened the communication is not happening
+     If we are calling 3rd party service we need to store the state so Resilience4j used Ring Bit Buffer in closed state to store the success or failure status of function calls
+    Success function call - 0
+    Failure function call – 1
+ 
+BulkHead
+    When u r hitting 3rd party service there are limits of number of request that hitting 3rd party service so that is controlled by bulkhead. For eg, if we want 10 concurrent request happen to 3rd party service.
+    It is provided with 2 implementation
+A SemaphoreBulkhead which  uses Semaphores
+A FixedThreadPoolBulkhead which uses bounded queue and a fixed thread pool
+ 
+Ratelimiter
+     Consider we have service which is publically open and we have client which is hitting that service unlimitedly. So if we don’t any control over how many request it can receive per second. So we should have some feature to handle that limit which can be done using Resilience4j ratelimiter. So if we configure as 100 request/second then we provide 200 request, it will take only 100 request and remaining request will be discarded
+    So rate limiting is used to control the rate of traffic sent or received by a network interface controller. It is used to prevent DOS attack 
+ 
+ 
+Retry
+   Consider client is hitting the service and suppose circuit is in open state due to number of failures. Now circuit breaker makes the hit to 3rd party to retry to check up or not so that circuit can be closed. How many request should send per second to check whether health is good or not that can be configured in retry. For eg, if we give 2 request/sec then circuit breaker per sec it will hit 2 request to 3rd party to check if it is up or not. If it is up it will close the circuit 
+   The number of times the call made to 3rd party to check if its health is good or not 
+ 
+ 
+ 
+LOADBALANCING IN MICROSERVICES
+ 
+Consider an microservice application DoctorPortal that uses MicroService1, MicroService2 and MicroService3. MicroService1 is running in production environment, in production environm we have many instance of MicroService1 so remember the advantage of microservice that we can more than one instances. Consider we have 3 instances MS1, MS2, MS3. From DoctorPortal we have sending n number of request to MicroService1 to get number of services available. So how “n” number of request going to know which instance to call for the response. 
+  
+Solution – Loadbalancer
+1.            Load balancing improves the distribution of workloads across multiple microservices (ie) if we have multiple instance on single microservice and many request sending to that microservice loadbalance is used to divide the request to each instances.
+Two types
+1.            Client side loadbalancer
+    Where loadbalancer is part of client (ie) when u r making the request to service we know which instance to call and it is responsibility of client to track that one
+2.            Server side loadbalancer
+     Where loadbalancer is part of server (ie) client is making a request and server have load balancer implementation and it knows about the number of instances of Microservice1 and it decides which instance to call 
+ 
+So basically loadbalancer is to divide the load among available services, client side means it is responsibility of client to call particular instance of that service and on server side it is responsibility of server itself.
+    In client side load balancer is part of request itself, so when u r making request to individual instance, it knows which instance to call
+1.            Netflix Ribbon + Spring boot – Ribbon provides the facility of load balancing in microservice architecture
+2.            @LoadBalanced
+3.            RestTemplate for communication among services
+4.            Load balancer algorithms like Round robin, Least connection, Agent based adaptive load balancing
+ 
+ 
+ 
+ 
+Example 2: Refer ShoppingServer-Ribbon,ShoppingService-Ribbon,PaymentService-Ribbon
+1.            Run ShoppingServer-Ribbon 
+2.            Check Eureka server using http://localhost:8761
+3.            Run PaymentService-Ribbon with port no 8081
+4.            Change port no as 8082 in PaymentService application.yml and run it once again
+5.            Change port no as 8083 in PaymentService application.yml and run it once again, check whether all 3 services are updated in eureka
+6.            Run ShoppingService-Ribbon and check whether update in eureka which runs in 9999
+7.            Now run http://localhost:9999/payment/20000
+8.            Now it will display the output and if u refresh each time it will display the output from different port no (ie)8081 or 8082 or 8083
+ 
+SPRING CLOUD OPENFEIGN
+   It is used to call third party REST services, used to consume third party microservice
+   Feign client is a declarative HTTP client developed by Netflix, when we are performing load balancing in Spring cloud and when we are integration Spring cloud eureka registry to invoke external service we should not use REST template in that case we can use Feign client, where it internally balance the load.
+ 
+The advantage of Feign client over REST template, if we are using feign client we no need to write unit test case for REST client because there is no code only developer need to declare and annotate an interface, where actual implementation will be provided at runtime.
+ 
+1.            Declarative REST client: it means we have an interface annotated with feign annotation and rest of things will automatically implement by Spring boot feign libraries itself by 
+ 
+2.            @EnableFeignClients – when u write this annotation on main application class, it scans for interface that declare as feign clients using
+                          FeignClient @FeignClient;
+So when u have @EnableFeignClients, it is going to scan all of ur project directory and look for @FeignClient annotation. If there any interface which is annotated with @FeignClient, it will consider that interface to implement internally as a service which will call third party.
+ 
+3.            @FeignClient – Annotation for interface declaring that a REST client with that interface should be created – which means it is going to call third party REST services
+ 
+1. We have a enterprise appl, First is Eurekaserver which is microservice registry which maintains list of available microservice up and running
+2. We have another microservice called Rest-Recommendations which has request mapped to /get-recommendations, we can see Feign inside because in an microservice architecture, one microservcie can invoke other microservice  so Rest-recommendation microservice depend on REST-APP microservice.
+3.Next we have two instance of same spring boot microservice appl called REST-APP. Now Rest-Recommendation microservice communicate to REST-APP through HTTP request , but since we have two instance to which one we are going to communicate, this decision is done by Feign client.
+     Eureka clients are registering themselves against Eureka server,so eureka knows which microservice are available in cloud environment. Now feign will fetch that list from Eureka server because feign has to know which microservice are available
+4.Let assume that one of client make a request to /get-recommendations, it perform that request through Rest-recommendation application
+ 
+Feign is REST client or REST consumer, we can use it to actually communicate to microservice that depending on (ie) to REST-APP microservice. But we have two REST-APP so which one we are going to communicate so Feign will use behind scenes Ribbon client side load balancer.
+   Ribbon which used inside Feign itself has picked the first instance, so Feign as REST client will perform HTTP request to REST-APP, now that instance will respond something that will received by Rest-recommendations and it process with that response. 
+ 
+Feign Client
+1.            Feign client is declarative and just an annotation for an interface
+2.            Wellsuited for restful approach(we can declare all CRUD operations in a single feign client interface). We have service exposed three endpoints and we need to consume all those endpoints, in that we create an interface and add method that need to consume and add some annotation
+3.            Fault tolerance and client side load balancing is in build
+ 
+RestTemplate
+1.            We ends up with writing many boiler plate code to make call from one service to another and we have to write many unit test cases. In Feign client it just interface no need to write test cases
+2.            Not suited for CRUD operation, we have to make calls to achieve it
+3.            Fault tolerance and load balancing is not in build
+ 
+ 
+1.            Create Feign-EurekaServer with EurekaServer dependency and @EnableEurekaServer annotation
+2.            Create Feign-RestApp with web,eureka client dependency with @EnableDiscoveryClient 
+3.            Create FeignClient with web,eureka client,open feign with @EnableDiscoveryClient, @EnableFeignClients
+4.            Run all application
+5.            Run in browser, http://localhost:8001/rest-version
+When u trigger /rest-version, we are returning the result of call to getVersion() from the RestClient which is an interface, and retrieving the  instance of restClient through Constructor Dependency injection.
+RestClient interface is Feign client and indicate the target API is rest-app(it is name of microservice that u r trying to reach). Feign client is Rest consumer which consume another REST endpoint and it is a microservice called rest-app.
+We are trying to target some handler inside Rest-app microservice and that handler is mapped to /version and it returns String
+ 
+Example 2: Refer FeignEurekaServer, FeignEurekaClient-1, FeignEurekaClient-2, FeignEurekaClient-3
+ 
+1.            Run all application
+2.            Check eureka from http://localhost:8761
+3.            Run http://localhost:8001/ - Now from EurekaClient-1 calls EurekaClient-2 and from client 2 calls EurekaClient-3 using RestTemplate
+4.            Now run http://localhost:8001/ using FeignClient, prints same result 
+ 
+http://spring.io/projects/spring-cloud
+API GATEWAY – Features (Zuul Proxy, Google Apigee, Spring cloud Gateway)
+There will be some non functional requirements that are common across microservices. For example, Security where client needs to authenticate and authorize particular services, Tracing – where we need to trace the request as it goes from 1 microservice to another, Service Aggregation – If we have calls that need to go to multiple microservices, instead of client making those separate calls we can have Service aggregator component in one place that makes all those calls for us, Rate limits – If u want to charge ur clients based on request like Amazon or Microsoft Azure Cloud, u can apply all those rate limits, if we have a centralized  place. All these non functional requirements that are common across microservices can go into each microservices which will repeat same code or same component across microservice or we can put these cross cutting concerns in one single place called API gatewaye
+           It is single entry point for multiple microservices, means any external system should not access directly to any other microservices instance. It can access through one common entry to other microservices
+1.	Simplifies client interaction – If v have many microservice there is no need to configure all rest endpoints to external appl
+1.            Separate out cross cutting concens
+Lets say we created a ecommerce appl, for that we created a web appl which has these urls /home,/product,/my-cart/get, /my-cart/add. If u fire /home url it gives the static html or jsp so that we can see the home page. When we make next call /products it will give list of products in the form of json. If the user is logged in, the user can make request to get the items, and adding the items to the cart.
+If the user fires /home or /products even if the user not logged in, we want to send the data back to the user. But if the user fires any of the operation of shopping cart which is used to get items from shopping cart or add items to cart, we want to ensure that the user should authenticated. Similarly, we have some url to add the products and delete the products which might require an administrative role, for that we want to authorize whether the user is signed in and try to access the url is actually valid administrator. We want to ensure that web appl is secured, so instead of HTTP we use HTTPS in our appl, for that we need to add SSL certificates 
+So basically ur web appl now has 3 added components like SSL certificates, authentication, authorization in addition to all the business logic and we want to try to separate these things which is not business logic related into a separate component. That component is called API Gateway.
+  So API Gateway is a component which acts as entry point for our API’S. In our case this API’s are hosted on web appl, so it becomes entry point for our web appl. 
+So everytime when client makes the request, first it goes to API Gateway, the gateway ensures the request are HTTPS using SSL certificate, then it will ensure the user is authenticated when user is calling /get or /add  and also it ensure user is authorized if the user calls /add or /delete.
+That way API Gateway will act as a guard for any request which is coming to ur appl, so it will protect ur API from bad address.
+2.            Separate and consolidate cross cutting concern across Microservices
+      Consider now we convert single monolithic appl to multiple microservices . So if any url hit from the clients for /home or /my-cart then it goes to microservice1 and anything related to /product url, it goes to microservice2.
+      Since all ur request will always come from API Gateway which is a single component, where API Gateway can decides based on these paths where to route ur urls either to microservice1 or microservice2 through routing
+3.            Replacing multiple client calls with single API calls
+         Now we want to add more features to our web application, like we want to give personalized recommendations for the logged in user, we give list of all trending products and also we have some discount offers and all these features are provided by microservice. 
+Now the client first request for home page and get all static files and we make AJAX call which is HTTP call for personalized recommendation, trending products and discount offers. Now we have 4 HTTP call made by the client to ensure that home  page is rendered correctly. It is possible that if the appl grows further we can more services and client have to make more number of HTTP calls to render single home page.
+   Instead the better options is the client will send single call to request a home page and will have some component in API Gateway called Adaptor which will make all these 4 calls on behalf of client and consolidate the response from these services and send back single response to the client.
+Also since there is one service serving only static files which is not best use case for microservice, there is no business logic, it is serving the same file again and again. We can have component within API  Gateway where there is a request for static files, the API Gateway itself will return the response and that way we can remove the microservice completely.
+ 
+4.            Routing based on headers, paths and params etc
+Lets say we expose a url called /product-video and will have 2 services in backend. One service which responsible for low quality video which will much faster and other service for high quality video which is slow. In API Gateway we will configure such that if request comes from mobile, it routes that request to fast service and if request comes from desktop we route that service to high quality service.
+   Lets say one service have too many copies to that service, in that case API Gateway also takes responsibility of being load balancer.
+   Zuul Filter is a class, that provides you different methods for filtering the requests. Zuul has 4 filtering mechanism like pre filter, post filter, error filter and route filter.
+   When the request comes to ur gateway, it first hits the pre filter, then route filter and then post filter. Error filter is something that runs in the background, if there  is any error in filtering mechanism it immediately catches.
+Spring Cloud API Gateway 
+    Spring moves cloud gateway because zuul1.0 did not support reactive programming and Spring has completely gone away from using Zuul so they have created own API gateway library called Spring Cloud Gateway
+ 
+Spring cloud gateway filters can be classified to PreFilters and PostFilters and can be implemented using application.yml or java configuration using addRequestHeader and addResponseHeader
+1. Run ur APIGateway application, run the endpoint after that goto browser console - Network tab-select the method-goto header tab where we  can see response header 
+2. We can create our own filters by extend AbstractGatewayFilterFactory
+https://www.devglan.com/spring-cloud/spring-cloud-gateway
+ https://github.com/only2dhir/spring-cloud-gateway-demo/tree/master/spring-cloud-gateway
+Example 2 – Refer DoctorService, DiagnosisService, ZuulProxy2
+1.            Run all application
+2.            No eureka server
+3.            Run to access doctor service, http://localhost:8089/doctor-api/getDS
+4.            Run to access doctor service, http://localhost:8089/doctor-api/welcome/sam
+5.            Run to access diagnosis service,  http://localhost:8089/diagnosis-service
+6.            Check in ZuulProxy application, all filters will be printed in console
+Example 3 - ZuulEurekaServer,ZuulConsumer1, ZuulConsumer2, ZuulApiGateway, ZuulFilter
+1.            Run all the application
+2.            Run eureka in http://localhost:8082 – it will register 3 instances
+3.            Access consumer1 application through zuul using
+    http://localhost:8081/con1/consumer1/get/mahesh
+4.            Access consumer2 through zuul using
+     http://localhost:8081/con2/consumer2/get/sam
+5.            Now stop ZuulApiGateway and run ZuulFilter appl just to see the filter information
+6.            Access consumer1 application through zuul using
+    http://localhost:8081/con1/consumer1/get/mahesh
+Now we can see filters in ZuulFilter application
+ 
+ 
+SPRING CLOUD CONFIG SERVER
+Changes in properties in different environment like dev, test, prod
+    For example creating a microservice which is interacting with database and to connects with database it needs username and password  so in the dev environment it should use a database which is entirely dedicated for development purpose. Once the development is done now it goes to test environment where it will have different username and password to connect with database, once testing is done now application goes live in production, in production env the database instance is different for example we use Oracle there will different oracle instance for production different from test and development separately 
+    So when software is moving from one env to another env, the things are changing, so we cant do always code changes so when software is moved from dev to test and then to production then it is not accepted to do code changes. 
+1.            Changes in properties files
+    We can change properties files or yml file. Consider we have microservice appl which has properties file, now we can change all db version in this file for dev or test or prod env.
+   So how do we make changes to properties and how we can effectively do without changing the code this is the place where config server plays an important role.
+ 
+2.            Need to restart to change the config
+    In monolithic application if we are not using config server and we want to make changes to configuration we have to restart your application to effect the changes made in properties file.
+But when spring cloud config comes into picture we can make the changes in your config files and these changes will reflect into your appl.
+ 
+What is Config server?
+1.            Used to change the configuration at runtime and for that we don’t need to restart or redeploy ur application 
+2.            Externalizing the configuration means we are changing the property configuration from outside without changing the code itself 
+3.            Ideal for cloud native applications (ie) we are talking about microservices, distributed system so cloud env gives many ways to create the microservice by giving different dependencies.
+Example 1: Refer SpringConfigServer-1
+Step 1: SpringConfigServer-1, we will reading properties or yml file from Git repository using cloud config server
+1.            Create SpringConfigServer-1 project with actuator and configserver
+2.            Use @EnableConfigServer in main class, which makes Spring boot appl as config server
+3.            Create repository in GitHub and create different properties file
+We created configprops with 2 properties files
+4.            Now we want to give the location of git repo inside applixcation.yml file
+ 
+Label: master indicate that we take from master, u can specify the branches too
+ 
+Config server library exposes some endpoints to access the properties like
+     /{applicationname}/{profile}[/{label}]
+     /{application}-{profile}.yml
+     /{label}/{application}-{profile}.yml
+     /{application}-{profile}.properties
+     /{label}/{application}-{profile}.properties
+Using one of these we can see data in properties file
+ 
+5.            Run SpringConfigServer-1
+6.            Run as http://localhost:8090/config-server(application name)/default – default is profile which access default property
+    Now it will display all the info from default application.properties file
+7.            To access application-prod.properties file we use
+http://localhost:8090/config-server/prod
+8.            Now we want change something in properties file and it has to update automatically, if u refresh the page it will automatically updated 
+9.            Now we are accessing the master details if we want to access the branch then or we can use label property
+http://localhost:8090/config-server/default/branchname
+similarly
+http://localhost:8090/config-server/prod/branchname
+ 
+Step 2: Refer SpringConfigClient-1
+1.            Create microservice to communicate with Spring cloud config server
+2.            Create SpringConfigClient-1 with dependency web, config client and actuator 
+3.            Create MainController.java
+4.            How config server comes into picture when config client is implemented and start the application, it will try to connect to config server by providing config server dependency. By default the address of config server is http://localhost:8888, if u want to override then u can configure in bootstrap.yml file. Always bootstrap.yml because we want to configure at the time of loading the server
+ 
+               server:
+                  port: 8081
+ 
+               spring:
+                 cloud:
+                    config:
+                      uri: http://localhost:8090/
+Now remove config part and try to run the appl, in console it will try to connect to config server in http://localhost:8888 but it cant fetch since our config server runs in http://localhost:8090 so we have to configure the above details
+5.            Start the application
+6.            Run http://localhost:8081/info
+    Fetch the default property from server to ur application
+7.            If we want to take profile specific properties like test or production, we need to configure in bootstrap.yml as
+        profile: prod
+8.            Run the application, run http://localhost:8081/info
+   Now it will load production related properties 
+ 
+9.Now we want to update the configuration without restarting the server (ie) whenever we change anything in properties file it automatically reflect in client side
+ 
+So we have two ways to read the configuration.
+1.            When u have @ConfigurationProperties, these values will be refreshed when u call /refresh[POST] endpoint which is provided by Spring cloud config, this is the post request. When u call this, the changes made in git repo it will loaded into the system
+2.            When u have @Value annotation, we have to call /refresh[POST] in addition,whenever we have @Value we have to call @RefreshScope 
+    So when u call /refresh[POST] only @ConfigurationProperties will be updated, @Value will not updated for that we have to  use @RefreshScope too
+ 
+9.            Now we have to expose actuator info using http://localhost:8081/actuator
+     It will display only few actuators 
+10.          To configure other endpoints we have configure in bootstrap.yml as
+ 
+Management:
+   Endpoints:
+     Web:
+       Exposure:
+         Include:
+-                        -health
+-                        - refresh
+So we enabled refresh end point
+11.          Restart both the application
+12.          Now we change values application-prod.properties in git repo, if we run http://localhost:8081/info ,it wont be updated
+13.          To update we have to give /refresh, post request in POSTMAN. So in Postman we give 
+   http://localhost:8081/actuator/refresh in POST
+[
+    "config.client.version",
+    "channel.url",
+    "channel.name",
+    "channel.source"
+]
+Will display the above saying the data is changed
+ 
+14.          Now if we run http://localhost:8081/info, now we can see the updated configuration from properties file
+Each time if u change in properties files then u have to /refresh endpoint in actuator, then only it updates the data
+At a time we can give only one profile 
+ 
+SPRING CLOUD BUS
+ 
+Previously Spring Cloud Config Server as a centralized location for keeping the configuration properties related to the application services (microservices).  The application services will act as Config Clients who will communicate with Config Server to retrieve the properties related to them.
+ 
+If any property is changed, the related service need to be notified by triggering a refresh event with Spring Boot Actuator (/actuator/refresh). The user will have to manually trigger this refresh event. Once the event is triggered, all the beans annotated with @RefreshScope will be reloaded (the configurations will be re-fetched) from the Config Server.
+ 
+In a real microservice environment, there will be a large number of independent application services. Therefore is it not practical for the user to manually trigger the refresh event for all the related services whenever a property is changed.
+ 
+The better approach is to trigger the refresh event for one service and broadcast the event through all other available services.
+ 
+Spring Cloud Bus links the independent services in the microservices environment through a light weight message broker (e.g:- RabbitMQ or Kafka).  This message broker can be used to broadcast the configuration changes and events. In addition, it can be used as a communication channel among independent services.
+Spring Cloud Bus links the independent application services (distributed nodes) through lightweight message broker. The message broker can be implemented with either RabbitMQ or Kafka. 
+ 
+ 
+Example:
+ 
+Step 1: Install RabbitMQ
+1. go to rabbitmq official website https://www.rabbitmq.com/ 
+2. Click on "Get Started" menu 
+3. then click on "Download + installation" 
+4. then click on windows installer recommended
+5. then download erlang 64 bit from https://www.erlang.org/downloads/22.2 - click OTP 22.2 Windows 64-bit Binary File (94825052)
+6. then download the rabbitmq3.8.9 .exe file \
+7. First install erlang 
+8. then install rabbitmq 
+9. then go to start menu and search for rabbitmq command prompt 
+10. type command "rabbitmq-plugins enable rabbitmq_management" 
+All set to go now go to http://localhost:15672 
+username: guest
+passowrd: guest
+ 
+Step 2: Create gitlab repository called cloudbus-repository  with configuration-properties with application.properties, development-service.properties and employee-service.properties 
+ 
+Step 3:  
+1.            Create SpringCloudConfig-CloudBusServer project with dependency config server
+2.            Create application.properties file
+     spring.cloud.config.server.git.uri :- This specifies the Git     repository location where the property files are stored.
+spring.cloud.config.server.git.searchPaths :- If the property files are stored under the sub directory of the repository, the directory name should be specified here. if there are multiple sub directories, those can be declared with spaces. If the property files are stored in the root of the repository, then you can neglect this configuration. In this example, we have stored the property files under the “configuration-properties” directory of the repository. Therefore we have used the “searchPaths” configuration here.
+ 
+ 
+Step 4:
+1.            Create DepartmentService-CloudBus with web,actuator,config client and rabbit mq dependency
+2.            Create EmployeeService-CloudBus with web,actuator,config client and rabbit mq dependency
+ 
+Step 5: 
+1.            Start all application
+2.            Run http://localhost:8081/service
+   It will fetch serviceName of DepartmentService
+from gitlab configured in Config server
+3.            Run http://localhost:8082/service
+   It will fetch serviceName of EmployeeService
+from gitlab configured in Config server
+4.            But if we change in properties files of Gitlab then we have to run /actuator/refresh in POST individually 
+we have to manually trigger the /actuator/refresh event for all Config Clients (application services) whenever a property is changed. Otherwise the change will not get reflected in all services. We found that it is not practical and easy approach.
+Here we are going to use the Spring Cloud Bus to broadcast the refresh event across all services.  Therefore whenever the property is changed, we need to trigger the refresh event for the Spring Cloud Bus. This can be done with invoking  /actuator/bus-refresh  endpoint through any of the connected services (any service that is connected to the Spring Cloud Bus). Then the Spring Cloud Bus will broadcast the refresh event across all the connected services.
+In this way, it is possible to trigger the refresh event in one service and get it reflected in all other connected services.
+ 
+5.            Now if we change the value in GITLAB in any one server it will affect the common values for all services using /actuator/bus-refresh
+http://localhost:8081/actuator/bus-refresh using POST request 
+Now we call /actuator/bus-refresh for departmentservice now it will affect all the service through spring cloud bus 
+6.            Now if we run http://localhost:8081/service it will be updated the properties information of both department service and employee service
+ 
+ Stream.of("monkey", "ape", "bonobo")
+                .min((s1, s2) -> s1.length() - s2.length())
+                .ifPresent(System.out::println); // ape
+ 
+        boolean present = Stream.empty()
+                .min((s1, s2) -> 0)
+                .isPresent();
+        System.out.println(present); // false
+ 
+T reduce(T initialvalue, BinaryOperator b)
+  String string = Stream
+                .of("w", "o", "l", "f")
+                .reduce("", (s, c) -> s + c);
+        System.out.println(string); // wolf
+ 
+        string = Stream
+                .of("w", "o", "l", "f")
+                .reduce("", String::concat);
+        System.out.println(string); // wolf
+ 
+        //2
+        Integer integer = Stream.of(3, 5, 6)
+                .reduce(1, (a, b) -> a * b);
+        System.out.println(integer);//90
+ 
+Optional<T> reduce( BinaryOperator b)
+Optional<Integer> reduce = Stream.of(3, 5, 6)
+                .reduce((a, b) -> a * b);
+        System.out.println(reduce);//Optional[90]
+ 
+T reduce(T initialvalue, BiFunction b1,BinaryOperator b)
+Integer reduce1 = Stream.of("w", "o", "l", "f!")
+                .reduce(0, (i, s) -> i + s.length(), (a, b) -> a + b);
+        System.out.println(reduce1); // 5
+ 
+Stream<Integer> infiniteStream = Stream.iterate(2, i -> i * 2);
+ 
+    List<Integer> collect = infiniteStream
+      .skip(3)
+      .limit(5)
+      .collect(Collectors.toList());
+System.out.println(collect);
+ 
+ 
+Employee maxSalEmp = empList.stream()
+      .max(Comparator.comparing(Employee::getSalary))
+      .orElseThrow(NoSuchElementException::new);
+System.out.println(maxSalEmp);
+ 
+List<Integer> intList = Arrays.asList(2, 5, 3, 2, 4, 3);
+    List<Integer> distinctIntList = intList.stream().distinct().collect(Collectors.toList());
+ 
+ 
+List<Integer> intList = Arrays.asList(2, 4, 5, 6, 8);
+    
+    boolean allEven = intList.stream().allMatch(i -> i % 2 == 0);
+    boolean oneEven = intList.stream().anyMatch(i -> i % 2 == 0);
+    boolean noneMultipleOfThree = intList.stream().noneMatch(i -> i % 3 == 0);
+ 
+ 
+Stream is a stream of object references. However, there are also the IntStream, LongStream, and DoubleStream – which are primitive specializations for int, long and double respectively. These specialized streams do not extend Stream but extend BaseStream on top of which Stream is also built.
+ 
+new Employee(1, "Jeff Bezos", 100000.0), 
+    new Employee(2, "Bill Gates", 200000.0), 
+    new Employee(3, "Mark Zuckerberg", 300000.0)
+ 
+The most common way of creating an IntStream is to call mapToInt() on an existing stream:
+ 
+Integer latestEmpId = empList.stream()
+      .mapToInt(Employee::getId)
+      .max()
+      .orElseThrow(NoSuchElementException::new);
+ 
+Double avgSal = empList.stream()
+      .mapToDouble(Employee::getSalary)
+      .average()
+      .orElseThrow(NoSuchElementException::new);
+ 
+ 
+reduce()
+Double sumSal = empList.stream()
+      .map(Employee::getSalary)
+      .reduce(0.0, Double::sum);
+ 
+collect()
+String empNames = empList.stream()
+      .map(Employee::getName)
+      .collect(Collectors.joining(", "))
+      .toString();
+ 
+toSet()
+Set<String> empNames = empList.stream()
+            .map(Employee::getName)
+            .collect(Collectors.toSet());
+ 
+toCollection() We can use Collectors.toCollection() to extract the elements into any other collection by passing in a Supplier<Collection>. We can also use a constructor reference for the Supplier:
+ 
+Vector<String> empNames = empList.stream()
+            .map(Employee::getName)
+            .collect(Collectors.toCollection(Vector::new));
+ 
+ 
+Sometimes it's useful to transform a regular object stream to a primitive stream or vice versa. For that purpose object streams support the special mapping operations mapToInt(), mapToLong() and mapToDouble:
+ 
+Stream.of("a1", "a2", "a3")
+    .map(s -> s.substring(1))
+    .mapToInt(Integer::parseInt)
+    .max()
+    .ifPresent(System.out::println);  // 3
+ 
+ 
+Primitive streams can be transformed to object streams via mapToObj():
+ 
+IntStream.range(1, 4)
+    .mapToObj(i -> "a" + i)
+    .forEach(System.out::println);
+ 
+ 
+Java 8 streams cannot be reused. As soon as you call any terminal operation the stream is closed:
+ 
+Stream<String> stream =
+    Stream.of("d2", "a2", "b1", "b3", "c")
+        .filter(s -> s.startsWith("a"));
+ 
+stream.anyMatch(s -> true);    // ok
+stream.noneMatch(s -> true);   // exception
+ 
+ 
+To overcome this limitation we have to to create a new stream chain for every terminal operation we want to execute, e.g. we could create a stream supplier to construct a new stream with all intermediate operations already set up:
+ 
+Supplier<Stream<String>> streamSupplier =
+    () -> Stream.of("d2", "a2", "b1", "b3", "c")
+            .filter(s -> s.startsWith("a"));
+ 
+streamSupplier.get().anyMatch(s -> true);   // ok
+streamSupplier.get().noneMatch(s -> true);  // ok
+Each call to get() constructs a new stream on which we are save to call the desired terminal operation.
+ 
+ 
+class Person {
+    String name;
+    int age;
+ 
+    Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+ 
+    @Override
+    public String toString() {
+        return name;
+    }
+}
+ 
+List<Person> persons =
+    Arrays.asList(
+        new Person("Max", 18),
+        new Person("Peter", 23),
+        new Person("Pamela", 23),
+        new Person("David", 12));
+ 
+List<Person> filtered =
+    persons
+        .stream()
+        .filter(p -> p.name.startsWith("P"))
+        .collect(Collectors.toList());
+ 
+System.out.println(filtered);    
+ 
+ 
+Map<Integer, List<Person>> personsByAge = persons
+    .stream()
+    .collect(Collectors.groupingBy(p -> p.age));
+ 
+personsByAge
+    .forEach((age, p) -> System.out.format("age %s: %s\n", age, p));
+ 
+ 
+Double averageAge = persons
+    .stream()
+    .collect(Collectors.averagingInt(p -> p.age));
+ 
+System.out.println(averageAge); 
+ 
+IntSummaryStatistics ageSummary =
+    persons
+        .stream()
+        .collect(Collectors.summarizingInt(p -> p.age));
+ 
+System.out.println(ageSummary);
+// IntSummaryStatistics{count=4, sum=76, min=12, average=19.000000, max=23}
+ 
+ 
+String phrase = persons
+    .stream()
+    .filter(p -> p.age >= 18)
+    .map(p -> p.name)
+    .collect(Collectors.joining(" and ", "In Germany ", " are of legal age."));
+ 
+System.out.println(phrase);
+// In Germany Max and Peter and Pamela are of legal age.
+The join collector accepts a delimiter as well as an optional prefix and suffix.
+ 
+We want to transform all persons of the stream into a single string consisting of all names in upper letters separated by the | pipe character. In order to achieve this we create a new collector via Collector.of(). We have to pass the four ingredients of a collector: a supplier, an accumulator, a combiner and a finisher.
+ 
+Collector<Person, StringJoiner, String> personNameCollector =
+    Collector.of(
+        () -> new StringJoiner(" | "),          // supplier
+        (j, p) -> j.add(p.name.toUpperCase()),  // accumulator
+        (j1, j2) -> j1.merge(j2),               // combiner
+        StringJoiner::toString);                // finisher
+ 
+String names = persons
+    .stream()
+    .collect(personNameCollector);
+ 
+System.out.println(names);  // MAX | PETER | PAMELA | DAVID
+ 
+takeWhile is similar to filter in the sense that it expects a predicate and returns a new stream consisting only of the elements that match the given predicate. But there’s a catch. In an ordered stream, takeWhile takes elements from the initial stream while the predicate holds true. Meaning that when an element is encountered that does not match the predicate, the rest of the stream is discarded. Let’s have a look at the following example.
+Stream.of(2, 4, 6, 8, 9, 10, 12)
+    .takeWhile(n -> n % 2 == 0)
+    .forEach(System.out::println);
+ 
+// prints out:
+// 2
+// 4
+// 6
+// 8
+ 
+dropWhile is essentially the opposite of takeWhile. Instead of taking elements from the stream until the first element which does not match the predicate, dropWhile drops these elements and includes the remaining elements in the returned stream.
+Stream.of(2, 4, 6, 8, 9, 10, 12)
+    .dropWhile(n -> n % 2 == 0)
+    .forEach(System.out::println);
+// prints out:
+// 9
+// 10
+// 12
+Regardless of whether the stream is ordered or unordered, if all elements match the given predicate then takeWhile takes and dropWhile drops all elements. The result of takeWhile is the same as the input stream. On the other hand, when all elements match, the result of dropWhile will be an empty stream.
+ Set<Integer> numbers = Set.of(2, 4, 6, 8);
+numbers.stream()
+    .takeWhile(n -> n % 2 == 0)
+    .forEach(System.out::println);
+// always prints out 2, 4, 6, 8
+// the order of course is nondeterministic because the stream is unordered
+ 
+takeWhile will be an empty stream. Since no elements matched, there’s nothing to take. dropWhile, on the other hand, returns the input stream if there’s nothing to drop.
+Stream.of(2, 4, 6, 8)
+    .dropWhile(n -> n % 2 != 0)
+    .forEach(System.out::println);
+// prints out:
+// 2
+// 4
+// 6
+// 8
+ 
+ The Bifunction and the BinaryOperator are same but the only difference here is the argument type and the return type of interfaces.
+Consider a case where you want to concatenate two strings and return the result. In this case, you can choose either one of them but BinaryOperator is a good choice to go with because if you focus on the arguments and the return type, they all are the same.
+BinaryOperator<String> c=(str,str1)->str+str1;
+you can do the same with Bifunction but now see the difference here:
+BiFunction<String,String,String> c=(str,str1)->str+str1;
+Now consider a case in which we want to add two integers and return a string. Here we can only choose the BiFunction and not the BinaryOperator:
+BiFunction<Integer,Integer,String> c=(a,b)->"Answer="+(a+b);
+ 
+    Nowadays the most popular domain that is banking where this batch processing being used, for example a customer using credit card and we do some shopping ot transaction using this credit card, but if we login back to our account through netbanking this transaction detail is not reflecting immediately, its taking some time to reflect their, because this transaction detail is being available in some other appl which belongs to different system, coming to customer account where we see this detail is belong to some other appl which have their own system and own databases. So inorder to get information from one system to other batch processing comes into picture and transfer those data from one system to other.
+    In education system we retrieve some sms, mails or some notification regarding fees due date or holiday or results got processed that is also called batch processing. Similarly in retail domain which deals with lot of products and they update the data frequently from other system which communicate the inventory to get the availability details, to data back from one inventory system to other we use batch processing
+   Any of the system not communicate with someone else database directly or not using any webservice to get data ir load into cache that also happening only once in the day, in retail domain some reports that getting generated in end of the day or week or month based on their need and all this stuff is happening through  batch processing. In healthcare we are getting health reports or any diagnosis reports 
+ 
+Introduction to Spring Batch
+    - It is developed by Spring community, it is an open source, very lightweight and this framework has been designed to solve enterprise problem and reduce lot of times of developer
+    - Spring batch helps large volume of records including logging data, transaction data, flat file data, it will process that data and finally write in proper format in target system. In spring batch even we can start the job, stop the job, skip the job and if something happens even we can retry the job 
+ 
+Features
+   - Developers can concentrate on implementation, for eg if we try to read the file and persist into database and we need not worry about how to read the file, how to persist and how to handle exception etc will be take care by spring batch
+   - Decoupling between different layers is easy - Spring batch have lot of layers like reader,writer,processor and listener these are independent and out of appl, there is no coupling between business logic code and their frameworks 
+   - Spring batch provides over 17 ItemReader and 15 ItemWriter implementation 
+   - Transaction management
+   - Chunk based processing 
+     1. Consider we transfer money through NEFT it will take minimum 30 min. Now when we submit the transaction and at same time another 100 people wants to do NEFT transaction, so it will stored in batches, after certain amount of time based on their configuration at server that job will triggered and then job will pick all transaction and it will start the processing. 
+     2. Used for settlement purpose (ie) each and every month u will be getting credit card statement. Consider first week of every month so same date from same bank another 1000 customers credit card report will be generated and send to mail id. So it will run batch process on that time and capture all data, process and generate complete pdf file and automatically trigger to ur mail id 
+   - Job start/stop/restart - If something went wrong while processing the data, then again we have to rerun everything.  Consider we have file with 10L records and something went wrong after 5L records then we have to process from scratch, but there might be some problem if we process the data again. In such case we can restart the job instead from scratch 
+   - The ability to skip and retry records as they are being processed - If we are reading file or database we want to skip some records due to some reason then we con configurable using spring batch  
+   - Job processing statistics
+        Consider we are running any job with help of Spring batch, one of batch may be succeed or failure due to certain reason, so u can find out using their statistics
+ 
+Spring Batch Components
+1. Job Repository
+      This represents the persistence of batch metadata entities in the database. It acts as a repository that contains batch job's information, for exampke when the last batch job was run etc
+ 
+2. JobLauncher 
+       This is an interface used to launch a job or run jobs when the job's scheduled time arrives. It takes the job name and some other parameters while launching or running the job
+ 
+3. Job
+     This is the main module, which consist of the business logic to be run
+ 
+4. Step
+    Steps are nothing but an execution flow of the job. A complex job can be divided into several steps or chunks, which can be run one after another
+ 
+5. ItemReader
+      This interface is used to perform bulk reading of data, eg: reading several lines of data from an Excel file when job starts
+ 
+6. ItemProcessor
+      When the data is read using ItemReader, itemProcessor can be used to perform the processing of data, depending on the business logic
+ 
+7. ItemWriter
+      This interface is used to write bulk data, either to a database or any other file disks
+ 
+ 
+Spring Batch is used to execute series of job at a particular point of time 
+ 
+Initially we have do everything manually now if we want automate that process at particular time. For example daily when time reach 6pm we want to execute some sort of job automatically we dont want to depend manually
+   We have bank appl, whenever they want to take backup means they send a message stating that we are planning to take backup so if u r doing any transaction at that time it will not reflect in ur database. Once every month or every year we want to execute series of job to take backup of the transaction 
+ 
+Spring Batch Architecture
+1.                 Consider scheduler that runs inside our JVM which is going to trigger our Spring batch processing, in general we use spring scheduler or quartz scheduler. The scheduler launch JobLauncher which is class in Spring batch framework, it is a starting point for any particular job to be started inside spring batch
+2.                 Job Launcher immediately triggers Job Repository which holds all statistical info of how many batches where run and what is the status of each batch, how many messages are processed or how many are skipped etc
+ 
+ 
+3.                 Once Job Launcher triggers a Job repository, the Job Launcher has also have Job registered with this Job Launcher. This particular Job has a step, a Step basically consist of 3 different component inside Spring framework called ItemReader, ItemProcessor, ItemWriter, all these are useful when you want to read something from particular source, process that particular message and then write back to some other source. Most of the case these sources are either database or file system or queuing system 
+4.                 For example, reading a file, we will read the file using ItemReader, we process the data inside the file basically each data can be converted into pojo or it can transfer to some other object using ItemProcessor and finally using ItemWriter we can write back to database or publish that to a queue.
+5.                 You can configure multiple steps inside the job but ItemReader, processor and writer can be one instance per step. All steps are enclosed within Step Exceution, whereas job execution happens at job level so if there are multiple step inside the job that is consider as JobExecution and each step has its own step execution
+6.                 Once all steps are completed, the step status is updated back into Job repository and we can also get some statistics on how many messages have read, how many processed and how many failed or skipped etc
+  
+ 
+Job Scheduler - in a day when it 6pm it is launch a job. So scheduler will take responsibility when it reaches wht time we have to execute the job.
+ 
+Job Launcher - someone should take responsiblity to launch the job
+ 
+Job -divided into step and job will have single task/step or multiple step
+ 
+Step can have 3 division called Reader,processor,writer but we can decide whether we have 3 division or not. Based on chunk and tasklet we will decide 
+ 
+Step of 2 types based on requirement
+  1. Chunk - step is very complex
+  2. Tasklet  - step is very simple
+ 
+Consider we take 2 step 
+  1. delete a file which use tasklet
+  2. excel to database which use chunk 
+ 
+ 
+ 
+In this architecture, how many job and how many steps.
+1 job and 2 step and steps are configured based on chunks, most properly in chuck only we will go with reader, processor and writer
+ 
+Entire step process is maintained by Step Execution and entire job process is maintained by Job Execution
+ 
+https://github.com/TechPrimers/spring-batch-example-1
+We will read csv files and write those data to database, so it is extract data from csv file transform to different object and store into database
+ 
+1. Create project with batch,web,spring datajpa, devtools database dependency 
+ 
+server.port=8081
+ 
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+ 
+spring.h2.console.enabled=true
+spring.batch.job.enabled=false
+ 
+spring.batch.job.enabled=false  - which disable default batch launcher, if we dont do it spring boot by default use SimpleJobLanucher and automatically start based on confgiuration which we add 
+ 
+2. Create users.csv file
+id,name,dept,salary
+1,Ram,001,20000
+2,Sam,002,25000
+3,Peter,003,30000
+ 
+3. Create entity class
+@Entity
+public class User {
+    @Id
+    private Integer id;s
+    private String name;
+    private String dept;
+    private Integer salary;
+}
+ 
+4. Create repository interface 
+public interface UserRepository extends JpaRepository<User, Integer> {
+}
+ 
+ 
+ 
+1. Enable @EnableBatchProcessing in main class
+ 
+2. Create controller with rest endpoint which returns BatchStatus which checks the status of job is completed or not. If all job are completed properly then it returns completed otherwise it returns some pending
+   - In architecture first we start job launcher, then we create job, then create step, then reader, then processor, then writer
+   - In this controller we want to do batch processing for that invoking a job we need interface JobLanucher so we autowire JobLauncher which is responsible to launch the job, it is the one which execute all jobs
+   - Next we autowire Job which is divided into step
+  
+In the controller we specify in the appl we execute sequence of jobs for that we mention the JobLauncher which takes the responsibility to execute sequence of job. Now JobLauncher want to know what job to execute for that we create another class which has batch configuration
+ 
+@RestController
+@RequestMapping("/load")
+public class LoadController {
+ 
+    @Autowired
+    JobLauncher jobLauncher;
+ 
+    @Autowired
+    Job job;
+ 
+    @GetMapping
+    public BatchStatus load() throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+ 
+    }
+}
+ 
+3. Create SpringBatchConfig class with @Configuration inside this we say what  is my job and what are all the steps, whether we have 1 step or multiple step, whether that step is created as chunk or tasklet
+ 
+@Configuration
+@EnableBatchProcessing
+public class SpringBatchConfig {
+}
+ 
+   -First we configure Job as bean, to create a job JobBuilderFactory take responsibility. Job contain step so create a step we need to use StepBuilderFactory. Step is divided into like ItemReader, ItemProcessor, ItemWriter so we have to pass as arguments
+ 
+@Bean
+    public Job job(JobBuilderFactory jobBuilderFactory,
+                   StepBuilderFactory stepBuilderFactory,
+                   ItemReader<User> itemReader,
+                   ItemProcessor<User, User> itemProcessor,
+                  ItemWriter<User> itemWriter
+    ) {
+ 
+   - All logic we write inside Step using StepBuilderFactory
+   - We can give any name,because whatever we are doing like what are steps creating, what are jobs creating, whether all job completed or not,all steps completed or not are maintained in database which are done by JobRepository 
+   so only we give some name so that in database we can see the job and its status 
+ 
+ 
+   - Now we decide to create step based on chunk or tasklet. Here we want to take data from csv file and store in database so for this purpose we define as chunk. 
+ 
+  - What task we are going to give, take the data from excel and store into db, but this task is divided as 10 chunk and do it
+    For tasklet we dont need to specify it because tasklet used for simple job so it can done at once. But here we divide lengthy process into 10 chunks and do it.
+    If it is divide into chunk it is further divide into reader (first go to csv file and read it), processor(process the data) and writer (write data) and finally build the step
+Step step = stepBuilderFactory.get("ETL-file-load")
+                .<User, User>chunk(100)
+                .reader(itemReader)
+                .processor(itemProcessor)
+                .writer(itemWriter)
+                .build();
+   - Now step is ready, now we want to assign this step to specific job using JobBuilderFactory and provide some name 
+ 
+ 
+   - Incrementor - so whenever any job runs it creates a job instance to create it we use RunIdIncrementor, so that we can come to know how many times job is run (ie) this job can run multiple instance so first time it give id as 1 and for second time its id as 2
+ 
+   - using start we will job with this step, in case we have multiple step
+return jobBuilderFactory.get("ETL-Load")
+                .incrementer(new RunIdIncrementer())
+                .start(step)
+                .build();
+ 
+3. Now we give defination from ItemReader, writer and processor
+   - read data from flatfile, so we create instance
+   - from which source read the data (ie)from csv file
+   - give name for ItemReader as "CSV-Reader"
+   -  flatFileItemReader.setLinesToSkip(1); read the csv file but skip the first line as first line is header
+   - flatFileItemReader.setLineMapper(lineMapper());
+ 
+@Bean
+    public FlatFileItemReader<User> itemReader() {
+ 
+        FlatFileItemReader<User> flatFileItemReader = new FlatFileItemReader<>();
+        flatFileItemReader.setResource(new FileSystemResource("src/main/resources/users.csv"));
+        flatFileItemReader.setName("CSV-Reader");
+        flatFileItemReader.setLinesToSkip(1);
+        flatFileItemReader.setLineMapper(lineMapper());
+        return flatFileItemReader;
+    }
+ 
+4. Now we create lineMapper() which pojo class should refer so based on that we store info in database 
+  we have compare csv with pojo class so that mapping will happen and store all data into database which will do by lineMapper()
+  1. We have to map csv file with pojo class for that we use
+DefaultLineMapper<User> defaultLineMapper = new DefaultLineMapper<>();
+  2. CSV is comma separated file 1,ram,33 where 1 represent 1st col, ram represent 2nd col. CSV need some delimiter to specify delimiter we use DelimitedLineTokenizer
+DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
+lineTokenizer.setDelimiter(","); - splits based on ,
+ 
+  - Now we map csv separated with , to pojo class using
+  BeanWrapperFieldSetMapper<User> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
+fieldSetMapper.setTargetType(User.class);
+  - Now we set DelimitedLineTokenizer and BeanWrapperFieldSetMapper to DefaultLineMapper using 
+defaultLineMapper.setLineTokenizer(lineTokenizer);
+        defaultLineMapper.setFieldSetMapper(fieldSetMapper);
+ 
+@Bean
+    public LineMapper<User> lineMapper() {
+ 
+        DefaultLineMapper<User> defaultLineMapper = new DefaultLineMapper<>();
+        DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
+ 
+        lineTokenizer.setDelimiter(",");
+        lineTokenizer.setStrict(false);
+        lineTokenizer.setNames("id", "name", "dept", "salary");
+ 
+        BeanWrapperFieldSetMapper<User> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
+        fieldSetMapper.setTargetType(User.class);
+ 
+        defaultLineMapper.setLineTokenizer(lineTokenizer);
+        defaultLineMapper.setFieldSetMapper(fieldSetMapper);
+ 
+        return defaultLineMapper;
+    }
+ 
+ 
+5. Now we create Processor which implements ItemProcessor
+   - from csv file read all data and write all data into database 
+ 
+Initially ur csv file contains id,name,age,deptcode now we want to change to deptname instead of deptcode and store in db, this can be done inside processor and give to writer 
+ Because ur entity class we have deptname not as dept code 
+ 
+@Component
+public class Processor implements ItemProcessor<User, User> {
+ 
+    private static final Map<String, String> DEPT_NAMES =
+            new HashMap<>();
+ 
+    public Processor() {
+        DEPT_NAMES.put("001", "Technology");
+        DEPT_NAMES.put("002", "Operations");
+        DEPT_NAMES.put("003", "Accounts");
+    }
+ 
+    @Override
+    public User process(User user) throws Exception {
+        String deptCode = user.getDept();
+        String dept = DEPT_NAMES.get(deptCode);
+        user.setDept(dept);
+        System.out.println(String.format("Converted from [%s] to [%s]", deptCode, dept));
+        return user;
+    }
+}
+ 
+6. Now we create writer class to store all info into da
+ 
+@Component
+public class DBWriter implements ItemWriter<User> {
+ 
+    private UserRepository userRepository;
+ 
+    @Autowired
+    public DBWriter (UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+ 
+    @Override
+    public void write(List<? extends User> users) throws Exception{
+        System.out.println("Data Saved for Users: " + users);
+        userRepository.saveAll(users);
+    }
+}
+ 
+7. Now joblauncher, job, reader,writer,processor is ready. The entire job is maintained by JobExecution which will get all updation of job
+  Now in controller method, we created all job,step, reader,writer,processor now when we run the appl u should read the data, process the data and write the data to db which happens automatically
+ 
+        Map<String, JobParameter> maps = new HashMap<>();
+        maps.put("time", new JobParameter(System.currentTimeMillis()));
+        JobParameters parameters = new JobParameters(maps);
+        JobExecution jobExecution = jobLauncher.run(job, parameters);
+ 
+        System.out.println("JobExecution: " + jobExecution.getStatus());
+ 
+        System.out.println("Batch is Running...");
+        while (jobExecution.isRunning()) {
+            System.out.println("...");
+        }
+ 
+        return jobExecution.getStatus();
+ 
+  Now we ask launcher to run the job(so job defined in controller and job() we define in SpringBatchConfig which contain abt step and step contain info abt reader, processor and writer 
+ 
+ 
+  JobLancher run the job and tell to JobExecution whether it is successfully executed or not and get the status from JobExecution
+ 
+So we initially configured JobLauncher, it will run Job and Job will run Step and step is agin divided into reader, writer,processor. Once job is executed successfully it gives status to JobExecution and finally it gives status to customer
+ 
+Go and checkdatabase it creates so many tables
+ 
+batch_job_instance is used to holds all info about job instance, which contains job_name which comes from our project in 
+batch_job_execution
+batch_step_execution
+ 
+Run http://localhost:8000/load it gives status as COMPLETED
+Each time we execute job id will be created 
+ 
+Connect with http://localhost:8000/h2-console
+ 
+ 
+Reactive Programming
+ 
+Why Reactive Programming ?
+ 
+Before we jump into reactive programming part lets talk about how the programming in general have evolved and what is a current state of programming
+  - Before 10 to 15 yrs ago, the appl that we used to build was monolithic appl which run in appl server and this model does not embrace distributed system
+  - Now we are living in the world of microservices which runs in cloud infrastructure where the appl run in the cloud env and also suited for distributed system 
+  - The web usage in general is increased compared to 10 to 15 yrs ago and the expectations of the appl that we build also changed
+ 
+Expectation of the application
+   - The appl should scale according to the load. Consider we have online shopping appl if the number of users increased than the expected value then the appl should scale its resources to handle the load 
+   - Use resources efficiently - Lets say u make a call to the database or an external service to get some data and during the scenarios we wait until the responses returned from external resources, waiting on something in general is not effective resource utilization
+   - Latency (ie) response time of the request should be faster to meet the customer need, so the API should perform as fast as possible 
+ 
+So in todays REST API development we have 3 ways to develop the REST aplication
+  1. client communicate to back end and collect data from database
+  2. client communicate to back end and communicate with other service
+  3. client communicate to back end and collect data from databa.se and communicate with database
+ 
+How traditional Restful apis handle concurrent request ?
+   The model we take is 
+Thread Per Request Model:
+    For each HTTP request the tomcat is going to take a thread from the thread pool and assign the thread to that HTTP request. Each allocated thread is responsible to handle the life cycle of that HTTP request 
+   The threads can be extended only to a value of n which is nothing but the thread pool size because that  is the one which is going to decide how many number of concurrent users can be handled at any given time 
+ 
+How can we increase or decrease the thread pool size?
+    There is the property used to manage the value of thread pool using
+     server.tomcat.max-threads
+   By default it can handle 200 connections, so in general it can handle only 200 concurrent users and this value can be overridden in application.properties or application.yml file in sping boot appl. Just because we have an option to override the value it does not mean we can set larger value for the property 
+   Each thread takes some memory, the common stack size is 1MB so  higher the thread pool size higher the memory consumption just for the thread instance so if u have larger thread pool basically that leaves you with very less memory for the application processing which means the application will perform poor
+ 
+How to scale ur application?
+    Load is handled using horizontal scaling, which means we create more instance of the appl based on the load.
+    For example, we have 3 instance of the appl which means the load is 3 times more than the expected value thats y we have 2 instances up and running here.
+    If ur appl is running in some kind of kubernetes or some other container orchestration environment then this is possible. In realtime we will have a load balancer sitting in front of our appl which will take care of distributing the HTTP requests to the application. This model works perfect and this model will work in the future too, but if u run more instances in the cloud is going to add some kind of additional cost to the organization
+   So we have a limitation when it comes to handling many concurrent users, so the idea of reactive programming is to move away from the thread per request model and handle higher loads of requests with less number of threads 
+ 
+ 
+Traditional REST API design
+    - Consider we have an API that relates to the retail  industry, this endpoint gets id as an input from the client and then returns the response entity of type Item.
+   Item has 2 additional details like price and location where this item is avialable. To return the item with all the information, first we make a database call and get the price of the item. And then make a rest call to get the location where this item is available. And then we build the item together with price and location infomation and finally response that to the client
+ 
+@GetMapping("/v1/items/{id}")
+public ResponseEntity<Item> getItemFromExternalServices(@PathVariable Integer id) {
+    Price price=priceRepo.findById(id).get(); //1. db call
+    ResponseEntity<Location> locationEntity=restTemplate.getForEntity(locationUrl,Location.class);  //2. rest call
+    Item item=buildItem(price,locationEntity.getBody());
+    return ResponseEntity.ok(item);
+}
+ 
+  This coding is called imperative style coding and the API is called imperative style API where the execution goes from top-down approach which means first we made database call followed by that we made the rest call to get the location, we go one by one then we build the item and responded that to client
+   Imperative style API by nature they are synchrounos and blocking which means first we make request and then we got a thread assigned to that request by tomcat and we make database call, so after the call is made we are in state called blocking state, the thread dosent do anything until the response is received from the database which means imperative style of programming leads to inefficient use of resources 
+   Synchronous aspect of the traditional API is lets assume the latency of this endpoint is 2ms, the db call takes 1ms followed by that REST API call takes 1ms which sums to 2ms for this simple usecase.
+   But in reality you might be doing lot of external resource calls before responding to client requests . If u want to improve the response time of this endpoint then we need to make these calls asynchronous which means we make this calls non blocking
+So it is not easy to improve the latency with the traditional REST API design which uses imperative style of programming 
+  
+We take an another example, 
+    @GetMapping("/v1/items")
+    public ResponseEntity<List<Item>> getAllItems() {
+       List<Item> items=itemRepo.getAllItems();
+       return ResponseEntity.ok(items);
+    }
+this endpoint returns all items in the inventory then the response object size would be large and if this endpoint is have many requests then
+   1. Application might crash with out of memory error
+   2. client will get such a huge response where the client might not be able to handle 
+ 
+How do we avoid this happening?
+    If there is way for the app to communicate to the source which is DB in the scenario and provide a feedback as DB to slow down since it was sending too much data, this concept is called back pressure 
+    So with imperative style api's, the appl does not have a way to communicate to the DB to slow down or reduce the size of the payload so no back pressure compatability in traditional REST API design 
+ 
+Limitation of Traditional REST API
+   1. Limit on the number of concurrent users
+   2. They are synchrnous and non blocking
+   3. Imperative style API requires a lot of work to do in order to make it asynchronous
+   4. No back pressure support 
+ 
+BackPressure means an appl is request for n number of data and database having huge amount of data, but appl over here not able to handle that much data. Considering my appl is slow, server is slow and it can handle only 10 records, but when u call for data this particular database sending 1000 records and appl not able to keep that data. So we need to tell db to hold since appl not able to process it or send less data. This feature is called backpressure 
+ 
+What is Better API design?
+   1. Asynchronous and non blocking 
+   2. Move away from thread per request model
+   3. Use fewer threads to serve many requests
+   4. Back pressure support
+ 
+What is Reactive programming?
+    1. New programming paradigm and complete different way we have been building things in Java
+    2. This programming style is asynchronous and non blocking 
+    3. Data flow as an event driven stream 
+    4. Reactive programming provides Functional style apis just like streams api in Java8
+    5. Support back pressure on data streams 
+ 
+When to use reactive programming?
+     When there is a need to build appl that supports very high load of data 
+ 
+How Reactive programming works?
+    We have 2 friends texting each other friend1 and friend2. For the sake of this example, we assume friend1 is watching tv and friend2 is busy outside. Friend1 decide to message friend2, in reality after the message is sent friend1 is not going to wait and block until the response is received from his friend2. After friend2 is complete his job outside, he have chance to reply back to friend1 and conversation proceeds, once they are done with the conversation they are going to do their work. This type of communication is called asynchronous and non blocking, the idea is not to wait and block on anything
+   In addition to asynchronous and non blocking aspect, this kind of communication is called message or event driven communication
+How data flow as an event driven stream ?
+     Before going to reactive program, we will see how data flow in imperative program.
+ 
+    List<Item> items=itemRepo.getAllItems();
+ 
+  The code here uses JPA makes a call to database to retrieve the data. In reality from appl we make call to the db to get the data and then app waits before it gets the data from the database, it goes to block and waiting state until the complete list of items are retrieved. This model is called synchronous and blocking communication model 
+   But in reactive model the data will flow as an event or message, so we receive one event for every result item from the data source, the data source can be database or external service or external file etc
+   Once all the data is evented out to the caller then we are going to receive a completion event, if there is an error in retrieving the data from external source then we are going to receive an error event 
+ 
+List<Item> items=itemRepo.getAllItems();
+   Here we are going to retrieve list of items from the database. 
+   First step is we are making the call to retrieve the list  of items, the call returns immediately because it is asynchronous and non blocking. The data will be pushed to the appl as a stream and as it is available one by one, meaning one event for every single item in the resultset. We recieve onNext() call from db layer to appl layer for every single item and it will continued until all the items are pushed to the appl and this data flow is called event driven stream
+    Basically we are not blocked and data is pushed to the appl, now once all the data is pushed we receive an event called onComplete() which means all items are pushed and here is an onComplete event which tells that we dont have any more data 
+ 
+Error Flow
+   We make call to database as like previous example and the call returns immediately,after the first onNext() call which return first item because of some reason we got an exception, in that case instead of abruptly exiting the execution flow which is how imperative style works. 
+    But here it is going to send an error event to let the appl know something unexpected happened, so after this event has received we can take care of handling how u want to recover from that exception
+    
+No data:
+   In case of no data flow (ie) for a given search of query there is no result then in that case we just get onComplete() event  from database layer
+ 
+Save data:
+   We discuss save data where return type is void, 
+       itemReactiveRepo.save(item);
+  The code makes a call to the database to save the item, in those case if save is successful we get onComplete() event or if save is unsuccessful for some reason then we get onError() event 
+ 
+Data flow as event driven stream
+  1. onNext(item) - data stream events
+  2. onComplete() -  completion/success events
+  3. onError() - error events
+ 
+Functional Style code
+    - similar to streams API
+    - easy to work with lambdas 
+ 
+Back Pressure in data streams
+    Reactive programming supports back pressure, if the data source producing more data than we expected then there is a way for the appl to provide a feedback to the data source stating u need to slow down until a catch up , this option is handy when it comes to build stable system in reactive programming
+Previously we talk about a data flowing as an event driven stream which means requesting for data and the data flowing to the appl as a event driven stream which is otherwise called Reactive Stream
+    - Reactive stream specification is nothing but the specification or rules for a reactive stream to follow. In OOPS we have features like inheritance, encapsulation, polymorphism etc whatever code that we write in OOPS should relate to these concepts 
+   - Likewise this specification has rules on how the reactive programming code that we write should follow.
+   - who created the specification?
+         Engineers from major companies like Pivotal, Netflix, Lightbend and Twitter etc got together and created the reactive stream specification
+   - The specification has 4 interfaces
+         Publisher, Subscriber, Subscription, Processor
+All of these interfaces talk to each other in order for whole reactive stream to flow
+ 
+1. Publisher
+  - It is simple interface with single method called subscribe() which accepts subscriber instance, by making this call the subcriber registers to the publisher
+    public interface Publisher<T> {
+         public void subscribe(Subscriber<? super T> s);
+    } 
+Publishers are data producers basically the data source. The example of publishers are database, external service  etc
+ 
+2. Subscriber interface
+    - It has 4 methods
+   public interface Subscriber<T> {
+       public void onSubscribe(Subscription s);
+       public void onNext(T t);
+       public void onError(Throwable t);
+       public void onComplete();
+  }
+onNext() is data stream, onComplete() is signal for no more data, onError() is signal that error happened, onSubscribe() which has subscription object as argument 
+ 
+3. Subcription interface 
+      It has 2 methods
+    public interface Subscription {
+        public void request(long n);
+        public void cancel();
+    }
+ 
+ 
+Publisher/Subscriber Event flow
+     We have publisher at top and subscriber at bottom, publisher is data producer or data emitter, subscriber is one which is going to read the data from the publisher. 
+    1. The subscriber is going to invoke subscribe() of publisher and passes the instance of the subscriber as an input. 
+    2. After that publisher is going to send a subscription object to Subscriber confirming the subscription is successful 
+    3. By default the request method is going to request for all the data and whatever data that you have give it 
+    4. Lets publisher is a database and is going to return 100 items in that case there will be 100 onNext() event with each event representing a row will be sent to the subscriber
+    5. Once all the data is sent, then we will receive onComplete() event that will be sent to the subscriber 
+    There is an option for the subscriber to provide a number to the publisher asking for a specific number of data with request(n). For example out of 100 matching items u just need 2 of the items from the publisher, in that case we pass request(2) then it is going to give 2 onNext() event followed by that we get onComplete() event
+   Basically this concept is called back pressure where subscriber has a control on how much data is need from the publisher. If there is any error in whole workflow then it will be receiving an onError() event
+   The subscriber has the option to call the cancel() in the subscription that is received from the publisher, which means we are cancelling the subscription and the publisher is not going to publish any event to the subscriber
+ 
+4. Processor interface
+      - It is combination of Publisher and Subscriber interface 
+  public interface Processor<T,R> extends Subscriber<T>, Publisher<R> {
+ 
+}
+ 
+ 
+Project Reactor 
+    - It is implementation of Reactive Streams Specification
+    - It is also called Reactive Library, any module that implements Reactive stream specification is known as reactive library
+    - Spring Webflux uses project reactor by default 
+ 
+3 types
+1.Reactive Libraries
+     - It is implementation of Reactive streams specification like Publisher, Subscriber, Subscription, Processor
+     - We have different Reactive Libraries like
+   1. RxJava   2. Reactor  
+   3. JDK 9 itself has Flow Class with reactive streams
+ 
+2. Spring webflux uses Project Reactor
+ 
+3.Reactor or Project Reactor
+    - Build and maintained by Pivotal
+    - Default library that comes with spring boot for writing reactive programming code
+ Project Reactor 
+  - It have different modules, but we discuss about
+1. reactor core
+2. reactor test
+3. reactor netty 
+4. reactor extra
+5. reactor adapter
+6. reactor kafka
+7. reactor rabbitmq
+ 
+ 
+reactor core 
+   - core library of Project reactor
+   - It has implementation of Reactive streams specification
+   - To work with reactor core we need minimum Java 8 
+   - Flux and Mono are two important classes which are the implementation of the reactive streams specification. These are the reactive types of project reactor
+   - Flux is a class which represents 0 to n elements
+   - Mono is a class which represents 0 to 1 elements
+ 
+Reactive API in Spring Boot
+1. Create ReactiveSpringBoot project with reactive web, lombok . Apart from that ur pom.xml will have project reactor which is default reactive library that comes with spring for flux.
+   - The default server is Netty 
+   - No reactive mysql connector is available
+   - If u expand the dependency of project reactor, u can see 3 dependency called project reactor core which has all the flux and mono reactive types, other is reactor test used for testing flux and mono because u cant write it as unit test cases, next is reactor netty which is default server for reactive 
+ 
+2. Next enable lombok dependency for ur project 
+ 
+3. We write test cases for flux and mono and then we study about those concepts
+  - Create FluxAndMonoTest.java
+  - Create fluxTest(), first we will create flux using just() and only way to access elements from flux using subscribing to it, without subscribing there is no point  in flux. When u subscribe thats when the flux is going to start emitting the values to the subscriber 
+ 
+@Test
+public void fluxTest() {
+   Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot");
+   stringFlux.subscribe(System.out::println);
+}
+ 
+-Run as Junit test
+-Now it will print the values one by one so as soon as you subscribe, what this flux does is its going to pass the elements to the subscribe() one by one so it prints the value one by one 
+ 
+4. Consider some error happens, in that case subscribe() has overloaded method of handling that.
+   stringFlux.subscribe(System.out::println,
+         (e)->System.out.println(e));
+  In order to attach an error to flux we have concatWith() with we are attaching an exception
+    Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot")
+     .concatWith(Flux.error(new RuntimeException("Exception occured")));
+stringFlux.subscribe(System.out::println,
+         (e)->System.out.println(e));
+ 
+ 
+Here the data is going to flow to the subscriber as events, as soon as we call subscribe(), a subscribe event is send to the flux and from there it send the events using onNext() and when there is exception its going to send u onError() with exception and send to subscribe() second argument
+   In order to see those events, flux have log() which is used to log all the events that happens behind the scenes when u call subscribe()
+ 
+Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot")
+      .concatWith(Flux.error(new RuntimeException("Exception occured")))
+              .log();
+  stringFlux.subscribe(System.out::println,(e)->System.out.println(e));
+ 
+When we run the code,the first step is onSubscribe(), after that we have onRequest() which means the request call with unbounded, basically subscribe request for whatever data u have till maxvalue. As soon as flux receives the request unbounded call, its going to send element one by one that why we se onNext() and then pass the element and print it and it pass next elemt like that, since we have error that why it ended with onError() event. If there is no error then we receive onComplete event 
+   
+5. Now comment concatWith() and run it, now we can see the process end with onComplete event
+ 
+6. Now we check after the error whether flux will emit an event or not, for that we create concatWith() after an exception
+Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot")
+                                                .concatWith(Flux.error(new RuntimeException("Exception occured")))
+                                                .concatWith(Flux.just("After error"))
+                                                .log();
+ 
+In this case it wont print "After error" after an exception occured because once the error is emitted from flux then it is not going to send any more data 
+ 
+7. subscribe() takes 3rd parameter also which gets notified whenever there is onComplete event 
+ 
+Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot")
+              .log();
+stringFlux.subscribe(System.out::println,(e)->System.out.println(e),()->System.out.println("Completed"));
+ 
+ 
+Writing Junit test for Flux
+1. Now we are going to test flux without any error, so we are not going to have error part 
+ 
+Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot").log()
+ 
+We are going to test the elements inside the flux which is spring, spring boot, reactive spring boot and the order in which elements are flowing to the subscriber 
+   In order to test the elements, reactor test is a module that we are going to use it and it has class called StepVerifier class. We write StepVerifier class which contains create() method which takes flux as argument
+          StepVerifier.create(stringFlux);
+  Next we have to define what is expected, for that we use expectNext() with 3 values and finally we have verifyComplete() for completion of flux
+   StepVerifier.create(stringFlux)
+          .expectNext("Spring")
+          .expectNext("Spring Boot")
+          .expectNext("Reactive Spring Boot")
+          .verifyComplete();
+If we change the order, then the test case it would be failed. So this test case make sure that we are getting the elements from the flux in the order that we have it here 
+  The difference between 2 methods is that subscribe() is one which is going to start the whole flow of the flux to pass the elements from flux to the subscriber,  but here StepVerifier take care of subscribing to the flux and then asserting the values on the flux
+   When we comment verifyComplete() and run then we wont get any output because verifyComplete is a call which is actually equivalent to subscribe which is going to start the flow of elements from the flux.
+ 
+   Instead of defining expectNext() multiple times, we can define in a single line also 
+  .expectNext("Spring","SpringBoot","Reactive spring boot")
+ 
+  @Test
+              public void fluxTest_WithoutError() {
+                             Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot");
+                             StepVerifier.create(stringFlux)
+                             .expectNext("Spring","SpringBoot","Reactive spring boot")
+         //.expectNext("Spring")
+         //.expectNext("SpringBoot")
+         //.expectNext("Reactive spring boot")
+         .verifyComplete();
+              }
+ 
+2. Next we create fluxTest_WithError() to check for errors. 
+   Here error is going to be last event, because we provide concatWith() which generates the error. In order to test the error case we have expectError() followed by verify(). verify() is one which start the whole flow of flux to subscriber 
+ 
+@Test
+              public void fluxTest_WithError() {
+                             Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot")
+                                                          .concatWith(Flux.error(new RuntimeException("Exception occured")));
+                             StepVerifier.create(stringFlux)
+         .expectNext("Spring")
+         .expectNext("SpringBoot")
+         .expectNext("Reactive spring boot")
+         .expectError(RuntimeException.class)
+         .verify();
+              } 
+ 
+If you want to verify only the message inside exception, for that we have expectErrorMessage(), we cant have both expectError() and expectErrorMessage()
+ 
+3. We dont want to validate all values, we want to validate the number of elements that particular flux is gonna emit, in that we use expectNextCount()
+ 
+@Test
+              public void fluxTestCount_WithError() {
+                             Flux<String> stringFlux=Flux.just("Spring","SpringBoot","Reactive spring boot")
+                                                          .concatWith(Flux.error(new RuntimeException("Exception occured")));
+                             StepVerifier.create(stringFlux)
+         .expectNextCount(3)
+         .expectErrorMessage("Exception occured")
+         .verify();
+              }
+ 
+Writing Junit test for Mono
+1. Create monoTest(), we are creating Mono with just() which takes only one element 
+ 
+@Test
+              public void monoTest() {
+                             Mono<String> stringMono=Mono.just("Spring");
+                             StepVerifier.create(stringMono)
+                             .expectNext("Spring")
+        .verifyComplete();
+              }
+When we run verifyComplete(), first call is onSubscribe() then we request for unbound data but in mono it is always 1 data so we got next event which is onNext from Mono and then onComplete event is called 
+ 
+2. Next we check errors in Mono, we create monoTest_Error()
+ 
+@Test
+              public void monoTest_WithError() {
+                             StepVerifier.create(Mono.error(new RuntimeException("Exception Occured")).log())
+                             .expectError(RuntimeException.class)
+        .verify();
+              }
+ 
+ 
+Introduction to Spring boot 2
+   - Introduce with new module called Spring Flux as part of Spring 5
+ 
+1. Goto https://spring.io/reactive
+2. You can see table dedicated for Springboot 2
+      We have Reactor at top which is Project Reactor which has Reactive Stack which refers to Spring Flux and Servlet Stack which refers to Spring MVC 
+   
+Reactive Stack:
+     Spring WebFlux is non blocking web which means async way of communicating over the network. To facilite this communication we need non blocking servers such as netty, servlet3.1 or above containers
+   In reactive stack there is no place for Servlets which is complete shift since we have non blocking interactions over network so we have reactive streams adapter 
+   Even security layer should be non-blocking so we have spring security reactive for that purpose and then we have Spring WebFlux which has annotated controllers and functional endpoints to handle the HTTP requests, in order to interact with db in non blocking way we have dedicated reactive modules for Mongo, Cassandra, Redis, Couchbase and R2DBC for relational db 
+ 
+Servlet Stack
+    It is old spring MVC which is thread per connection module which uses servlet
+ 
+https://docs.spring.io/spring-framework/docs/current/reference/html/web-reactive.html
+ 
+ 
+Example 2:
+1. In same ReactiveSpringBoot project, create FluxAndMonoController annotated with @RestController
+ 
+2. We create GET request called "/flux", this method returns Flux which means 0 to n elements
+ 
+@GetMapping("/flux")
+public Flux<Integer> returnFlux() {
+     return Flux.just(1,2,3,4).log();
+}
+Run the appl which runs in Netty server since it is non blocking way
+ 
+Run as http://localhost:1234/flux - will display 1,2,3,4 in the browser but in the console u can see onNext event will be generated for each element and finally onComplete event
+ 
+Previously we discuss in Flux and mono, this happens only when we subscribe to it, but when the browser hits the endpoint, the browser is like a subscriber which is asking for the data so the first call is that the subscription is sent back to browser, after that there is a request call and all elements are sent back to browser, so browser is the one which is a subscriber of this flux 
+ 
+3. In order to differentiate response that comes from Spring MVC and Spring Webflux, so now we introduce delay for 1sec, so each element is going to have a delay for 1sec
+ 
+@GetMapping("/flux")
+              public Flux<Integer> returnFlux() {
+                   return Flux.just(1,2,3,4)
+                                            .delayElements(Duration.ofSeconds(1))
+                                            .log();
+              }
+ 
+-Restart the appl, when we run http://localhost:1234/flux, it will take 4 sec to reload the browser and display the result
+    In the endpoint, we didnt mention what type of return type it is returning to the browser, so by default it returns JSON, so the browser wait until all the elements are returned and then display. Since browser cares about what is return type so it wait until all elets are returned and then display
+ 
+4. Now we are going to return stream instead of JSON 
+ 
+@GetMapping("/fluxStream", produces=MediaType.APPLICATION_STREAM_JSON_VALUE)
+public Flux<Integer> returnFluxStream() {
+    return Flux.just(1,2,3,4)
+                                            .delayElements(Duration.ofSeconds(1))
+                                            .log();
+} 
+ 
+Here we inform the client whatever producing is a stream kind of value
+ 
+-Restart the appl, when we run http://localhost:1234/fluxstream, now we can see result is rendered as stream 
+ 
+ 
+Junit: Test Reactive API using WebClient 
+    Writing Junit test cases for the endpoints we previously created
+ 
+1. Create FluxAndMonoControllerTest.java, annotated with  @RunWith(SpringRunner.class) and @WebFluxTest
+     @WebFluxTest is used to scan for all classes that are annotated with @RestController or @Controller and more. This @WebFluxTest is not going to scan the classes that annotated with @Component,@Service and @Repository 
+ 
+2. In order to write test case for nonblocking client, spring introduced WebTestClient class which is non blocking client 
+   @Autowired
+   WebTestClient webTestClient;
+ 
+3. Create flux_approach1(), we use instance of WebTestClient followed by get() and uri() which provide the endpoint we are going to connect, next is accept() which provide the mediatype, next is exchange() acts like subscriber and invoke the endpoint as subscription call and started to emit all the values to subcriber, next we are expecting the status to be OK, next is expecting the return result as integer and finally get response body 
+   Next we create StepVerifier and pass the generated flux and we expect the subscription to  be sent to us from this endpoint using expectSubscription(), next we expect the values one by one using expectNext() and finish using verifyComplete()
+ 
+     @Test
+              public void flux_approach1() {
+                             Flux<Integer> integerFlux=webTestClient.get().uri("/flux")
+                                                         .accept(MediaType.APPLICATION_JSON_UTF8)
+                                                          .exchange()
+                                                          .expectStatus().isOk()
+                                                          .returnResult(Integer.class)
+                                                          .getResponseBody();      
+                             StepVerifier.create(integerFlux)
+                                         .expectSubscription()
+                                         .expectNext(1)   .expectNext(2).expectNext(3)
+                                         .expectNext(4)
+                                         .verifyComplete();
+              }
+ 
+4. Create flux_approach2(),
+      we are going to expect the header with content type and next is expectBodyList() with Integer.class, here we are not going to evaluate the values instead we will evaluate the size that are coming from flux using hasSize()
+ 
+@Test
+              public void flux_approach2() {
+                             webTestClient.get().uri("/flux")
+                                                         .accept(MediaType.APPLICATION_JSON_UTF8)
+                                                          .exchange()
+                                                          .expectStatus().isOk()
+                                                       .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8)
+                                                          .expectBodyList(Integer.class)
+                                                          .hasSize(4);
+              } 
+ 
+ 
+Test for infinite Non blocking sequence 
+     We are going to create an endpoint which will generate infinite streams, in case of server side events or stock tickers
+ 
+@GetMapping(value="/fluxStream", produces=MediaType.APPLICATION_STREAM_JSON_VALUE)
+              public Flux<Long> returnFluxStream() {
+                  return Flux.interval(Duration.ofSeconds(1))
+                                                           .log();
+              } 
+ 
+Run the appl, we run http://localhost:1234/fluxStream, we can see events are coming to browser infinitely and in console the events are emitted and that displayed in browser
+  Now if we run same endpoint in another tab http://localhost:1234/fluxStream, it is another instance and start to print from the beginning 
+  Whenever we try to stop  the appl, it will cancel the instance gracefully, it will send cancel() event to these clients 
+ 
+1. Now we write test cases for infinite streams, create fluxStreamTest(). We use same code like flux_approach1 method
+@Test
+              public void fluxStreamTest() {
+                             Flux<Long> longFlux=webTestClient.get().uri("/fluxStream")
+                                                         .accept(MediaType.APPLICATION_STREAM_JSON)
+                                                          .exchange()
+                                                          .expectStatus().isOk()
+                                                          .returnResult(Long.class)
+                                                          .getResponseBody();
+                             
+                             StepVerifier.create(longFlux)
+                                         .expectNext(0l)
+                                         .expectNext(1l)
+                                         .expectNext(2l)
+                                         .thenCancel()
+                                         .verify();
+              }
+ 
+ 
+Build Reactive API using SpringBoot with Mono
+1. We create returnMono() with GET request which returns only single element
+ 
+@GetMapping("/mono")
+public Mono<Integer> returnMono() {
+    return Mono.just(1).log();
+}
+ 
+2. Now we create test case for Mono, here we are requesting for a single resource and get that resource in a non-blocking way 
+   First we use instance of WebTestClient, then we make get() followed by uri(), then accept() followed by exchange() which makes call to endpoint and expect the status to be ok 
+@Test
+              public void monoTest() {
+                             Integer expected=new Integer(1);
+                             webTestClient.get().uri("/mono")
+                             .accept(MediaType.APPLICATION_JSON_UTF8)
+                             .exchange()
+                             .expectStatus().isOk()
+                             .expectBody(Integer.class)
+                             .consumeWith((response)->{
+                                           assertEquals(expected,response.getResponseBody());
+                             });
+              }
+ 
+Spring WebFlux-Functional Web
+     Functional endpoints are lambda based lightweight and functional programming model. This is small library or a set of utilities used to route and handle request 
+   1. Use Functions to route the request and response
+      Idea behind the functions to handle the incoming requests and response
+   2. Functional web contains 2 parts called RouterFunction and HandlerFunction 
+ 
+   When client makes a request and the call reaches the server, first the request will be forwarded to router function and if it has an appropriate mapping then the request will be forwarded to the handler function.
+   Handler function is the one which is going to do the complete processing of reading the request, processing the request and sending response back to the server 
+ 
+RouterFunction
+   - used to route the incoming request,  it is equivalent to @RequestMapping annotation which has request url to map the request 
+ 
+HandlerFunction
+   - Handles the request and response, equivalent to the method body after the request is received 
+   - HandlerFunction have ServletRequest which represents HttpRequest and ServletResponse represents the HttpResponse 
+ 
+Non Blocking endpoints using Handler and Router
+    We are not going to use RestController to create endpoint, instead we use Functional web endpoint  
+1. Create SampleHandlerFunction.java, annotate with @Component so this class to be scanned as bean and using this bean in our router function 
+2. Create a method which returns ServerResponse and going to be Mono, since we are building non-blocking it can be Mono or Flux. We are going to read the request using ServerRequest and send response using ServerResponse with ok() and set content type as APPLICATION_JSON and set the body using body() where we set the actual values which going to emit as part of endpoint 
+   This endpoint is going to return Flux which is enclosed in ServerResponse and returns status code as OK 
+ 
+@Component 
+public class SampleHandlerFunction {
+              
+              public Mono<ServerResponse> getFlux(ServerRequest serverRequest){
+                             return ServerResponse.ok()
+              .contentType(MediaType.APPLICATION_JSON)
+              .body(Flux.just(3,4,5,6).log(),Integer.class);
+              }
+              
+              public Mono<ServerResponse> getMono(ServerRequest serverRequest){
+                            return ServerResponse.ok()
+              .contentType(MediaType.APPLICATION_JSON)
+                             .body(Mono.just(7).log(),Integer.class);
+              }
+ 
+}
+3. Create a router function in RouterFunctionConfig.java with @Configuration and it is responsible to map the incoming request to appropriate handler 
+   Create a bean which return a RouterFunction class and  this method takes HandlerFunction as input and it returns RouterFunctions class with route(), this route method takes the url and provide the type it going to accept and we have provide the handler function
+ 
+@Configuration
+public class RouterFunctionConfig {
+ 
+              @Bean
+              public RouterFunction<ServerResponse> route(SampleHandlerFunction s){
+                             return RouterFunctions.route(GET("/functional/flux")
+              .and(accept(MediaType.APPLICATION_JSON)),s::getFlux)
+              .andRoute(GET("/functional/mono")
+              .and(accept(MediaType.APPLICATION_JSON)),s::getMono);
+                                      
+              }
+}
+ 
+4. Start the appl
+5. Run http://localhost:1234/functional/flux, now it will print 1,2,3,4
+   Now the incoming request is picked up by particular mapping and call handler function called flux() which contains response
+ 
+8. Run http://localhost:1234/functional/mono, now it will print 1
+   Now the incoming request is picked up by particular mapping and call handler function called mono() which contains response   
+ 
+JUnit for Functional Endpoint using WebTestClient
+     We have handler,router package so same package has to be created 
+1.Create SampleHandlerFunctionTest.java with @RunWith(SpringRunner.class)
+   We already discuss, @WebFluxTest will scan only classes with @RestController or @Controller, not the classes with @Component,@Service etc. So here we cant use @WebFluxTest, so instead we use @SpringBootTest. @SpringBootTest dosent automatically read ur WebTestClient, so we have to define @AutoConfigureWebTestClient
+  Next we autowire WebTestClient
+ 
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureWebTestClient
+public class SampleHandlerFunctionTest {
+ 
+              @Autowired
+              WebTestClient webTestClient;
+              
+              @Test
+              public void flux_approach1() {
+                             Flux<Integer> integerFlux=webTestClient.get().uri("/functional/flux")
+                                                         .accept(MediaType.APPLICATION_JSON_UTF8)
+                                                          .exchange()
+                                                          .expectStatus().isOk()
+                                                          .returnResult(Integer.class)
+                                                          .getResponseBody();
+                             
+                             StepVerifier.create(integerFlux)
+                                         .expectSubscription()
+                                         .expectNext(1)
+                                         .expectNext(2)
+                                         .expectNext(3)
+                                         .expectNext(4)
+                                         .verifyComplete();
+              }
+              
+              @Test
+              public void monoTest() {
+                             Integer expected=new Integer(1);
+                             webTestClient.get().uri("/functional/mono")
+                             .accept(MediaType.APPLICATION_JSON_UTF8)
+                             .exchange()
+                             .expectStatus().isOk()
+                             .expectBody(Integer.class)
+                             .consumeWith((response)->{
+                                           assertEquals(expected,response.getResponseBody());
+                             });
+              }
+}
+ 
+ 
+Reactive Spring boot with MySQL database
+   In normal JDBC approach which is taken within the api is blocking within our database operations and we dont have truly reactive application unless we bring non-blocking behavior at the database level
+ 
+R2DBC(Reactive Relational Database Connectivity)
+    
+ 
+a) Using Spring Data R2DBC, tables cannot be created at runtime. We can either create the tables externally or we can create a schema.sql file inside the resources folder and execute them programmatically. For our application, we will create a schema.sql file inside the resources folder with all the DDL statements.
+DROP TABLE IF EXISTS users ;
+CREATE TABLE users ( id INT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, name VARCHAR(100) NOT NULL, age integer,salary decimal);
+DROP TABLE IF EXISTS department ;
+CREATE TABLE department ( id INT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,user_id integer, name VARCHAR(100) NOT NULL, loc VARCHAR(100));
+b) Execute the schema.sql file, for which we need to override the ConnectionFactoryInitializer Bean.
+ 
+@Configuration
+public class CustomConnectionFactoryInitializer {
+    @Bean
+    public ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {
+        ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
+        initializer.setConnectionFactory(connectionFactory);
+        CompositeDatabasePopulator populator = new CompositeDatabasePopulator();
+        populator.addPopulators(new ResourceDatabasePopulator(new ClassPathResource("schema.sql")));
+        initializer.setDatabasePopulator(populator);
+        return initializer;
+    }
+}
+ 
+ 
+1. Create Customer table in mysql
+mysql> use reactive;
+Database changed
+mysql> create table customer(id int primary key auto_increment,name varchar(20));
+Query OK, 0 rows affected (5.20 sec)
+ 
+mysql> insert into customer(name) values('ram');
+Query OK, 1 row affected (0.46 sec)
+ 
+mysql> insert into customer(name) values('sam');
+Query OK, 1 row affected (1.04 sec)
+ 
+2. Create ReactiveSpringBoot-DB project with reactive web, spring data R2DBC, lombok, mysql driver dependency
+ 
+spring.r2dbc.url=r2dbc:mysql://localhost:3306/reactive
+spring.r2dbc.username=root
+spring.r2dbc.password=root
+server.port=1111
+ 
+3. We need to build reactive rest endpoint which provide  crud operation on Customer 
+Create model class called Customer
+ 
+@Table
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Customer  {
+   @Id
+   private Integer id;
+   @Column
+   private String name; 
+}
+ 
+4. Create CustomerRepository which extends ReactiveCrudRepository 
+ 
+public interface CustomerRepository extends ReactiveCrudRepository<Customer, Integer> {
+              Flux<Customer> findByName(String name);  
+}
+ 
+ 
+5. We create CustomerController.java and reactive prog works on Project Reactor which have Flux and Mono 
+  First we want to return list of customers so we will return Flux in case of getAllCustomers()
+  If we want to return single customer then we use Mono for getCustomer()
+  We return single customer object after inserting into db so we return Mono
+  In case of updating the customer, we find the customer by id from database, we convert that customer object using map() and save using flatMap()
+ 
+@RestController
+@RequestMapping("/customer")
+public class CustomerController {
+ 
+              @Autowired
+              CustomerRepository customerRepo;
+              
+              @GetMapping("/all")
+              public Flux<Customer> getCustomers(){
+                             return customerRepo.findAll();
+              }
+              
+              @GetMapping("/{id}")
+              public Mono<Customer> getCustomer(@PathVariable Integer id){
+                             return customerRepo.findById(id);
+              }
+              
+              @PostMapping
+              public Mono<Customer> createCustomer(@RequestBody Customer customer) {
+                 return customerRepo.save(customer);
+        }
+ 
+        @PutMapping("/{id}")
+    public Mono<Customer> updateCustomer(@RequestBody Customer customer,@PathVariable Integer id){
+                             return customerRepo.findById(id)
+                                                          .map((c) -> {
+                                                                        c.setName(customer.getName());
+                                                                        return c;
+                                                          }).flatMap(c->customerRepo.save(c));
+              }
+              
+              @DeleteMapping("/{id}")
+              public Mono<Void> deleteCustomer(@PathVariable Integer id){
+                             return customerRepo.deleteById(id);
+              }
+}
+ 
+6. Start the application
+7. In postman, with 
+GET - http://localhost:1111/customer
+GET - http://localhost:1111/customer/1
+POST - http://localhost:1111/customer - under JSON give
+{
+   "name":"Raj"
+}
+Here we clearly assume that for any new customer, id would be null to successfully save into our database. If we provide any id then we get
+ 
+https://www.vinsguru.com/spring-data-r2dbc/
+org.springframework.dao.TransientDataAccessResourceException: Failed to update table [product]. Row with Id [40] does not exist.
+ 
+This is because we are trying to save a new product. The id field should be null. If it is present, Spring expects the given id to be present in the DB. So we can not insert a new record with the given id. But We can fix this by implementing the Persistable interface. If the isNew method returns new, R2DBC inserts the record with the given id.
+ 
+ 
+PUT - http://localhost:1111/customer/1
+{
+   "id":"3",
+   "name":"Raju"
+}   
+DELETE - http://localhost:1111/customer/1
+ 
+ 
+@Component
+public class RouterHandlers {
+    
+              @Autowired
+    CustomerRepository customerRepository;
+              
+              static Mono<ServerResponse> notFound = ServerResponse.notFound().build();
+ 
+    public Mono<ServerResponse> getAll(ServerRequest serverRequest) {
+        return ServerResponse
+                .ok()
+                .body(
+                                           customerRepository.findAll(), Customer.class
+                );
+    }
+    
+    public Mono<ServerResponse> getId(ServerRequest serverRequest) {
+ 
+        String custId = serverRequest.pathVariable("id");
+        return ServerResponse
+                .ok()
+                .body(
+                                           customerRepository.findById(Integer.parseInt(custId)), Customer.class
+                );
+    }
+    
+    
+    public Mono<ServerResponse> createCustomer(ServerRequest request) {
+        Mono<Customer> customerMono = request.bodyToMono(Customer.class).flatMap(customer -> customerRepository.save(customer));
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(customerMono, Customer.class);
+    }
+   
+    public Mono<ServerResponse> deleteCustomer(ServerRequest serverRequest) {
+ 
+        String id = serverRequest.pathVariable("id");
+        Mono<Void> deleteItem = customerRepository.deleteById(Integer.parseInt(id));
+ 
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(deleteItem, Void.class);
+    }
+}
+ 
+ 
+@Configuration
+public class ReactiveConfig {
+ 
+    @Bean
+    RouterFunction<?> routerFunction(RouterHandlers routerHandlers) {
+ 
+        return RouterFunctions.route(GET("/rest/customer/all"), routerHandlers::getAll)
+                .andRoute(GET("/rest/customer/{id}"), routerHandlers::getId)
+                //.andRoute(POST("/rest/customer").and(accept(MediaType.APPLICATION_JSON)),routerHandlers::createCustomer)
+                .andRoute(POST("/rest/customer").and(contentType(MediaType.APPLICATION_JSON)),routerHandlers::createCustomer)
+                .andRoute(DELETE("/rest/customer/{id}").and(accept(MediaType.APPLICATION_JSON))
+                        ,routerHandlers::deleteCustomer)
+                .andRoute(PUT("rest/customer").and(contentType(MediaType.APPLICATION_JSON))
+                        ,routerHandlers::createCustomer);
+                
+    
+    }
+ 
+}
+ 
+ 
+Spring Webclient
+    Spring webclient is a new addition to the spring ecosystem through which u can build modern Restful API clients 
+ 
+What is Spring WebClient?
+    - Released as part of Spring5
+    - Part of the Spring WebFlux module
+    - It is Functional Style API
+    - Using WebClient we can build both synchronous and asynchronous Rest API client 
+    - Spring webclient is asynchronous by default 
+ 
+Why WebClient?
+     - RestTemplate is one of popular Rest client as part of Spring framework. But from spring 5.0, the non blocking reactive WebClient offers a modern alternative to RestTemplate with support for both sync and async as well as stream scenarios
+     - RestTemplate will be deprecated in future version, and stop using RestTemplate as part of our appl
+ 
+1. Create ReactiveSpringBoot-WebClient which is going to communicate with ReactiveSpringBoot-DB using webclient
+ 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Customer {
+              private Integer id;
+              private String name;
+              public Customer(String name) {
+                             super();
+                             this.name = name;
+              }
+}
+ 
+ 
+2. Create CustomerRestClient.java
+ 
+@RestController
+@Slf4j
+public class CustomerRestClient {
+              
+              private WebClient webClient = WebClient.create(http://localhost:1111);
+ 
+              @GetMapping("/customer")
+              public Flux<Customer> retrieveAllCustomers() {
+                             return webClient.get()
+                                                          .uri("/rest/customer/all")
+                                                          .retrieve()
+                                                          .bodyToFlux(Customer.class);                                                
+              }
+              
+              @GetMapping("/customer/{id}")
+              public Mono<Customer> retrieveCustomerById(@PathVariable("id") int customerId) {       
+                             return webClient.get().uri("/rest/customer/{id}", customerId)
+                                  .retrieve()
+                                  .bodyToMono(Customer.class);
+              } 
+              
+               @PostMapping("/customer")
+              public Mono<Customer> addNewCustomer(@RequestBody Customer customer) {
+                                     System.out.println(customer.getName());
+                          return webClient.post().uri("/rest/customer")
+                                           .contentType(MediaType.APPLICATION_JSON)
+                                           .accept(MediaType.APPLICATION_JSON)
+                                  //.syncBody(customer)
+                                           .body(BodyInserters.fromValue(customer))
+                                  .retrieve()
+                                  .bodyToMono(Customer.class);
+              }
+ 
+@PutMapping("/update")
+              public Mono<Customer> updateCustomer(@RequestBody Customer customer) 
+               {
+                             System.out.println(customer.getName());
+                   return webClient.put()
+                       .uri("/rest/customer")
+                       .contentType(MediaType.APPLICATION_JSON)
+                             .accept(MediaType.APPLICATION_JSON)
+                       .body(BodyInserters.fromValue(customer))
+                       .retrieve()
+                       .bodyToMono(Customer.class);
+              }
+              
+               @DeleteMapping("/customer/{id}")
+              public Mono<Void> delete(@PathVariable("id") Integer id) 
+               {
+                   return webClient.delete()
+                       .uri("/rest/customer/{id}", id)
+                       .retrieve()
+                       .bodyToMono(Void.class);
+              }
+              
+               
+}
+ 
+3. Inside that create retrieveAllCustomers() which retrieve all the customers.
+       - Inorder to make call we need instance of WebClient so we autowire it. Webclient API is functional style API so it give what kind of method we want to perform
+      - To fetch all customer use get endpoint so we use get() and followed by we pass url using uri() and followed by retrieve() which make the call to the endpoint and we get response object 
+     - The response for this endpoint returns multiple customers so we use bodyToFlux() and collect this value as list using collectList()
+     - Since by default WebClient is async but in order to make WebClient instance behave like synchronous client we need to use block()
+ 
+ 
+ 
+ 
