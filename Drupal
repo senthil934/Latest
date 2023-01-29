@@ -1,0 +1,2964 @@
+Drupal
+    Drupal is content management system which came in year 2001 for developing dynamic websites 
+    Drupal is CMS with tens and thousands of add-on features 
+
+What is CMS?
+    In old days we would create webpage files that interlinked between each other using HTML, upload them to the internet and we have 10 or 100 or 1000 pages on website, but each page was its own separate file, but it is not the efficient way to manage a large website
+    CMS that comes along and says, when you come to a webpage and click on a link, the first thing that happens is CMS which in our case is Drupal which made up of PHP, Ajax, JS and brings will all kinds of functionality, so we want the content from this particular area of the website and all of the content is stored in a database. So when we want that content to have particular look and style, so Drupal will have a database that contains the content and the theme that holds all of the look and feel and design of our site
+     So when someone says that we have updated our logo and we need to update thousand pages on ur website, so CMS like Drupal says we will update in one place and ur entire site would be updated in an instant 
+
+Drupal History
+     Drupal is open source so therefore Drupal is free. Drupal was founded in 2000 by Dries Buytaert 
+
+2000 - A chat platform in a Dorm room
+2001 - 1.0,2.0,3.0
+2002 - 4.0
+2007 - 5.0 - stable version of Drupal released
+2008 - 6.0
+2011 - 7.0
+2015 - 8.0
+2020 - 9.0
+
+Drupal has become core CMS that has add-ons called modules and themes, they can be all packaged up into Distributions and there is huge community around drupal
+    whitehouse, weather.com, harvard university , dallas cowboys, lady gaga uses Drupal 
+
+Why Drupal?
+1. It is free and completely open source project with some incredibly powerful features
+2. It is flexible - Drupal is one of adaptive systems. Drupal works with sophisticated websites that require many different custom types, developers use it as both a CMS and as a web development platform 
+3. It is mobile ready - we can view and administer every page on drupal site from any device we choose 
+4. Fantastic for big projects from whitehosue.gov to weather.com, drupal can handle ur biggest project. Drupal shines with more complex websites, its great solution for the people who want to build feature rich website, and its great solution for large enterprises 
+5. Friendly, Social and Searchable - Drupal helps people to find my site and my content, also drupal allows site editors to add tags, descriptions, keywords and human friendly urls
+6. Safe and secure - Drupal keeps ur sites afe with regular security updates like hash passwords, session id's thet change when permissions change, text format permissions, restricting user input etc 
+7. If we need to extend ur drupal site from what comes out of the box, there are 1000 and 1000 of modules that add features to ur drupal site, we can have multiple themes or versions of themes on same site and we have complete control over the visual presentation of website data
+8. Drupal have active support community 
+
+
+Many refer Drupal as CMS or framework and drupal.org states that drupal can be used to build anything from a personal blog to an enterprise appl. When we think about drupal we typically think about open source code that when combined makes up drupal, this code includes drupal code where we get when we download drupal from drupal.org and contributed modules and themes 
+    Drupal is more than code, it is international community of people to share ideas, help each other, work together to improve the internet, one contribution at a time. Drupal is web development framework 
+
+Drupal Installation
+     Drupal needs AMP(Apache, MySQL and PHP) stack or similar to run Drupal, there are other webservers and database options for running drupal but these are recommenended once and simpler to start 
+    In order to run drupal on local system or webserver, it need to run on AMP stack or similar. Many users develop on linux use virtual box setup, in case of MAC or windows user which use MAMP(My Apache+Mysql+PHP) OR XAMPP which is other tool used to run apache, mysql, php on ur loacl computer 
+
+XAMPP/WAMP/MAMP/LAMP
+   - Apache
+   - MySQL
+   - PHP
+   - W: Windows
+   - M: MacOS
+   - L: Linux
+- We use XAMPP as local env
+
+1. Install XAMPP
+  start apache, mysql in xampp panel
+     -If mysql is already installed on 3306, stop the service which is running from services.msc and then start it
+     - Click Netstat give > apache2 -v, if it is not responding it is problem with port no
+     - Goto xamp/apache/conf/httpd.conf - edit 
+Listen 8012
+ServerName localhost:8012
+     - Now start Apache
+
+2. localhost:8012/phpmyadmin - It will start the php admin page
+
+3. Install composer from https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos
+
+4. check cmd prompt 
+>composer
+
+5. Download Drupal9 from https://www.drupal.org/download - click download.tar.gz
+
+6. Extract drupal9 inside xampp-htdocs-Drupal9.3.6-Rename to demo1
+
+7. Run localhost:8012/demo1
+       - Choose language: English, so that admin interface will be in english language 
+       - Installation Profile: Standard for majority of the sites we develop, minimal for advance users and we intend to customize the drupal site we are setting up 
+       - Click Continue anyway
+       - Now goto htdocs/demo1/sites/default/settings.php file
+            Here in $databases:[] is empty
+  -Set up database - This is where verification requirment happens on backend side and it just making sure that the env we have setup is capable of running drupal site. Drupal is CMS  and as such it needs a place to store that content and store the activity that happens with that content
+   Some configuration element is also stored in drupal database, one of difference between drupal 7 and drupal 8 is that drupal 8 has taken some of the configuration settings out of being installed in database and put them into the code. We need to connect to database before we continue, the database has already have been setup whenever we set the environment, so we need to configure it 
+       - Database name: demo1
+         username: root
+         Password: empty password 
+       - Now goto localhost:8012/phpmyadmin, it will create demo1 db with some default tables 
+       - Now goto htdocs/demo1/sites/default/settings.php file
+            Here in $databases:will be created based on configuration given 
+
+8. Now the drupal site is installed and we need to setup basic configuration settings for the site before we move on and start working with customization 
+Site name: Tasty Cakes for All 
+    - what is this site is for, in our case if ur company is called Tasty Cakes for All, so we provide sitename as Tasty Cakes for All, which provide worshops on methods for creating treats with consideration for food allergies and sensitives. It also provide a database that contributed to invite individual who might have valuable recepies to share 
+
+Site email address: communications@tastycakesforall.com
+   It is system email address  
+
+Site maintenance account: 
+Username: tc4a
+     It is critical user on site, mostly user1. user1 is always powerful account on ur site, this is the user which can do anything including serious harm to the site. It is also good idea that user account should not have username as "admin" because this is most likely username that the user account will be on any content management site and so its the one hacker will try to attempt to get into the site 
+
+Password: password
+Email address: siteadmin@tastycakesforall.com
+    This is the email address that will be used, if we forget the user account password and need to have password resets 
+
+Regional settings:
+    All of the info we setup in this configuration is changeable later on (ie) if we want to change the email address or sitename or username or password. Regional settings is also changeable later on, however its the one section that we really want to get correct when u first install drupal site, because consider if we have any content on ur site (ie) date or time sensitive we want to make sure that date and times on the content are in the region that ur site events will actually be with them 
+    If we change regional settings after date and time content is created, it is possible that ur configuration will become little bit messy and we have to go back and troubleshoot 
+   Default country: India
+   Default Time zone: Kolkatta
+
+Update Notifications:
+    This can also be changed later on in this process
+
+9.Click Save and continue
+     It will automatically take to home page of our new site. On top of site we have black bar and grey bar which give access to all kind of site configuration to us, this and all available to us because we logged in to as tc4a user which is user1 account 
+
+10. Open new ignoito window and run, localhost:8012/tc4a
+    When working on drupal site, it is often helpful to open sites in 2 different browsers, one in which we are logged in and one in an anonymous user and make easier in catch errors and settings of the machines 
+    When we open the site in different browser, the site works differently, first on left side we dont have search bar, no add content link, on top the admin bars are not available. This is the very helpful way to develop specially once we start getting into setting permission over for different user experiences and if we have multiple user roles not just anonymous and administrator, we may choose to have 5 or 6 different browsers on ur computer and actually look at the site as different users 
+
+    Drupal is CMS with the database and user accounts that allows human being to authenticate and make changes to the site 
+
+Directory structure of Drupal tar file downloaded
+    Each dir in drupal folder will contain readme.txt which contain information about what to do and what the directory and how to treat it contents 
+
+1. core - It is the core code for ur drupal site is stored, we should not edit anything in this directory. We need to replace the contents of the dir when doing drupal core security update 
+2. modules - we place contrib modules that u download to extend the functionality of drupal site 
+3. profiles dir is available because drupal community has created number of installation profiles that includes preconfigured and customized elements for drupal to fill the specific solutions. For example we have profiles for commerce, profiles for goverence and profiles for many other types of sites that you want 
+4. themes - we store any contributed themes that we download from drupal.org or any custom theme that we built yourself 
+5. sites - This dir is crucial to ur site when we develop multisites. If we are running only one site from ur codebase, then we primarlily work with default dir inside sites directory 
+    Here we have settings.php and default-settings.php file. settings.php file will contain all of info that our sites needs to run, including the database info 
+    files directory will contain all of temporary files for ur sites such as images, pdfs and cache files. We cant see anything but we can see in existing file
+    Once ur site is installed, if we open demo1/sites/default/files we can see config followed by hash code, this is where all the configuration changes made to the site will be stored 
+
+Content Types - Content and Articles 
+     We discuss basic contents and articles which comes with drupal, what makes drupal as CMS as web appl framework is the ability to customize everything
+     So when we first install drupal we end up with front page and configuration options, the front page says "Welcome to Tasty Cakes for All" and on the top we can see configuration options. The most important configuration on ur site is content entry, without content ur site proably dosent serve much of the purpose
+       Since we have currently logged in as administrator so we have admin menu in top which cays Manage, Shortcuts and our user name . The "Manage" tab shows all of configuration access that we have on our site, starting with content
+
+Creating Article:
+1. Click content 
+2. Click Add Content
+       We have 2 options available to us by default (ie) article and Basic page 
+3. Click Article 
+       Title:  Gluten Sensitivity
+       Body: Paste some dummy content 
+       Tags: gluten-free, baked goods
+       Image: stickybuns.jpg
+Once we add image, we get alt text feild, this is very important that we always fill alt text field on any piece of content when we add image, because this is the text that readers and search engines will recieve in the event when image is not available 
+       Alternate text: delicious sticky buns
+4. Click Save and Publish 
+
+Now we can see Glutten Sensivity article page and we can see images, when it is submitted, who submitted, the image, the tags and also comment field, since this particular content type has comment enabled by default 
+
+5. Now we click home page on top, now we have piece of content on front page and this piece of content is an article that we just create. 
+    It displays the smaller version of the image and teaser
+
+Creating basic page:
+1. Click content 
+2. Click Add Content
+3. Click Basic Page - basic pages are for static content that wont change 
+       Title: About Tasty Cakes for All
+       Body: Paste some dummy data
+       Click Menu Settings 
+         - Click Provide a menu link 
+                 Menu Link Title:  About
+                 Parent Item: Main Navigation
+4. Click Save and Publish 
+
+Now we can see just a page without any comment field, no date and time, no author info. On the top we can see the menu navigation "About" and "Home"
+    This shows how much we can create with drupal out of box without doing any customization error 
+         
+Publishing options in Drupal 
+         This options dicates how and where ur contents should displays and all of this options are completely customizable with the configuration
+         For example, complex appl wordpress are possible in which we might require content to go through some kind of approval process before it is visible to public.
+         Here we are going to add piece of content which is article and this time we are not going to follow the default settings all the way through
+
+1. Click Content
+2. Click Add Content
+3. Click Article
+      Title: Peanut as a substitute for Eggs
+      Body: paste some dummy content
+      Tags: gluten-free, baked goods, peanut, egg-free
+      Image: pg-cookies.jpg
+      Alternate text: Peanut butter cookies look very moist even without eggs 
+4. Click Save and Uncheck Published check box 
+         Now we can see article will display in pink shade of background which indicate this piece of content is unpublished, so it wont show up in any of the displays 
+5. Now copy the url and paste in new ignioto window, now it will not display because this content is not published 
+     
+6. Now goto Content - Peanut as a subsitute for Eggs - Click Edit button which will be seen since we have logged in as user 
+    On right side it says "Not Published" and give the timestamp of last time this content is saved 
+
+7. Click Comment settings
+       We have open so users can post comments and closed where users cannot post comments. Since this piece of content is about Peanut as subsititude for eggs and we dont want this post to be discussed more, so we click "Close" for this content 
+
+8. Click Authoring Information
+       We have options to change username of the author for particular content and to change when this particular piece of content is created. This is useful if we are putting content for someone else or if content probably should have published earlier than actually putting it on the site
+       We can leave the authorname and timestamp as such since we have only one user 
+
+9. Check "Published" and Click Save, so that the content will be published in the site and we can see the comments are disabled and 
+    We can login into new incognito window and check the content is display, also Click "Home" page and check whether both contents displayed
+
+10. If we want "Glutten Sensivity" article to be at the top, right now it is after "Peanut as a substitute for Eggs" article 
+
+Click Glutten Sensivity article - Click Edit - Click Promotion Options - Click Sticky at top of lists - Click Save - Click Home menu in the top
+     Now Glutten Sensivity article will move to the top and looks different because this particular article has been deemed special 
+
+11. Click "About" menu
+         Now we can see url for about page as "http://localhost:8012/tc4a/node/2"
+         By default all content in drupal will have node id which is a unique number assigned to each content in ur site, so that it can be referenced by the machine 
+      Click Edit - Cick URL Path Settings 
+URL alias: /about
+     Click Save
+
+Now when we see URL it will be changed as "http://localhost:8012/tc4a/about"
+
+Still now we have covered, drupal content types called pages and articles, we also have publishing options by default to these content types and those publishing options are determine how and where the content created in this content type. So pages meant for static content, by default pages dont have comments, no images, no tags and they can easily placed in menu system
+     Articles are meant for temporary items like news, blogs etc, by default articles have comments, it asks for images, tags and also displays on front page by default, in front page it will show the summary not the entire content. Any content on the site can be either published or unpublished. When the content is not published, it is not visible to public and typically displays with pink background behind the content area, in order to allow to know that this particular content is not published 
+    The editing feature provide access to different promotion controls like we can change authoring information so we can set the content is being authored by different user on different date and time. We can also change the url of content to give friendly path. If the content has commenting available too, then we can determine whether or not the comments to be open or closed. We can also set promotions options for particular content to determine whether or not to show in front page or sticky which means regardless of whatever other options are present in view, the sticky items will come to top
+
+
+Site Information for Drupal site
+    This includes sitename, slogan, system email address, settings for front page, access denied and page not found page 
+
+1. Click Configuration - Under System Click Site Information 
+     We set some of info while installing drupal and now we expand further 
+
+Site name: Tasty Cakes for All
+Email Address: communications@tastyakesforall.com
+      This is original email address for any communication that needs to send out from site such as password reset and some other notification 
+Slogan: A source for information on food sensitivities 
+
+Front page:
+We also have ability to change the url for the front page (ie) when somebody comes to ur website and type top level domain tastycakesforall.com, they will get one page which is ur home page or front page. So just like anyother page on ur site actually has its own node or url 
+
+Error Pages:
+    Default 403 page is the page that user is going to see, if they land on the page for which they dont have permission to view the content 
+    Default 404 page means the url that we enter doesnt have any destination  
+
+When we save and go back to site, we can see the slogan would display in web page 
+
+2. Click Content - Click Add Content - Click Basic Page
+Title: Sorry, this isnt for you!
+Body: I dont think you came here intentionally, so I will not get mad. Please turn around!
+
+Click URL Path Settings
+URL alias: /403
+Click Save
+
+3. Now configure access denied and error page in site Configuration
+Click Configuration - Click Site Information - 
+
+Default 403 page: /403
+
+For 404 error page we actually direct the user to default system search to drupal site (ie) search/node so if the page is not found then the user is automatically directed to search/node
+
+Default 404 page: /search/node
+
+4. Now we run localhost:8012/tc4a/abc, then it will automatically open default search page 
+
+5. Now we open new incognito window and try to access http://localhost:8012/tc4a/abc2, it will go to accessdenied page since we dont login into the page 
+
+
+Navigation toolbar
+    It is the toolbar at the top of site which gives access to all of the configuration option available in Drupal installation
+    Navigation toolbar is black menu which we can see in the top of site when we logged in as administrator user. There are 4 options available in navigation toolbar like Manage, shortcuts, username and toggle option on right side
+
+1. When we click on that toggle option, we can see pencil icon will be appearing all over the interface. This is called quick edit and gives u access to edit ur content inline and we can do changes without going away from home page 
+
+2. Manage
+      When we select Manage option, the bar underneath will show Content, Structure, Appearance, Extend, Configuration, People, Report, Help 
+
+1. Content
+       Content section gives u the ability to add contents, it also gives the ability to look at existing content and go through that existing content in different ways. We have 2 other tabs called Files and Comments
+     Files will give u access to anything thats been uploaded to the sites such as image, pdf or other file type that u have been accepting and we can use this to manage those files or atleast to find out where they are used in ur sites 
+    Comments tab allows you to access comments on ur sites and to find out any comments need to be reviewed or approved and also to find out which content, a comment exists on and also who authored that comment and when the comment was made 
+
+2. Structure - building block of ur site 
+       It gives access to heart of our drupal site, the ability to change apperance on ur site, we can create our own custom content types and those forms will look different from article and basic page content types 
+
+1. Block layout 
+       It gives you access to add or change the blocks on ur site and place them in various regions. So blocks are chunks of content or  information or embedded code on ur site that are separate from content itself 
+
+2. Comment types
+       It is used to change comment forms, we can create comment form which ask user for various specific type of information 
+
+3. Contact forms
+       We can setup specific forms that can be used to contact someone through ur site. For example we might have book or services form on ur site and we might use contact form to do that
+
+4. Content types
+       We create custom content types for ur site and we can customize ur drupal site  
+
+5. Display mode
+        This is powerful element of ur structure options in ur configuration, because this gives the ability to setup how ur content will displayed and create different displays for different purpose 
+
+6. Menus
+      This is ur site navigation, we can also add links and change order of items in menus
+
+7. Taxonomy
+       This is the tool for characterization of content and very useful for setting up searching and for optimizing search engines and for creating navigation system for ur site which make it easy for user to find information that they looking for 
+
+8. Views
+     Views are the heart of how ur content gets displayed on ur site. Views are queries that list out content based on various specific parameters and really important for making ur content easy to find and providing logical structure for ur site 
+
+3. Appearance
+       It is the place where we manage themes, other CMS refer themes as skins or designs. It is used to control ur layout 
+      We can see Bartik is the default theme and Seven would be for admin theme. Here only we control the contributed themes or custom themes we have installed at ur site 
+      We have Settings tab which controls the display of some key elements in ur theme 
+
+4. Extend
+       It is used to add new module or enable modules that are part of core but disabled in default installation. We can also used to update module if there is security update and uninstall module that we decide to that we are not going to use it 
+
+5. Configuration
+       This is where we are going to setup overall settings for ur drupal site like site title or caching settings on ur site such as performance settings. This is also way we can setup profile systems settings and text format that are available to content editors 
+
+6. People
+     Not only as this way we are going to manage the users that have access to ur site, its also a way we are going to set permissions for those users can do and we are going to set user roles
+     Permission setting are based on user roles, an individual users are signed user roles so that they can have access to the permissions designed for that specific roles
+
+7. Reports 
+      It give you access to status reports on ur site including updates available or log messages. If we are seeing lot of issues with ur site, we may look at the log messages to help u identify all those issues are coming from, so that we can fix them 
+
+8. Help 
+      It gives access to lot of documentation, this documentation is created by the community and it is a great place for u to get started as a community contributer because as u r working on ur drupal site, u may find that some documentation is in quite helpful as u needed to be and u on ur own can figure out the solution to something that might be missing and once that happen we can go back into documentation urself and update the documentation so that it can be more helpful for next person who comes along and has same experience as u might have had 
+
+
+Shortcuts
+    This gives u quick access to sections of manage area that u might want to spend lot of time in. By default it has Add Content and All Content, because basically we spend lot of time with our content 
+
+User Account(tc4a)
+     It is the user account, this gives the ability to view, edit user profile and logout 
+
+
+Customizing Shortcuts 
+     To make it easy and quickly get to the choices that u need to use most frequently 
+ 
+1. Click Shortcuts, we can see Add Content and All Content which by default included in drupal installation 
+
+2. Now in this case we want to generate shortcut for comments page
+    Click Content - Goto Comments tab - we can see star like symbol near comment, if u click that it will added as shortcut in the shortcut tab
+    Click Shortcuts and check whether comment is added as shortcut 
+
+3. We can also create custom shortcut menus for different type of users on ur site. For example we have content editor user role and we have a user specifically for comment approval then we can have shortcut menus that specifically focusses on content editing and other shortcut menu that specifically focus on comment management
+
+1. Click Edit Shortcuts - Click Shortcuts under breadcrumbs - Click Add Shortcut set 
+Set name: comment management shortcuts
+Machine readable name: coment-mgt-shortcut
+Click Save
+
+Click Shortcuts under breadcrumbs 
+
+Now we can see 2 shortcut sets have been created, if we click List Links on Default, it shows shortcuts for Add Comment, All Comment and Comments. If we click List links on comment management shortcuts again we can see shortcuts for Add Comment, All Comment and Comments, because we created shortcut set and copied everything from default which is the starting point for any new shortcut set 
+    But now we dont comments shortcut on default set, so we go into default set and remove the comments shortcut 
+
+2. Now we go to our user account(tc4a)
+Click Edit profile - Click Shortcuts tab - Select comment management shortcut - Click Change set 
+
+Now we can see for tc4a user we will have "comment management shortcut" as shortcut set so we can see Add Content, All Content and Comments as shortcuts for this particular user 
+
+
+Regional Language Setting
+      This settings will tell ur site where u have located geographically which is helpful when u have map based information on ur site 
+
+1. Click Configuration - Click Regional Settings under Regional and Languages
+    We can see here what we setup during ur installation process, so we are telling ur site where u r located, what is ur timezone and also we can determine whether or not users can able to setup own time zones 
+   So if ur site needs to be international or needs to span many locations across the country that have different timezones then we can actually allow users to adjust time in their timezones 
+
+2. Click Date and Time format under Regional and Languages 
+     Now we can see all of date and time formats that exists and we can create custom format also 
+
+Click Add Format
+Name: Time Only
+Format String: g:H a   ---- When we add format string which requires PHP to identify the format string to look like. If we dont know the format we can click PHP Manual and get the actual format 
+
+Now we can see custom format has been added and use it later in our site
+
+3. We know that this particular site  needs to be a multilingual site, so we want to extend our site to be multilingual. Language is one of option that comes with Drupal installation, but it is not enabled functionality since many sites dont need to be multilingual 
+
+1. Click Extend - Select Language module - Click Install
+2. Click Configuration - Now we can see Language option under Regional and Language, since we enabled Language module 
+3. Click Languages 
+      Now we can see only language available is English, because thats only we used at installing the site. But we want traditional chinese available to this site as well, because we want chinese people also want to use this site just like English people 
+4. Click Add Language - Select Chinese, Traditional - Click Add Language 
+     Now drupal will install that language and make it available to ur drupal site. We can also set which language is default, in this case we keep english as default language because that is going to be the primary user language on this site
+5. Click Detection and Selection tab - which allows to choose how a language is detected so that the content or interface language that presented to the user is appropriate to that particular user 
+
+6. Click Content Language under Regional and Languages
+     We can make translation available to different types of content on the site 
+Select Content - Click Save Configuration 
+
+7. We can also set date and time formats to be available to specific language
+
+Click Date and Time formats - Edit Time_only 
+
+Now we can see new field with language selection, so we can make this format only to english or chinese or not specified or not applicable, so this date and time format can be used in specific language 
+
+7. When we are visiting configuration section in menubar, we can see an error message as "One or more problems were detected with your Drupal installation. Check the status report for more information"
+   Click Status Report - We can see the problem as "Trusted Host settings" is not enabled 
+
+This status report is also helpful, it also gives u an idea of whats wrong and where we can find out the information about how to fix it 
+
+1. Now we will go to settings.php inside sites/default folder
+
+2. Now we paste the following code in end of file
+$settings['trusted_host_patterns'] = [
+    '^localhost$',
+]; 
+
+3. We dont have permission to edit settings.php, so we change permissions on default directory and settings.php
+
+- Open Git bash
+- sites>chmod 777 default/
+- sites>cd default
+- default>chmod 777 settings.php
+
+4. Reload the page, now we see trusted host is enabled and there is no error in status report 
+
+
+Entities and Nodes
+      Drupal is complex framework that has entire vocabulary that goes with it, understanding that vocabulary makes it easier to get help, to make use of educational resources that are available and also to navigate text as you are learning Drupal. One page that u should always be handy while u becoming Drupal site builder or developer is the glossary page on Drupal.org
+
+Entity
+    - Any defined chunk of data in Drupal. This includes things like nodes, users, taxonomy terms, files, etc. Contributed modules can define custom entities. Each entity type can have multiple bundles.
+    - The best explanation that we can think of to explain this is, how instagram sends data directly to Facebook 
+    Consider we have a photo with description of that photo, we also have comments along with the photo and information on when it is posted and who have posted. All of this bits of info or chunks of data that make up this specific instagram post, and this post as a whole is called entity. It also has a internal entity within it which is the image itself 
+    If we go to facebook, we have instagram account set to automatically post to facebook as well. So this image, the date when it was posted, the caption and all of that information is automatically push over to facebook, because facebook knows how to understand that entity 
+    Entities can also be bundles which are specific implementations of an entity type. So when u send instagram post is a bundle which sends over to facebook 
+
+1. Now we go to drupal site, where we can see 2 entities (ie) 2 article which is a content, we can also see 2 more entities which are the two images associated with each of these articles and those entities are files
+    If we look at "submitted by" information, we can see it is submitted by "tc4a" which is the user that currently logged in and who created these content. That user and any other user on this site is also an entity. Underneath the images, we can see tags and comments, so those tags and comments are also called as entities. Each of these things that exists on the site is chunk of content that define in a very specific way 
+
+Nodes
+    A piece of content in Drupal, typically corresponding to a single page on the site. Nodes are specific kind of entity and all the content enter on to the site like articles, basic pages those are going to be the nodes 
+
+1. Now go to Drupal site - Click Content
+      We have 3 items which is called as node, each one of these items will also have a specific node id, by default that node id will be end of the url on that specific node
+     When we click "Peanut as a Subsitute for Eggs", in the url we can see "/node/3", where 3 is the node id for this specific content and that node id will be unique for each and every content in ur site
+     So no matter what content type we are using, it will become a node and those content types are basic page and article
+
+Creating content type with basic pages
+      We will create content that comes with drupal installation (ie) basic page content. The content we create using this content type will be drupal nodes and we will create this content usinf 3 different ways, so that we can review the differences between the contents display with different choices in the settings
+
+1. Click Content - Click Add Content - Click Basic page 
+Title: Why Tasty Cakes?
+Body: some dummy text
+
+Now we want this in main menu, so we go Menu Setting - Select Provide a menu link 
+
+URL alias: /why
+Click Save 
+
+2. Click Content - Click Add Content - Click Basic page 
+Title: A Celiac's Story 
+Body: some dummy text
+
+Now we want this in main menu but we are not going to put in top level, we want as a sub page for why tasty cakes page, so we go Menu Setting - Select Provide a menu link 
+
+Parent item :  Why Tasty Cakes?
+Uncheck Published
+Click Save 
+
+Now we can see this page is not published and will come with pink background indicate that this content is not published 
+
+Now when u copy the url "http://localhost:8012/tc4a/node/6" and paste in another browser, it will go to access denied page as it is not published 
+
+3. Click Content - Click Add Content - Click Basic page 
+Title: A Nursing Mom's Story?
+Body: some dummy text
+
+Now we want this in main menu, so we go Menu Setting - Select Provide a menu link 
+
+Parent item :  Why Tasty Cakes?
+
+Click Promotion Options - Select Promoted to first page 
+
+Click Save 
+
+Now we can this content, when we go to home page, we can see this content displays on the home page and we can see it displays differently how articles displays. It dosent have submitted by, tags and comments information because it is different type of contents 
+
+4. Click Content
+       Now we can see 3 basic pages we just created, we can see information about those pages including one of them is unpublished and also see those pages behave differently (ie) one of them display on front page and others are simply found through menu system 
+
+Creating content type with articles 
+      Articles are temporary content like blog post, new items which have tags, comments. The content we create as articles will be drupal nodes because a node is piece of content in drupal site. We create article using 3 different settings so that we can see the difference between how they behave 
+
+1. Click Content - Click Add Content - Click Article
+Title: Adventures in Sticky Dough
+Body: some dummy text 
+Tags: gluten-free, baking
+Comment Settings: open 
+Promotion Options: Disable Promoted to first page
+- Click Save 
+
+We can see articles with comments, but when we click on home page we wont see that article in our list of content because it is note promoted to front page 
+
+2. Click Content - Click Add Content - Click Article
+Title: Exploring Spices
+Body: some dummy text 
+Tags: spices
+Image: spices.jpg
+Alternate text: Spices are colorful
+Promotion Options: Check Sticky at top of lists
+URL alias: /spices
+Comment settings: closed 
+- Click Save 
+
+Now we can see this article will have an image but does not have comments and if we goto the home page this article is sticky so it is at very top 
+
+3. Click Content - Click Add Content - Click Article
+Title: The Myth of Healthy 
+Body: some dummy text 
+Tags: gluten-free, health food
+Image: myth.jpg
+Alternate text: Myth of Healthy
+Authoring Information:
+    Now we want to add author info because this shouldnt be the first article posted and we have number of articles already and this is not first one
+Authored on: 02/02/2022 - we change date to some earlier date (ie) we have posted the article today but it think that article is posted while ago
+- Uncheck Published
+- Click Save 
+
+Now we can see the article with pink background since it is unpublished 
+
+
+So here we created 3 content types called article and those 3 articles have different settings, one didnt have image and wasnt promoted to front page, one of them has alias and was promoted to front page and 3rd article is not published so the public wouldnt able to see it and also have different date and time much earlier then when it was actually posted 
+
+- Click Content - Now we can see all contents and these are nodes and many of these nodes have images attached to them
+- Click Files tab - we can see all of the images that have been included on the content and we can find where those images has been used
+   Click 1 Place under used in - It will tell what entity and what type of entity those particular files have been used in 
+
+
+Content Revision
+      The goal of CMS is to enable people of all different roles to easily edit content. In some sites this might need because 1000's of people are managing the content on the site and one person make changes that other dosent understand. When we edit a piece of content in drupal we can set it to store a revision 
+
+1. Click About menu - Click Edit - We are going to change something in the body or format it 
+   Select Create new revision checkbox
+   Revision log message: Contents are highlighted
+Click Save 
+
+Now we can see the edited data and also revision tab and when we click on revision tab we can see the list of all the revisions of this particular content, we can also see the previous revision by clicking on the date and timestamp for that revision 
+
+2. We have many options for filtering the contents in the content types based on type, title etc
+   So we created 6 nodes among which 3 are basic page and 3 are articles. In case if we want publish the articles which is unpublished
+
+Published status: unpublished - Click Filter - Select both the checkbox
+   Action: Publish Content
+   Click "Apply to selected items"
+
+Drupal Blocks
+     Blocks are building block that we can use to make ur site in our own ways. Some blocks are created by modules that we will enable and others are created by menus that we build and others are created by views that we build  
+     In our page, search box is a block, tools box is a menu that displays as block, the content area on ur site is also block called as system block which is generated by Drupal core in order to display all of the key elements of Drupal site
+     Blocks are displayed in regions on ur site, regions are layout area that are defined by theme, ur theme is the code that renders ur design. The different region we are looking at page which include left sidebar where search and tools box are present, content region where we can see articles and basic pages, header region where we have logo, slogan, sitename 
+
+1. Click Structure - Click Block layout - Demonstrate block region(Bartik) 
+    To view what are different blocks present in site
+
+Block Management Page
+     The block management page is accessed under Manage tab
+
+1. Click Structure - Click Block layout 
+           This page will list all available blocks, on the left we can see blocks placed in the region already and on the right we see blocks that are available but not placed
+       We can see the blocks that are listed and we can see the regions in which they are displaying. 
+       In sidebar first we can see multiple blocks in it, we can reorder the blocks by using the handlebars and drag the blocks up down and display in different order. 
+    Previously we use drag handlebars to shift the block order, sometimes this drag handlebars may not be display due to many reasons like wrong versions of jquery or performance issues so everything on ur site is not loaded. In those cases or in case where u want to change the order without using drag handlebars then we can use row weights
+
+1. Click Show row weights 
+      Now we can notice drag handlebars disappear and new column called weight will be created
+      Now we can see sidebar first, where we have actual weights displayed as -6, -5. As a general rule lighter something is higher falls and heavier it is then deeper sinks. So in this case the lighter item with higher negative weight will appear above the heavier items 
+     Tools: 3
+    Click Save
+
+Now we can see search will appear above tools
+
+2. Now we can move blocks from one region to another, for example breadcrumbs currently display in the region called Breadcrumb, but now we want to display in content region 
+    - Now we drag breadcrumb and put into content region -  Click Save blocks
+    - Now click Why Tasty Cakes? - we can see breadcrumbs are displaying in the content region
+
+3. We have disabled region in the bottom, if the blocks are in the disabled region which means that they are not displaying in any region on the site 
+
+4. Blocks layout will contain the blocks which already exist in the system, so some of the blocks which we have created, some of the blocks which are created by the menus or views and some of the blocks that exists because of system blocks when u install Drupal 
+     These blocks are categorized based on how they have been generated, under Lists we have Recent comments, Recent Content and whos online, under menus we have administration, footer, main navigation, shortcuts, tools, user account menu, these are blocks that exists by default when u install drupal 
+     We have system block called Powered by Drupal which is present in the bottom, but we place another Powered by Drupal block in the bottom of content region
+
+- Drag Powered By Drupal and put in Content region 
+- Click Save 
+
+
+Creating Custom Block
+     Consider we want to create quote on left sidebar throughout the site. In left sidebar right now we have search and tools box, so we want one more underneath that with a quote
+
+1. Click Structure - Click Block Layout - Click Custom Block Library - Click Add Custom Block 
+
+Block Description: Food Quote of the Day
+Body: All you need is love. But a little Chocolate now and then dosent hurt
+  -- Charles M.Schulz
+Click Save
+
+It will come to  main block layout page, now we see click Place block in which region we want to place it. Now we want to display in sidebar first,
+Click Place block in Sidebar first - Select custom block we create - Click Save block 
+
+Now we can see custom block will display in left sidebar
+
+2. The previous block created we used own markup, we write the code into text field provided and then we use semantic markup to add blockquote 
+    Now we are going to bring content from 3rd party tool and display on the sidebar as a block 
+
+1. Click Structure - Click Block Layout - Click Custom Block Library - Click Add Custom Block 
+
+Block Description: Spicy Food
+
+Goto https://embed.ly/code - Click Instagram - Copy embed code
+
+Body: Click Source - Full HTML - paste the embed code - Click Save 
+
+ Now we want to display in sidebar first,
+Click Place block in Sidebar first - Select custom block we create - Click Save block 
+
+Now we can see custom block will display in left sidebar
+
+So this is easy way to integrate 3rd party tool using embed code 
+
+3. Now we discuss about settings options available to the blocks, many options are available whether it is custom block or system block 
+   Previously we created custom block which uses embed code from instagram and it is specifically related to tc4a user (ie) admin user on this site, so we want to display this block only on individual profile page and not everywhere on the site
+
+1. Click pencil icon on block - Configure block
+- Uncheck Display title 
+
+Now we want this particular block to display only on one page in site is with Pages tab
+   We want this particular block to only display in user profile page or individual users this instagram account depends on, in order to make this happen we need to find out the url of particular user 
+
+Click tc4a in new tab - View profile - We can see url tied to that /user/1
+
+Now come to configure tab
+Pages: /user/1* - so anything of user with /user/1 and anything else that come out after, this block should display on any of those pages, however it should not display on anyother pages
+
+Click Save block 
+
+Now it wont display the instagram block in main page, but it will display on localhost:8012/tc4a/user/1
+
+
+Menus
+    Contents is most important element of ur site, the menu system enables ur user to access that content, so menus are ur site navigation 
+     The main navigation menu is currently displaying as the primary menu like About, Home, Why Tasty Cakes?. This is primary menu or top level navigation of the site, it leads to landing pages for different section of the site.
+    Administration menu is the menu at top of browser when u logged in, so the black Manage bar with grey content, structure, appearance etc. We also see user account menu in default layout which says My Account and logout. All of these menus can be customized and we can create new ones 
+
+1. Click Structure - Click Menus
+        We can see list of all of menus that exist on our site and we can make changes to those particular menus. We can see tables which list the titles for all of menus that comes with Drupal installation as well as description of each menu and operations that allow us to edit the menu or add link to these menus 
+
+2. Click Edit menu on Main Navigation 
+      We can change the title which we saw as Main Navigation when we look at the menu list and we change the summary which is description that we see about the menu. It is good idea to put title and summary about menus because when we coma back to the site a year after u developed, we may not remember exactly why u made the menus. If we have multilingual enabled we can also choose what language the menu is going to display, for example if we do have chinese language audience we can menu that specifically for chinese speaking viewers and dosent display for English viewers. So we 3 menus on top level and 2 menus under Why Tasty Cakes?. Each of these menu link also has operations associated with it including edit and delete link
+
+3. Click Add Link
+      The link can be either external or internal, external means that the link is going outside the site whereas internal means it is going to the page within the site. If it is internal link we will type the title of page that we want to goto and for external we have to provide the URL 
+
+Menu Link Title: Celiac Disease Foundation 
+Link: http://celiac.org/
+Enabled: determines whether ur link is visible in ur menu 
+Click Save
+
+Now we can see Celiac Disease Foundation link will be part of top level navigation. Unpublished pages will never show in menu until they are  published, this how prevents users from accidently landing on content which they shouldnt see. The other thing that really great about Drupal and Drupal menu system is that links to contents to which users does not have permission to access will not displayed. So if we have content or view that should only be accessed by admin users it will not display in menu if the user is not authenticated as admin users 
+
+4. Now we rearrange the menu using drag handlebar like Home, About, Why Tasty Cakes, Celiac Diseases Foundation 
+   Click Save 
+
+Now menu order makes more sense based on the navigation we created.
+
+5. Adding new menu to site 
+        Create our own menus and add them in various region on ur site 
+
+Click Structure - Click Menu - Click Add Menu
+
+Title: External Resources
+     Machine names will only have alphanumeric characters, no spaces, can have underscores and hypens, this is the unique name that database uses to understand this particular element, we can machine name if needed but it can be helpful to keep machine name that drupal creates because that machine name is unique 
+
+Administrative Summary: A list of links to other blogs about food sensitivities
+
+Menu Language: English
+     When u create this menu, if u have multilingual setup on ur site which we do, we can choose what language this menu displays, when we say not specified it will display in any language 
+
+Click Save
+
+-Now we add links to the menus we created - Add Link 
+
+Menu link Title: Elana's Pantry
+Link: http://elanaspantry.com
+Parent Link: <External Resources>
+Click Save
+
+Menu link Title: Gluten Free Girl
+Link: http://glutenfreegirl.com
+Parent Link: <External Resources>
+Click Save
+
+Menu link Title: Gluten Free Goddess
+Link: http://glutenfreegoddess.blogspot.com
+Parent Link: <External Resources>
+Click Save
+
+Menu link Title: Gluten Free on a Shoestring
+Link: http://glutenfreeonashoestring.com
+Parent Link: <External Resources>
+Click Save
+
+Menu link Title: Rain's Musings on Gluten Free Cooking
+Link: http://rainbreaw.com/cooking
+Parent Link: <External Resources>
+Click Save
+
+We can see the list of menu links. When we go back to Menus page we can see External Resources menu is one of the options in menu list. If we go operations on that menu we can add a link and even we can delete menu since it is not system menu
+
+-Now we will place that menu in our site on sidebar second so that it can be seen by enduser 
+     
+Click Structure - Click Block Layout - Click Place Block in Sidebar second - Select Place Block of External Resources - Click Save Block - Click Save
+
+Now we can see External Resources menu appears on the right hand side(ie) sidebar second
+
+6. In addition to adding custom menu that we have created to a region on ur site, we may also want to make ur secondary level links for ur primary navigation available (ie) in case of Why Tasty Cakes? link we have child links
+    The common practice to use Hover menus where u mouse over a links and the menu popups underneath that. Hover menus are issues when it comes to usability on site, because users with any kind of mobility makes hover menu difficult to navigate. Hover menu also adds excess link list to the menu that will be read by screen reader if u havent implemented proper skip navigation for ur visually impaired users. 
+    By default the menus that are available in ur Drupal install are not hover menu because of those usability and accessibility issues within hover menu itself. We do need secondary level links in primary menu to be visible on site otherwise there is no way to access that content
+
+Click Structure - Click Menus - Click Edit menu for Main Navigation 
+    We can see 2 links under Why Tasty Cakes?,  and we want to display those 2 links under Why Tasty Cakes?
+
+Click Structure - Click Block Layout - Click Configure on Main Navigation menu 
+     Now we add a new instance of that block, so its not going to impact the existing one thats currently displaying in the primary menu region, rather this is going to be a new block that gives same information
+
+Title: Why Tasty Cakes?
+Menu Levels:
+   Initial Menu Level: 2 - since we want this particular instance to ignore the top level links and only display second level links that appear underneath whatever page we are on
+
+Region: sidebar first 
+Click Save 
+
+Now we can see Why Tasty Cakes? menu is at last in sidebar first, but we want to appear in the top because we want secondary level links for that section to be first thing that appear in left side bar, 
+
+so we drag at top - Click Save 
+
+Now we can see on leftside Why Tasty Cakes? block appears with 2 items that are secondary to the particular menu item. When we go to About link we cant see those secondary menu items, because about page does not have sublinks 
+
+So we have discussed to use blocks to display menus where they need to be presented on the site which enables the user to actually be able to access the content which we have created and have reference to site structure that makes the ability to navigate to the site easily
+
+
+Drupal Modules
+   The code that runs on drupal site comes in 2 types of code (ie) core and contributed
+   Core code is the code that comes with drupal install and it is part of drupal download from drupal.org. Contributed code is the code that someone from Drupal community or organization who is part of drupal community has created and given back to drupal.org
+    Contributed code is not maintain by any of drupal entity but rather by the individual who choose to provide that code and given it back to  community. The code that is written is basically packaged together and then put on to drupal.org or drupal code download as a module which gives a ability to build a specific piece of architecture 
+    Code used by modules are usually written in PHP and CSS and adds functionality to ur site 
+
+1. Click Extend 
+      Display all of the modules that are available to our site as well as option to install new modules
+      Some of the modules are checked and some of them are dont. In each module row there is small description provided, and left of the description, we can see an arrow when we click it, it will provide the information about this module and it is provided by the person who wrote the module. 
+     Module also has security updates, in this module description we have version which represents the version of module that running and just like drupal core it is important that we keep track of any security updates that are released for a module, because if u have been running a module that requires critical security update and you want that update when u leaving ur site just as exposed as you didnt update drupal core when major security update comes out 
+
+Enabling Module 
+    In our site, under the tools box on left side we have only option available is Add Content, we have some content from the front page, we have some sub menus 
+    If we want to add contents, we go to tools and click Add Content we have Articles and Basic page, only 2 content types available right now.
+
+Click People - Click Permissions tab
+      We can scrolldown to F section and see that what we control permission for FieldUI, File, Filter and those are the only options under F category because we didnt enable other modules 
+
+Click Extend - Search: Forum - Enable checkbox - Click Install
+
+Click Content - Click Add Content - We can see new content type "Forum Topic" is added 
+
+Subject: Egg Substitutes
+Forums: General discussion
+Body: some dummy text
+Click Save 
+
+Now we can see forum with breadcrumbs as Home, Forums, General Discussion and also this particular content type have immediately has comments enabled and link for "General Discussion". Clicking on that, it will take to general discussion and any topics that is created in this forum are now available in the list 
+    In the tools box on the left, we can see 2 links Add Content and Forums. When we click on Forums, it will take me to all of the forums available on this particular site 
+   
+Click People - Click Permissions tab - Scroll down to F sections
+    We can see permission available for Forum category 
+
+Now we go back to our site - Click Forums on left side - Click General discussion - Click Egg Subsitutes
+    For sake of presentation we add some comments
+Subject: Flaxseeds
+Comment: 1 tbsp flaxseeds with 2 2tbsp water make a hearty substitute that helps with binding
+Click Save 
+
+Go back to Forums and it will keeping track of the comments as posts in the topic as well, so in that table we can see 2 posts in 1 topic. So all this functionalities are happen just we have enabled forum modules
+
+Click Structure - Click Forums - Click Settings 
+    Here also we can adjust the settings of forums module and changes the way this module behaves 
+
+How do we select the module?
+    We are currently under Extend section of the Manage tab on the site, it shows list of all modules available to our site which means all bits of functionalities that we can add to the site as little packages. All of the modules that is available in the list came with drupal core installation 
+    Consider we need some functionalities which does not comes with drupal installation, we go to drupal.org and look for contributed modules 
+
+Goto drupal.org - Build - Modules 
+      We can see different modules that been contributed by community, so it is upto we decide which modules is best suited for ur needs 
+
+Now we are going to select a module called Display Suite
+Maintenance Status: actively maintained
+Works with: Drupal 9
+Search Modules: display
+  Click Search button
+
+Now we see how to install contrib modules into site in 3 ways
+Click Extend - Click Install new module   
+
+1. Now we can give url of module and install 
+
+2. Download the module and choose the related downloaded file
+
+3. Using drush stands for Drupal Shell, this is the command line method for managing ur drupal site
+
+
+Now we goto drupal.org and download the display suite tar.gz module file 
+1. Extract the file
+2. copy the folder and paste insise xampp/htdocs/tc4a/modules folder
+3. Goto Extend menu in site, under search if we type display, it will list all of the modules that are inside display suite package 
+4. Now click and install all related modules 
+
+How we make changes to existing content types?
+     The ability to create unique conten types and serve the needs of various kinds of things that ur site might need to display. Each of the content type can behave very differently, each content type is made up of fields such as in the article content type where we have title, body, tags and image fields, these are the fields that created on the form for the content type 
+    You can customize what fields are available and add new ones if we like to, we can also set different rules for how each of those fields will display and in what order it should display. Your form that the editor fills out can have different field ordered when they display when the enduser sees. As the site builder we are not limited to drupal core content types, we also not limited to once that might be created by modules that u enable   
+     Specifically we look at modifiying the fields on content type as well as modifying some of the default behaviour of the content type itself. So we will look at article content type 
+
+Click Home - Click Exploring Spices - Click Edit 
+     Looking at the form we have lot of information like title, body, tags and image field but perhaps we might be using lot of images that are showed publicly using creative comments, if we are going to that then we need to credit the photographers so in order to do this we are going to add a field for photo credit 
+
+Menu Settings - Provide a menu link
+     We can easily add this kind of content to a menu, it dosent really make sense in the context of this particular site for article, which is sort of blogpost to be in a menu. We dont want people to post article accidently or intentionally add them to main menu because that will really impact the user interface that we trying to create in a negative way, so as a site builder we protect the integrity of site by removing the possiblity of people do things that they shouldnt
+    So the task regarding this particular article content type is that we need to add photo credit field to node form and we need to remove the ability to easily add article to menu from the node form itself
+
+1. Manage the content type which were going to do under 
+Manage tab - Click Structure - Click Content types 
+     Each content type that is listed along with description it also has Operation column. This drop down menu has 5 options 
+   - Manage fields which allows to add or edit the field that u have on ur form 
+   - Manage form display which allows to change the order of those fields in the way those fields look for the person entering the content 
+   - Manage display which allows you to change how those fields are going to display or how the content type will display to the enduser
+   - Edit which is where u will edit menu settings, the place where we can change the general settings for this particular content types such as description etc
+   - Delete 
+
+2. Now we want to remove the content type ability to be place in menu from the node form
+Click Article - Click Edit in Operations - 
+     There are number of things we can change in this particular section, including the description for the content type which can be really helpful for the site managers and content editors. We can also change title field label, for example if this content type is person content type where we entire person info, then field name can be name instead of title
+     Publishing options - this is where we have default publishing option and in case of article, by default articles are promoted to front page, if we dont want that we can uncheck 'promoted to front page'
+     Display settings - allows to determine whether or not submitted by information displays on the content for the enduser
+     Menu settings - This particular content type is placed in the main navigation menu, but we dont want to place in any menu so we uncheck Main Navigation and leave all of them unchecked
+
+Click Save 
+
+So whenever we click Add Content Type - Click Article 
+   Now menu settings have been disappeared from the list of options on right hand side, so we cant add any article to the menu from node form, we have to manage menu itself in order to add article 
+
+3. Next we need to add photo credit field to this content type
+Click Structure - Click Content types - Click Manage Field under Operations for the Article 
+    We have the fields which is already available body, comments, image and tags 
+
+Click Add field 
+Add a new field:  Text(plain)
+Label: Photo credit
+    Whem we enter Photo credit on right side we can see machine name as field_photo_credit, the machine name is important this is how the database recognizes what is this particular field is, we cannot have 2 fields with same machine name, all machine names should be unique. 
+Click Save
+Click Save and Continue
+Click Save Settings
+
+Now we can see Photo credit field 
+
+- Now we edit existing article and add photo credit
+Click Content - Click Exploring Spices - Click Edit 
+Photo Credit: Senthil
+Click Save 
+
+Now if we scrolldown we can see photocredit at the bottom. So we took default content type article and modify its behaviour 
+
+4. Next to adjust how the content type displays to the end user. We look various display options available when managing the content type
+1. Form display
+Click Structure - Click Content type - Click Manage form display under Operation for Article 
+  - We drag Photo Credit below Images
+  - Now click Settings of Photo Credit
+    Size of textfield: 100
+    Placeholder: Name of Photographer
+    Click Update
+  - Click Save
+
+- Click Content - Click Add Content 
+       Now we can see placeholder for Photo credit field
+
+5. Now we goto Exploring Spices article and photo credit will be displayed in the bottom of the article. Now we change the way, the fields displays to the enduser 
+
+Click Structure - Click Content type - Click Manage Display under Operation for Article
+   Drag photo credit under image - Change Label as Inline - Click Save
+
+Go to Exploring Spcies, now photo credit will be displayed after the image 
+
+6. If we goto Home page, Exploring Spcies article has a teaser display and this dosent show photo credit. Now we want to display photo credit on to the teaser
+     In the Manage display section there are 3 options like Default, RSS, Teaser. RSS is what feeds, what feeds are available in those fields and what order all those fields are available. Teaser are whats been used as overall news on the home page 
+
+Click Teaser - Drag Photo credit under Body - Change label as Inline - Click Save
+
+When we goto home page we can see photo credit is displayed in the teaser  
+
+
+Creating Custom Content Type
+      The site builder is intended to display receipes and events along with pages. Receipes and events should be the own content type in drupal site because they need to portait that in a very different way from blogpost and basic pages
+     Receipes should have information such as meal type and ingredients. Events should include information such as how to join the events, date and time of the event and phone number, this means we are going to have different fields so that the form is different 
+
+1. Click Structure - Click Content type - Click Add Content Type
+    Name: Event
+    Description: Use this to add webinar events
+    Publishing Option: only published
+         We are just pusblishing this content type but we are not promoted to front page 
+    Display Setting: uncheck display author& date
+         This setting determines whether or not "submitted by" info will appear in the teaser and on node itself. In this case we dont want to display author and date info so uncheck it
+    Menu Setting: Uncheck Main Navigation
+        This determines whether or not it is easy to add the particular piece of content to the menu directly from node form. In the case of events we dont want that so we uncheck it
+
+Click Save and manage fields 
+
+Now we can able to manage the fields of content type. Now only field that exists apart from necessary title field is body field. The first field we are going to add here is going to be the existing field (ie) the image field that used in article content type. On the article content we can see image field, whereas on page content there is no image 
+    On event content type we like to have image which behave exactly same way it does on the article content type, for that reason we use existing field rather than creating new field.If u want any of the behaviour to be different in this particular content type then we need to create new field not using the existing ones 
+
+Click Add field 
+Reuse an existing field: Image:field_image
+Click Save and Continue
+
+We can add Help text if we want. Next we can set whether or not this field is required, in this this field should not be required. We can give default image so for every event we can have some kind of image that goes with, if the user dosent upload new images for the event. We can also change "Allowed File extensions", consider we want to allow pdf here, in this case actually dont since we want it to behave like image
+ 
+File Directory: images/events
+     File Directory field will determine where any uploads are stored in ur directory, in this case we want to store in images directory with subdirectory events inside it  
+
+Click Save Settings
+
+Now we can see 2 fields on Event content type (ie) body and image. Next feild we want to add is the field that will help the user knows how to join the event. For the purpose of this demo,lets say every event that Tasty Cakes connect would be a webinar, so this field should be link that would allows the user to join the webinar
+
+Click Add Field
+Add a new field: Link
+Label: Webinar Link - Click Save and Continue
+
+Each of them will have only 1 webinar link so
+Allowed values: Limited - 1
+Click field settings
+
+Help Text: Include the link to the webinar so that users can join the event
+Check Required field
+Allow Link text: Disabled 
+   - Determines whether URL or text to display, we check disabled so URL will be displayed 
+Click Save
+
+We now have 3 fields in our event content type
+
+2. Now we add event content to Event node
+
+Click Content - ClicK Add Content - Click Event
+
+Title: Homemade Baby Food
+Body: some dummy text 
+Image: babyfood.jpg
+Alternative text: Healthy baby food
+Webinar link: https://www.nestle.com
+Click Save
+
+Now we can see the event is placed with basic settings 
+
+3. Now we add field which specifically design to hold telephone number in the event content type. We can simply use plain text field for phone numbers but there are few reasons why we want this to be special field
+   - First there are so many people are accessing websites on mobile devices, it only make sense for phonenumbers on site to be clicked and make it easy for mobile users to make call right there
+   - Second semantic markup which is the markup that tells the browser valuable info about the content being displayed is helpful for those viewing site through screen readers such as non sighted users, it also ensures that the content that can be easily translated to future technologies or migrate from one place to another
+     - Finally as with urls and email address, phone numbers can be improperly entered, using a field to design specifically for phonenumber will help to check the data entered is accurate 
+    To enter phone number there is no specific fields are available. So we need to intall  module called Telephone
+
+Click Extend - Search for Telephone - Click Install
+
+Click Structure - Click Content Type - Click Manage field under Operation for Events
+
+Click Add field 
+Add a new field: Telephone number
+Label: Phone  - Click Save and Continue
+Allowed number of values - Limited - 1
+Click Save field Settings
+
+Help Text: Please include a contact phone number if available
+
+We need to have a default phone number to use in the event when no phonenumber is provided
+Phone: (123) 456-7890
+Click Save Settings 
+
+Now we want to add that phonenumber to Homemade Baby Food event
+Click Content - Click Edit on Homemade Baby Food
+
+We can see phonenumber field in bottom, the reason why particular node which we already created dose not contain default phone number is because this node is already exists before we made the change to the event. If we create new event then we can see the default phone number is in the form field. So it is important to know the changes to the content type after content has already created not necessarly reflect on the existing content 
+
+Phone: (123) 464-0873
+Click Save 
+
+Now we can see phonenumber in the bottom of event type
+
+4. Now in order to make phonenumber linked and users can directly call to that number. In order to make it link we go for display settings in content type
+
+Click Content - Click Edit on Homemade Baby Food - Click Manage Display tab
+     We change format of Phone field as Telephone link instead of Plain text 
+Click Save
+
+Now we can see the phonenumber become clicked, and when we click on it, it will prompt for making call by lanuching an appl with which we can make external call. 
+
+5. Now we add another important field called date and time. Events typically takes place at specific point in time, we also want events to display in list of upcoming events and we want those list to automatically update when an event passes without having to edit the site
+
+Click Structure - Click Content Type - Click Manage field under Operation for Events
+
+Click Add field 
+Add a new field: Date
+Label: Event date 
+Click Save and Continue
+
+In this case we want date and time for date type or even we could choose date only if ur events are not time specific
+Date type: Date and time
+Allowed number of times: Limited 1 
+Click field settings 
+
+Help text: Date and time of the event
+Check required field - because we want to make sure that our events are always set in time
+  
+We can also add some default value which can be current date or relative date such as 3 days from now 
+Default date: None
+Click Save settings 
+
+Now we want to add that date field to Homemade Baby Food event
+Click Content - Click Edit on Homemade Baby Food
+
+When we scrolldown we can see event date which tells us the format and gives us easy fields to setup date and time 
+   Even we can change the format of date field instead of calendar
+Click Structure - Content type - Select Manage Form Display under Event - For Event Date instead of using Date and time we can choose select list also 
+
+Event date: 10/14/2022 5:00:00 PM
+Click Save
+
+Scrolling down at bottom we can see event date and time displayed 
+
+6. Now we look at changing date and time display, because for example we are confident that users are comfortable with 24hrs clock, the date and time created here displays based on 24hrs clock. The another reason to change, the designer of the site asks for date and time to look very specific so we want to make that happen in our date time format 
+   So now we want to change 24hr clock to 12hr clock 
+
+Click Structure - Click Content Type - Click Manage display under Operation for Events
+
+Click Settings option for Event Date field
+    We can able to choose from list of date format which is created during drupal install itself, except Time Only which we created by configuring drupal site. All of the times that listed here happens to be from 24hrs clock 
+    Since we need 12hr clock we need to create new date format in order to available to us in this list
+   So we set new date format in configuration
+
+Click Configuration - Click Date and time format - Click Add format 
+
+Name: Date and time with 12hr clock
+Format String: F j, Y - g:H a
+Click Add Format 
+
+Click Structure - Click Content Type - Click Manage display under Operation for Events
+
+Click Settings option for Event Date field - Choose Date and time from 12hr Clock
+Click Update
+Click Save
+
+When we goto event page and scroll down, we can see the date is updated to 12hr clock
+
+7. Now we look at the display settings and make sure the way that content type displays is logical 
+   Now we look at the Homemade Baby food event, when we scrolldown we have bunch of text about the event. We have image field which has label on it called "Image" which is unnecessary for this event. It also contains webinar link, phone number and event date, but this information has to be displayed on top of the event but not at the bottom 
+
+Click Structure - Click Content type - Click Manage display under Operation for Event 
+
+Drag Image under Links - Change Label as Hidden 
+
+Drag Eventdate above Image - Change Label to Inline, so that we can see label and date in same line
+
+Drag Links down to bottom, because it is relavent only for administrator 
+
+Now make Webinar link and Phone label as inline
+
+Click Save
+
+Now we can see event date right at the top, next we have image with no label, then we have event description and at bottom we have webinar link and phone number
+
+8. Now we look at the way the teaser displays the event because we use teasers a lot for list of events. So very quick way to see this is to promote this event on front page, because front page will show teasers for all of the content 
+
+Click Content - Click Homemade Baby Food - Click Edit - Under Promotion Options - Select Promoted on to front page - Click Save
+
+Now if we goto home page and scroll down, we can see the event listed, but it is not helpful listing for this event because it dosent tell us when the event is happening, it dosent give any info about webinar link or any other info, it also dosent display the image which is really nice to see in the teaser because we do have image on this content 
+
+Click Structure - Click Content type - Click Manage display under Operation for Event - Click Teaser tab
+    Now we can see it displays links and body, the body format is summary or trimmed because in teaser we dont want entire info we just want the summary, so other info we want is 
+
+Drag Image before body with label as Hidden
+    We also want image to display much smaller in the teaser, we dont want big original image 
+  - Click Setting on Image 
+    Image Style: Thumbnail
+    Link Image To: Content 
+        This is teaser so this is listing someone else and not full node view itself, users are often tempted to click on pictures when they are associated with something that gives more information
+Click Update - Click Save 
+ 
+Drag Event date after body with label as Inline 
+
+Now we want to use 12hr clock, so click Setting and select date and time with 12hr clock, and update it 
+
+Now we can see little thumbnail image and seeing event date which is really helpful. Notice the image is not the same size as images on other nodes since other node display are showing medium display
+
+- Click Setting on Image 
+    Image Style: Medium
+Click Update - Click Save
+
+Now we can see the same size images as other contents and mouse over the image, its clickable and if we click on it, it will take to the node for that event 
+
+9. It is also valuable for ur upcoming event views to have RSS format available to that because RSS feeds will allow indication of the content. For example having ur event content to automatically post on facebook without we going to facebook and tell about the event  
+
+Click Structure - Click Content type - Click Manage display under Operation for Event - Click Default tab
+   Under Custom Display Settings - check RSS - Click Save
+
+Now we have new tab for RSS - Click RSS tab
+   It take everything from default display, so we disable the image because we dont need in RSS feed
+
+Drag image and place inside Disabled - Click Save
+   Now we have RSS display
+
+So event content type display in logical way, the event date is at top and at the bottom we have webinar link and phone number and on home page we are seeing the teaser for the event 
+
+     Now we have examined content type, drupal installation comes with 2 basic content called article and basic page. Previously we have enabled forum module may add content type as well, in this case forum module added forum topic content type. We can customize any content type including default ones and those added by modules. We can also create our own content type, we looked at fields such as telephone, date time
+
+10. Now we add 3 more content to work on the site 
+
+Click Content - Click Add Content - Click Event 
+
+Title: Working with Egg Subsitutes
+Body: some dummy text
+Webinar links: http://keckmedicine.org
+Phone: (234) 678-0192
+Event date: 01-01-2023
+Click Save
+
+Click Content - Click Add Content - Click Event 
+Title: Gluten free flour blends 
+Body: some dummy text
+Webinar links: https://www.glutenfreeliving.com/
+Phone: (456) 123-0978
+Event date: 05-11-2022
+Click Save
+
+Click Content - Click Add Content - Click Event 
+Title: Dining out with the Celiac
+Body: some dummy text
+Webinar links: https://nationalceliac.org/
+Phone: (123) 456-7890
+Event date: 20-11-2022
+Click Save
+
+
+Drupal Views
+     Views are everything, they are simply a piece of content. Sometimes views are quite complex with all kinds of contexts determining what displays and how it looks and sometimes it would be very simple. There are already some views in our site
+  1. On the home page we have river of news, we can see all of the items that promoted to the front page are displaying in teaser form on the home page. This is home page view
+  2. In addition to display in teaser form, this content is also displaying ordered in the sticky item first and then date posted descending so that most recent content shows on top
+  3. Another view on ur site right from the beginning is the content view
+  Under Content we have list of all contents on ur site, this is displaying as table with specific field from each piece of content. For example we see title, content type, author, status whether it is published or not and when it was last updated. These are all fields for specific information from that specific piece of content. The default sort order is updated date descending so that most recently edited content will display in the top
+   4. Similarly we have another view for users
+Click People 
+   Right now we have only user on the site (ie) tc4a account which we are using. Once we have multiple users on the site then all will be listed in this particular view. This view is similar to view of content because it setup exactly in the same way 
+   People view and content view have filters in the top, these filters allow u to set parameters as what content will display in the list. They are referred to as exposed filters 
+
+1. We created number of events so we need to create view for upcoming events. This view have 3 displays 
+   - A block which shows 3 or 4 upcoming events on home page where everyone will see them right away
+   - A page where the user can go to see all of the upcoming events
+   - Also a RSS feed, so 3rd sites can know the upcoming events 
+
+2. Creating custom view which is simple page display showing upcoming events using teaser display mode 
+
+Click Structure - Click Views - Click Add View
+
+View name: Upcoming Events 
+    Just like when we create content types and fields, views also has machine name that automatically created 
+
+Check Description: A list of upcoming events containing a block, page and RSS display 
+
+Show: content of type: Event sorted by: Newest first
+
+Page Setting: we want a page to create
+Check create a page
+Path: events
+
+We need to add menu link because we need this particular page to display in the menu 
+Menu: Main Navigation
+Link Text: Events 
+Click Save and Edit 
+
+This take to an interface where we can refine my view even further. But now we just go back to the site and click Events tab and we can see all of the events which we created, there is no pager yet because there is no 10 events so there is no need for pager
+   Right now events are displayed in teaser form with most recent post. Also we cant edit this page like other pages
+   Click Why Tasty Cakes? menu which is page view and right down the title we can see edit and delete tab available where we can edit and delete the page. We also have quick edit option by clicking pencil icon. But in the case Events tab we cant see those tab under title, we do have quick edit option by clicking pencil icon but it dosent allow to edit the content instead we can edit the view
+     View is not a node, view is list of nodes so if we want to edit the content in the view we have to edit the content itself not the view
+     Views UI is actually separate module from the Views itself  
+
+Click Extend - Search for View module 
+    We get 2 core modules called Views and Views UI. Views module actually enables you to have views running on the site, Views UI module that gives the user interface that makes it possible for you to configure the views without actually using the code. When ur site goes into production (ie) when it is live and visible to user, its often good idea to disable views UI module for 2 reasons
+    1. Disabling views ui module will help ur site performance
+    2. It will prevent users with view permission from accidently editing views on production. If we try to edit a view but do not find views listed under Structure tab, then chances are views UI module is disabled on the site and we need to reenable it in order to edit the views 
+
+Now we see view user interface and what avialable to us when we are working with the views 
+
+Click Structure - Click Views - Click Edit under Upcoming Events 
+    The first thing right on the top we have displays, right now we have only one display for this view which is page display. We can add additional displays by clicking Add button including another page display or other display that is listed 
+
+Display name: Page
+    Any page display will default to display name as page. If we have multiple displays, then we change it
+   For example, in this particular situation we are going to have page for upcoming event and also page for past events, so we name this page as upcoming page
+
+Click Page
+    Administrative name: Upcoming Page 
+Click Apply
+
+This way we know by looking at displays that this particular page is for upcoming events  
+
+Title: Upcoming Events 
+    This is the title that user will see on the page 
+
+Format: Unformatted list 
+    We can adjust the format of the display, this covers the HTML that renders the view on the page. It was set as unformatted list, by clicking we can change other formats like grid, table. There are lot of modules which give u additional styles for displaying ur contents in views. For example we have slideshow styles we can use, that will used  in views and allow you to display content in slideshow 
+
+Show: Content | Teaser
+     We can change this to show specific fields, but now we use contents
+
+Fields: It is currently disabled because we are using content display
+
+Filter Criteria:
+    Used to determine which content to display, for example when we create the view we set it to show only content of event content type and that will be the filter that we rely on
+Sort Criteria:
+   Used to determine in what order content is displaying and right now it display in newest content to be showing first 
+
+Page Settings
+   It is here because we are using page display type. With the page we need to know the path of that particular page and need to know whether or not that particular page go into menu. 
+
+Header and Footer
+   The header and footer allows you to put the content at the top and bottom of the view 
+   
+No Results Behaviour 
+    This is what happen when nothing returns for a specific query that we are using. For example if there is no upcoming events, the view would display whatever is there in no results behaviour
+Click Add - Select Global Text area - Click Add and Configure 
+Content: There are no upcoming events
+Click Apply
+
+Pager: Mini | 10 items
+     This option is used to set how many result to display in the view and to determine if the user gets page through more results 
+
+Preview
+   It is the area where we can see ur work before saving the view. If we dont have very fast env however this can really slowdown ur working experience, in that case we may turn off auto preview so things happens more quickly while setting ur configuration 
+
+Click Save  
+
+3. Now we are going to set the filter criteria on the view to make sure the content listed is the only content that actually we want to see. We have Upcoming Event view which shows all of the events that listed on our site 
+
+Click Structure - Click Views - Click Edit under Upcoming Events 
+
+Filter Criteria:
+     We have 2 criteria already set like publishing status which set to yes which shows only the content that published will display on the site. If we set to no then it will display the content which is not published 
+    Next criteria is event (ie) only content type that is pulled into this view is event content.
+    Now we want to display only the content which has an image
+
+Click Add 
+Select Content: Image(field_image:alt)
+Click Add and Configure
+Operator: Is not empty(NOT NUll)
+Click Apply
+
+Click Save
+
+Now we go to Events tab, we can see only one event that displaying is the event with an image 
+
+Click And/or Rearrange under Filter - Remove Content Image filter - Click Save
+
+Now we can see all the events in Events tab
+
+4. Now we want to have a date filter, we only want to see upcoming events, we dont want to see any content for event date is passed 
+
+Click Add 
+Select Content: Event date
+Click Add and Configure
+Operator: Is greater than or equal to 
+value: 2022-10-15 07:00:00
+Click Apply
+
+Click Save
+
+Now we go to Events tab, we can see only the event whose date is >= 2022-10-11
+
+Click And/or Rearrange under Filter - Remove Content Image filter - Click Save
+
+Now we can see all the events in Events tab
+
+5. Now we see how to use views user interface to change the sort order for the contents. Now we can see all the events are displaying in descending order (ie) the newest posts first 
+    We know Homemade Baby Food is the only event that has an image, so it is important event than others, so we want this to be sticky at the top of the list 
+
+Click Edit from pencil icon on Homemade Baby Food - Click Promotion Options
+- Uncheck Promoted to first page
+- Check Sticky at top of lists
+- Click Save
+
+If we see the view page, the sticky at top of the list dosent make any change, thats because it is control by sort criteria of view, right now only sort criteria that exists on the view is to show the most recently posted item 
+
+Now we go to Sort Criteria - Click Add 
+    Right now we have only one sort criteria based on authored on, now we add 2 more criteria (ie) event date and sticky status 
+    Select event date
+    Select Sticky at top of lists 
+Click Add and Configure
+Order: Sort Ascending 
+Granularity: Month
+Click Save
+Order: Sort descending for sticky
+
+The next thing we want to do is to provide the order of sort criteria, these are the rules that determine how the content is going to be listed and what happens is the rule at the top is going to be the first one which applied. But we want sticky content to be the first that appears on the page, so we want to make sure sticky rule is the first one applied to the view. Next thing we want to apply to the view is event date rule which says show the next upcoming content first. In this particular case we dont want authored on sort criteria in place, because thats not relavent to the upcoming events display 
+
+Click Rearrange under Sort Criteria 
+Remove authored on because we dont want that
+Next drag Sticky to the top of list as first followed by event date
+
+Click Apply
+Click Save 
+
+Now we go to events tab, we can see sticky item is jump upto the top of list and looks like sticky with grey background. If we scroll down we can see the events are listed in chronological order based on event date 
+
+6. Now we create block view display to upcoming event which simply list title and date of upcoming events 
+    We goto Home page and we see the recent article that has been promoted to the front page but we dont have any information about the events that might be happening
+
+Click Structure - Click Views - Click Edit under Upcoming Events
+
+Now we add a new display to this view
+Click Add - Choose Block because we need block element that we can place in sidebar of home page
+    Now we can see Block as one of element in Display list. We keep title, format everything unchanged
+    Under Show, we dont want to show content in teaser, we want to see title, event date for specific event in home page 
+
+Click on Content
+For: This block(override)
+Row: Fields
+Click Apply(this display)
+Click Apply
+
+Fields:
+   By default it has title in it, we also want to add event date because we want to display in that particular block 
+
+Click Add under Fields
+For: This block(override) - because we want this change only in this block
+Select Content: Event date
+Click Apply(this display)
+Click Apply(this display)
+
+Now we can see title and event date under Preview option
+
+Sort Criteria:
+   Now we dont want sticky at top of list to be relavant in this particular display. This display is simply 3 next event that are happening and sticky at top of list will unnaturally promote an event above the 3, so we dont want that to happen 
+
+Click Rearrange Under Sort Criteria
+For: This block(override)
+Remove Sticky at top of list
+Click Apply(this display)
+
+Pager:
+   Right now by default this view is using pager and it is limiting to 10 items. We dont want pager at all and actually limited to 3 items 
+
+Click Mini Under Pager
+For: This block(override)
+Pager: Display specified number of items
+Click Apply(this display)
+Items to display: 3
+Click Apply
+
+More Link:
+   The next we want change is more link which is set as No, this will give a link at bottom of view to more information. We actually want this because this little block is basically a teaser block encouraging the user to click and see the overview of all the upcoming events 
+
+Click No under More Link
+For: This block(override)
+Check Create More Link
+Click Apply(this display)
+
+Click Save 
+
+Now we can see under preview section all upcoming events listed and at a bottom a link for more information will be created
+   The title field is simply linked to the content and event date is displayed using the sites default medium format which uses 24hr clock 
+
+7. Now we are making some changes over the field
+       1. First we take title field and provide a header tag around it, specifically h3 tag, so when html renders it has good semantic markup
+       2. For date field we create label telling the user what that particular field representing and uses 12hr clock 
+
+Click Structure - Click Views - Click Edit under Upcoming Events
+
+Click Content: Title under Fields 
+    First thing we want to pay attention is that we are using override so all the changes we made are going to impact only the block display. We dont want the label on title field, so we wont check "Create a label" option.
+    We also have an option to exclude this feild from display, so it is odd to have a field in ur field lists but exclude from display, this is something that used frequently when constructing more advanced views. We may need the info from a particular field available to be rewritten to other field or we want field info available but not visible 
+     Title field is currently "Link to the Content" and we want to leave it as it is. If we are adding an image field then it wont link to the content by default, we have to do so
+
+Style Settings:
+     This has to do with how the field is rendered in HTML in the view
+Check Customize field HTML - because we want this field to render as header, we want good semantic markup on every element on the site 
+HTML Element: h3
+
+No Results Behavior:
+  Select Hide if empty -  It will tell whenever field is empty that need to exist on content 
+
+Click Apply(this display)
+
+In the preview section, we can see the title is larger and bold because it has h3 tag to it
+
+8. Now we make some edit to event date fields 
+
+Click Content:Event date under Fields 
+Date Format: Date and time with 12hr clock 
+
+Click Rewrite Results
+  Check Override the output of this field with custom text
+Now from the replacement patterns we are going to find event date 
+
+Text: <strong>Date & Time:</strong> {{ field_e }}
+
+No Result Behaviour: Check Hide if empty 
+
+Click Apply(this display)
+
+In preview section, we can see Date and time in formatted view
+
+Click Save 
+
+9. Now we are going to place the block display that we created in upcoming events views on the home page 
+  Now we place the block right below external resources in the sidebar 
+
+Click Structure - Click Block Layout 
+Click Place Block under Sidebar Second 
+Click Place Block of Upcoming Events, this option only exist because we create block display. If we did not create block display it will not be available in list of blocks
+    We have list of options, first we can display the title or not and there is checkbox where we can override the title if we want to say something else. We can also change the number of items that display on the block, if the default setting that we configure when we set up the view is not that really want for this particular display
+   We can also restrict where the block displays
+Click Pages
+Pages: <front>
+Click Save Block
+
+Click Save Blocks
+
+Now if we go to home page, we can see list of upcoming events on the sidebar below External Resources. When we click More link, it will go to page of upcoming events 
+
+RSS Feed display
+     It is good idea to create feed for any content that will be available for syndication( syndication in which content is made available from one website to other sites) by 3rd party. 
+     On home page we have a block displaying upcoming events, at the bottom we have more link which take us to upcoming events page and when we scroll down upcoming events page we can see all of the events and last item is the last event 
+
+Click Structure - Click Views - Click Edit under Upcoming Events
+
+Click Add - Select Feed
+    We can red border around Feed this means some kind of error with this display perhaps even entire view will not work until this error is fixed. When we scroll down we have error message which says "Display Feed uses a path but the path is undefined", because of this the preview area is not working. We will change the display settings by doing so we can rectify this error
+
+Display Name: Feed 
+     We can leave display name as feed because we dont have more than one feed here
+
+    But we change the title, feeds are usally intended for 3rd parties not for ur site itself, so it is useful to have branding in the title itself. 
+Title: Upcoming Events for Tasty Cakes for All 
+    We dont want to this title change to affect all displays, we only want to change only feed display 
+For: This Feed(Override)
+Click Apply(this display)
+
+Format:
+   Unless u r very well comfortable with RSS feeds, leave the settings as it is 
+
+Sort Criteria:
+    Also for the feed it is typically not a good idea to include sticky at top of the lists in sort criteria. The sort should be purely the list of content in the order the events will take place or in some cases in the order in which they are posted with the new posting first 
+
+Click Rearrange under Sort Criteria 
+For:This feed(override)
+Remove sticky at top of list
+Click Apply(this display)
+
+Now we need to set path for the field which get rid of error message and also gives url which we can give to 3rd party recipents 
+
+Click No Path is set under Path
+    It is always very nice to make sure the path indicates what the content is and also include RSS.xml or feed at the end, so the recipient is very clear on what they receive 
+    Path: events/rss.xml
+    Click Apply 
+This is very helpful url that tells 3rd party what they are going to get.
+
+Notice red border around the feed is now gone and preview section will work at this point
+
+Attach to:
+    Now we attach this feed to all 3 displays (ie) master, block, upcoming page 
+Displays: Select all 3 options
+Click Apply
+
+Pager:
+   We do want to display a specified number of items because pager dosent really work in a feed environment. But rather than 10 we need more item like 20 
+Click on 10 items 
+Items to display: 20
+Click Apply
+
+Click Save 
+
+Now we can preview RSS feed, it is meant to display in markup, because this is wht RSS reader are going to see 
+
+When we goto Events tab which display upcoming events page, when we scroll down we can see new RSS feed icon, this allows user to quickly subscribe to that feed if they want to.
+
+Till now we have discussed about views, so we created views with 3 displays like
+  1. Page display - Click Events tab
+          It shows all of the upcoming events in teaser form 
+  2. Created block display for home page - click home tab
+    In the right sidebar we see next 3 upcoming events listed in order
+  3. RSS display that can be used for content syndication   
+
+
+Text Formats and how to customize it
+      Drupal is CMS and depending on how u setup ur drupal site and what permissions give to ur users, u r making it possible for people to add content in line. The content needs to be formatted which means markup
+      Markup added by random users or even trusted users present 2 potential problems
+1. Security
+      If ur user can add any HTML that they want into ur site, they can potentially leave back to us for cross site scripting or other security host. They can do this intentionally but it is likely they will do so unintentionally and not realizing what they have done
+2. Design
+      We will all like to believe that everyone realize that red text is not good experience design. But the reality is that there are lot of content editor who dont know about good branding, design consistency and best practices. They simply want their content to be noticed and they do anything to make that happen 
+     In order to prevent the integrity of ur design and brand it is important to limit what they can do to the key option of styles 
+     Text formats are the method that drupal uses to restrict what users can do while entering and formatting contents
+
+Click Configuration - Click Text formats and Editors
+
+By default drupal comes with 4 formats 
+1. Basic HTML - It is fairly safe text format available to authenticated users. It allows the things like bold, italics, anchor tag and images 
+2. Restricted HTML - It is much more limited filter design specifically for non authenticated users or anonymous user who may enter content. The types of content that anonymous user may enter could include comments or filling out message field on a form. Content entered using this filter will have potential security host removed from it before it render on the page
+3. Full HTML - allows the content editor to use any HTML markup that they want to, they wouldnt able to use PHP, JS. This format will by default available to administrator role only and this format will be used only by trusted user 
+4. Plain text - The user not able to make the content bold, italic 
+
+1. Basic HTML
+Click Configure under Operations in Basic HTML
+     The first thing that we can do here is to choose which roles to use text format. By default drupal has authenticated user, administrator set to be able to use basic html text format 
+     Next we can choose is text editor which used for the input format, by default drupal core comes with CKEditor, we can also add ur own 
+
+Enabled Filters
+    What ur text format does will apply filters to whatever been entered into body field or whatever field that filter is available for, those filters will change anything that need to be modified 
+    For example, we have format which automatically convert urls into links. The important filter is "Limit allowed HTML tags" which strips any potentially nasty code on ur design 
+
+Filter processing order
+    We also have list of formats with drag handlebars, we want to order the format in the order that we want to applied to the content
+
+Filter settings
+     The important is "Limit allowed HTML tags" and we see in the textfield that all of the html tags that this particular text format will allow without stripping them out before the content is rendered on the page 
+
+Click Save
+
+
+When entering content the text formats that are available on the text area field will display in the ordered that are listed in this configuration page. The first one that will show for the user is the first one they have permission for use. For example for ur authenticated user the first one they will show is basic html, for anonymous user the first one they will show is restricted html 
+
+Click Content - Click Add Content - Click Article 
+    We have body field which is text area, in 
+Text format area basic html shows first, then restricted html and then full html because thats the order that listed on the configuration page 
+
+Now we are going to review CKEditor which is default editor available for text formats in drupal, we also look how we can customize CKEditor to be little bit more appropriate for ur specific site 
+
+Click Content - Click Add Content - Click Article 
+     This is node form for article content type, the body field has some basic formatting options available
+Body: paste some dummy text
+     We format the content like bold, italic etc. It is very easy for me to format my content using buttons at top of the text editor. The buttons that are avialable in ur editor should correspond directly to the markup that would be allowed by the text format that being used 
+     The visual editor can be customize for each specific text format. Right now we use basic html text format, but if we select Full HTML we can see lot more options in the list of buttons at the top 
+
+How to format the visual editor to match the markup thats allowed by the specific text format?
+   Click Configuration - Click Text formats and Editors
+     First we can see different text format have different text editors, more specifically basic html and full html have access to CKEditor, but restricted html and plain text do not have text editor. If we add other libraries to ur site and those libraries will be available to add as the default text editor for ur specific text format.
+
+Click Configure under Operations in Basic HTML, under Text Editor we can choose which text editor we need
+
+Toolbar configuration
+    This allows us to determine which buttons are going to show and what order it will display in our active toolbar. So the buttons that available match the tags that u r allowing through ur filter 
+
+Limit allowed HTML tags:
+   Inside Allowed HTML tags:
+      So depending on the allowed tags, so if we want add any allowed tags on the toolbar. We can drag any related button and put in active toolbar 
+
+CKEditor plugin settings 
+    This setting current has only image, if we add any modules we can have more options. The first thing that we specify here is whether or not images can be uploaded through visual editor, in this case we want to allow that because our user want to put images inline in the body of the tags. We can specify a directory that images go into which is good because that helps us to keep our file directory updated. It can also control maximum dimension and also maximum file size allowed 
+
+Click Save
+
+Once we reload the article page we can see new buttons available on toolbar 
+
+Image Fields
+     One of the common things for content editors to want to do is that images inline to body of the content 
+
+Click About tab
+     Now we are going to add a image in the body 
+Click Edit
+Click Image button in toolbar 
+Image: cakes.jpg
+Alternative text: Cakes
+Align: Right
+Check Caption
+Click Save
+
+We can give some caption for the image  
+
+Click Save
+
+Now we can see images on the page, it looks quite nice because drupal with default theme make image styled in very nice way. However the images inline in the content its not something that we can control with the use or put into teaser.
+
+Goto Home page, where we have all teaser that have the image displaying in nice way, because images are field in the article content type and it is able to pulled into the view in a very special format. But adding image inline into the content is basically part of joining block of text 
+
+Goto About page - so this image is no way differentiated as far as drupal is concerned from the text around it, it just part of the same piece of data    
+    
+How to automatically manipulate how images display on the site?
+    If we look at home page we have river of news view of all of the items that promoted to front, we see that images are displayed in clean and consistent manner with proper width for this display. Each image in each of the teaser is using as image tag of medium and it makes them all in consistent look 
+    If we click at anyone of the node, the image is displaying quite large which is using original image style as oppose to the medium style that we are seeing on the home page
+    The image display in responsive manner, responsive means that the image itself or the browser as a whole will reshape according to the view in device the user has. So if the user is looking at the site through mobile phone it would be quite narrow and small then the image and the interface around it will all be optimized in that environment 
+
+Goto More tools - Developer tools - Click Toogle device  and change the size for any mobile device
+    As soon as we did everything has changed and the image drop down in size so that it wouldnt exceed width of the browser screen, this means that this is responsive design and image itself responsive and works nicely regardless of what device we used to visit this site
+     There are 4 default image styles that come drupal installation like thumbnail, medium, large and original image 
+
+Click Configuration - Click Image Styles 
+    We can see 3 default image styles provided like thumbnail, medium and large. Medium style is used on home page in the river of news display 
+    A good example when u want to use a image style will be a grid when we are displaying number of images together. Now we create such type of display in our page
+
+Click Structure - Click Views - Click Add new View 
+View Name: Images
+Show: Content of Type: Article
+
+Click Create a page
+Display format: Unformatted list of: fields
+Items to display: 100
+Click Save and Edit
+
+Click Add under Fields
+Click Content: Image
+Click Apply(all display)
+
+Formatter: Image
+Image Style: Medium(220*220)
+Link Image to: Content 
+Click Apply
+
+When we scrolldown we can see list of all of images, we have one article here thats displaying which dosent have an image, so we apply filter 
+
+Click Add under Filter Criteria 
+Click Content:Image
+Click Apply(all display)
+Operator: IS NOT EMPTY
+Click Apply
+
+Next thing we want to do is to display as grid not as unformatted list 
+
+Click Unformatted list under Format
+Style: Grid 
+Click Apply(all display)
+Number of columns: 3
+Click Apply
+
+Next we want to change the order so image show first and title present underneath
+
+Click Rearrange under Fields
+Drag Content Image first
+Click Apply
+
+Click Save
+
+Now we goto localhost:8012/tc4a/images page we can see a grid with 3 images lined up in a row with the title underneath that. All of the images
+
+2. All 4 images started with exact same aspect ratio (ie) landscape aspect. But what happens if we add an image that has portrait aspect ratio
+
+Click Content - Click Add Content - Click Article 
+
+Title: About fruits
+Body: some dummy text 
+Images: fruits.jpg (portrait image)
+Alternative Text: Fruits benefits
+Photo Credit: Fruits
+Click Save 
+
+If we scrolldown we can see how the images displays and if we goto  http://localhost:8012/tc4a/images, previously we can see all images are aligned nicely in grid but an image with wrong shape which looks messy 
+
+3. Now we are going to fix the formatting of the images in this table by creating new image style so the grid looks fine
+
+Click Configuration - Click Image Styles - Click Edit under Medium
+      The medium image style which says 220*220 is using an effect called Scale and that effect has set to scale the image down to be wider than 220 pixels, so whichever the dimension of image is larger and thats the one will be scaled, but the shape of the image will remain exactly the same 
+    We have other effects that we can choose from and these effects also useful for various reason. One of them which adjust the screen now is scale and crop. Scale and crop will resize the image in 1D to fit the size we are looking for and crop the top and bottom half of the image, so the image has proper aspect ratio in order to fit into exact shape we want to be  
+
+Click Configuration - Click Image Styles - Click Add Image Style
+   Image Style name: Grid Image
+   Click Create New Style 
+   Select Scale and Crop under Effect 
+   Click Add
+   width: 200   Height: 100
+   Click Add Effect 
+   Click Save
+
+Now this style will be avialable to me in all of areas where images are display
+
+Goto http://localhost:8012/tc4a/images
+Click Edit View by clicking pencil icon
+Click Content:Image under Fields
+Image style: Grid Image
+Click Apply(all displays)
+Click Save
+
+Now we can see all of the images have fit into the grid nicely and all sized in same way 
+
+In our file system \tc4a\sites\default\files\styles\gr\public\2022-10, we can each of these images that is exactly the size of image changed to 200*100 dimension, so drupal is actually creating a real file for the presentation of image 
+
+Click Configuration - Click Image Style 
+   Under Operation of Grid image we can see one of the options as Flush, if we change ur image style then we want to flush the existing ones which will remove all of those image files that was created and start generating new image file based on new style setting that we have placed
+
+4. Previously we created new image style that was 200 pixel wide and 100 pixels high that we called grid image. We have applied grid image style to this view and thats what enabling each image to have same aspect ratio and make this view looks very professional 
+    Unfortunately one of the image which happens to be portrait aspect ratio, this cause cropping on this image to be strange because it is focussing on center of image. This image styles by default adjust according to the actual center of the image, we can fix this using contributed module called focal point
+
+1. Download focal point module and paste inside
+\htdocs\tc4a\modules
+   It also need crop api module 
+
+2. Click Extend - Search for crop and Focal point - Click Install
+
+3. Goto http://localhost:8012/tc4a/images, click on that particular image - Click Edit - Scroll down to image and we can see crosshair symbol exist on image and we drag them to center of the page 
+Click Save
+
+But nothing change in original image, if we goto 
+localhost:8012/tc4a/images we can see nothing is changed, the reason is also we made a change to image style, right now image style using an action called scale and crop 
+
+Click Configuration - Click Image Styles - Click Edit for Grid Image 
+Click on drop down: select Focal point Scale and crop
+Click Add
+Width: 200 Height: 100
+Click Add Effect 
+
+Click Remove under Scale and Crop 
+Click Save
+
+Now if we go back to image field, we can see the image is moved to proper place in the image. Sometimes the changes make to the image style will not load right away because there will be cached version of the images stored on ur site. We can get rid of these under the image styles configuration area
+
+Clcik Configuration - Click Image Styles - Click Flush under Grid Image 
+
+
+File fields
+    The file fields are however are slightly different from image fields, as it is designed to handle files that would be downloaded rather than once render on ur page. In order to work with file field we are going to add this field to article type 
+
+1. Click Structure - Click Content Types - Click Manage fields under Article - Click Add field 
+  Add a new field: File
+  Label: Downloads
+  Click Save and Continue
+
+Now we have field settings that we need to go through for the file field
+   The first setting we need to choose is whether or not display field need to be enabled. The display field is a checkbox that allows me when we are uploading a file to a node, to choose whether or not that file will display in the list of files on the node. This display would be for the unauthenticated general public
+    It is possible that u might be want to upload files to a node without actually display on the node and the content of that field is not intended for the public 
+
+Check "Enable display field" - and now people choose whether or not the file would actually display when user look at the node itself
+
+Check "Files displayed by default" - we want files to be displayed by default 
+Click Save Field Settings
+
+Now we get the form to setup file field on article content type
+
+Label: Downloads
+Allowed file extensions: pdf - we want allow pdf files 
+File directory: downloads  - It is directory in drupal structure where these files will be stored, because these are uploads that user putting into ur directory structure 
+Maximum upload size:
+   We can limit the upload size if we have limited storage space, it is good idea because if large files are transferred that is going to gives ur site with low performance. So we want to make sure that users are only transferring files that u know ur server can handle
+Check Enable description field:
+   The description field allows u to enter human readable titles for ur files 
+Click Save settings
+
+So we have added file field
+
+2. Now we edit one of article to add this field
+
+Click Content - Click Exploring Spices - Click Edit 
+
+Now we can see file field will be available 
+
+Downloads: select some pdf file
+Description: File uploads 
+
+We have checkbox as checked to include file in display or not 
+
+Click Save
+
+Now if we scrolldown, we can see download at the bottom of my node, right now we are file with description with little icon representing what type of file it says
+
+3. If we want to show this files in table format
+
+Click Structure - Click Content type - Click Manage display under article 
+Under format choose Table of files for Downloads
+Click Save
+
+Now if we go to that content we can see downloads listed in table which include filename and size. As like images this is also an entity that display under content management area
+
+Click Content - Click Files tab
+      Here we can see most recent file uploaded which specify file type, size etc
+
+
+Taxonomy
+   Taxonomy is a tool for categorizing content on ur site. Typical tags on blocks are part of taxonomy, the current hashtag trend in social media is part of taxonomy. Both of these examples are typically what would we consider as free tagging, where the user can create any term they want to as they go
+     On creating the structure of ur drupal site however we want to create control vocabulary. Control vocabulary can make easy for user to find the content they want, because we are defining structure based on specific subject  
+      In order to really demonstrate how control vocabulary in ur taxonomy can help to define the structure of the site make content easy to find 
+
+We goto site https://librarysite.chillco.com/library-events, which is public library site, there are number of pages which has filter at the top like Audience. The Audience filter has list of terms like adults, kids, teens which is called control vocabulary. If we select Teens and click apply, the content that return was the only content that has marked with teens term 
+
+Click Structure - Click Taxonomy
+   There are 2 vocabulary already exits. Tags came with drupal installation which is free tagging vocabulary that behaves similarly to hashtags in social media or tagging on blogpost. Forums is the vocabulary that automatically created when we enable the forum module. Forums vocabulary is a controlled vocabulary, any term added to this vocabulary becomes a forum thats available for the people to have discussions 
+    So taxonomy is a word for overall functionality for categorizing within ur drupal site. Within taxonomies we have vocabularies, in the librarysite example we have 2 different vocabulary categorizing content like audience and resource type. 
+    Individual terms can typically be clicked on to see all of the contents that has categorized with that term. We can see in our site based on free tagging
+
+Goto Home page - Click gluten-free tags under Glutten Sensitivity  
+    Now we can see all content that has tagged with gluten free term. This kind of metadata can help to structure the content of ur site as well as create relationship between contents 
+
+There are 2 types of vocabulary
+1. Controlled vocabulary have predefined list of terms from which the content editor must choose
+2. Free tagging allows the content editor to add whatever terms they want and create new ones when entering content 
+    Free tagging is more like hashtag, whereas controlled vocabulary are effective resources for creating a site structure
+
+1. Now we will add controlled vocabulary which is key structure component of our site. Tasty Cakes for all is not only about providing blogpost and events but also receipes. Receipes can be categorized in many ways but in this case users are probably are interested in easily finding receipes based on their food sensitivity, likewise our blogpost may be relavent to specific sensitivity so this is effective way to categorize content on our site 
+
+Click Structure - Click Taxonomy - Click Add Vocabulary
+   Name: Food Sensitivities
+   Description: Food sensitivities and intolerances are more common than food allergies
+   Click Save 
+
+Once vocabulary is created and if we want a controlled vocabulary then it needs to have terms in it
+
+Click Add Term
+
+Name: Gluten free
+Description: dummy text 
+Click Save
+
+Name: Nut free
+Description: dummy text
+Click Save
+
+Name: Peanut free
+Description: some dummy text
+Relations:  Parent term: Nut free
+    Peanut free is related to nut free, so parent term for peanut free is nut free,this means that nut free is over peanut free category 
+Click Save 
+
+Name: Egg free
+Description: dummy text
+Click Save
+
+Name: Dairy free
+Description: dummy text
+Click Save
+
+Now goto taxonomy, click on List fields under Food sensitivities where we can see the structure and peanut free is child of nut free. Each of these term is drupal entity and can be treated just like content files
+
+2. Now this vocabulary is available to the site and we can added to the content type so that they can use it
+
+Click Structure - Click Content type - Click Manage fields under Article  - Click Add field
+    The field we are adding is an reference to an entity 
+   Add a new field: Taxonomy term 
+   Label: Food Sensitivities
+   Click Save and continue
+Now we need to say which vocabularies is going to be used, obviously we want to use Food Sensitivities category which was by default only because it is first one in alphabetical order
+   Type of item to reference: Taxonomy term
+   Allowed Number of values: Unlimited
+We select unlimited because there may be multiple sensitivity that receipe address 
+   Click Save field settings
+We can set help text, we can set the feild to required and set default value just like setting anyother field on content type
+   Vocabulary: Food Sensitivities
+   Click Save settings
+
+Now click Manage form display to control how this particular view looks on node form 
+   Food Sensitivities: Check boxes/radio buttons
+Because there are too many sensitivities. If we want this to be as free tagging vocabulary we can do so by selecting "Autocomplete term widget(tagging)" which allow to create terms in the field itself, but we dont need since it is controlled vocabulary
+    Click Save  
+
+3. Now edit the existing content type
+
+Click Content - Click Edit under The Myth of Healthy
+   We can see a new field Food Sensitivities with list of checkboxes 
+    Select: Gluten free, Dairy free
+    Click Save
+
+Click Manage display - drag Food sensitivities under tags 
+Click Save
+
+Now when we look at the content, in the bottom we have see food sensitivities tags on the article, on clicking on one of thing will take us to the list of everything tagged with that particular food sensitivity 
+    Right now we have only one item and we have description at the top, because the taxonomy term is an entity and therefore it has fields on it and this text comes from description that we saw when we create taxonomy term itself 
+
+4. We are going to review a creating the content type and we are going to make sure that content type references food sensitivity vocabulary so that we can use to structure how the content is displayed 
+
+Click Structure - Click Content Type - Click Add Content Type
+   Name: Recipe 
+   
+Under Submission form settings, we are going to change title field
+   Title field label: Dish name
+
+Under Publishing Options: Disable Promoted to first page 
+
+Under Display settings: Disable Display author and date information 
+
+Under Menu settings: Disable Menu Navigation because we dont want this recipe added to main menu
+
+Click Save and manage fields 
+
+Click Edit Under Body 
+    First we change label for Body field to Directions
+   Label: Directions 
+   Click Save field
+
+6. Now we add some ingredients fields
+Click Add field - now we add plain text field for ingredients
+   Add a new field: Text(plain)
+   Label: Ingredients
+   Click Save and Continue
+   Allowed number of values: Unlimited - because may be multiple ingredients
+   Click Save field Settings 
+   Click Save settings
+
+7. Now we add food sensitivity term reference
+
+Click Add field
+   This field is already exist because we created it in the article content type 
+  Reuse an existing field: Entity reference: field_food_sensitivity
+  Click Save and continue
+  Vocabulary: Food sensitivities
+  Click Save settings
+
+Click Manage form Display, to make sure everything looks proper
+   Drag Ingredients before Directions
+   Drag Food sensitivities before Ingredients
+   Change select list to checkboxex for Food sens
+   Click Settings under Ingredients 
+   Change Sizeof textfield: 100
+   Click Update
+   Click Save 
+
+Now we have recipe content type and now we add content for that recipes
+Click Content - Click Add Content - Click Recipe
+
+so we can see form to create a recipes
+
+8. In order to create multiple recipes individually, we can use devel module which is helpful when building the site first time and provide sample content in place 
+
+Click Extend - Install Devel4.2.1, Devel Generate module
+
+Now we can see devel setting under configuration
+Click Configuration -  Click Generate Content - Click Recipe - Click Generate
+    So now we have 50 recipe nodes 
+
+Click Content 
+Under Content Type: Recipe - Click Filter 
+   We can see lot of content 
+
+If we click on any one of these, we cam see the content and in the down we can see tags from food sensitivities vocabulary 
+    Now if we click on Dairy free, we can see a page with all of contents listed on it that uses Dairy free term. This is term page and since term is an entity, it can also be modified 
+
+Click Structure - Click Taxonomy - Click List terms under Food Sensitivities 
+    Now we looking at the terms for food sensitivities, and we can see at top also have Manage fields, Manage form display, Manage display tabs, so this will allows me to actually add fields to this terms and manage the way that display. For example we can add image at the top or other types of info such as external resources on this particular food sensitivity. This can be useful in setting up the structure of the site and making it really easy for user to find the types of thing that they need 
+    So now we create custom content type and set that content type to reference term from vocabulary, we also looked how those terms are entities into themselves and had their own pages in drupal site 
+     So we have discussed about taxonomy which is powerful resource for structuring ur site by providing categorization. Taxonomy is overall functionalities and contains vocabulary, vocabularies are specific type of categorization that might happened. For each category there are terms which are subject within each overall category, terms are drupal entities just like content nodes of end users and can be treated as such including adding custom fields and formatting. In order to use this categorization method on content we must have content type to reference the relavent vocabularies by adding reference field to the node form
+
+
+Drupal Views
+    Drupal views provide some filtering options, we will discuss about exposed and contextual filters which enable drupal site builders to deliver specific content to the user based on contextual information that dynamically pulled from user session or other info such as what other content might be on the page and all of this can be setup entirely through the user interface while building drupal site 
+
+Exposed Filters
+   Exposed filters are the filters that visible to the user, the user is able to make choices as to which content they see by choosing how the content is filtered. This is common user experience on shopping site, for example if we looking to purchase children clothing we might want to filter the choices of clothing to those which are appropriate size for the child 
+     A great example for exposed filters can be found in drupal installation in content mgt page
+
+Click Content 
+   We can see all of the contents on the site is listed. On the top we have filters available to us to change what content displays. These are exposed filters and easy to add to our own view when u configuring ur drupal site 
+
+1. We going to create a view of recipes and then enabling the user to choose which food sensitivity are considered in the list of recipes that we display to them 
+
+Click Structure - Click Views - Click Add view
+   View name: Recipes
+   View Settings - It should show content of type recipes
+      Show: Content of type: Recipe
+   Page Settings - we need to create a page so 
+      Check create a page 
+We want to create a menu link which is part of main navigation 
+   Check Create a menu link
+      Menu: Main navigation 
+   Click Save and Edit
+   Click Save
+
+If we scrolldown to preview area we can see all of recipes are added to the site. When we goto home page and click Recipes tab we can see all recipes on the site.  But we want dropdown menu at the top that allows me to choose which recipes are actuallu seeing based on whatever food sensitivity we have 
+
+Click Add under Filter criteria 
+   Select Food sensitivities(field_food_sensitivities)
+   Click Add and configure filter criteria
+   Vocabulary: Food Sensitivities
+   Selection type: Dropdown 
+Since autocomplete would require the user to have an idea of what food sensitivities are available on the site, whereas dropdown is going to place the text into the select list that we can choose from
+    Check Show hierarchy in dropdown
+    Click Apply and continue
+
+We can further adjust the operators including choosing to filter by specific term if we want to
+
+Check Expose this filter to visitors, to allow them to change it 
+    It gives specific options that actually we want to work with, in setting up how the user interact with this particular filter. The only option we are going to change is label,because we dont want machinename in label 
+   Label: Food Sensitivities 
+   Click Apply
+
+Under filter criteria it is provided as exposed 
+   Click Save
+
+When we goto Recipes tab, we can see a dropdown at the top which allowing us to make a selection, if we select and click apply we can see only those recipes 
+
+2. Another usage of exposed filter is search keyword filter, this filter enables u to create a focused search field (ie) textfield that only serach content that also needs all of the other filter parameters for ur site 
+
+Click Add under Filter criteria - Search: key
+   Select Search keywords
+   Click Add and configure filter criteria 
+   Check Expose this filter to visitors to allow them to change it 
+   Click Apply
+   Click Save
+
+Now goto Recipes tab, we can see search keyword text field will be available in the filter and we can search the recipe based on particular keyword 
+
+Contextual filters
+     Contextual filters will look at the context of the page being viewed. Any number of elements can be considered in a contextual filters such as something about url path that the user happens to be on ur site, the type of user that actually engaging with ur site, when that user last logged in to the site if they are authenticated, when the content that they are looking was created etc
+      The good example of contextual filters is with the drupal view with taxonomy, it comes with drupal when u installed and it is already setup. The lot of content is already making use of the terms that we setup in vocabulary in our taxonomy 
+    On home page we have all the articles that have tags and these are terms, when we click on anyone of these terms such as baked goods and now we taken to a display with all of content with that specific term selected 
+    We also added a vocabulary for ur recipes content for food sensitivities, if we click one of recipes and in that if we click Gluten free food sensitivity, we can see number of nodes that has term gluten free, some of the nodes are recipes and some are articles. At the top of page we can see paragraph and this paragraph is actually setup in taxonomy term itself. If we click edit here and we are going to edit the taxonomy term and not any of the articles listed below 
+    This is the view that actually displaying and this view actually use contextual filters. The contextual filter that it using is coming from the url path for the page that we are on
+     This is the url "taxonomy/term/8", here 8 is term id, every taxonomy term on ur site is going to have a unique id for that specific term 
+
+Click Edit view when clicking pencil icon which will take me to view which available to list of view
+    When we come down to preview area, we can see there are no results. But contextual filters is looking for term id 8 for the gluten free taxonomy
+
+Preview with contextual filters: 8 
+Click Update Preview
+   Now we can see all of the results for that particular taxonomy term because of contextual filter in preview area. So how is the view actually making this happen  
+
+Click Advanced
+    We can see first item called Contextual Filters, the filter that has been added here is "Content: Has taxonomy term id"
+    We are using contextual filter rather than adding in Filter criteria because if we add filter under filter criteria then we need to set this particular display to filter to a specific taxonomy term, if we did that then we have to create a new display for every single terms in the site which dosent make any sense and neither we want this particular display to be available for each and every taxonomy term thats on the site and we dont want to create an individual display for each and every term because it leads to lot of overhead
+    So rather than adding a filter for termid 8, we add a contextual filter for "content:has taxonomy term id" 
+    When we click on "content:has taxonomy term id", we have few settings like if there is no result then we dont want there to be a page avialable, so there is proably no taxonomy term 203 on our demo site because we havent build enough content yet. So if somebody wants to the url "/taxonomy/term/203" the result they would get be page not found
+    Under page settings we have Path: /taxonomy/term/% where % is taken for term id
+    
+Header: 
+   We know views are list of contents and we saw filters will show all of the contents for that specific item we are looking for
+   So in this case, we goto preview area which starts with content, it wouldnt start with paragraph that comes from term page itself. So that been got in using token called "Global rendered entry" from Header area which is the taxonomy term that is being used by contextual filter
+   When u click on that "Global rendered entry" from Header area, when we see replacement pattern which make use of is !1 which is nothing but term id from contextual filter 
+   So back to site with Gluten free term page, where we can see term, then we see the content from specific taxonomy term and we see the results of the view. If we click another recipe, in that click another food sensitivity and we can see same flow 
+
+Relationship in views 
+   - Used to include information that is reloaded into an entity being displayed but not actually from entity being displayed. A practical reason u might be use relationship on a view would be, if we have view of a bunch of articles where displaying entire article and under each article if we want to add an about the author line, in this case we are going to include photo of recipe author on the recipe listing in the view 
+
+Click Recipes tab
+    If we look at the listing of recipes here, right now we have title, teaser and read more link. If we click one of Read more link we can look at what content exists on this particular entity. We have food sensitivity taxonomy listing, we have ingredients and we have directions for the recipe. The author info is separate entity and it is not part of this particular entity itself, the only thing that this entity contains in relation to author is who the author is and no other info is retain in the entity itself about the author. That info can be found if we edit this particular entity by
+
+Click Edit - Under Authoring Information
+    We can see which user is the author of this particular entity 
+
+Now we are going to cleanup this look and include the photo of the author in each listing 
+
+Click Structure - Click Views - Click Edit under  Recipes 
+
+First we are going to change the view display rather than displaying just the teaser for the recipe, so we are changing the format from content to fields 
+
+Click Content under Format 
+Row: Fields
+Click Apply
+Click Apply
+
+Now we can see only the title will be displayed in preview area, because title is the field, so now we change the title along with some customize html tags 
+
+Click Content: Title under Format 
+Under Style settings  - Check Customize field HTML
+HTML element: H2
+Click Apply
+
+Now we can see all title changed to h2 heading under preview area. Now we like to add recipe description which is in body 
+
+Click Add under Fields 
+Search: body - Select Body 
+Click Add and Configure fields
+    Now we want to show trimmed content along with summary with 200 char to look nice and short
+Select Summary or trimmed under Formatter
+Trimmed limit: 200
+Click Apply
+    
+Next we rewrite the results to strip HTML tags so that it look nice and clean
+ Check Strip HTML tags under Rewrite Results
+ Preserve certain tags: <br><p>
+ Click Apply
+
+Next feild we want to add is food sensitivity tags that might be on the recipes
+
+Click Add under Format
+Search: food - Select: Food sensitivities
+Click Add and Configure fields 
+    We create a label so that it says what it is begin shown
+  Check Create a label
+  Label: Food Sensitivities
+  Click Apply
+
+Now if we scrolldown to the preview here and we can see much nicer display that makes more sense for this recipes. Now we want to add the picture from the user who added the recipes. So under fields lets see what we can add in relation to the author of the node
+
+Click Add under fields 
+Search: user 
+    We can see options like last comment uid who have created the comment, we have add comment link so that user can add comments, and also who authored content and who did the last revision of the content. But none of these fields are related to photo of the user. Now we search for photo, we have photo credit which is in article but we are not interest in it, we can search for picture  but nothing shows up, now we can search for image, there is an image field which appears in article and event, so none of things are going to help so the field that we are trying to show here isnt available under fields category
+   This is where we need to add a relationship, what I need this particular display to do is to go out and find info about the author of the node throughout the listing of each node  
+   Right now we have 2 users on our site like tc4a, burgerpop and we can see thier photos. In case if you dont have users means, goto People - Click Add user and u can create a new user
+
+Click Advanced tab - Click Add under Relationship
+Search: author - Select Content Author 
+Click Add and Configure relationships
+  We can change the title of this relationship, if we have multiple relationship on particular view display 
+   Under Adminsitrative Title
+     Administrative title: author
+We also require this relationship which means anything that going to display in the view result must actually have this relationship to something else. Every node will have an author so we dont need to require this relationship because we have an author regardless. But if we have events for example that reference recipes and u only want ur view to display events that are related to recipe then we require this relationship 
+   Click Apply
+
+Now we can see author under relationship, now we can go back to fields and see what we can add in relation to author 
+
+Click Add under fields 
+Search: user - because we are interested in something about the user, now we have got user email, last time user logged in, we can link to user, we can find user language, username etc and even we can see user picture 
+   Select: Picture under User
+This is available to me because we have author relationship
+   Click Add and configure field
+
+The first option in the setting is to choose relationship that is going to pull this picture into the entity listed 
+   Relationship: author
+Since this is an image we can choose image style
+   Image Style: Thumbnail
+We could link the image to content so that it would link it to the user
+   Link Image to: Content 
+   Click Apply
+
+Click Rearrange under Fields
+Move Picture between title and body 
+Click Apply
+
+Click Save
+
+We can author inside parenthesis which tells us that this field using relationship and pulling the data from different entity from the entity list 
+ 
+Now we can see the user picture appear between title and body of recipe listings, if we click on anyone of the picture and it will take us to the user record. In summary this relationship allow you to pull data from other entities, once that might reference or other has related to the entity that u r displaying in ur view and display that data along with the result in the view itself
+
+Advanced options in views interface
+   Click Recipes tab - Click Edit view under pencil icon
+    On the right we have advanced sections, we have discuss about contextual filters and relationship, we have lot more options to look at, now we look at
+
+Exposed Form in block 
+    When we goto recipes tab, we have expozed block appear at top that allow us to filter the results in the view, this is placed at top of the view but if we want to place it in a block  above External resources in right sidebar and want this block to be available to show on any page on the site, we can use exposed form in block to pull the explosed filters out of the view and place them in a block and show them anywhere we want on the site 
+
+Click on No under Exposed form in block
+Change to Yes
+Click Apply
+
+We also going to see exposed form style
+
+Click on Settings under Exposed form style
+Submit button text: Show recipes * 
+Uncheck Allow people to choose the sort order
+Click Apply
+
+Click Save
+
+Now we can see recipes tab is no longer displays at the top recipes view, so we goto block configuration find the block and place it on right sidebar 
+
+Click Structure - Click Block layout 
+Click Place block on sidebar second
+Select Place block for Exposed form: recipes-page_1 
+   Now we override the title
+Check Override title
+    Title: Find Recipes 
+   We want to show on every page on the site, so
+we leave the pages as not restricted under Page settings
+    Click Save block
+
+Drag Exposed form first, since we want it to first available in sidebar second 
+    Click Save blocks
+
+Now we goto recipes tab, we can see display on right side including Show Recipes button. If we goto another page like Why Tasty Cakes?, the block is still on sidebar and we can change any options and click Show recipes, it will take to recipe view only showing that particular recipes 
+
+Next we look at more options under Advanced section of views display 
+
+Machine name: page_1
+    The machine name for view display is how drupal identify this display, just as each entity has its own id, each view display each block and each configuration element on ur site is going to have a machine name. This is also used in themeing to apply ids that none has CSS rules applied to them and also used in themeing hooks in more advanced drupal development
+
+Use Ajax: No 
+    This option is currently set to No, enabling this option in ur view meaning that more resources are required to display to ur user, this is because lot of ajax code is been loaded onto ur page when u have this enabled. It allows however is for content to change dynamically when the user provides the own feedback such as paging through the view or selecting the filter, so we dont want to reload the entire page when the user makes any click 
+
+Query Settings: settings
+    It is also one mainly to use in ur drupal site building 
+Click Settings - Select Distinct
+     In some instances we may endup showing multiple versions of record, distinct will help to eliminate that and to show only one version of each record. Until if u r comfortable with views dont use any of other settings under querry options
+
+Caching: None
+    It is also useful setting in ur view display, this setting will enable you to deliver cached version of the view display to users (ie) rather than running the database query we can show the user what is already loading version of page, this can speed ur performance. Enabling this however means that this display may not always show the newest content as quickly
+
+CSS Class: None
+    We can use to add a class or classes to ur view display which will then help u with styling when u working on ur theme 
+
+We not going to use most of the advanced settings in ur view display unless u discover that u need them
+
+Taxonomy term 
+    It is an different type of entity, this field will act as an navigation for recipes based on food sensitivities and then treated like a menu and place it in one of sidebar to make easy navigation for users 
+
+Click Structure - Click Views - Click Add view
+
+View name: Recipe Navigation
+
+Till now everything we have done is show content, this is type of entity we are going to show in view. But now we show Taxonomy term of type Food sensitivities because thats the only type of taxnonomy term that we want to display 
+Show: Taxonomy terms of type: Food Sensitivities
+   We dont want to create a page because all we need is a block in sidebar that list all of the taxonomy term and links to each one
+  Check Create a block 
+Under Block Settings
+  Display format: Unformatted list of Fields
+  Click Save and edit 
+
+When we scrolldown we can see all taxonomy terms that are the part of food sensitivity vocabulary are listed under the recipe navigation preview area
+
+Click Unformatted List under Format - Change to HTML List 
+Click Apply - leave all settings to default
+Click Apply
+Click Save
+
+Now we can see vocabularies are listed in unordered html list. Now we have created a view with different type of entity in order to create list of something on the site
+
+Click Structure - Click Block Layout - Click Place Block in Sidebar first 
+  Select Place block of Recipe Navigation 
+  Click Save block
+
+It has been added to bottom, so we drag Recipe Navigation above Tools
+   Click Save block 
+
+Now if we goto home page, we can see Recipe navigation on the side bar, clicking on any one of these will take us to taxonomy term page not to recipe view. So if we click Gluten free, we can see all content related to gluten free not just the recipes, so this includes article and also we can see the description of gluten free taxonomy term
+    So this is different then choosing the food sensitivity on the right sidebar 
+   Select Gluten free - Click Show recipes button
+which shows only the recipes that has been tagged as gluten free and nothing else
+
+In summary ur view need not be content views but also views displaying other entities like taxonomy term, users etc. The views we have looks similarly no matter what type of entity we want to display 
+
+Advanced options in views configuration
+Click Structure - Click View - Click Edit under Recipes
+     First we look at exposed filters, these are setup under filter criteria and in the case of recipe database we setup filter for food sensitivity as well as filter for keywords 
+
+Click Recipes tab
+    The exposed filters that are avialable have been placed into a block in the sidebar, normally it will shown in the top of the recipes view. Making the selection in these fields will change this particular view and which elements to display
+    We also saw contextual filters which is currently empty in our recipe view. We look at contextual filter through taxonomy term view and saw that based on the url structure, the content displayed would be the content that contains same term as the termid in the url itself
+
+Click Structure - Click Views - Click Edit under Taxonomy term 
+    Under contectual filter we saw taxonomy termid and under page settings we have /taxonomy/term/% where % is termid
+
+Goto Recipes tab - Click Dairy fee under Recipe Navigation 
+   We can see url has termid in it and based on the contextual filter the content that displays below is only content that contains related termid
+
+Click Structure - Click Views - Click Edit under Recipes
+    We also look at relationship, specifically we created a relationship concept to the author entity that is tied to specific recipe so that we would able to show the picture of the author and recipe teaser in the recipe view 
+
+Goto Recipe tab - Select Gluten free under Food Sensitivity - Click Show Recipes
+   Now we can see all of the recipes with author picture in these recipes. With all of these advanced configuration settings available inur views UI, views UI is extremely powerful this is with lot of site building work can be done without touching the code 
+
+User Management
+    The way that drupal handles the user is one of the features that makes drupal as a powerful CMS. User roles and permission can be finegrained as u want, making it possible to isolate user activity on the site in very unique ways. Drupal site builders frequently use this level of control to establish complex workflows for content mgt on their sites 
+    By default, drupal comes with 3 user roles 
+1. Anonynmous which is the user that not logged into the site 
+2. Authenticated user, this is the user who logged into the site with username and password. Authenticated users not necessarily have any permissions, its entirely upto u what authenticated users able to do on ur site
+3. Administrator, this is site admin with permission to do almost everything on the site, the role has security implication that only given to truly trusted users 
+    Now I have logged in as full administrator, I have access to every configuration element of the site. There is also a separate user comes with drupal installation, that isnt actually a user role but it is special user called user1 
+   User1 is basically root user on ur site, it is the first user thats created when u install drupal and truly powerful user. Ideally we will never use user1 account to manage ur site. The first thing that we should do when working on site is to create new user for urself and assign that user to administrator role and log out off from user1 account and login to ur personal account
+
+User creation and management
+    The first thing to establish on ur site is how ur user accounts are created
+
+Click Configuration - Click Account Settings
+    Here we will determine the default user behaviour including what happen when someOne tries to create a user account 
+
+Contact settings:
+   The first option is whether or not there is personal contact form on the user page. This would be appropriate for community site but may not appropriate for the site where we dont want people to be directly contacting those individuals on the site, for example company profile
+
+We can also set rolename for 2 of default user types on ur site, Anonymous which means non authenticated users, so we can change to public or guest etc. We can also change which user role is administrator role, so if we have multiple type of users on ur site, we might choose different role for the admin role
+
+Registration and Cancellation
+    The next option is who can create accounts, for example can ur site visitors create an account or request account creation by themselves or do they need to contact someone or how they can create by sometype of administrator. We can also determine whether or not visitors can request account but then require administrator approval before those accounts are actually enabled and then user can login
+
+Require email verificatiob when visitor creates an account
+     This will cause the site to send out an email when user tries to setup an account to the email address the user attempt to use. The user have to check their email and click on the link that they received in that email to confirm that there is truly their email account. So this provides a level of security and also provides some annoying to the user 
+
+Enable password strength indicator
+    This will tell the user how strong or week the password that they are planning to use actually is. It will forces them to think more carefully about what they going to put in as passwords. We can use some contributed modules to force some strong password and give password policies to ur site 
+
+When cancelling a user account?
+     We can also choose what happens when user account is cancelled, we dont tend to cancel user account rather we can block them
+
+Emails
+    Next section controls the emails that are sent when various actions take place with user account creation. Most of these have to do with whether or not this user is able to create the account on their own or what kinds of approval its required in order for that account to become an actual user account. This is where we can setup the emails that would be sent and what those emails look like 
+   Two important automated emails that in here regardless of how ur user accounts are created are 
+1. Account activation which is the email that send when user account is created even if a user account is created by certain administrator 
+2. Password recovery so what happens when user forgets the password and needs to click on forgot password link in order to get a new one 
+
+Click Save settings
+
+Once account setting behaviour are established its time to create a couple of users on ur site. As we discussed the first user that you should create if u havent already, is the administrator user account for urself so that we are not continuing to configure the site as user1 
+
+Click People
+   we can see list of users on the site, there is only 1 user the first user that was created during site installation which is user1. Now we add a user 
+
+Click Add user 
+
+Email address: senthil@example.com
+Username: senthil
+Password: password
+Confirm password: password
+Roles: Administrator 
+Click Create new account
+
+Now when we goto People link, we can see that user senthil is never logged into the site. So we logout of the site as user1 (ie) tc4a and now we logged in as senthil, so interface will look exactly the same because this user account is an adminsitrator user account but we dont have root level permissions and this user is not powerful user on this site, so this user dosent have same level of security risk like user1 account 
+
+Next we are going to create user account for anyone who is going to help with content on this site. For now we simply create one authenticated user that we can test the permission and see how the site works with different type of users 
+
+Click People - Click Add User 
+Email address: senthil_auth@example.com
+Username: senthil_auth
+Password: password
+Confirm Password: password
+Roles: Authenticated user - any user will have auth role
+Click Create new account
+
+Now we goto People tab, we can see 3 users that we have along with the roles assigned to each user. Now we are going to block user1 (ie) tc4a doing this user1 account is no longer available, nothing else changed the account still exist on the site and all of the content that the user created is also still present on the site so only difference is they cant login until they are no longer blocked 
+
+Select tc4a
+With Selection: Block the selected users
+Click Apply
+
+Now in new browser, login as authenticated user 
+username: senthil_auth
+Password: password 
+
+Since authenticated user dosent have that much in the way of permission, the interface didnt change much at all, the only changes that took place will be login box run away and in the top right corner we have My account and Logout link
+
+Click My Account link - Click Edit and change information if we want to, since we dont have that much info we cannot change the user role so all will be authenticated user until administrator makes changes 
+
+Now we covered account settings under configuration where the default behaviours on the user accounts can be predefined, this includes automatic email messages that might be send when a user tries to create the account. We also created 2 new users (ie) administrator user and basic authenticated user
+
+Custom user roles and permissions
+Click People
+     We can see all list of users. In the People tab we have Roles tab 
+
+Click Roles
+    We can see 4 roles that comes with drupal installation (ie) anonymous user, authenticated user and administrator, content editor. We can setpup any user role you can think off and use that to set any kind of workflow that u might need on ur site. For example if we have RSS feed that feeds content to facebook, u might have user role which has only 1 permission which is to determine whether or not content goes to facebook 
+    In the case of this site we want to have recipe contributor role for users to add recipes and edit their own recipes but cant touch other peoples recipes or do anything else on the site
+
+Click Add role 
+Role name: Recipe Contributor
+Click Save
+
+We can see recipe contributor exists as one of role in our site. In order for this role to be useful we need to work with permissions for the user roles. We can do in 2 places
+  1. Click Edit Permissions under Operations of Recipe Contributor  
+   This will show all the permissions available with only 1 category to which we can set those permissions whether or not the permission is available to recipe contributor role
+  2. Permissions tab under People tab
+    This shows all the permissions available on the site with little checkboxes for every user role on our site. 
+    As a warning if u have lot of user roles on ur site and lot of different modules are enabled, this can be incredibly intense page to load. The database query along will potentially cause ur site to freeze out and will be a huge performance issues
+    There are contrib modules that we can use to make this little bit more manageable if we get into such situation. Since we have only 4 users roles here and not many modules we go over and use this page and see how permissions are applied to different user roles
+     The administrator column here is completely grade out because the administrator user role which has permission to do everything on the site. Recipe Contributor role also has whatever authenticated user is capable of doing because any user that logged into ur site is authenticated user. We dont need to add permission for recipe contributor to post comments because authenticated user is able to post comments 
+      The only permission right now we are interested is permission to add recipe content and edit ur own recipe content.
+
+Scroll down to Node and we can see each content type has bunch of permission associated with it, so basic page content type has create new content, delete any content, delete own content etc so there are lot of different category of permissions for each content type. The difference between edit,delete any content and edit,delete own content is whether or not the content is the content that specific user created it
+   We want the recipe contributor to create new content, we dont them to delete any content as well as their own content, we dont want them to delete any revisions, edit any content because we dont them to edit other people recipes, but we do want them to edit their own content. They can also view revisions but not allow to revert revisions because they want to see what changes admin made to their recipe
+
+Select Recipe: Create new content
+       Recipe: Edit own content
+       Recipe: View revisions
+
+Click Save Permissions 
+
+Now we need to create a user who is recipe contributor 
+
+Click List under People - Click Add User
+
+Email address: senthil_recipe@example.com
+Username: senthil_recipe
+Password: password
+Roles: Recipe contributor along with auth user
+Click Create new account
+
+So we discussed how to create a custom user role and how to set permission on that user role
+
+Strategies for Checking permission
+     Now we discuss strategies for checking permissions and making sure that interface  works as expected for different types of users 
+
+2 ways to check the permissions   
+    1. Open another browser and login into other browser as a user with the roles that u want to test
+    In this case we are in chrome logged in as administrator, we can move to another browser and login as recipe contributor 
+
+Username: senthil_recipe
+Password: password
+
+Now we can go through the process of testing this particular user role by making sure that the tools we need are actually here. The only thing that this particular user role is able to do is add recipe or manage existing recipe that this user has created 
+
+Click Add Content under Tools
+
+Dish name: Gluten free Pumpkin Donuts
+Food sensitivities: select all options
+Ingredients: pumpkin, sugar, egg 
+Directions: some dummy text
+Click Save 
+
+So we can edit the recipe as well as we can add another recipe as the way we expect for recipe contributor. This can be pretty difficult to test all of user roles and their permissions that u have setup for each user role, because it means login, logout and again login, logout specifically if u have multiple users 
+   Much easier way we can do this by using contrib module called Masquerade which allows u to temporaily pretend to be another user where still logged into the site as urself 
+
+Download masquerade 8.x-2.x-dev from drupal.org
+Extract and paste into tc4a/modules folder
+Click Extend  
+Enable and Install masquerade module
+
+Masquerade module has nice little block that we can place on our site and we can use this block to quickly masquerade as other user 
+
+Click Structure - Click Block Layout 
+Click Place block of Sidebar first
+Select Masquerade - Click Place Block 
+   We will restirct this block to admin user role because only admin user role should be able to masquerade other users 
+Under Roles - Check Administrator
+Click Save Block 
+
+When we go to the site we can see Masquerade block on sidebar where it allows to find user and switch what user we are using to look at the site 
+
+Masquerade: senthil_recipe
+Click Swicth
+
+Now we looking at the site as senthil_recipe that particular user, this is very handy and allow me to test the functionality without having 2 browser open, we can very qucikly masquerade as other user and checks the site. When we are done as senthil_recipe user, on the top we have Unmasquerde link which will switch back to viewing site as initial user 
+
+So till now we discuss drupal users, roles and permissions, drupal comes with 4 types of users 3 roles and user1, these roles include anonymous user, auth user and administrator. We can create our own roles and fine grained permission to these roles based on the workflows u need in ur site 
+
+
+Drupal Themeing
+     Theme would be ur visual display of ur site, in the case of our demo site, we have blue bar on the top, the way that the primary links are displayed in these tabs, the way that sidebars and content area are displayed 
+    Theme is a file or a collection of templates files, configuration files and asset files (JavaScript, CSS, images, fonts) which together determine the look and feel of a site. A theme contains elements such as the header, icons, block layout, etc.
+     Themes however are much more about CSS, they are everything about the front end presentation of ur drupal site which includes JS and the template that renders content on ur site. Template exists not only for the overall page layout but also for content area itself or for primary menu or even for the block. Theme also includes regions and regions are where the blocks are placed 
+
+     Now we are going to enable couple of contributed drupal theme in order to change the overall look of our site, we will put 2 themes from drupal.org like Insha and Space. Insha is the theme that going to be responsive and mobile friendly, it also comes with HTML5 and CSS3 
+
+Download Zen modules - Paste inside tc4a/themes folder of our project
+   Now we can see the files available in themes folder, the configuration file in our theme are yml file and page layouts are done using files inside templates folder which are twig file. CSS in case of space theme is done using SASS and its going to have its own file as well 
+    Themes can be enabled just like modules, but it happens under Appearance section of site management
+
+Click Appearance 
+    We can all installed themes and in the down we have uninstalled themes, these are additional themes that are available to our site and can be installed and configured as the theme thats being used on the site 
+
+Click Install and set as default of Zen 
+
+Now we can check the different theme of our site, but right now this may not look exactly as we want since elements are displaying at top locations
+
+Now we are going to adjust theme settings and block layout for the contributed themes that we have enabled on our site so we get better site presentation with these installed themes 
+
+
+Drupal with Composer
+
+Installation
+
+If we get any SSL certificate error 
+
+C:\Users\USERNAME\AppData\Roaming\Composer\config.json
+
+to this:
+
+{
+    "config": {
+        "disable-tls": true,
+        "secure-http": false
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "http://repo.packagist.org"
+        }
+    ]
+}
+
+2. https://ostraining.com/blog/drupal/drupal-xampp-curl-error-60/
+
+Drupal with Composer
+    Composer is a tool for dependency managemebt in PHP. It allows you to declare the libraries ur project depends on and it will install them for you
+
+Module M - XYZ Library - ABC Library 
+    Consider a scenario where we have to download or enable a module called Module M  for a website, this Module M is dependent on XYZ library and this library is dependent on another library called ABC. If we want to download this module and make it work then we have few ways to do it 
+  1. First we have to download the module from drupal.org, it can be tar or zip file, since this module needs other libraries we cant directly enable this module, we have to download xyz library and put it in vendor/library folder, then again we have to download ABC library and put it in vendor/library folder and finally we will enable the module
+    But using composer it will save lot of time, since composer is dependency mgt tool so it will evaluate whether that module is dependent on any library, so it will download xyz and then abc libraries
+
+
+Installation
+1. Create drupal project using composer
+
+xampp/htdocs>composer create-project drupal/recommended-project myproject 
+
+drupal/recommended-project will downloads the stable drupal version which is 9.4.8 in my case 
+
+It will download all packages, so it will evaluate what all is needed for basic drupal setup
+
+2. Goto myproject folder
+myproject> ls
+   So all libraries should be inside vendor folder. Normally composer will download project setup inside web folder, but if we want to download setup in other folder, so we dont want to download anything while creating project, so we tell composer not to download the libraries, it simply creates composer.lock and json file other things we have to do it 
+
+>composer create-project --no-install drupal/recommended-project myplainproject
+    It will create only composer.lock and composer.json after that we can setup the project
+
+Composer.json and Composer.lock
+    So whenever we download any project based on composer it will come with 2 files 
+    Composer.json is the file which list basic information about the project like name, description, package dependency and what all the dependencies are required for running to setting up this project 
+    Composer.lock file is for maintaining the locked version of all the packages that required in the composer.json file    
+
+2. Run http://localhost:8012/myproject - Click Web
+      Now u can install the project 
+
+What is Drush?
+     It is called Drupal shell which provide CLI for drupal, shell is a way to provide a command line interface for ur server that will give text commands to accomplish tasks rather than using user interface by clicking around 
+    It is not actually a module that you download and install inside ur drupal site because this is providing CLI, so this is a project you need to download and install on ur computer 
+
+1. Goto XAMP folder
+
+C:\xampp>composer    - check composer is there
+
+C:\xampp>composer global require drush/drush:dev-master  - Install drush
+
+C:\xampp>drush status
+
+Set the path in env variable
+
+path    C:\Users\senthil.kumart\AppData\Roaming          \Composer\vendor\drush\drush
+
+Webform in Drupal - Create project demo
+     The Webform module allows you to build any type of form to collect any type of data, which can be submitted to any application or system.
+
+1. Download webform module(webform-6.1.x-dev) from https://www.drupal.org/project/webform and put inside C:\xampp\htdocs\demo\modules folder
+   Or use composer to download is
+>composer require drupal/webform
+
+2. Next module we download is Token, Token API is part of Drupal core but the token module gives u nice UI for browsing available tokens. 
+  https://www.drupal.org/project/token
+Tokens are little placeholders that you can place into text which then Drupal will render and replace with the token you have specified 
+
+3. Click Extend - Search for Webform, WebformUI Token - Click Install 
+    Webform uses a bunch of external libraries to add extra functionality
+
+Click Structure - Click WebForms - Click Configuration - Click Libraries 
+   We can see all of external libraries and we can see most of them are switched on and if we dont want to use a particular external library we can simply uncheck the checkbox and click on Save
+    If we scroll up we can see message which tells how to download the libraries goes, by default the libraries are automatically loaded from CDN but it is recommended to download them into Drupal libraries directory. Library directory in drupal is used to share external libraries across multiple modules so we have only one version of library instead of having a version of library in different modules
+     Webform gives drush commands to download and install these libraries 
+   1. webform-libraries-make or webform-libraries-composer, these commands will create a make file or composer.json file with all of the libraries in them
+   2. webform-libraries-download, this will simply download all of the libraries and extract them into ur libraries directory 
+   3. webform-composer-update, this will modify  the composer file in ur Drupal installation with all of the libraries 
+
+C:\xampp\htdocs\demo>drush
+
+C:\xampp\htdocs\demo>drush webform:libraries:download
+    Now in htdocs/demo/web/libraries we can see all libraries have downloaded 
+
+or download libraries.zip and extract into demo/ folder. 
+
+
+Now we are ready to create webform
+
+1. Click Structure - Click Webforms - Click Add Webform
+
+Title: Request Callback 
+Click Save
+
+2. Now we attach fields or elements to webforms like textfield for name, telephone elt for phone and textarea for details 
+
+Click Add Element
+Click Add Element for Text field 
+     Title: Name
+     Under Form Validation Check Required checkbox
+     Click Save
+
+Click Add Element
+Click Add Element for Telephone
+     Title: Phone
+     Under Form Validation Check Required checkbox
+     Click Save
+
+Click Add Element
+Click Add Element for Textarea
+     Title: Details
+     Under Element Description
+        Description: Please describe your current business 
+     Under Form Validation Check Required checkbox
+     Click Save
+
+Now on Source tab, we can view the yml version of the form because the form is stored in yml markup, its not stored in database its actually stored as yaml markup. We can modify the yaml directly from here, so if we want to create another 2 phone element we can just copy and paste and change the key 
+
+phone_1:
+  '#type': tel
+  '#title': Phone1
+  '#required': true
+phone_2:
+  '#type': tel
+  '#title': Phone2
+  '#required': true
+
+Click Save and goto Elements tab we can see 2 new elements. So for some reason if we want to create 10 text fields we can easily do it through the source tab instead of manually using UI 
+
+3. If we want to view actual form, we can go for View tab
+    When we enter some name, phone and details and we can submit the form 
+
+4. During software building process we wont be filling out the form a lot, so we can use Test tab and all it does is, it prepopulates the form with test data and everytime we click on it, it populates with some other test data 
+
+5. After receiving few submissions, if we want to see all of the submissions, click Result tab we can see all of ur submissions 
+   If we want to download all of the submission in CSV format by going to Download tab and then click on download 
+   If we want to clear all submissions, we can do so by using Clear tab and click Clear button 
+
+Create Conditional elements
+    A lot of form builders have the ability to conditionally show or hide elements, this is useful if you want to only display an element, lets say a specific radio button or a drop-down has been selected, webform have this capability
+    Now we create a new element called preferred contact method which is a drop-down list with 2 options email and phone. When a user selects email then an email element will be displayed or if they select phone then a phone element will be displayed
+
+1. In same Request callback webform, click Add element
+     - Click Add Element under Select 
+        Title: Preferred Contact Method
+     - Under Element Options
+Option Value               Option Text
+  email                      Email
+  phone                      Phone
+     - Under Form Validation Check Required checkbox
+     - Click Save
+
+2. Drag Preferred Contact Method element below Name element
+   Click Save elements 
+
+If we goto View tab, we can see basic drop-down with email and phone options
+
+3. Now we add conditional logic to phone element so that it only displayed if we select phone 
+
+Click Build tab
+Click Edit under Phone element 
+Click on Conditions tab
+    - Under State select visible 
+    - If: All
+        Preferred Contact Method  Select:Value is 
+                                          phone
+Click Save
+Click Save Elements
+
+So logic here is the state is visible if all of the following is met (ie) preferred contact method value is phone 
+    If we goto view tab, we can see phone element is not visible and then if we select phone, the phone elt will be visible 
+
+4. Now we create new email element,so that when user selects the email they can enter the email address 
+
+Click Build tab
+Click Add Element
+    - Click Add Element under Email
+        Title: Email
+        Under Form Validation Check Required checkbox
+    - Click Conditions tab  
+        - Under State select visible 
+        - If: All
+        Preferred Contact Method  Select:Value is 
+                                          email
+Click Save
+- Move email element below phone element
+Click Save Elements
+
+
+Create Multistep Wizard
+    As we add more elements the size of the form will naturally grows and it is annoying to see single page form with lot of elements and in webform we have ability to create pages or multistep wizard. 
+    So we create 2 pages in our form, the first one is called contact details and that will have name and preferred contact method and a second page is called company details which will have the details elements 
+
+1. Click Build tab - Click Add Page 
+          Title: Contact Details
+   Click Save
+
+2. Click Add Page 
+          Title: Company Details
+   Click Save
+
+3. Now move Contact Details on top and move Name, Preferred Contact Method, Phone, Email under Contact Details and Details under Company Details 
+     Click Save Elements
+
+4. If we goto View tab, we can see a progress bar which tells which page we are in and other page information 
+    Now we can enter some info in the form and enter submit 
+
+5. Now to modify the progress bar, we can 
+click Settings - Click Form - Click Wizard Settings
+   - check Show Wizard Progress page, Show Wizard Progress percentage 
+Click Save
+
+Now if we goto View tab, we can see which page we are in and if we where fill first page we can see 50% through the form
+
+6. Now eventhough we are in first page or second page the url dosent change depending on which page you are on, which is problem if we want ot track the progress using some type of analytic tool such as Google Analytics 
+
+click Settings - Click Form - Under Wizard settings
+  Select Page name(?page=contact) under Track wizard in the URl by 
+  Click Save
+
+Now if we click View tab, and give some values and click Next then it adds some parameter in url which page and it matches the page key 
+
+7. Now if we want to change Next button
+
+click Build - Click Edit on specific page u want to change the button 
+    Under Page Settings 
+       Next Page Button Label: Go to Next Page
+    Click Save
+
+Now if we click View tab, we can see label of button is changed 
+
+8. Next we can make your forms easier to fill out (ie) floating fields from left to right so webform makes easy to float elements around in the form
+
+Now we delete the Name element and we add 2 more elements firstname and lastname and then we will float each element next to each other
+   - Click Delete under Name field
+   - Click Add Elements under Contact Details
+          Click Add Elements of Text field
+          Title: First name
+          Under Form Validation Check Required checkbox
+          Click Save
+   - Click Add Elements under Contact Details
+          Click Add Elements of Text field
+          Title: Last name
+          Under Form Validation Check Required checkbox
+          Click Save
+   - Drag and move firstname and lastname below Contact Details 
+   Now if we goto View tab, we can see firstname and lastname text fields
+
+8. Now we make both text fields to float each other
+
+- Click Build - Click Add Layout
+     Key: full_name
+     Click Save
+- Move full_name at top below Contact Details and indent ur First name and Last name fields
+- Click Save Elements
+
+Now goto View tab, we can see both the elements are floated next to each other 
+
+- If we want to change the width of each element 
+     Click Edit on First Name
+     Change value of  Flex: 2  under Flexbox item
+     Click Save
+
+     Click Edit on Last Name
+     Change value of  Flex: 5 under Flexbox item
+     Click Save
+- Click Save Elements
+
+Now goto View tab, we can see width of both elements are changed 
+
+Create List Options
+     Webforms provide the way to create predefined options 
+
+Click Structures - Click Webforms - Click Options 
+
+We can see list of predefined options like days, months, languages, country etc that we get when we install webform. We can define these options and reuse them in radio buttons or checkboxes, select options when needed. We can edit these options when needed by clicking Edit button 
+
+1. Now we create our own options
+
+- Click Add Options
+      Label: Softwares
+Option Value               Option Text
+ java                         Java
+ j2ee                         J2EE
+ j2me                         J2ME
+      Click Save 
+
+2. Click Forms - Click Build 
+   Click Add Elements under Company Details
+   Click Add Element under Select
+        Title: Softwares
+Instead of defining the options, we can select
+        Options: Software
+        Check Requried
+        Click Save
+   Drag and move Software under Company Details
+   Click Save Elements
+
+Now goto Test tab and we can see the Software options. The advantage of using predefined options if we have multiple forms using the same options then adding the options in easy, we dont have to manually go through each individual form 
+
+Sending email using Webform
+    Here we send 2 emails, first one will be to sales dept because this is request a callback form, somebody wants to be called back or contacted so when a user fills out this form and email will sent to sales dept. Second email will be a confirmation email but it will only be sent if the user has supplied an email, because a user can give a phone number or email so we not guaranteed an email address all the time, so confirmation email will be a conditional email 
+
+1. Install maillog module which logs emails, but it still send the email. We can see only developer realease 
+    - Download maillog-8.x-1.x-dev, token-8.x-1.11 inside modules folder
+    - Click Extend - Install maillog and token modules
+
+2. Click Configuration - Click Maillog Settings
+   - Uncheck "Allow the emails to be sent" because we dont want to accidently send emails in dev env
+   - Uncheck "Display emails on page" because it takes half page to display the text of email
+   - Click Save configuration 
+ 
+3. Click Structure - Click Webforms - Click Settings under Request a Callback form Build button- Click Emails/Handlers - Click Add Email
+
+1. First we send mail to sales dept
+      Title: Sales Department 
+      To email:
+         Select: Custom to email address
+                 sales@example.com
+
+In message area we can modify subject and body, we can change the subject so that we can have firstname and lastname in subject and we can do this using token
+   - Click Browse Available Tokens (if u dont have this link make sure token module is installed)
+   - Click Webform Submissions 
+          We can see [webform_submission:values:?], this is wildcard token and we can replace ? with element key so that element value will be rendered 
+   - Under Subject: Select custom subject
+      RAC from [webform_submission:values:first_name] [webform_submission:values:last_name]
+   - Under Body: Select custom body 
+       - Click Source
+        Paste the default body - again click Source
+     
+Now [webform_submission:values] token which will display all of the values and we can control which values get added to this token by 
+     - Click Included Email values
+We can simply uncheck which values we dont want to pass to that token, in our case we need all but there are situation where we have some private info not be displayed in the form, so we can uncheck it
+
+Please contact Customer,
+Submitted on [webform_submission:created]
+Submitted by: [webform_submission:user]
+Submitted values are:
+[webform_submission:values]
+
+     - Click Save
+
+2. Goto Test tab, we can click next page and finally click Submit button. Now it will display the message that sending of email message is disabled by maillog
+
+3. To check the logged email 
+
+Click Reports - Click Maillog 
+
+We can see list of email when we click on the subject we can see the full body of the email 
+
+4. Now we create confirmation email 
+
+Click Structure - Click Webforms - Click Settings under Request a Callback form Build button- Click Emails/Handlers - Click Add Email
+
+Title: Confirmation email
+Send to:
+    To mail:  select Email under Elements
+Subject:
+    Select Custom Subject: Thanks for Contacting us
+Body:
+    Select Custom Body: Click Source - Paste default body 
+   
+Thanks [webform_submission:values:first_name],
+Submitted on [webform_submission:created]
+Submitted by: [webform_submission:user]
+Submitted values are:
+[webform_submission:values]   
+
+- Goto Conditions tab
+     Enabled   If: All of the following is met
+                  Email            Filled
+Click Save
+Click Save Handlers
+
+- Goto Test tab, fill all details and click submit
+
+- Goto Click Reports - Click Maillog 
+     Now we can see 2 emails one is confirmation and another one sent to sales dept, if we click confirmation emails we can see all info displayed
+
+
+Creating Confirmation Page
+
+1. Click Structure - Click Webforms - Click Settings under Request a Callback form Build button- Click Confirmation
+     From here we can configure the confirmation type, we will leave it as page but we can set as inline, message, modal, url, url with message. Page is most common one, but if we want to redirect user to 3rd party website then we can use URL option
+
+Confirmation title: Request a callback has been submitted
+
+Confirmation message:
+     Thanks [webform_submission:values:first_name],
+     One of our sales reps will be in contact shortly. 
+
+Confirmation Back Link
+   Label: Back to request a callback form 
+
+Click Save
+
+2. Goto Test tab, fill all details, click on submit, we get confirmation page 
+   Now in url we can see the tokens will be displayed, but we dont want to display
+
+Click Settings - Click Confirmation - check "Exclude token from Confirmation URL"
+
+Click Save
+
+Goto Test tab, fill all details, click on submit, we get confirmation page, but now we cant see the token parameter in URL and the token will not rendered properly because we need those tokens. So if we are going to add tokens to confirmation message we need to make sure "Exclude token from Confirmation URL" is unchecked 
+
+Allow Draft Submission
+     Now we allow users to save drafts, consider we fill out form with five pages, it will nice to stop halfway and save it as a draft and come back and finish it later 
+
+1. Click Stucture - Click Webforms - Click Settings under Build for Request a Callback - Click Submissions
+     - Check Authenticated and Anonymous user 
+     - Check Allow users to save multiple drafts
+     - Check Automatically save as draft when paging, previewing
+under Submission Draft Settings 
+     - Draft Saved Message
+Submission saved. You may return to this form later and it will restore the current values
+Please note: Your draft submission will be deleted in 3 days
+     - Select Draft under Automatically Purge of Submission Purge Settings
+      Days to retain submission: 3
+
+-Click Save
+
+2. Now we can see draft button in our callback form, now we give just firstname and lastname, then click Save Draft button, we can see the draft message 
+     Now remove ?page=contact_detail and refresh the page we can see message that draft is pending and when we click on "Load your pending draft" we can see the draft will be loaded because we have only one 
+      But we have checked the checkbox which allows users to have multiple drafts, so we go back to form and enter firstname, lastname and select preferred contact method, then click Save Draft button, it will say display the draft message
+      Now when we refresh the page, we can click "View your pending drafts", we can see a table with all drafts, if we want to use specific drafts we can click on anyone of link 
+
+3. In case if we want to customize the table 
+
+Under Settings - Under Submission - Under Submission User Settings  
+      We just check firstname, lastname, Submission Title and uncheck IP address
+     Click Save 
+
+Now we can see the draft table will be changed
+
+4. Now if we want to change the value of Submission title in the table
+
+Under Settings - Under Submission -
+
+Submission Label: [webform_submission:submitted-to] by [webform_submission:values:first_name]
+
+Click Save
+
+Now we can see the value for submission title in the draft table will be changed 
+
+
+Displaying Form as a Block
+     Now we add form as a block in the right sidebar 
+
+1. Click Content - Click Add Content - Click Basic Page
+   Title: Test page
+   Url alias: /test
+   Click Save 
+
+1. Click Structure - Click Block Layout - Click Place Block of Sidebar Second 
+   Search for Webform - Click Place Block 
+
+Webform: Request a Callback 
+Pages: /test
+Click Save Block 
+Click Save Blocks 
+
+So when we goto our main page, we can see the form in right hand sidebar. Now we can give some values and click submit, it will go to confirmation page 
+
+2. We may notice that when we switch pages, it refreshes the whole page to go to the next page, now we can avoid that by using AJAX setting for this form 
+
+Click Settings on pencil icon on webform
+Check Ajax checkbox under Ajax Settings 
+Click Save 
+
+Now when we fill the data and click Next page, it will reload only the form via Ajax, and finally when we click submit it redirects to confirmation page 
+
+3. Now we dont want to redirected to a whole new page once the form has been submitted, so webform allows to display the confirmation inline 
+
+Click Settings on pencil icon on webform
+Click Confirmation 
+Ckeck Inline under Confirmation type
+Click Save
+
+Now when we fill the details and click submit button, we can see it will display confirmation msg in same page 
+
+
+Display Form using Webform Node
+     Another way we can display forms using Webform node sub modules
+
+1. Click Extend - Search for Webform - Select Webform node - Click Install
+
+2. Click Structure - Click Content Types - Click Webforms 
+   - Click Manage fields under Webform 
+
+This content type has two fields, body and webform. The module implements its own field type called webform which allows to display forms on any field or entity
+    So we can display a form within a block just by adding a field to a custom block type or if we want to allow editors to embed forms using the paragraphs module, then we can create a paragraph type and then attach the webform field to it 
+
+3. Now we create 2 instances of our request a callback form, first will have email pre-populated as the preferred contact method and second one will have phone.
+   So using Webform content type we can have multiple instances of one form
+
+Click Content - Click Add Content - Click Webform 
+    Title: Request a Callback (Email) 
+    Webform: Select Request a callback 
+    Default Submission Data: preferred_contact_method: email(we can get the key from Structure - Webforms - Request a callback)
+    Click Save 
+
+So now if we scrolldown, we can see email is default preferred contact method
+
+4. Now we create another for phone
+
+Click Content - Click Add Content - Click Webform 
+    Title: Request a Callback (Phone) 
+    Webform: Select Request a callback 
+    Default Submission Data: preferred_contact_method: phone
+    Click Save 
+
+So now if we scrolldown, we can see phone is default preferred contact method
+
+5. Now we click Test tab, add two values for Request a Callback(Phone) and one value for Request a Callback(Email)
+
+Click Content - Click Webforms - Click Request a Callback(Phone) - Click Results 
+    We can see 2 submission for this one, since webform is smart enough to show the submission for that particular one 
+
+Click Content - Click Webforms - Click Request a Callback(Email) - Click Results 
+    We can see 1 submission for this one
+
+So we could easily develop a system in Drupal where editors could create multiple webform content pages but they can only see submissions that have been entered in on specific pages
+
+Now if we want to see all the submissions
+
+Click Structure - Click Webforms - Click Submissions under Request a Callback 
