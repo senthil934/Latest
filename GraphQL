@@ -1,0 +1,3031 @@
+      GraphQL is a new API standard and it is different from a typical REST API, it is more efficient, more powerful and more flexible alternative to REST API. It is an open source and developed by Facebook 
+      GraphQL is Graph Query Language it means whatever the data that we need, we send in the form of query and the server will respond you for that particular query.
+      Consider typical REST API, where we sending a request, where we want user id and for that id we want some posts and we want to check how many followers we have for that particular user id, so we have 3 api endpoints are available (ie) id, posts and followers  
+      First we fetch the id which returns the user information and second call we are making it to posts for that id to see how many posts are available. Then 3rd request we are sending for that user id how many followers are their, which returns followers information. So we are hitting 3 apis back to back and these 3 results are showing on any kind of client like mobile or desktop or any web appl. But the problem is that just to show some basic information, we want to show what is the user id, how many posts are available and how many followers are available for that user, only that info we want to show on client (ie) mobile or any web appl. In that case we are hitting 3 services (ie) we are making the request to the server 3 times for 3 different apis and then fetching the huge amount of data and filtering out that particular data and displaying on the client. This is the problem with typical REST API 
+      We see how exactly GraphQL will solve the problem, so we have GraphQL server and this information is already available at server side, so this is the query we will send over here that for this user id we want name, we want posts like how many titles are there for that particular posts and we want to show the last 3 latest followers are their and give me their names. So we will send a post request to the GraphQL server and the server will respond back a typical JSON file. So in the GraphQL, the user can specify exactly the data it needs in a query 
+
+Advantage
+    1. We have typical REST API without GraphQL, so we have mobile appl and we want to display some basic information about that particular user and we are sending 3 endpoint url and there are 3 database are available where 3 respective information are available in this database. So without GraphQL we are sending first request and fetching lot of information from the server, but we need only few information instead of these 100 attributes in json response we need only few one, so we filter it out and rest of things we dont need it. 
+    Next we are calling the second api and getting the data from the database and sending response to the client and client says we need only 2 information from that particular response. Next we are hitting 3rd api and again getting the data from the database in the form of response json, then we need only few information and we dont need rest of the information. So this is the only information we want and then we will display on the mobile site, so we have first user and second user, only 4 attributes we needed out of 100 or 200 attributes which are coming from the server as response 
+     With GraphQL, we will send the request, the GraphQL will filter it out and combine the data and give as response back to the user, so GraphQL says this is what u want and I will give you that exactly the same thing only, and I will not give unnecessary data in the form of response. In both the cases the UI will remain same but if we see the performance with GraphQL is good 
+     2. Another problem is that, consider we want to display 3 information like user information, how post this user has written and how many followers are there, so if we have 3 endpoint urls then we are hitting this request 3 times, first for the userid we are passing, second for this userid how many posts are available, third for this userid how many followers are available and then we get the response back to client, so we are hitting 3 apis over here 
+       But with GraphQL the same information can be get by sending a query to GraphQL server saying that we want this information about that particular user and only these attributes are needed and then we get the response back to the client
+      So first advantage is more and more efficient in terms of performance, second advantage is that if any changes are happening in the UI side (ie) UI attribute is changed or something, then we can add one more attribute to the query and get response over here. Next thing is that we dont need to send many request (ie) we are unnecessarily sending so many request and then finally you are fetching the data 
+     Third advantage is that unnecessary over data we are getting it, consider we are sending the request for this particular post and we are getting 100 attributes in the json format which we dont want, out of 100 we want only 5 information, so over fetching data can be avoided in this particular case
+     Fourth adavantage is that, if any UI changes are available then UI developer can say that we are not dependent on this particular GraphQL response every time that we are getting it, we can make any changes at any time because in the agile world, lets say ur Product manager say to add 2 more attributes or delete 3 attributes so we just prepare the query accordingly at the runtime and send the request to the server and get the response accordingly 
+
+Refer https://graphql.org/users/  to see who all using GraphQL  
+
+In GraphQL, you will deal with 3 main categories
+   1. Queries - the way we are going to get data from the server
+   2. Mutation - the way we are going to modify data on the server and get updated data back
+   3. subscriptions - the way we are going to maintain a real time connection with the server
+
+What is GraphQL?
+     GraphQL is a query language for APIs and a runtime for fulfilling those queries with ur existing data. GraphQL provides a complete and understandable description of the data in ur API, gives clients the power to ask for exactly what they need and nothing more
+     There are few important points provided in this defination
+   1. GraphQL is a query language for APIs and not a tool or a framework for designing APIs, so GraphQL is all about creating an API and not designing an API 
+   2. A client gets exactly what it want from an API nothing more than that, so unlike REST where we get the full representation of a resource, in GraphQL we get exactly what we want 
+    - Graph QL is developed at Facebook
+
+GraphQL is a collection of 3 things:
+  1. Schema Defination language or SDL
+  2. Runtime environment
+  3. Query Language 
+
+Schema Defination Language
+    - It is used to define a GraphQL Schema 
+    - which are used to expose the functionalities that are available in an appl to its users. 
+   Consider we have an appl called Virtual library which mimics the behavior of a real library so what could be the possible functionalities or operations for this appl, one could be adding a new book to the library and other could be getting a list of all books data available in the library, so these are the operations that are going to be exposed to the users and in order to expose these functionalities to the users we have to use GraphQL schema 
+     A GraphQL schema contains
+1. Types which are similar to classes in Java, these types can have fields which are equivalent to instance variable in Java class 
+2. Operations which can be performed on these types which are similar to methods in Java 
+
+Example of schema file written in SDL
+    We have 3 types in this file like query type, mutation type and Object type
+
+Object type is used to create a userdefined type, so Book is a userdefined type which has 3 fields like id,name and pages, which is equivalent to a Java class 
+
+type Book {
+    id: Int
+    name: String
+    pages: Int
+}
+
+So now when we have a type, let us define few operations that we can perform on this type, in order to define an operation in SDL, we can either use query type or Mutation type
+    Query type is used to create read only operation which will read data from server. The operations define inside query type are called queries. We have 2 queries here, one is getBook() that takes an argument id of type int and returns a Book object. Second query getBooks() which takes nothing but returns a list of books 
+  
+type Query {
+    getBook(id:Int):Book
+    getBooks:[Book]
+}
+
+On other hand mutation type is used to create a write operation which will manipulate data, so the operation defined in mutation type are called mutations. Here we have mutation called createBook() that takes 2 argument name of type String and pages of type Int and it returns an Integer 
+
+type Mutation {
+    createBook(name:String, pages:Int):Int
+}
+
+So these operations are exposed to the users with the help of the GraphQL schema, so in generally schema contains type and operations
+
+Runtime Environment
+    It performs 2 major operations
+1. Parsing the GraphQL Schema file and creating an in-memory schema file 
+      Reading information from the schema file again and again will be inefficient si the runtime env creates an in-memory representation of the schema file that contains all the info defined in the schema file 
+     So the first duty of the runtime env is to create an in-memory schema from GraphQL schema file that will contain all the necessary information like types and operations that were there in the schema file 
+ 
+2. Executing the operation specified in the clients request 
+      A user can use any of the operations that were defined in the schema file. Runtime env is responsible for handling the user's request, it looks for the operation specified in the request then it uses the in-memory schema to check if that operation exists in the schema or not. If it exists then runtime will execute it and will perform the specified action like reading or manipulating the data at server 
+    So as a client if I want to use an operation defined in the schema file, we have to make a query and pass that query to the runtime env, the runtime env will inspect that request in order to fetch the operation and then it will validate that operation in order to see if that operation exists in this schema file or not, it will use the in-memory representation of this schema to validate the operation and if that operation exists in this schema then it will execute it and will perform the specified action
+
+Query Language(QL)
+     - It is used by clients to use operations that defined in the GraphQL schema 
+     - QL enables the client to select only the required fields from set of fields
+     So as a user if we want to execute any of the operations specified in the schema file, we have to use the query language offered by GraphQL in order to specify that operation 
+
+GraphQL Query                                        Result
+{                                            {
+  getBooks {            Runtime env           "data":{     
+      name                                        "getBooks":[
+  }                                                 {
+}                                                    "name":"My Latest Book"
+                                                    }
+                                                    {
+                                                      "name":"My oldest Book"
+                                                    }
+                                                ]
+                                             }
+     
+So here we are using Query language to specify the getBooks operation, after specifying we will send this request to Runtime env which will inspect this request and it will check if this operation exists in this schema file or not and if it exists then it will execute it and will perform the requried actions, we can see the result is returned from the runtime env, we are getting the name of the books that were available in the database, we can see we only getting the names but not id and pages because we have asked only for the name 
+
+Data Fetcher
+    - It is a callback function 
+    - It is linked to every query, mutation and field
+    - When a client uses an operation defined in the schema file then runtime env invokes the data fetcher linked to that operation in order to perform the specified action 
+      So every query and mutation is linked to a data fetcher which is basically a callback function, this callback function will be invoked by the runtime env in order to perform the required action 
+
+//getBook(id:Int):Book
+public DataFetcher<Book> getBook() {
+    return environment -> bookRepo.findById(environment.getArgument("id")).map(Function.identity()).orElse(null);
+}
+       So getBook operation is associated with DataFetcher, this data fetcher will get id argument from the request and will find the book as per the id and will return the book
+
+//getBooks:[Book]
+public DataFetcher<List<Book>> getBooks() {
+    return environment -> bookRepo.findAll();
+}
+So getBooks takes no argument but return list of books, so this data fetcher is associated with getBooks and return the list of all books 
+
+//createBook(name:String,pages:Int):Int
+public DataFetcher<Integer> createBook() {
+   return environment -> bookRepo.save(new Book(environment.getArgument("name"),environment.getArgument("pages"))).getId();
+}
+createBook mutation is associated with this data fetcher which will get the name and the pages arguments from the request and will create a new instance of the book and will save it and then return the id for this newly created book
+
+How the in-memory schema is prepared?
+       So first we create schema file using SDL and then we create the required datafetchers for the operations defined in this schema file, then we feed the schema file and the data fetchers to runtime environment and then it prepares an in-memory schema for it, this is a high level overview of the process
+
+Executing the operation
+     So when a client asks for an operation to execute like getBooks which returns a list of books, so basically the server will get this request first and it will forward the request body to GraphQL runtime environment. Now the env will inspect the request to fetch the supplied operation in the request, so after getting the operation the GraphQL runtime env will validate it to see if this operation exists in in-memory schema or not and if this exists in the schema, the schema will return the assocaited datafetcher which is linked with that operation and we will give this datafetcher to GraphQL runtime env. Now graphql runtime env will execute this datafetcher and perform the required action 
+
+GraphQL vs REST vs gRPC
+
+GraphQL 
+    - It is a collection of SDL, Runtime env, QL
+    - Graph QL is developed at Facebook
+    - GraphQL provides a mechanism through which
+1. A client can request exactly what it wants from an API nothing more or less
+2. A server can send only the required data specified by the client in the request 
+    - It is not a tool or a framework for designing an API, its all about querying an API and getting the exact data from it
+      So what is querying an API, we understand with an example. Suppose we create an api for a library that returns a list of books, each book has several fields like id, name, pages and author. The author field itself contain few fields like id, name, age and address. So this api will return list of books together with the fields. Now we consider 2 cases
+
+Case 1: 
+    Consider ClientA wants to create a webpage and he will be displaying list of books together with all fields. For this purpose our apis is suited because it is returning all the information that is required by ClientA 
+
+Case 2:
+   Consider ClientB wants to create a webpage but he will be displaying only name of the books that are available in the library, for this purpose our api is not suitable because our api is returning lot more information which is not required to clientB 
+    We can tackle this problem by using GraphQL, so GraphQL enables the client to request exactly what they wants from an api, nothing more than that and it enables the server to send only required data that specified by the client in the request. This is where GraphQL can be used and this is what querying an api means 
+
+
+How GraphQL works in Java?
+      - First step is to create schema file, this file will contains types and the operations which can be performed on these types 
+      - SchemaParser class is provided by the GraphQL Java api, we create an object of SchemaParser class to parse the schema file. After parsing we get an instance of TypeDefinationRegistry, this instance is an in-memory representation of the schema file 
+      - We also have to prepare DataFetcher, each DataFetcher is either associated with an operation or field. In order to generate a link between operation and DataFetcher or field and DataFetcher we have to create an instance of TypeWiring, so each instance of TypeWiring represents the linking between operation or the field with the DataFetcher, there can be more than one linking so there can be more than one instance of TypeWiring 
+      We feed all the instances of TypeWiring to RuntimeWiring in order to create an instance of the RuntimeWiring class 
+     - Now we have 2 instances, one for TypeDefinationRegistry and another for RuntimeWiring. Now we combine them with the help of SchemaGenerator class and creates an instance of GraphQLSchema. 
+      This GraphQLSchema is further used to create an instance of GraphQL, so GraphQL is the main class in the GraphQL Java API which is used to handle the client requests 
+
+How GraphQL works in Java?
+         First client sends a request that contains either a query or a mutation. It does not interact directly with GraphQL instance, instead it interacts with the controller first. In controller there is always a method that passes the request body to GraphQL instance. This method is usually mapped to the URI path "/graphql". Further this GraphQL instance will always execute DataFetcher, if the operation mention in the request is valid operation. Upon execution on DataFetcher it either fetches the data from database or it request an API in order to get the data. Then the result is returned, now on the controller side, the controller creates a response from this result and send it back to the client 
+     
+
+1. Create SpringBoot-GraphQL with spring reactive web, h2 database, Spring data R2DBC and graphql Java API dependency 
+
+<dependency>
+  <groupId>com.graphql-java</groupId>
+  <artifactId>graphql-java</artifactId>
+  <version>15.0</version>
+</dependency>
+
+2. (Optional) Select GraphQL client called Altair which is most commonly used, download from https://altairgraphql.dev/ and install it
+
+3. Create model class which basically maps to GraphQL request or basically when we use graphQL client like postman, it will send us a few fields like query field, variables field and operation name. In order to hold those values we have to create pojo or model class in Java 
+    Create GraphQLRequestBody class with 3 fields like query, operationName and variables 
+
+public class GraphQLRequestBody {	
+	private String query;
+	private String operationName;
+	private Map<String, Object> variables;
+}
+
+4. Create Controller class with @RestController
+
+    @Autowired
+    private GraphQL graphql;
+    First we autowire GraphQL class which is an main object that is available in the GraphQL Java API 
+    We create single method with post request with value as "graphql". It will consume as json type and also produce same JSON type. So whenever we place a request to this URI we get the model class using @RequestBody. 
+
+@PostMapping(value="graphql", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public void execute(@RequestBody GraphQLRequestBody body) {
+		graphql.executeAsync(ExecutionInput.newExecutionInput().query(body.getQuery()).operationName(body.getOperationName()).variables(body.getVariables()).build());	
+	}
+
+     Now we called executeAsync method and providing the ExecutionInput argument and we will getting the query from the body using getQuery(), next operation name from the body using getOperationName(), lastly we get variables from the body using getVariables()
+     executeAsync() returns CompletableFuture<ExecutionResult>, so ExecutionResult is the result returned by the GraphQL runtime, so we will wrap it in a Mono which is created using fromCompletionStage(). Since it returns ExecutionResult we will be invoking another method called map() on it with ExecutionResult 
+
+@PostMapping(value="graphql", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Map<String,Object>> execute(@RequestBody GraphQLRequestBody body) {
+		return Mono.fromCompletionStage(graphql.executeAsync(ExecutionInput.newExecutionInput().query(body.getQuery())
+				.operationName(body.getOperationName()).variables(body.getVariables()).build()))
+				.map(ExecutionResult::toSpecification);
+	}
+
+So toSpecification will convert data and the errors returned by Java API into the format of GraphQL. So whenever the client receives the response it will be formatted in the GraphQL response format, now we change the return type as Mono<String,Object> 
+
+@PostMapping(value="graphql", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Map<String,Object>> execute(@RequestBody GraphQLRequestBody body) {
+		return Mono.fromCompletionStage(graphql.executeAsync(ExecutionInput.newExecutionInput().query(body.getQuery())
+				.operationName(body.getOperationName()).variables(body.getVariables()).build()))
+				.map(ExecutionResult::toSpecification);
+	}
+
+5. Now we create entity class or domain object. We will be create simple library app so the model we are creating is a Book and Author class
+    We are going to create as entity so we use the support provided by Spring data R2DBC 
+
+@Table("books")
+public class Book {	
+	@Id
+	private int id;
+	private String name;
+	private int pages;
+}
+
+6. Next we create repository class called BookRepository with @Repository annotation 
+     We are going to use the R2dbcEntityTemplate  provided by the Spring Data R2DBC,  so we autowire R2dbcEntityTemplate 
+     @Autowired
+     private R2dbcEntityTemplate template;
+     
+Next we will create a method that will fetch a book row from database, so we call template.select(), where we are going to fetch the data from books table and that books table is mapped to the Book entity class. Finally we dont want to fetch everything we want to fetch a specific book according to id, so we will be filter or match the result, here we will be doing matching part using Criteria and fetching particular book according to its id based on the argument. We will do fetch and since this will only return a single book instance so we will be doing that using one(). 
+
+public void getBook(int id) {
+		return template.select(Book.class).matching(Query.query(Criteria.where("id").is(id))).one();
+	}
+
+Since one() returns Mono of type Book, so we change the return type to Mono<Book>
+
+public Mono<Book> getBook(int id) {
+		return template.select(Book.class).matching(Query.query(Criteria.where("id").is(id))).one();
+	}
+
+Next we create repository method to fetch all books called getBooks(), it wont take any arguments because we are just returning list of available books in the database 
+    So we call template.select() from Book.class, now we are not going to match anything as we require all the books, so we fetch everything using all(). Here it will return a Flux, so we return this and change return type as Flux<Book>
+
+public Flux<Book> getBooks() {
+		return template.select(Book.class).all();
+	} 
+
+7. Remove <scope>runtime<scope> from r2dbc-h2 dependency in pom.xml because Spring Data R2DBC dosent create a table according to entity class as it does with JPA or Spring Data JPA
+   We have to manually create this table file and have to execute it 
+   Inside resources folder, create schema.sql file 
+
+CREATE TABLE books(
+	id int PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(255),
+	pages INT
+);
+
+Create new sql file called data.sql inside resources to insert some data into the table 
+
+INSERT INTO books(name,pages) values("Java",439);
+INSERT INTO books(name,pages) values("J2EE",530);
+
+So when we start the appl, Spring boot will automatically create the tables as well as it will insert the values into the table 
+
+
+9. Now we create graphql schema file, inside resources we create schema.graphql file 
+    First we have to create Book and we have to map our model in the graphql schema. Our Book class has 3 fields, so we create an equivalent GraphQL type 
+
+type Book {
+	id:Int
+	name:String
+	pages:Int
+}
+
+Now we create queries or operations that can be performed on this type. So we create 2 query, first is getBook which takes id of the book and return a Book, next is getBooks which will take nothing but return list of books, in graphql list is represented as []  
+
+type Query{
+	getBook(id:Int):Book
+	getBooks:[Book]
+}
+
+Now we have type and 2 operations or queries in place.
+
+10. Next we create DataFetchers for getBook and getBooks operation. Now we create BookService class with @Service annotation 
+    To create a DataFetcher, the return type should be DataFetcher, it is a generic type and we have to provide a type that it wraps, basically if we are going to return a Book then DataFetcher will become DataFetcher<Book> but since we are using reactive programming we will have the value of Book in Future so we use CompletableFuture over here 
+    First we wrap Book into CompletableFuture and then we wrap that CompletableFuture into DataFetcher. This is how reactive programming works, as GraphQL Java API dosent support the reactive types like Mono and Flux directly, so we have to convert Mono and Flux types into CompletableFuture and then we have to wrap those CompletableFuture in the DataFetchers 
+   public DataFetcher<CompletableFuture<Book>> getBook()
+
+     Ctrl+Shift+T for DataFetcher Interface. It has only 1 method called get(), so we can use it as a Functional Interface 
+      We will return a lambda over here, each and every DataFetcher receives an argument of type Environment, so we fetch book id from the environment. The arguments that we pass in the request using GraphQL client are basically stored in this Environment object and later we can fetch with the help of DataFetcher Environment object 
+     Now we get the argument from schema file using env.getArgument("id") and this argument should be same as given in graphql schema file. 
+
+return env -> {
+	int bookId = env.getArgument("id");
+		};
+
+     Now we get the book according to book id, so we do this with the help of repository we created, so we first autowire it 
+     @Autowired
+     private BookRepository bookRepository; 
+
+    Now we call bookRepository.getBook(bookId), now this will return Mono<Book>, as we saw GraphQL Java API dosent support reactive API so we have to convert into CompletableFuture using toFuture()
+   return bookRepository.getBook(bookId).toFuture();
+
+public DataFetcher<CompletableFuture<Book>> getBook() {
+		return env -> {
+			int bookId = env.getArgument("id");
+			return bookRepository.getBook(bookId).toFuture();
+		};
+	}
+
+Now we create other DataFetcher for getBooks which returns DataFetcher of CompletableFuture for a list of books, again we do lambda expr, this time we call bookRepository.getBooks().collectList() which returns a list of book and wrap it in Flux, so we can convert it to Future using toFuture()
+
+public DataFetcher<CompletableFuture<List<Book>>> getBooks() {
+		return env -> bookRepository.getBooks().collectList().toFuture();
+	}
+
+
+11. Now we have to create GraphQL bean in main class 
+     So we create a method graphQL() with @Bean and returns GraphQL. 
+  - First we have to create an instance of SchemaParser
+  SchemaParser schemaParser = new SchemaParser();
+  - Next we have to locate graphql schema file inside resources folder using ClassPathResource
+  ClassPathResource schema = new ClassPathResource("schema.graphql");
+  - Next we pass classpathresource to schemaparser so that it can parse the file and returns an instance of TypeDefinationRegistry
+   TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema.getInputStream()); 
+  - Next step is to map the operations or queries with their respective DataFetchers, so to that we have to create an instance of RuntimeWiring and we call type() which takes an argument of TypeRuntimeWiring and it is created using TypeRuntimeWiring.newTypeWiring() and we use Query type so we have to use Query type, then with these we bind the DataFetcher 
+
+RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
+		.type(TypeRuntimeWiring.newTypeWiring("Query").dataFetcher("getBook", bookService.getBook()))
+		.type(TypeRuntimeWiring.newTypeWiring("Query").dataFetcher("getBooks", bookService.getBooks()))
+		.build(); 
+   - Next step is to combine TypeDefinationRegistry, RuntimeWiring and generate a schema out of it. To generate a schema we have to use SchemaGenerator class
+  SchemaGenerator generator = new SchemaGenerator();
+   - Now we call generator.makeExecutableSchema() and we pass TypeDefinationRegistry and RuntimeWiring which returns an instance of GraphQLSchema  
+   GraphQLSchema graphQLSchema = generator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
+  - Final step is to create GraphQL instance using GraphQLSchema, to do that we call newGraphQL() and pass that graphQLSchema object and build 
+  return GraphQL.newGraphQL(graphQLSchema).build();
+
+
+12. Start spring boot appl
+
+13. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give, since getBooks return list of books we provide all the fields 
+
+{
+    getBooks {
+        id
+        name
+        pages
+    }
+}
+
+Click Send 
+
+Now we can see the list of books
+
+If we want to check getBook operation, we give
+
+{
+    getBook(id:2) {
+        id
+        name
+        pages
+    }
+}
+
+It will list a single book with id=2. In case if we want only specific fields
+then we can provide
+
+{
+    getBook(id:2) {
+        name
+        pages
+    }
+}
+
+So for book id 2, it will display only name and pages 
+
+14. Delete data.sql, since next we are going to do mutation (ie) inserting
+
+Executing a Mutation
+1. Now we change few things here
+     - Change type of id from int to UUID 
+
+@Table("books")
+public class Book {	
+	@Id
+	private UUID id;
+	private String name;
+	private int pages;
+}
+    - Change datatype in schema.sql from int to varchar(255)
+CREATE TABLE books(
+	id VARCHAR(255) PRIMARY KEY,
+	name VARCHAR(255),
+	pages INT
+);
+
+   - Change datatype in schema.graphql file from int to String
+type Query{
+	getBook(id:String):Book
+	getBooks:[Book]
+}
+
+type Book {
+	id:String
+	name:String
+	pages:Int
+}
+
+  - Change in BookService and BookRepository class 
+
+1. To create a mutation, first we have to create a mutation block in schema.graphql. We already have query block which holds all the query, now we create a mutation block which will hold all mutation in our appl
+     We create a mutation called createBook() which takes name and pages as argument, we will generate id ourself so we provide only name and pages. This mutation will return a book with the uuid of newly created book in the form of string, here id is UUID but we use String because by default GraphQL Java API dosent support UUID, so we use string instead of UUID 
+
+type Mutation{
+	createBook(name:String, pages:Int):String
+} 
+
+
+3. Create a new method in respository that will create a new book
+     We create a method called createBook() which takes Book as an argument, first we generate UUID for book and set that id to the book object. Next step is R2DBCEntityTemplate to insert this book into database using insert() which will insert Book.class using book object and finally return bookId using thenReturn which returns Mono object 
+
+public Mono<UUID> createBook(Book book) {
+		UUID bookId = UUID.randomUUID();
+		book.setId(bookId);
+		return template.insert(Book.class).using(book).thenReturn(bookId);
+	}
+
+4. Create DataFetcher for this mutation in BookService
+    We create a method which returns CompletableFuture, now we use DataFetcher Environment to fetch the arguments like name and pages, next we set those values to the Book object, next we call bookRepository.createBook() with book object as argument. So this will return Mono<UUID>, so we have to convert it to Completablefuture using toFuture(), but before that we have to convert book UUID to string using map()
+
+public DataFetcher<CompletableFuture<String>> createBook() {
+		return env -> {
+			String bookName = env.getArgument("name");
+			int pages = env.getArgument("pages");
+			
+			Book book = new Book();
+			book.setName(bookName);
+			book.setPages(pages);
+			
+			return bookRepository.createBook(book).map(Object::toString).toFuture();
+		};
+	}
+
+5. Now we have to map this DataFetcher to the mutation in schema.graphql file in main class inside graphql()
+
+.type(TypeRuntimeWiring.newTypeWiring("Mutation").dataFetcher("createBook", bookService.createBook()))
+
+6. Start the appl
+
+7. 13. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section 
+
+When excuting mutation we have to provide mutation keyword unlike query where we dont specify the operation name because query is default operation 
+
+mutation {
+   createBook(name:"Spring",pages:500)
+}
+
+Now it will return a book with id, then now with that id we can check the other query operation
+
+{
+    getBook(id:"1bc91ada-9dc3-408d-bb28-81fc00efcebb"){
+        name
+        pages
+        id
+    }
+}
+
+Now it will display book details for that book id
+
+Mutating a Nested Object
+ 
+1. In schema.graphql, we will create a new object called Author and we nest that object into Book object 
+
+type Author {
+	id:String
+	name:String
+	age:Int
+}
+
+Now we use this Author object in the Book object as each book will have an author 
+
+type Book {
+	id:String
+	name:String
+	pages:Int
+	author:Author
+} 
+
+Since we have author inside book, now we need to add few more arguments inside the mutation block to support the author arguments 
+
+type Mutation{
+	createBook(bookName:String, pages:Int, authorName:String, age:Int):String
+}
+
+2. In schema.sql, we need to modify to create author as well 
+
+CREATE TABLE authors(
+	id VARCHAR(255) PRIMARY KEY,
+	name VARCHAR(255),
+	age INT,
+	book_id VARCHAR(255) UNIQUE NOT NULL,
+	
+	CONSTRAINT book_author_fk FOREIGN KEY(book_id) REFERENCES books(id)
+);
+
+3. Create model or entity class for Author 
+
+@Table("authors")
+public class Author {
+	@Id
+	private UUID id;
+	private String name;
+	private int age;
+	
+	@Column("book_id")
+	private UUID bookId;
+}
+
+4. Create AuthorRepository with @Repository annotation. Now we will autowire R2DBCEntityTemplate provided by Spring data R2DBC
+  @Autowired
+  private R2dbcEntityTemplate template;
+
+Next we create a method called createAuthor() for saving the author into the authors table, it will take Author instance as an argument. Next we create UUID and set it author id, then we call insert Author.class using author instance and thenReturn an authorId, thenReturn will return Mono<Author> so we make return type as Mono<Author>
+
+public Mono<UUID> createAuthor(Author author) {
+		UUID authorId = UUID.randomUUID();
+		author.setId(authorId);
+		return template.insert(Author.class).using(author).thenReturn(authorId);
+	}
+
+5. Create an AuthorService with @Service annotation, then we have to autowire AuthorRepository to insert into db
+        @Autowired
+	private AuthorRepository repository;
+
+
+Now we create a new method called createAuthor() which used to insert data into author table. This method have 3 parameters (ie) authorName, age and bookid. Now we create Author object and set all those values to the author object. Finally we call repository.createAuthor(author), this will return UUID wrapped in Mono since Graphql dosent support UUID so we have to convert to String using map()  
+
+public Mono<String> createAuthor(String authorName, int age, UUID bookId) {
+		Author author = new Author();
+		author.setAge(age);
+		author.setName(authorName);
+		author.setBookId(bookId);
+		return repository.createAuthor(author).map(Object::toString);
+	}
+
+6. Now we need to modify BookService as well, in case of createBook() we are getting 2 arguments name and pages but now we need to fetch 2 more arguments.
+   - First change name to bookName 
+String bookName = env.getArgument("bookName");
+
+   - Next we need to get authorName and age from environment 
+    String authorName = env.getArgument("authorName");
+    int age = env.getArgument("age");
+
+   - Now first we will insert the book and if it is successful we insert the author. So first we call bookRepository.createBook(book), next we call flatMap() where we will getting the bookId, then we will save the author, in order to save it we autowire AuthorService. Then we call authorService.createAuthor() with authorname, age, bookId, this will return Mono<String> which is basically an authorid but as the parent need to return bookId, so we need to write logic to convert bookId so we can do map() where we get authorId which we ignore and we return bookId.  Next we convert it to CompletableFuture using toFuture()
+
+public DataFetcher<CompletableFuture<String>> createBook() {
+		return env -> {
+			String bookName = env.getArgument("bookName");
+			String authorName = env.getArgument("authorName");
+			
+			int pages = env.getArgument("pages");
+			int age = env.getArgument("age");
+			
+			Book book = new Book();
+			book.setName(bookName);
+			book.setPages(pages);
+			
+			return bookRepository.createBook(book).flatMap(
+					bookId -> authorService.createAuthor(authorName, age, bookId)
+					.map(authorId -> bookId.toString()))
+			.toFuture();
+		};
+	}
+
+6. Start the application
+
+7. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give,
+
+mutation {
+    createBook(bookName:"Struts",pages:300,authorName:"Jordan",age:33)
+}
+
+Click Send
+
+Now we can see book is successfully created and return bookid, now we cant fetch the book because we have nested object so we need to modify few more things 
+
+
+Querying Nested Object 
+      Now we are going to query the value of author field which reside in the Book object. 
+
+Refer schema.graphql file:
+      As we know we have 3 operation in this schema file like getBook, getBooks, createBook, each operation has its own datafetcher which is associated with it. Similarly when we talk about the fields, each field also has DataFetcher, so for each field there is a DataFetcher associated with it 
+     But we didnt specify any DataFetcher for any field, then how things are working, this is because whenever we didnt specify any DataFetcher for a field then GraphQL Java API creates a default Property DataFetcher for a field and associate with the field. But we can also define a separate DataFetcher for ur field, so we are going to create separate DataFetcher 
+      
+Refer Book.class:
+    Here we can see 3 fields id, name, pages but when we look at schema file Book object we have 4 fields and the field which is present in this Book objetc but not in the Book class is author field 
+    So in order to have 1-1 mapping between graphql type and Java type, so we should create a new field in Book class of type Author. But we are not going to do so instead we create a separate DataFetcher for the author field and why we are building separate datafetcher for author field and not for id,name,page field this is because whenever we request the value for any of fields like id,name, pages then we can get row from the database 
+     If we actually place the author field in Book class then whenever we request the value for any of these field we will be fetching the value for author as well. Consider if we request the value for name then if we place the author field as well so when the row is return from Books table for the particular name according to id then corresponding author row will be return from the database as well. This is not the intention of Graphql and it is against the principle of Graphql where we actually expect the values that we specified in the request to be return and not any other extra data. This is why we create separate DataFetcher for author field 
+
+1. Create a new method called getAuthor() according to bookid in AuthorRepository for fetching author row  
+      Now we use R2DBCEntityTemplate select() to select data from db (ie) from Author class. Now we get author based on bookid so we use matching() and specify Criteria with where() with name of column as book_id and expecting single row using one() which returns Mono<Author>
+
+public Mono<Author> getAuthor(UUID bookId) {
+		return template.select(Author.class).matching(Query.query(Criteria.where("book_id").is(bookId))).one();
+	}
+
+So now we created a method which fetch author from Author table using bookid
+
+2. Create DataFetcher for author field in AuthorService class 
+     We create method called authorDataFetcher which returns CompletableFuture because Graphql Java API dosent support reactive type. 
+     We will return a lambda expr which will recieve DataFetcher environment as an argument and now we can use getAuthor() method present in AuthorRepository, but how we get bookid that is required by getAuthor(). So we can one of the method of DataFetcher environment called getSource(), so actually we are creating a DataFetcher for author field and the author field is present in Book object, so when we call getSource() we will get reference to the parent Book object and we can get bookid from  that object and pass it to AuthorRepository getAuthor() and we will return Mono but we need to convert it into CompletableFuture using toFuture()
+
+public DataFetcher<CompletableFuture<Author>> authorDataFetcher() {
+		return env -> {
+			Book book = env.getSource();
+			return repository.getAuthor(book.getId()).toFuture();
+		};
+	}
+
+3. Now we have to associate this DataFetcher with the author field present in the Book object in schema file using RuntimeWiring in main class 
+    Here we have to define the containing type and actual type which is contained. Here the containing type is Book because author field is present in Book and name of field present in schema.graphql file is author, then we specify the DataFetcher present in AuthorService 
+
+.type(TypeRuntimeWiring.newTypeWiring("Book").dataFetcher("author", authorService.authorDataFetcher()))
+
+So we have successfully mapped author field which is contained in Book object and then DataFetcher present in AuthorService which is basically getting the row from the author table based on bookid 
+
+4. Start the application
+
+5. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give,
+
+In order to query the nested object first we have to insert some data so we run mutation first
+
+mutation {
+    createBook(bookName:"Spring boot",pages:350,authorName:"John",age:35)
+}
+
+Now it will create a new book with bookid. Now we can query our nested object since we inserted book along with author details 
+
+{
+   getBook(id:""){
+       author{
+           id
+           name
+           age
+       }
+   }
+}
+
+Now it will display author details which is stored in our database 
+
+
+Enums in GraphQL
+      
+1. In Schema.graphql file we will create a new enum, this enum will be used to categorize our book object and it will hold constants like Horror, Comedy, Action etc into which a book can be categorized 
+
+enum Category {
+    HORROR, COMEDY, FANTASY 
+}
+
+Now we will use this enum to categorize our Book object, so we have to create a new field in Book object of type Category 
+
+type Book {
+	id:String
+	name:String
+	pages:Int
+	author: Author
+	category: Category
+}
+
+2. Now to create an identical enum called Category in Java as well, since we can use GraphQL enums in client side, so to use enums in backend we have to create identical enum in Java as well 
+
+public enum Category {
+    HORROR,
+    COMEDY,
+    FANTASY
+}
+
+3. Next step is to use Category enum to categorize our Book class, to do we have to create new field in Book.java of type Category 
+      private Category category;
+Create its getter and setter methods
+
+4. Next step is to add new column in our Books table to include new field called Category in schema.sql
+
+CREATE TABLE books(
+	id VARCHAR(255) PRIMARY KEY,
+	name VARCHAR(255),
+	pages INT,
+	category VARCHAR(255)
+);
+
+5. Now we have to modify mutation as well in schema.graphql file 
+   We have only one mutation called createBook and it takes bookName, pages, authorName and age. Now we have to provide new argument for Category which will take value for category field 
+
+type Mutation{
+	createBook(bookName:String, pages:Int, category:Category, authorName:String, age:Int):String
+}
+
+So we have added a new argument called category of type Category, now we have to fetch the value for this argument as well so we have to create a DataFetcher which is actually associated with this createBook mutation and that particular DataFetcher is located in BookService called createBook(), so this DataFetcher is actually associated with createBook mutation, so we can fetch the value for the category field in createBook() DataFetcher 
+
+6. We have to use valueOf() present in Enum class and create Category constant. Next to set the category into Book object 
+
+Category category = Category.valueOf(env.getArgument("category"));
+book.setCategory(category);
+
+So we have modified our DataFetcher 
+
+7. Start spring boot application
+
+8. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give,
+
+Now our table is empty so first we have to insert some data so we run mutation first
+
+mutation {
+    createBook(bookName:"Java",pages:550,category:FANTASY,authorName:"Patrick",age:35)
+}
+
+Now it will create a new book with bookid. Now we can query to fetch inserted book along with author and category details 
+
+{
+   getBook(id:""){
+       author{
+           id
+           name
+           age
+       }
+       category
+   }
+}
+
+Now it will display book details along with book and category information
+
+
+Variables in GraphQL
+      We take help of the createBook mutation to understand variables 
+
+1. Goto Postman we have 
+
+mutation {
+    createBook(bookName:"Java",pages:550,category:FANTASY,authorName:"Patrick",age:35)
+}
+
+createBook mutation takes several arguments like bookName, pages, category, authorName and age, right now we are passing the values for these arguments in the mutation itself but there is an issue
+    In real time appl, this mutation will be stored in a String inside a variable, so whenever we want to change the value for these argument values then we have to actually modify the string again and again, because these values can be dynamic in nature and can be changed with each and every request 
+     So in this case we can use variables for these values in graphql, so to use the variables we use GraphQL Variables in Postman where we can see empty object, so in this object we will place our all variables that we are going to use in our mutation or query
+     But before actually specifying the variables we have to declare them, so to declare a variable we have to provide an operation name which can be anything 
+
+mutation myOperation {
+    createBook(bookName:"Java",pages:550,category:FANTASY,authorName:"Patrick",age:35)
+}
+
+Here we are specifying that we are actually going to mutate and the name of the operation is myOperation. To declare the variable we have to use parenthesis next to the operationname and to declare the variable we have to use dollar symbol follow by variable name and then its datatype and use those variable inside the createBook 
+     In order to specify the value for those variable we will use GraphQL variable section in Postman where we provide the value in form of key value pair 
+
+mutation myOperation($name:String, $pages:Int){
+    createBook(bookName:$name,pages:$pages,category:FANTASY,authorName:"Patrick",age:35)
+}
+
+In graphQL variable section - provide the value
+
+{
+   "name":"J2EE",
+   "pages":560
+}
+
+Now we can see the values are successfully inserted into database. In order to check whether the values are inserted we can provide
+
+{
+    getBooks {
+        name
+    }
+}
+
+Now it will list all available books along with new book which we have inserted 
+
+2. If we want to provide default value for any variable we can provide using = and provide the default value. Suppose if we want to provide default value for pages field
+
+mutation myOperation($name:String, $pages:Int = 200){
+    createBook(bookName:$name,pages:$pages,category:FANTASY,authorName:"Patrick",age:35)
+}
+
+In GraphQL variable section we provide value for name field as
+
+{
+   "name":"J2ME"
+}
+
+Now we can see the values are successfully inserted into database. In order to check whether the values are inserted we can provide
+
+{
+    getBooks {
+        name
+        pages
+    }
+}
+
+Now it will list all available books like Java, J2EE, J2ME
+
+So by using variables there is no need to modify string again and again and you can put a placeholder in ur mutation and you can specify a separate object of key value pairs that can be actually placed inside ur mutation or the values of the variables can be replaced at runtime, so this is why variables are used. By using variables if ur server allows caching of the queries or mutation that can also be done, this will actually improve the performance of ur query processing in GraphQL
+
+
+Non Null Token 
+      There might be case where the client using any of the queries or mutation can provide null values for the arguments, in that case we will have trouble in the backend 
+      Here we have a query called getBook which takes an argument of type String which is basically an id and it returns a Book. So what this query does is it takes an id and returns a Book according to that id. But what happens if client passes null value for this argument, in that case we will receive a NullPointerException at backend
+     To avoid this situation we can use GraphQL Non Null token 
+
+1. First we check what happens when we provide null value, so in postman we try to run a query 
+
+{
+    getBook(id:null) {
+        name
+        pages
+    }
+}
+
+It will display DataFetchingException and in the eclipse console it will display NullPointerException, so it is clear that null value for argument we will get NullPointerException 
+
+2. GraphQL Non Null token is denoted by ! and we put it in the argument or in the fields of the object as well 
+
+type Query{
+	getBook(id:String!):Book
+	getBooks:[Book]
+}
+
+By putting ! it indicate the value of id argument should be non null value
+
+3. Start the appl
+
+4. In postman, first we send new request to create a new book
+
+mutation {
+    createBook(bookName:"Java",pages:550,category:FANTASY,authorName:"Patrick",age:35)
+}
+
+Now it will create a new book with bookid. Now if we run getBook with null value, it will say validation error and check in eclipse console, this time we wont get NullPointerException but we get Validation excpetion which says query failed to validate 
+
+{
+    getBook(id:null) {
+        name
+        pages
+    }
+}
+
+
+Spring for GraphQL
+       GraphQL has been finally integrated with the Spring latest version 2.7.0, they have introduced a new starter which is a Spring-boot-starter-graphql, this starter project will actually replaces GraphQL Java API that we use in a project to create GraphQL server 
+
+1. Create SpringBoot-GraphQL1 with Spring for grapgql, Spring reactive web, h2 database, Spring data R2DBC, Lombok dependency 
+
+2. Create graphql folder inside resources folder and create the schema file inside it 
+   Create schema.graphqls inside graphql folder 
+
+First we will create type called Employee which has id which is of type ID, name as string, salary as String and departmentId as type ID 
+
+type Employee {
+    id: ID!
+    name: String
+    salary: String
+    departmentId: ID!
+}
+
+Next we add type of Department which has id of type ID, name as String and department will have many employees something like 1 to many relationship
+
+type Department {
+    id: ID!
+    name: String
+    employees: [Employee]
+}
+
+Now we write queries for that, so we fetch employee by providing name in their argument and since there may be many employee with same name so it will return as list. We also create query for allDepartment which will return list of departments
+
+type Query {
+    employeeByName(employeeName: String): [Employee]
+    allDepartment: [Department]
+}
+
+Now we will create mutation which will add the employee and we pass addEmployeeInput of type AddEmployeeInput and we return Employee as response. So instead of giving multiple fields as arguments to addEmployee we create a separate type AddEmployeeInput as input type and that type will have multiple fields. 
+       We can also updateSalary of the employee which takes updateSalaryInput as separate type and also returns a Employee with updated salary
+
+type Mutation {
+    addEmployee(addEmployeeInput: AddEmployeeInput): Employee
+    updateSalary(updateSalaryInput: UpdateSalaryInput): Employee
+}
+
+Now we create separate type called AddEmployeeInput of type input which contains name of employee, salary and departmentId and also UpdataSalaryInput of type input with employee id and salary 
+
+input AddEmployeeInput {
+    name: String
+    salary: String
+    departmentId: ID!
+}
+
+input UpdateSalaryInput {
+    employeeId: ID!
+    salary: String!
+}
+
+We also do a subscription, in subscription we will give all the employees in the realtime, so while doing subscription we dont have to provide list of employee, it should be only employee because we are going to send multiple employees in a response  
+
+type Subscription {
+    allEmployee: Employee
+}
+
+3. Now we create data objects of all types that written over here. So we have 2 types Employee and Department, also 2 input types for that also we have to create corresponding classes 
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class Employee {
+
+    @Id
+    private Integer id;
+    private String name, salary;
+	@Column("department_id")
+    private Integer departmentId;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class Department {
+    @Id
+    private Integer id;
+    private String name;
+    private List<Employee> employees = new ArrayList<>();
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class AddEmployeeInput {
+    private String name, salary;
+    private Integer departmentId;
+}
+
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class UpdateSalaryInput {
+    private Integer employeeId;
+    private String salary;
+}
+
+4. Next we have to repository for Employee and Department since we have also insert and fetch the data from database 
+     Now we create EmployeeRepository which extends ReactiveCrudRepository with custom  method
+
+interface EmployeeRepository extends ReactiveCrudRepository<Employee, Integer> {
+	Flux<Employee> getEmployeeByName(String name);
+	Flux<Employee> getAllEmployeeByDepartmentId(Integer departmentId);
+}
+
+interface DepartmentRepository extends ReactiveCrudRepository<Department, Integer> {}
+
+5. Now we create controller class called GraphQLController with @RestController. We will try add annotation of GraphQL used to fetch something from database or to add into database, so we required the repository for that so we autowire it 
+
+        @Autowired
+	EmployeeRepository empRepo;
+	
+	@Autowired
+	DepartmentRepository deptRepo;
+
+First thing we are going to add employee into the database, so anything that we add or update its of type mutation, so we write logic to add an employee
+     We create addEmployee() method which returns Mono<Employee> since it is reactive, so now we have pass the argument as AddEmployeeInput type using @Argument annotation, here we used @Argument annotation to accept the parameters that we are going to provide while querying or calling addEmployee mutation. Now we call empRepo.save() along with addEmployeeInput
+    So we need to create a mapping for AddEmployeeInput and Employee using Function functional interface. Inside that we create an object of Employee and set all the values to that  employee object and finally return employee object 
+
+Function<AddEmployeeInput, Employee> mapping = aei -> {
+		var employee = new Employee();
+		employee.setName(aei.getName());
+		employee.setSalary(aei.getSalary());
+		employee.setDepartmentId(aei.getDepartmentId());
+		return employee;
+	};
+
+Now we use this mapping employee object inside addEmployee() to insert the employee into the database 
+
+	public Mono<Employee> addEmployee(@Argument AddEmployeeInput addEmployeeInput) {
+		return this.employeeRepository.save(mapping.apply(addEmployeeInput));
+	}
+
+Now we created the logic how to save employee into the database using EmployeeRepository, since we wont call this method directly and since it is mutation method, then we have to use @SchemaMapping along with typename as mutation and field as addEmployee 
+
+@SchemaMapping(typeName="Mutation",field="addEmployee")
+public Mono<Employee> addEmployee(@Argument AddEmployeeInput addEmployeeInput) {
+		return this.employeeRepository.save(mapping.apply(addEmployeeInput));
+	}
+
+This can be done in a short way or directly add @MutationMapping annotation, so this @MutationMapping annotation is a composite annotation, it internally uses schema mapping only. Always make sure when we use @MutationMapping mutation name in schema file and method names should be same, so if we do a mutation for addEmployee, so the name of mutation in schema file will be mapped with method name 
+
+@MutationMapping 
+public Mono<Employee> addEmployee(@Argument AddEmployeeInput addEmployeeInput) {
+		return this.employeeRepository.save(mapping.apply(addEmployeeInput));
+	}
+
+6. Next we do query mapping using @QueryMapping annotation, here we provide employeeByName since we have a query in schema.graphql file 
+    Now we create employeeByName() which takes employeeName as argument using @Argument annotation and we fetch the data by using empRepo.getEmployeeByName()
+
+@QueryMapping
+	public Flux<Employee> employeeByName(@Argument String employeeName) {
+		return this.employeeRepository.getEmployeeByName(employeeName);
+	}
+
+7. Now we create tables inside h2 and add some dummy data
+   Create schema.sql and data.sql files inside resources folder 
+
+create table department(id serial primary key, name varchar(255) not null);
+create table employee(id serial primary key, name varchar(255) not null, salary varchar(255) not null, department_id smallint not null)
+
+insert into department(name) values('software')
+insert into department(name) values('mechanical')
+insert into department(name) values('chemical')
+insert into department(name) values('civil')
+insert into department(name) values('electronics')
+insert into department(name) values('management')
+
+8. Now we want to enable GraphiQL which is an IDE for GraphQL in application.properties file
+
+spring.graphql.graphiql.enabled=true
+
+9. Start the appl 
+           Now it will expose GraphQL on rest endpoint /graphql with POST request
+
+10. Now we run http://localhost:8080/graphiql on browser 
+     It will automatically open Graphiql IDE.
+     Click Show Documentation Explorer - to view different query and mutations that we created. Now we run mutation to insert the employee data  
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Ram", salary:"20000", departmentId:1}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+Now it will display employee object in response. Now we have successfully setup GraphQL Server with addEmployee mutation. Now we run query to get employee by name 
+
+query {
+   employeeByName(employeeName:"Ram") {
+       id,name,salary
+   }
+}
+
+Now it will display all the employee with name as "Ram"
+
+11. Now we write the mutation to update the salary using @MutationMapping for updateSalary(), and it will return Mono<Employee> and we will pass updateSalaryInput as an argument using @Argument annotation 
+    First we find the user by id and then we do flatMap() which will give us the employee that has come from database and set the salary of employee with the updated salary. Finally we will add that updated data of that employee into the database 
+
+@MutationMapping
+	public Mono<Employee> updateSalary(@Argument UpdateSalaryInput updateSalaryInput) {
+		return this.employeeRepository.findById(updateSalaryInput.getEmployeeId())
+				.flatMap(employee -> {
+					employee.setSalary(updateSalaryInput.getSalary());
+					return this.employeeRepository.save(employee);
+				});
+	}
+
+12. Now we write the logic for allDepartment query using @QueryMapping for allDepartment() which returns Flux of Department and using departmentRepository.findAll()
+   It will give us only all the department, it will not give all the employees, eventhough Department type contains list of employees 
+
+@QueryMapping
+	public Flux<Department> allDepartment() {
+		return this.departmentRepository.findAll();
+	}
+    
+13. Start the application and reload Graphiql UI 
+
+14. Now we add 1 user 
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Ram", salary:"20000", departmentId:1}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+Next fetch the employee based on name 
+
+query {
+   employeeByName(employeeName:"Ram") {
+       id,name,salary
+   }
+}
+
+Next we update the salary of this user
+
+mutation {
+    updateSalary(updateSalaryInput:{employeeId:1, salary:"40000"}){
+       id, name, salary
+    }
+}
+
+Now it will update the salary from 20000 to 40000. Now we fetch once again and check whether the salary is updated
+
+query {
+   employeeByName(employeeName:"Ram") {
+       id,name,salary
+   }
+}
+
+Now we fetch all department 
+
+query{
+    allDepartment {
+        id, name, employees {
+            id, name
+        }
+    }
+}
+
+When we run we can see employees are empty, we got all the departments which was added when we start the application, but we didnt get any employees that is associated with that department. Previously we have added "Ram" employee with departmentId 1, so in the employees array there should be 1 employee in the name Ram, but it is empty because we havent write the logic to fetch the employee which is present in the particular department 
+
+15. Now we write the logic to fetch employee for a particular department using @SchemaMapping, we provide the typeName as Department because we need to resolve the field of department and field is employees 
+    Now we create employees() which return Flux<Employee> which takes Department as an argument. Next we call empRepository getAllEmployeeByDepartmentId  to get all employees based on department id 
+
+@SchemaMapping(typeName="Department", field="employees")
+public Flux<Employee> employees(Department department){
+   log.info("Department Id #", department.getId());
+   return this.employeeRepository.getAllEmployeeByDepartmentId(department.getId());
+} 
+
+So now first we will get all department from allDepartment() method and then GraphQL will look into schema mapping and see that in the Department's employees field we have written a different logic, so GraphQL will call employees() method to resolve employees field 
+
+16. Start the application and reload Graphiql UI 
+
+17. Now we add 1 user 
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Ram", salary:"20000", departmentId:1}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+Now we fetch all department 
+
+query{
+    allDepartment {
+        id, name, employees {
+            id, name
+        }
+    }
+}
+
+Now we can see employee information in the Department, but if we see eclipse console we can see this method is invoked 6 times because when we call allDepartment it has return 6 different department because there were 6 department in database and for each department employees() method has been invoked to resolve the field employees 
+    So this approach is not good because here we got the employee detail from different microservice or it could be a network call that we are trying to make, so the number of department increases the number of network call will be increased to resolve this field employees
+
+18. Another way to resolve this thing by using @BatchMapping 
+    Now we create a method called employees() which returns Mono of Map of Department and Collection of Employee, here we will pass List of Department and this method will be invoked only once because we get all department at once in the argument 
+   Here we return corresponding employees which is present in the department by calling fromIterable(). Next we use flatMap(), here we will receive the department object and we will use this to fetch the all employees by using getAllEmployeesByDepartmentId. Now we use collectMultiMap which will return Map of Department and Employee, here we get one employee and we want to map that employee to correct Department. Now we use filter() to get single department and we will check with the employees departmentId 
+
+@BatchMapping
+	public Mono<Map<Department, Collection<Employee>>> employees(List<Department> departments) {
+		return Flux.fromIterable(departments)
+				.flatMap(department -> this.employeeRepository.getAllEmployeeByDepartmentId(department.getId()))
+				.collectMultimap(employee -> departments.stream().filter(department -> department.getId().equals(employee.getDepartmentId())).findFirst().get());
+	}
+
+19. Start the application and reload Graphiql UI 
+
+20. Now we add multiple user 
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Ram", salary:"20000", departmentId:1}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Sam", salary:"30000", departmentId:2}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"RaJ", salary:"40000", departmentId:2}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+Now we fetch all department 
+
+query{
+    allDepartment {
+        id, name, employees {
+            id, name
+        }
+    }
+}
+
+Now it will display all departments with the related employees
+
+20. Now we write @SubscriptionMapping which used to get multiple or many records in a real time whenever the data is available 
+     Now we create a method called allEmployee() which returns Flux<Employee> (ie) all the employee by writing employeeRepository.findAll() and delay for 3 sec so that we can see the data is getting changed for every 3sec 
+
+@SubscriptionMapping
+	public Flux<Employee> allEmployee() {
+		return this.employeeRepository.findAll().delayElements(Duration.ofSeconds(3));
+	}
+
+So whenever we use Subscription mapping we have to add the endpoint for the websocket in application.properties, so the scubscription works in a websocket because it continuously gives u the data so we have to enable GraphQL websocket and add the path as /graphql. We can give any path but here we provide same path which is used for HTTP POST 
+
+spring.graphql.websocket.path=/graphql
+
+21. Now we write one interceptor so whenever there is a request to our application that interceptor will be invoked which is used to write authentication, authorization 
+     Create GraphQLServerInterceptor class with @Component annotation and implement WrbGraphQLInterceptor and override method called intercept() whenever u r passing or requesting for any data, that data will first intercepted in this GraphQLServerInterceptor. So here we will simply log the request that coming in. Here we done simple thing but we can write authentication, authorization etc before the actual request goes to ur controller 
+
+@Component
+@Slf4j
+class GraphQlServerInterceptor implements WebGraphQlInterceptor {
+
+	@Override
+	public Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, Chain chain) {
+		log.info("interceptor logs {}", request.getDocument());
+		return chain.next(request);
+	}
+}
+
+22. Start the appl and reload Graphiql 
+
+24. Now we add multiple user 
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Ram", salary:"20000", departmentId:1}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Sam", salary:"30000", departmentId:2}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"RaJ", salary:"40000", departmentId:2}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+Now we stream that data in graphiql using scubscription 
+
+subscription {
+   allEmployee {
+      id, name, salary, departmentId
+   }
+}
+
+Now we can see the data is coming in a real time in a duration of 3sec. Now in eclipse console we can see the logs of interceptor, so what interceptor is doing is it intercepting the call and it has logged the document in the console 
+
+25. Now instead of sending the request from Graphiql, now we create a proper client. 
+    So we create bean called HttpGraphQlClient, so in the main class declare @Configuration annotation. Since our server is HTTP GraphQL then the client should also HttpGraphQlClient, which return the object and build it, we have to pass the url of server with endpoint "/graphql"
+
+        @Bean
+	public HttpGraphQlClient httpGraphQlClient() {
+		return HttpGraphQlClient.builder().url("http://localhost:8080/graphql").build();
+	}
+
+26. Now we create logic for getting the information in controller class 
+   - First we autowire HttpGraphQlClient
+        @Autowired
+	HttpGraphQlClient httpGraphQlClient;
+   - Next we give get request for getting the employee by name, we need to pass the query as an document 
+
+@GetMapping("/employeeByName")
+	public Mono<List<Employee>> employeeByName() {
+		var document = "query {\n" +
+				"  employeeByName(employeeName: \"devproblems\") {\n" +
+				"    id, name, salary\n" +
+				"  }\n" +
+				"}";
+		return this.httpGraphQlClient.document(document)
+				.retrieve("employeeByName")
+				.toEntityList(Employee.class);
+	}
+
+So whenever we call the endpoint "/employeeByName" it will call graphql server which is nothing but the same appl and try to get the employee by name "Ram" and give us the response 
+
+27. Start the application and reload Graphiql
+
+28. Now we add an employee in Graphiql 
+
+mutation {
+    addEmployee(addEmployeeInput: {name:"Ram", salary:"20000", departmentId:1}){
+        id
+        name
+        salary
+        departmentId
+    }
+}
+
+If we run the request http://localhost:8080/employeeByName in browser it should display the employee based on name "Ram"
+
+
+Why GraphQL?
+     Normally we will create API in order to transfer data, for example we have a client which is web appl that sends the request to api, similarly we have mobile appl which sends the request to same api to fetch the data. 
+    Consider we have desktop appl which sends request to api called "/getBooks" in server and the server is sending response like id, title, desc, price and author. Similarly we have mobile appl which needs only id and title, now mobile appl is sending request to same api "/getBooks". But in case of traditional API, the mobile appl also receives same id, title, desc, price and author details. So we have designed an api in such a way that whenever we hit "/getBooks" from any appl, all appl will receive the same data
+    But mobile appl needs only id and title but it returns all the fields which makes ur api's performance to be low. In order to solve this problem in case of traditional api then we have to create different end point for mobile appl which returns only id and title. So this makes ur design to be costlier for different different client appl to create different apis.
+      This is solved by GraphQL, so GraphQL simply says to describe ur data and ask for what you want and finally get predictable results. So with GraphQL we can get different different data with single endpoint so it will increase ur performance also 
+
+
+GraphQL with Resolver
+
+1. Create SpringBoot-GraphQL2 project with web and extra dependency like
+
+                <dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-spring-boot-starter</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphiql-spring-boot-starter</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+                <dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java-tools</artifactId>
+			<version>5.1.0</version>
+		</dependency>
+
+2. So when we are working with GraphQL, we need to consider 2 important thing (ie) resolver and scheme
+    Resolver is a java class and it contains methods and those methods will be executed whenever a query is executed and those methods will contain business logic ideally. So consider resolvers are something like controllers which contain handler methods in our REST API's, so when we make the request those handler methods will be executed
+     We create a class MyResolver ith @Service annotation and in order to make this resolver we implement an interface called GraphQLQueryResolver. So this class becomes resolver so when the appl runs the graphql is going to register all these methods in the memory 
+     Now we create first method called hello() which return a string called "Hello world"
+
+@Service
+public class MyResolver implements GraphQLQueryResolver {
+    
+	 public String hello() {
+		 return "Hello World";
+	 }
+}
+
+3. Next we need to create Schema called home.graphqls, so GraphQL will look at .graphqls extension for the schema 
+    The schema is exactly the mirror of resolver so in order to execute hello() we have to create corresponding field or query inside the schema. So graphql query name should match with the method name 
+
+type Query {
+    hello: String
+}
+
+4. Start the appl, run http://localhost:8080/graphiql, now we can run the query
+
+query {
+   hello
+} 
+
+Now it will return "Hello World"
+
+
+GraphQL with Error Handling
+
+1. Create SpringBoot-GraphQL3 with web, h2, spring data jpa, graphql starter and graphql java tools
+
+2. Enable GraphQL servlet
+
+graphql:
+  servlet:
+    mapping: /graphql
+    enabled: true
+    corsEnabled: true
+
+spring:
+  datasource:
+    url: jdbc:h2:file:C:/h2/data/testdb  - here we created temp file of db, so no need to insert data in each data
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2
+
+
+2. Next we add GraphQL schema, create schema.graphqls file inside resources
+
+type Book{
+    title: String!
+    isbn: String!
+}
+
+type Query{
+    getBook(isbn: String!): Book
+}
+
+3. Create model Book class with 2 fields 
+
+public class Book {
+  private String title;
+  private String isbn;
+}
+
+4. Create resolver class to access getBook query
+with @Component, create method name as same given in schema
+
+@Component
+public class BookResolver implements GraphQLQueryResolver{	
+	public Book getBook(String isbn) {
+             return new Book("Java","3848484");
+         }
+}
+
+5. Start the application
+
+6. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give,
+
+query getBook($isbn:String!){
+    getBook(isbn: $isbn){
+        title
+    }
+}
+
+Under graphql variable, provide the value for isbn
+
+{
+    "isbn": "3848484"
+}
+
+Now it will display the book detail called Java
+
+7. GraphQL Mutation
+     Mutations is the action that changes the data in the backend. Now we create a book in backend using mutation. In order to create a book, we need some input type to pass the data to the method of mutation
+
+type Mutation{
+    createBook(bookWrapper: BookWrapper): Book
+}
+
+     So we create input called BookWrapper type to pass the data to the create book which has same field as Book type
+
+input BookWrapper {
+    title: String!
+    isbn: String!
+}
+
+8. Create BookWrapper class with title, isbn fields
+
+public class BookWrapper {
+	private String title;
+    private String isbn;
+}
+
+9. Create resolver for mutation purpose with @Component and implements GraphQLMutationResolver and create method called createBook() same like query defined in schema file
+
+@Component
+public class BookMutationResolver implements GraphQLMutationResolver{
+	
+	public Book createBook(BookWrapper bw) {
+		return new Book(bw.getTitle(), bw.getIsbn());
+	}
+
+}
+
+10. Start the application
+
+11. Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give,
+
+mutation createBook($bookWrapper: BookWrapper) {
+     createBook(bookWrapper:$bookWrapper) {
+        title
+        isbn
+     }
+}
+
+
+Under graphql variable, provide the value for isbn
+
+{
+    "bookWrapper": {
+        "title":"J2EE",
+        "isbn":"1233444"
+     }
+}
+Now it will create the book detail called J2EE
+
+12. Next we create class called Author which has id, name and set of books that author has written 
+
+public class Author {
+    private Long id;
+    private String name;
+    private Set<Book> books;  
+}
+
+13. Now we add Set<Author> under Book class
+         private Set<Author> authors;
+Create its getter and setter methods 
+
+So there is many to many relationship between Book and Author class 
+
+14. Next we have to create repository for data access. Create BookRepository 
+
+@Repository
+public interface BookRepository extends JpaRepository<Book, String> {
+}
+
+Now define @Entity, @Id annotation in Book and Author class for isbn field, and @ManyToMany for list of author and list of books, also join table relationship between book and author table 
+
+@Entity
+public class Book {
+    private String title;
+    private LocalDate publishedDate;
+    @Id
+    private String isbn;
+    @ManyToMany(
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            },
+            fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "book_author",
+            joinColumns = @JoinColumn(name = "isbn"),
+            inverseJoinColumns = @JoinColumn(name = "author_id")
+    )
+    private Set<Author> authors;
+
+     public void addAuthor(Author author) {
+        if (this.authors == null) {
+            this.authors = new HashSet<>();
+        }
+        this.authors.add(author);
+    }
+}
+
+@Entity
+public class Author {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @ManyToMany(
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            },
+            mappedBy = "authors"
+    )
+    private Set<Book> books;
+}
+
+15. Now autowire BookRepository in BookMutationResolver, to insert the book into database 
+
+@Component
+public class BookMutationResolver implements GraphQLMutationResolver{
+	
+	@Autowired
+	BookRepository bookRepo;
+	
+	public Book createBook(BookWrapper bw) {
+		Book book=new Book(bw.getTitle(), bw.getIsbn());
+		return bookRepo.save(book);
+	}
+
+}
+
+In order to create Book, we need Author so in order to create Author we need  AuthorMutationResolver and AuthorRepository
+
+@Repository
+public interface AuthorRepository extends JpaRepository<Author, Long> {
+   
+}
+
+
+@Component
+public class AuthorMutationResolver implements GraphQLMutationResolver {
+
+    @Autowired
+    AuthorRepository repository;
+
+    public Author createAuthor(AuthorWrapper wrapper) {
+        Author author = new Author(wrapper.getName());
+        return repository.save(author);
+    }
+}
+
+16. Similarly we need to create schema for author
+
+type Mutation{
+    createBook(bookWrapper: BookWrapper): Book
+    createAuthor(author: AuthorWrapper): Author
+}
+
+input AuthorWrapper{
+    name: String!
+}
+
+type Author{
+    id: Int!
+    name: String!
+}
+
+17. Next we link author and book, so we have a method to add the author into book in BookMutationResolver
+
+ public Book addAuthor(Long authorId, String isbn) {
+        Optional<Author> author = authorRepository.findById(authorId);
+        Optional<Book> book = bookRepository.findById(isbn);
+        if (author.isPresent() && book.isPresent()) {
+            Set<Author> authors = new HashSet<>();
+            authors.add(author.get());
+            book.get().setAuthors(authors);
+            bookRepository.save(book.get());
+            return book.get();
+        }
+        throw new GraphQLException("couldn't add author");
+    }
+
+18. Now we define addAuthor in schema
+
+type Mutation{
+    createBook(bookWrapper: BookWrapper): Book
+    createAuthor(author: AuthorWrapper): Author
+    addAuthor(authorId: Int, isbn: String): Book
+}
+
+Next we need to add list of authors to Book and list of book to authors 
+
+type Book{
+    title: String!
+    isbn: String!
+    authors: [Author]
+}
+
+type Author{
+    id: Int!
+    name: String!
+    books: [Book]
+}
+
+19. After assigning author to book, in order to retrieve the author info for that book, we need to fetch the book based on id from database, so we autowire BookRepository and fetched the book by using findById
+
+@Component
+public class BookResolver implements GraphQLQueryResolver{
+	
+	@Autowired
+	BookRepository bookRepo;
+	
+	public Book getBook(String isbn) {
+       // return new Book("Java","3848484");
+		return bookRepo.findById(isbn).get();
+    }
+
+}
+
+20. Start the appl
+
+21. First we create the book
+
+Goto Postman, in POST request give http://localhost:8080/graphql
+     
+Select Body - Check GraphQL - Under query section give,
+
+mutation createBook($bookWrapper: BookWrapper) {
+     createBook(bookWrapper:$bookWrapper) {
+        title
+        isbn
+     }
+}
+
+
+Under graphql variable, provide the value for isbn
+
+{
+    "bookWrapper": {
+        "title":"J2EE",
+        "isbn":"1233444"
+     }
+}
+Now it will create the book detail called J2EE into database. Next we create the author
+
+mutation createAuthor($author: AuthorWrapper) {
+    createAuthor(author:$author) {
+        id
+        name
+    }
+}
+
+Under Graphql variable we provide
+
+{
+    "author": {
+          "name":"Patrick"
+    }
+}
+
+Now it will insert author into database
+
+Now we add author to the book we created.
+
+mutation addAuthor($authorId:Int, $isbn:String){
+     addAuthor(authorId:$authorId, isbn:$isbn){
+            isbn
+            title
+     }
+}
+
+Under GraphQL variable we add the variable values as
+
+{
+    "authorId":"963acf31-b461-4b39-b52d-e1e3ec0980b6",
+    "isbn":"1233444"
+}
+
+Now that author will be added to the book with particular isbn. Now we query the author name for that particular book
+
+query getBook($isbn: String!) {
+    getBook(isbn:$isbn){
+        title
+        isbn
+        authors {
+            name
+        }
+    }
+}
+
+{
+    "isbn":"1233444"
+}
+
+Now it will display author related to that book isbn
+
+22. Now we create another book
+
+mutation createBook($bookWrapper: BookWrapper) {
+     createBook(bookWrapper:$bookWrapper) {
+        title
+        isbn
+     }
+}
+
+
+Under graphql variable, provide the value for isbn
+
+{
+    "bookWrapper": {
+        "title":"J2ME",
+        "isbn":"5667676"
+     }
+} 
+
+Next we will add the second book to same author
+
+mutation addAuthor($authorId:Int, $isbn:String){
+     addAuthor(authorId:$authorId, isbn:$isbn){
+            isbn
+            title
+     }
+}
+
+{
+    "authorId":"8bf99507-d43e-44e3-b95d-0be0a2553e8e",
+    "isbn":"5667676"
+} 
+
+Now we have 2 books with 1 author, so we can do with aliases (ie) we can call that 2 isbn's for the book and query them in single call using aliases 
+
+query getBook($isbn:String!, $isbn2:String!){
+      books1:getBook(isbn:$isbn){
+         title
+         isbn
+         authors{
+           name
+         }
+      }
+      books2:getBook(isbn:$isbn2){
+         title
+         isbn
+         authors{
+           name
+         }
+      }
+}
+
+Under GraphQL variable we provide
+
+{
+    "isbn":"1233444",
+    "isbn2":"5667676"
+}
+
+
+23. Instead of running each time book and author, we can insert the data while starting the appl using ApplicationRunner
+    In main class implements ApplicationRunner and override run(), inside this method we can add book and author using repository 
+
+@Override
+    public void run(ApplicationArguments args) {
+        Book book = new Book("Learning GraphQL: Declarative Data Fetching for Modern Web Apps", "978-1492030713");
+        
+        Author eve = new Author("Eve Porcello");
+        Author alex = new Author("Alex Banks");
+        book.addAuthor(eve);
+        book.addAuthor(alex);
+
+       authorRepository.saveAll(Arrays.asList(eve, alex));
+       bookRepository.save(book);
+
+       Book book1 = new Book("The Road to GraphQL: Your journey to master pragmatic GraphQL in JavaScript with React.js and Node.js", "978-1730853937");
+       Author robin = new Author("Robin Wieruch");
+       book1.addAuthor(robin);
+
+       authorRepository.save(robin);
+       bookRepository.save(book1);
+    }
+
+24. Start the appl and just run 
+
+query getBook($isbn:String!, $isbn2:String!){
+      books1:getBook(isbn:$isbn){
+         title
+         isbn
+         authors{
+           name
+         }
+      }
+      books2:getBook(isbn:$isbn2){
+         title
+         isbn
+         authors{
+           name
+         }
+      }
+}
+
+
+{
+    "isbn":"978-1492030713",
+    "isbn2":"978-1730853937"
+}
+
+Now it will display books as well as author for those books
+
+25. Fragments
+        Previously we have 2 books and we can get those 2 books in same time by having aliases books1 and books2 
+        Now we use fragments which deals with boilerplate code so here we have title, isbn and authors name are repeated in second alias too, so we can omit that using fragments 
+
+Syntax:
+   fragment Name on TypeName {
+       field1(variable:$variablename)
+       field2 
+       field3
+   }
+
+We can use fragment to easily reduce the repeations
+
+24. Start the appl and just run 
+
+query getBook($isbn:String!, $isbn2:String!){
+      books1:getBook(isbn:$isbn){
+         ...book
+      }
+      books2:getBook(isbn:$isbn2){
+         ...book
+      }
+}
+
+fragment book on Book {
+    title
+    isbn
+    authors{
+      name
+    }
+}
+
+Under GraphQL variable we can provide 
+{
+    "isbn":"978-1492030713",
+    "isbn2":"978-1730853937"
+}
+
+Now it will display same output as previous 
+
+26. Creating custom Scalar type 
+       Basically we are developing a book management system, now we want to add publish date to the book, so we need a localdate type supported by graphql schema. So we have added scalar type to schema file 
+
+scalar LocalDate 
+
+So now we need to tell GraphQL engine how to pass the string to localdate and how to serialize the localdate into a string 
+
+27. Add publishedDate field in Book and BookWrapper class and create its getter and setter methods 
+
+private LocalDate publishedDate;
+
+28. In schema file, add publishedDate field into Book type and also in BookWrapper
+
+type Book{
+    title: String!
+    isbn: String!
+    publishedDate: LocalDate
+    authors: [Author]
+}
+
+input BookWrapper{
+    title: String!
+    isbn: String!
+    publishedDate: LocalDate
+}
+
+29. We need to add graphql scalar type of LocalDate
+   Create GraphQLLocalDate class which extends GraphQLScalarType and create a constructor which takes name (ie) name of scalar type, description and  Coercing which takes input and output as LocalDate and String, then we override the methods
+   serialize() will utilize the object and will return as string and parseValue() will take the object and return as LocalDate 
+    In case of serialize() we need to check if the argument is instance of LocalDate and we can convert to String. In case of deserialization (ie) parseValue() we need to parse the object to a LocalDate. In parseLiteral() we need to check this input is instanceof String using StringValue class, if not it will return null otherwise we return as LocalDate
+
+
+30. In main class, run() method we try to add the values for the LocalDate to insert into database 
+
+31. Start the appl, so it will add books and author in database
+
+32. Now run in postman as
+query getBook($isbn:String!, $isbn2:String!){
+      books1:getBook(isbn:$isbn){
+         ...book
+      }
+      books2:getBook(isbn:$isbn2){
+         ...book
+      }
+}
+
+fragment book on Book {
+    title
+    isbn
+    publishedDate
+    authors{
+      name
+    }
+}
+
+{
+    "isbn":"978-1492030713",
+    "isbn2":"978-1730853937"
+}
+
+Now it will display the details about the book and author with all fields
+
+33. Now we create a book to verify deserialization working or not 
+mutation createBook($bookWrapper: BookWrapper) {
+     createBook(bookWrapper:$bookWrapper) {
+        title
+        isbn
+        publishedDate
+     }
+}
+
+
+Under graphql variable, provide the value for isbn
+
+{
+    "bookWrapper": {
+        "title":"J2SE",
+        "isbn":"2667676",
+        "publishedDate":"2022-01-10"
+     }
+} 
+
+Now it will create an another book. Now add author to that book, so copy isbn and execute addAuthor 
+
+mutation addAuthor($authorId:Int, $isbn:String){
+     addAuthor(authorId:$authorId, isbn:$isbn){
+            isbn
+            title
+     }
+}
+
+{
+    "authorId": 1,
+    "isbn":"2667676"
+}
+
+Now we can get this book from getBook
+
+query getBook($isbn:String!, $isbn2:String!,$isbn3:String!){
+      books1:getBook(isbn:$isbn){
+         ...book
+      }
+      books2:getBook(isbn:$isbn2){
+         ...book
+      }
+      books3:getBook(isbn:$isbn3){
+         ...book
+      }
+}
+
+fragment book on Book {
+    title
+    isbn
+    publishedDate
+    authors{
+      name
+    }
+}
+
+{
+    "isbn":"978-1492030713",
+    "isbn2":"978-1730853937",
+    "isbn3":"2667676"
+}
+
+Now it will display all the books for that author will published date 
+
+
+GraphQL Error Handing
+      So whenever we query 
+
+query getBook($isbn: String!){
+    getBook(isbn:$isbn){
+       title
+       isbn
+       authors{
+          name
+       }
+    }
+}
+
+and GraphQL variable as valid isbn
+{
+  "isbn":"978-1492030713"
+}
+
+It will display the correct book with isbn, but if we provide any other isbn it will display "Internal Server Error(s) while executing query", but we need a proper way to send the error
+     So all the errors in GraphQL will go through GraphQLErrorHandler interface, so we have a class DefaultGraphQLErrorHandler class which implements 
+GraphQLErrorHandler interface. Here processErrors() get fires when something bad happens. 
+      So first it will look at filterGraphQLErrors and that will filter whether it isClientError by checking whether error is instance of ExceptionWhileDataFetching or whether exception is instance of GraphQLError
+      GraphQLError is an interface which we can use to define our own GraphQL errors. So inside processErrors it will check if any of those error is not clientError then it set the message as "Internal Server Error(s) while executing query"
+
+1. Inorder to display our own errors we want to implement GraphQLError and provide the our own exceptions using ErrorType. First we add DataFetchingException. 
+
+public class ResourceNotFoundException extends RuntimeException implements GraphQLError{
+    
+	public ResourceNotFoundException(String message) {
+		super(message);
+	}
+	
+	@Override
+	public List<SourceLocation> getLocations() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ErrorClassification getErrorType() {
+		// TODO Auto-generated method stub
+		return ErrorType.DataFetchingException;
+	}
+
+}
+
+2. Next we have to define the exception in BookResolver class
+
+  public Book getBook(String isbn) {
+	       Optional<Book> opt=bookRepo.findById(isbn);
+	       if(opt.isPresent()) {
+	    	   return opt.get();
+	       }
+			throw new ResourceNotFoundException("There is no book with isbn: "+isbn);
+	    }
+	
+3. Start the appl
+      Now if we try to run getbook with wrong isbn we can get our user defined exception message but still we get some kind of external data because this is happening with another exception called SimpleDataFetcherExceptionHandler which is default exception that got into the play and ExceptionWhileDataFetching will display that error message 
+    So we customize that by adding a class called GraphQLErrorHandler with @Component which implements GraphQLErrorHandler interface that comes from graphql.kickstart.execution.error and override processErrors(). Inside this method we need to identify the error and convert these to our exception rather than DataFetchingException 
+    Next we need to implement getNested() where we will check it is an instanceof ExceptionWhileDataFetching then we need to get the exception otherwise we need to send e back 
+
+@Component
+public class GraphQLErrorHandler implements graphql.kickstart.execution.error.GraphQLErrorHandler {
+
+	@Override
+	public List<GraphQLError> processErrors(List<GraphQLError> errors) {
+		return errors.stream().map(this::getNested).collect(Collectors.toList());
+	}
+
+	private GraphQLError getNested(GraphQLError e) {
+		if(e instanceof ExceptionWhileDataFetching) {
+			ExceptionWhileDataFetching ex=(ExceptionWhileDataFetching)e;
+			if(ex.getException() instanceof GraphQLError) {
+				return (GraphQLError)ex.getException();
+			}
+		}
+		return e;
+	}
+}
+
+
+4. Start the appl, and now we run with wrong isbn
+
+query getBook($isbn: String!){
+    getBook(isbn:$isbn){
+       title
+       isbn
+       authors{
+          name
+       }
+    }
+}
+
+{
+  "isbn":"wrong isbn"
+}
+
+Now we can see the customize error message along with classification part as DataFetchingException
+
+GraphQL Subscription
+      Subscription is connection between server and client where client can subscribe to some event or some method and then server can push data to the front end via that subscription 
+
+1. Provide dependency for graphiql 
+
+<dependency>
+   <groupId>com.graphql-java-kickstart</groupId>y
+   <artifactId>graphiql-spring-boot-starter</artifactId>
+   <version>7.1.0</version>
+</dependency>
+
+2. Define subscription in schema.graphqls
+
+type Subscription {
+     books:[Book]
+}
+
+3. Now we create BookListSubscriptionResolver with @Component to invoke the subscription query, which implements GraphQLSubscriptionResolver 
+     So we create a method books which return Publisher and this Publisher will return List<Book>. Inside this method we will fetch all the books and display each book with 2 second delay 
+    
+ @Component
+public class BookListSubscriptionResolver implements GraphQLSubscriptionResolver{
+
+	@Autowired
+	BookRepository bookRepo;
+	
+	public Publisher<List<Book>> books(){
+		return subscriber -> Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()->{
+			List<Book> books=bookRepo.findAll();
+			subscriber.onNext(books);
+			subscriber.onComplete();
+		},0,2,TimeUnit.SECONDS);
+	}
+}
+
+3. Start the appl, in graphiql execute 
+
+subscription {
+    books{
+       isbn
+       title
+    }
+}   
+
+Now it will display all the books with 2sec delay 
+
+
+
+Cursor based Pagination
+  Consider we have lot of data and we need to show portion of them at a time so its about pagination. If we consider the pagination UX we have numbered pages as we can see in Google, we have sequential pages it is similar to numbered page but we have only next button, and if we consider Infinite scroll we can see that in social media like FB, Twitter, Instagram etc so it will fetch data and keep continue to scroll and fetch more data 
+
+Pagination Implementation Approach - 2 ways
+1. Limit offset pagination 
+       It is traditional and we can implement it in SQL, 
+   select * from books order by publisheddate limit 10 offset 20 - we start from 20 and print 10 data 
+     Here in graphql we use skip and first options
+
+query book {
+    getBooks(skip:1, first:1){
+       title
+       isbn
+   }
+}
+
+2. Cursor based pagination 
+     But in cursor based we have edge, cursor, node, and page information
+
+connection - paginated field on an object - for example, the authors field on a book or the comments field in a blog post
+
+edge - has a one object in the paginated list and includes a cursor to allow pagination starting from that object
+
+node - actual object
+
+pageInfo - specify what is available for next fetch like next page to fetch, previous page to fetch and what is the start and end cursor 
+
+So GraphQL Kickstart provide with @Connection annotation and specify what is the typr that this connection refers, it also generate user edge 
+
+33. Now we write book query which supports the pagination 
+
+type Query{
+    books(first: Int, after: String): BookConnection @connection(for: "Book") - It will have first parameter and after parameter, it returns a BookConnection and we should use @Connection annotation and specify its for book using "for" attribute 
+    getBook(isbn: String!): Book
+}
+
+34. Now we need to write a method to invoke that query in BookResolver
+    So the method returns a Connection with first, after and DataFetchingEnvironment as argument. Next we need to get list of books from the repository by using findAll() and finally return SimpleListConnection of books
+
+ public Connection<Book> books(int first, String after, DataFetchingEnvironment env) {
+	        List<Book> books = bookRepo.findAll();
+	        return new SimpleListConnection<>(books).get(env);
+	 }
+
+35. Start the appl
+
+36. In Postman, run the graphql query
+
+
+
+Development Approach
+1. Schema First approach
+2. Code First approach - we are not defining the schema but the schema is generated at the runtime 
+
+https://github.com/pravintarte/graphql/tree/master/src
+https://www.youtube.com/watch?v=JEe8FUCz4VY&list=PLxZ6CHRlzYBWgAognsBMsIJx8MOp-jMMr&index=1
+Schema First Approach
+     We first define GraphQL schema and that schema is shared between the client and the server and then client basically using that schema makes the queries, mutation and subscriptions and it basically restricts the amount of data we want to fetch from the server  side
+
+1. Create SpringBoot-GraphQL4 with spring web, spring data jpa, h2 db, lombok, graphql-spring boot starter, graphiql(UI interface for working with GraphQL) and graphql java tools which gives you an UI to test ur graphql functionalities  
+
+2. Configure db information in application.properties
+
+spring.datasource.driver-class-name=org.hsqldb.jdbc.JDBCDriver
+spring.datasource.url=jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=create
+
+3. Create 2 different entity (ie) Actor and Film 
+
+4. Create 2 repository to fetch those entities from the database 
+
+5. Create schema.graphqls file inside resources/graphql folder 
+     GraphQL has certain building blocks likes types, queries, mutations and subscriptions. So type is the object which u are going to use for the response of ur endpoints, so we need to define the types 
+
+type Actor {
+    actorId : ID!,
+    firstName :String,
+    lastName :String,
+    dob:String,
+    address:String,
+    filmId : Int
+}
+
+actorid is basically a primary key for ur entity and in case of GraphQL, it has a special datatype called ID which corresponds to a identity of your entity and exclamation mark suggests that it will be a non null (ie) mandatory field. We dont have any datatype called date in GraphQL so we can map the date to string  
+
+type Film {
+    filmId : ID!,
+    name : String,
+    dateOfLaunch : String
+}
+
+type Query{
+    getAllActors:[Actor]
+}
+
+and register our query into schema 
+
+schema {
+    query: Query
+}
+
+We have defined the actor into java class, we have defined film into java class but we didnt define getAllActors implementation anywhere, so we need to define so GraphQL framework can identify it and send back the response 
+
+4. We need to add some dummy data into the database so we add in DataLoaderService class 
+
+5. Now we create this implementation in service class called AuthorService 
+   We can define the getAllActors method and with the help of repository we fetch all actors from database. So we create our query getAllActors but for GraphQL framework to identify we need to implement an interface called GraphQLQueryResolver and it will injected at the graphQL runtime. So once service comes up they will find that what are the classes implementing this interface and whatever public method specified into those classes it will be registered as a query and it will try to map this name with the name that is specified into ur schema file 
+
+@Service
+public class ActorService implements GraphQLQueryResolver
+ {
+
+    @Autowired
+    private ActorRepository actorRepository;
+
+     @Autowired
+     private FilmRepository filmRepository;
+
+     public List<Actor> getAllActors(){
+         return actorRepository.findAll();
+     }
+
+}
+
+6. To test our service we need to access one of UI which has been provided by the GraphQL Java tools that we added in pom.xml file, to enable that UI interface we need to add some configuration in application.properties
+
+graphql.servlet.corsEnabled=true
+graphql.servlet.mapping=/graphql
+graphql.servlet.enabled=true
+
+So whenever we are calling any endpoint from GraphQL UI it is mapped to a servlet called "/graphql", we can provide any name and it becomes something like contextpath in REST.
+
+7. Start the application
+         As we discussed we have one UI tool provided by the framework itself from which we can test our endpoints so we can access it using
+
+http://localhost:8080/graphiql 
+
+On right hand side click Docs - We can see all query. Now we can run our query using
+
+query {
+  getAllActors {
+    actorId
+    firstName
+    lastName
+    dob
+    address
+    filmId
+  }
+}
+
+Now it will display all the actors saved into the database 
+
+8. Next we fetch the actor based on id, so we create another query method in ActorService
+
+ public Actor getActorById(Integer actorId){
+         return actorRepository.findById(actorId).get();
+     }
+
+9. Now we put this query into schema file also 
+
+ getActorById(actorId:Int):Actor
+
+10. Start the appl, refresh the browser and now run the query 
+
+query {
+  getAllActors {
+    actorId
+    firstName
+    lastName
+    dob
+    address
+    filmId
+  }
+  
+  getActorById(actorId:4){
+    actorId
+    firstName
+    lastName
+    dob
+    address
+    filmId
+  }
+}
+
+Now we get the output of both the queries, this is power of GraphQL (ie) into the same query we can call multiple endpoints, so in REST world we cant call multiple endpoints in a single query but here we can combine those and fetch the data
+
+In case if we dont want to hardcode the id in the query, we can parameterize it using 
+
+query($id:Int){
+  getAllActors {
+    actorId
+    firstName
+    lastName
+    dob
+    address
+    filmId
+  }
+  
+  getActorById(actorId:$id){
+    actorId
+    firstName
+    lastName
+    dob
+    address
+    filmId
+  }
+}
+
+In Query Variable, we have to give 
+{
+   "id":4
+}
+
+Now it will display all actors as well actors by id
+
+11. Now if we want to rename or change the property name which is sent by the server itself (ie) we dont want firstName and lastName property we want to be sent by a different name 
+
+query($id:Int){
+  getActorById(actorId:$id){
+    actorId
+    FIRST_NAME:firstName
+    LAST_NAME:lastName
+    dob
+    address
+    filmId
+  }
+}
+
+This is called as alias, now it will display the response as FIRST_NAME and LAST_NAME 
+
+12. Now we want to find the films that this actor is working into, so we can do this by using GraphQLTypeResolver so whenever actor is getting resolved we can ask GraphQL to resolve the films as well if it has been specified into the query 
+     So we create FilmService class with @Service and implements GraphQLResolver and we need to resolve it whenever actor object getting resolved, we need to fetch the films that actor is worked into as well. First inject FilmRepository, now we create a method to fetch the film based on the actor 
+
+@Service
+public class FilmService implements GraphQLResolver<Actor> {
+
+    @Autowired
+    private FilmRepository repository;
+
+    public Film getFilm(Actor actor){
+        return repository.findById(actor.getFilmId()).get();
+    }
+}
+
+13. Now this has to be specified into schema file, so whenever actor is getting resolved, it can fetch films as well so we configure film type in Actor type
+
+type Actor {
+    actorId : ID!,
+    firstName :String,
+    lastName :String,
+    dob:String,
+    address:String,
+    filmId : Int,
+    film:Film
+}
+
+14. Start the appl and refresh the graphiql and run
+
+query($id:Int){
+  getActorById(actorId:$id){
+    actorId
+    FIRST_NAME:firstName
+    LAST_NAME:lastName
+    dob
+    address
+    filmId
+    film {
+      filmId
+      name
+    }
+  }
+}
+
+Now it will display actor details as well film details the actor have worked 
+
+15. Next we go for mutation which is nothing but updating certain data onto the server side, consider we need to update the address of an actor 
+    In ActorService, we implement another interface called GraphQLMutationResolver and create a method to update the address where we pass an id, new address and based on that id we update the address 
+
+  @Transactional
+     public Actor updateAddress(Integer id, String address) {
+    	 Actor actor=actorRepository.findById(id).get();
+    	 actor.setAddress(address);
+    	 actorRepository.save(actor);
+    	 return actor;  	 
+     }
+
+16. Create mutation in schema file
+
+type Mutation {
+    updateAddress(id:Int,address:String):Actor
+}
+
+and register mutation in schema
+
+schema {
+    query: Query,
+    mutation: Mutation
+}
+
+17. Start the appl, refresh the browser and run
+
+mutation {
+    updateAddress(id:6,address:"Delhi"){
+       actorId
+       firstName
+       lastName
+       dob
+       address
+       filmId
+    }
+}
+
+Now we can see the address is updated for that particular actor 
+
+18. So here we are sending the properties to mutation endpoint one by one, but if it is a large number of properties we can send as an input object as an server itself and that object can be defined in server side so both client and server are in sync 
+    So we create an input object called AddressInput which implements GraphQLInputType and override a method called getName(), it will have 2 parameters actorId and address
+
+@Getter
+@Setter
+public class AddressInput implements GraphQLInputType{
+
+	@Override
+	public String getName() {
+		return "addressUpdate";
+	}
+	
+	private Integer actorId;
+	private String address;
+
+}
+
+19. Now we create another method in ActorService to update the address based on input object 
+
+@Transactional
+     public Actor updateAddressByInputObject(AddressInput input) {
+    	 Actor actor=actorRepository.findById(input.getActorId()).get();
+    	 actor.setAddress(input.getAddress());
+    	 actorRepository.save(actor);
+    	 return actor;  	 
+     }
+
+20. Configure this method in schema file under Mutation
+   First we need to specify the input object as well
+
+input AddressInput{
+    actorId:Int,
+    address:String
+}
+
+Next we need add in mutation
+
+type Mutation {
+   updateAddressByInputObject(input:AddressInput):Actor
+}
+
+21. Start the appl, refresh the browser and run
+
+mutation($input:AddressInput){
+  updateAddressByInputObject(input:$input){
+     actorId
+     firstName
+     lastName
+     address
+  }
+}
+
+In Query variable we provide
+{
+    "input":{
+        "actorId":6,
+        "address":"Chennai"
+     }
+}
+Now we can see address is updated for that particular actor 
+
+22. Consider the query
+
+query{
+  getActorById(actorId:4){
+    actorId
+    FIRST_NAME:firstName
+    LAST_NAME:lastName
+    dob
+    address
+    filmId
+    film {
+      filmId
+      name
+    }
+  }
+}
+
+Now what if this film response we are getting as part of my query, we want to make it conditional, so if we give some attribute if that condition is true then only we want to assume that as a response otherwise dont, we can do this by using directive called @include, so the client can control the response that coming in and we are not changing anything in server side code   
+
+query($withFilm:Boolean!){
+  getActorById(actorId:4){
+    actorId
+    FIRST_NAME:firstName
+    LAST_NAME:lastName
+    dob
+    address
+    filmId
+    film  @include(if:$withFilm){
+      filmId
+      name
+    }
+  }
+}
+
+In query variable we provide
+{
+   "withFilm":true
+}
+
+Now we can see it will return actor with film response, but if we send false it should not display the film 
+
+23. Fragment which is nothing but if there are certain attribute which are getting repeated multiple times into a query, we can abstract it out and keep it somewhere and client can use it 
+
+query($withFilm:Boolean!){
+  getActorById(actorId:4){
+    ...actorDetails
+    film  @include(if:$withFilm){
+      filmId
+      name
+    }
+  }
+}
+fragment actorDetails on Actor{
+    actorId
+    firstName
+    lastName
+}
+
+In query variable we provide
+{
+   "withFilm":true
+}
+
+24. Subscription is something like push notification that server can send it to the client 
+     First ActorService must implement GraphQLSubscriptionResolver 
+     We can implement subscription using spring reactor project, so we add the dependency in pom.xml
+   <dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.3.4.RELEASE</version>
+		</dependency>
+
+Now we want to create subscription on actor update so whenever actor is getting updated we want to send as a push notification to our clients, so we want to maintain a map of all clients which are interested in these subscriptions 
+    So we create ConcurrentHashMap where we maintain map of actorId in which they are interested into and we use FluxSink which return a stream of data back to the client itself 
+   private ConcurrentHashMap<Integer,FluxSink<Actor>> subscriber=new ConcurrentHashMap<>();
+    We create onActorUpdate() which returns Publisher of Actor
+
+   public Publisher<Actor> onActorUpdate(Integer actorId){
+         return Flux.create(subscriber-> subscribers.put(actorId,subscriber.onDispose(()->subscribers.remove(actorId,subscriber))), FluxSink.OverflowStrategy.LATEST);
+     }
+
+So whenever actor is updated we want to return a actor object as a push notification back onto the server side, so inside updateAddressByInputObject() and updateAddress() where we update the address we check for subscriptions and push the data
+
+if(subscribers.get(input.getActorId())!=null){
+             subscribers.get(input.getActorId()).next(actor);
+         }
+
+25. Add subscription into schema file
+
+type Subscription{
+     onActorUpdate(actorId:Int):Actor
+}
+
+and register subscription into schema 
+schema{
+  subscription:Subscription
+}
+
+26. Start the appl, open 2 Graphiql browser, one prompt will be subscription of events and another will be updating the address of an actor 
+
+In the first one we call subscription
+
+subscription{
+  onActorUpdate(actorId:6){
+     actorId
+     firstName
+     lastName
+     address
+  }
+}
+
+In next prompt we will update the address
+
+mutation($input:AddressInput){
+    updateAddressByInputObject(input:$input){
+        actorId
+        firstName
+        lastName
+        address
+    }
+}
+In query variable we provide
+{
+    "input":{
+       "actorId":6,
+       "address":"Bangalore"
+     }
+}
+
+First run subscription and then click updating the address, now we can see it will update back in subscription
+
+
+https://www.youtube.com/watch?v=SHj_HV9pdJ8&list=PLxZ6CHRlzYBWgAognsBMsIJx8MOp-jMMr&index=8
+https://github.com/pravintarte/graphqlspqr
+2. Code First approach
+       In the traditional approach, if we wanted to add GraphQL to our project, we would have to follow two steps. First, we'd have to add GraphQL schema files to the project. Secondly, we'd need to write respective Java POJOs representing each type from the schema. This means that we'd be maintaining the same information in two places: in the schema files and in the Java classes. Such an approach is error-prone and requires more effort in maintaining the project.
+
+GraphQL Schema Publisher & Query Resolver, SPQR in short, originated in order to reduce the above problems – it simply generates GraphQL schemas from the annotated Java classes.
+
+Previously in case of schema first approach we need to define ur own schema and since this is handwritten they are error prone, we need to understand the GraphQL DSL (ie) basically to define ur own schema and we need to understand the notations, terminologies so if we want to write a query we need to know how to define the schema types, what are the attributes that we need to specify into schema file 
+    On the coding aspect of it whatever service that we are creating they have to implement certain interfaces, so we need to understand the internal libraries to write the code in schema first approach 
+
+1. Create SpringBoot-GraphQL5 project with spring data jpa, h2 db, lombok, spring web and graphql-spqr-spring-boot-starter dependency
+
+2. Configure db properties in application.properties file
+
+spring.datasource.driver-class-name=org.hsqldb.jdbc.JDBCDriver
+spring.datasource.url=jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=create
+server.port=9090
+graphql.spqr.gui.enabled=true
+
+3. Create entity class called Actor and Film marked with @GraphQLType
+
+In Actor class we have filmId as a relationship mentioning Actor entity but there is no join mention here, so if we are working with GraphQL it is advisable not doing any hard joins within ur entities, because client is controlling the amount of data it wants to retrieve from a data source  
+
+4. Create ActorRepository and FilmRepository
+
+5. Create DataLoaderService class to store dummy data into the database 
+
+6. Now we need to create query endpoints or the query functionalities for our actor model 
+     Create ActorService class with @Service annotation. Now we create a method getActorById() which returns actor based on the id from database and getAllActors() to return all the actors
+      So how to tell GraphQL framework that this particular method to expose as a GraphQL query, so we expose this service as GraphQL API using @GraphQLApi so GraphQL SPQR framework will understand that this service is eligible for GraphQL endpoints scanning 
+      Next thing we need to do is which endpoint that we are exposing we have to mark it as @GraphQLQuery. Next whatever inputs that are sending to ur methods are marked as @GraphQLArgument
+
+@Service
+@GraphQLApi
+public class ActorService {
+    @Autowired
+    private ActorRepository actorRepository;
+
+    @GraphQLQuery
+    public Actor getActorById(@GraphQLArgument(name = "id") Integer id){
+        return actorRepository.findById(id).get();
+    }
+
+    @GraphQLQuery
+    public List<Actor> getAllActors(){
+        return actorRepository.findAll();
+    }
+}
+
+7. Start the appl, and run http://localhost:9090/gui which redirects to GraphQL UI called Playground
+    On the right side, click Docs where we have 2 queries, so just by adding an annotation this particular library is creating the GraphQL schema in the background automatically, so this is the difference between first approach and code first approach where we dont need to write this graphql dsl, it is automatically created for u
+
+query {
+   allActors{
+       actorId
+       address
+       filmId
+       firstName
+       lastName
+   }
+}
+
+Now it will give all the actors details and now we run another query
+
+{
+   actorById(id:4){
+      actorId
+      firstName
+      lastName
+   }
+}
+
+Now it will display actor based on a particular id. In case if we dont want to hardcode the id and we make it to be parameterize 
+
+query($id:Int){
+    actorById(id:$id){
+        actorId
+        firstName
+        lastName
+    }
+}
+In query variables we provide 
+{
+   "id":4
+}
+Now we can see the actor based on particular id, in case if we want to provide different name at time of displaying without affecting the server side
+
+query($id:Int){
+    actorById(id:$id){
+        actorId
+        ActorName:firstName
+        lastName
+    }
+}
+
+Now it will display as ActorName instead of firstName 
+
+8. Next if we want to display the actor details as well as the films that he have worked on. So in Actor entity we have filmId as a relationship or reference attribute specified, so using that filmId we can query the film table and finish the film details but we want to wire all of those two objects together and send it back as the same response to UI 
+      Now we create FilmService class to fetch the film data with @Service and @GraphQLApi. Next we create method called getFilm() with @GraphQLQuery annotation, so whenever we fetch Actor we need to fetch Film as well, basically Actor has to resolved first and then only using that Actor we can fetch Film attribute as well from database using @GraphQLContext
+     @GraphQLContext basically tells the GraphQL framework that whenever actor is getting resolved and user has asked for the film details as well using the same Actor object we can fetch the Film object 
+
+@Service
+@GraphQLApi
+public class FilmService {
+
+    @Autowired
+    private FilmRepository repository;
+
+    @GraphQLQuery
+    public Film getFilm(@GraphQLContext Actor actor){
+        return repository.findById(actor.getFilmId()).get();
+    }
+}
+
+9. Start the application and run http://localhost:9090/gui
+    Click Docs - Click Actor - Earlier we can see Film as an object is not part of Actor model but since we are telling GraphQL framework that whenever we are fetching the details of an actor we want the film details as well, so now this film becomes the part of your graphql type. This is not specified into our java class but GraphQL framework is auto resolving it and Film type is auto created for us 
+    Now execute the following query 
+  
+query($id:Int){
+    actorById(id:$id){
+        actorId
+        firstName
+        lastName
+        film{
+          filmId
+          name
+          dateOfLaunch
+        }
+    }
+}
+In query variables we provide 
+{
+   "id":4
+}    
+Now it will display the actor details as well as the film details that actor has worked on without specifying details within ur persistent entity 
+
+10. Now we want to make them conditional (ie) based on certain conditions we want the film details to be displayed using include directive 
+
+query($id:Int,$includeFilm:Boolean!){
+    actorById(id:$id){
+        actorId
+        firstName
+        lastName
+        film @include(if:$includeFilm){
+          filmId
+          name
+          dateOfLaunch
+        }
+    }
+}
+In query variables we provide 
+{
+   "id":4,
+   "includeFilm":true
+}    
+When we run it will display the film details, but if we provide false it wont display the film details
+
+We have skip directive which is opposite of include,
+
+query($id:Int,$includeFilm:Boolean!){
+    actorById(id:$id){
+        actorId
+        firstName
+        lastName
+        film @skip(if:$includeFilm){
+          filmId
+          name
+          dateOfLaunch
+        }
+    }
+}
+In query variables we provide 
+{
+   "id":4,
+   "includeFilm":false
+}    
+When we run it will display the film details, but if we provide true it wont display the film details
+
+11. Now we create mutations to update the info to database using @GraphQLMutation. Now we create updateAddress() to update the address of the actor 
+
+@GraphQLMutation
+    public Actor updateAddress(@GraphQLArgument(name="id") Integer id,@GraphQLArgument(name="address")String address){
+        Actor actor = actorRepository.findById(id).get();
+        actor.setAddress(address);
+        actorRepository.save(actor);
+        return actor;
+    }
+
+12. Start the application and run 
+
+mutation($id:Int,$address:String){
+    updateAddress(id:$id,address:$address){
+        actorId
+        firstName
+        lastName
+        address
+    }
+}
+
+In Query variable we provide
+{
+   "id":4,
+   "address":"Chennai"
+}
+Now we can see the address is updated for that particular actor 
+
+13. We are sending whatever parameters that we want to update as a separate parameters but if there are so many parameters which is there into the query, so it is better if it is wrapped inside some kind of object and send it out using input type
+   We create a method called updateAddressByInputType() which takes AddressInputType class 
+
+ @GraphQLMutation
+    public Actor updateAddressByInputType(@GraphQLInputField(name="addressInput") AddressInputType address){
+        Actor actor = actorRepository.findById(address.getId()).get();
+        actor.setAddress(address.getAddress());
+        actorRepository.save(actor);
+        return actor;
+    }
+
+14. Create AddressInputType class with 2 properties 
+
+@Getter
+@Setter
+public class AddressInputType {
+	private Integer id;
+	private String address;	
+}
+
+15. Start the application and run 
+
+mutation($input:AddressInputTypeInput){
+    updateAddressByInputType(address:$input){
+        actorId
+        firstName
+        lastName
+        address
+    }
+}
+
+In query variable we provide
+{
+   "input":{
+      "id":4,
+      "address":"Hyderabad"
+    }
+}
+
+16. Now we look at subscription which is nothing long running HTTP connection similar to web sockets, so GraphQL also provides supports for websockets. To implement web sockets we need to another library from the project reactor of spring which provide reactive support to HTTP endpoints 
+
+<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.3.4.RELEASE</version>
+		</dependency>
+
+Like queries and mutation we can write the method using @GraphQLSubscription 
+
+private ConcurrentHashMap<Integer,FluxSink<Actor>> subscriber=new ConcurrentHashMap<>();
+
+@GraphQLSubscription
+public Publisher<Actor> onAddressUpdate(@GraphQLArgument(name="actorId") Integer actorId){
+    return Flux.create(subscriber -> subscribers.put(actorId, subscriber.onDispose(()->subscribers.remove(actorId,subscriber))),FluxSink.OverflowStrategy.LATEST); 
+}
+
+So basically whenever the address is updated or when someone calls Subscription endpoints, we are maintaining subscription map for all subscribers that are basically interested in the changes happening on actor address change and whenever it happens it will basically return Publisher. subscribers are nothing but ConcurrentHashMap which maintains the subscription object which is ur Flux object and actorId 
+
+Next whenever address is updated we need to notify the party who is interested in computation also 
+
+if(subscribers.get(id)!=null){
+   subscribers.get(id).next(actor);
+}
+
+
+17. Start the appl, open 2 Graphiql browser, one prompt will be subscription of events and another will be updating the address of an actor 
+
+In the first one we call subscription
+
+subscription($actorId:Int){
+  onAddressUpdate(actorId:$actorId){
+     actorId
+     firstName
+     lastName
+     address
+  }
+}
+In query variable we provide
+{
+   "actorId":4
+}
+In next prompt we will update the address
+
+mutation($id:Int,$address:String){
+    updateAddress(id:$id,address:$address){
+        actorId
+        firstName
+        lastName
+        address
+    }
+}
+
+In Query variable we provide
+{
+   "id":4,
+   "address":"Chennai"
+}
+
+First run subscription and then click updating the address, now we can see it will update back in subscription
+
+
+GraphQL Building Blocks
+      There are basically 2 different types in a GraphQL, 
+   1. Specification which has been released by Facebook
+      In Specification, there are 4 major building blocks of GraphQL schema
+    - Query 
+         It is like SQL query that you hit on ur table to fetch ur data from the resource, it is like GET request in REST 
+    - Mutation
+         It is used to update ur resource and return java object as response, it is like POST request in REST  
+    - Type
+         In Java pojo how we have different datatypes, similarly in Type we have different datatypes 
+         So basic datatypes of GraphQL is called scalar datatype like ID(special one which represent primary key of ur resource), String, Float and Boolean, complex objects and Fragments 
+    - Subscription
+   2. Runtime which is basically created by the different communities for different languages 
+       Whenever you create a GraphQL runtime and the query is sent by the browser that query has to be validated and executed. So validation is for checking if the queries are valid or not, all the fields specified in the type is there in server side or not, if the query is perfectly valid then you execute query using runtime or do an introspection 
+
+Consider the following type called Actor
+
+type Actor {
+    actorId : ID!,
+    firstName :String,
+    lastName :String,
+    dob:String,
+    address:String,
+    films:[Films]
+} 
+
+The actor basically works in a films, so basically actor have an actorId which is primary key for ur resource and specified as ID, first_name, last_name, address as String, dateOfBirth is again a String there is no date as scalar type in case of GraphQL so date will be represented into String format. Next films basically a complex object because films internally will have filmId, name and dateOfLaunch etc 
+    So the difference between REST based endpoint and GraphQL based endpoint is suppose we fetch actor information using actorId, then we will create an endpoint like "/actor?actorId=123" and in case if we want the films in which that actor has been worked on "/films?filmId=456". But in case of GraphQL there will be only one endpoint called "/graphql" and the query will be changing so if you just want actor we will send query for the actors, if we want films we will send query for the films 
