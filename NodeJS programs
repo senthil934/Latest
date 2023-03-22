@@ -1,0 +1,1762 @@
+1. crud_app
+
+assets/css
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow&family=PT+Sans&display=swap');
+
+:root{
+    --dark: #2b2d42;
+    --light: #adb5bd;
+    --border: #dee2e6;
+    --border-btn: #edf2f4;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+    font-family: 'PT Sans', sans-serif;
+}
+
+.container{
+    max-width: 1024px;
+    margin: auto;
+}
+
+.nav-brand{
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.d-flex{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.justify-between{
+    justify-content: space-between;
+}
+
+.text-center{
+    text-align: center;
+}
+
+.border-shadow{
+    border: 1px solid var(--border-btn);
+    box-shadow: 1px 3px 10px #e9ecef;
+}
+
+.text-dark{
+    color: var(--dark);
+}
+
+.inline{
+    display: inline-block;
+}
+
+.text-light{
+    color: var(--light);
+}
+
+.text-gradient{
+    background: linear-gradient(to right, #8e2de2, #4a00e0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#header nav{
+    background-color: #06d6a0;
+    padding: 1em 0;
+    width: 100%;
+}
+
+#site-main{
+    margin-top: 6em;
+    font-family: 'Barlow', sans-serif;
+}
+
+#site-main .container .box-nav > a{
+    font-size: 1em;
+    padding: .5em 1em;
+}
+
+#site-main .container form{
+    margin: 2em 0;
+}
+
+table{
+    border-spacing: 0px;
+    width: 100%;
+}
+
+.table td, .table th{
+    padding: .75em;
+    vertical-align: top;
+    text-align: center;
+    border-top: 1px solid var(--border);
+}
+
+.table td > a.btn{
+    padding: .3em 1em;
+    font-size: 1.1em;
+    margin: 0 .2em;
+}
+
+.table tr:hover{
+    background-color:#06d6a0 ;
+}
+
+.table tr:hover td > a{
+    box-shadow: none;
+}
+
+.table .thead-dark th{
+    color: #fff;
+    background-color: var(--dark) ;
+    border-color: #32383e;
+}
+
+.form-title{
+    margin-top: 2em;
+}
+
+.form-title > h2{
+    padding: .5em 0;
+}
+
+.new_user{
+    max-width: 786px;
+    margin: auto;
+}
+
+#update_user .form-group,
+#add_user .form-group{
+    margin: .4em 0;
+}
+
+#update_user .form-group input[type="text"],
+#add_user .form-group input[type="text"]{
+    width: 100%;
+    padding: .6em 1em;
+    margin: .5em 0;
+    border: 1px solid var(--border);
+    font-family: 'Barlow', sans-serif;
+    font-size: 1em;
+    border-radius: .2em;
+}
+
+#update_user .form-group .radio,
+#add_user .form-group .radio{
+    margin: 1em 2em;
+}
+
+/* adding style to radio buttons */
+.radio input[type='radio']{
+    position: absolute;
+    opacity: 0;
+}
+
+.radio input[type='radio'] + .radio-label:before{
+    content: "";
+    background: var(--border-btn);
+    border-radius: 100%;
+    border: 1px solid var(--border);
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    position: relative;
+    top: -0em;
+    margin-right: .5em;
+    vertical-align: top;
+    cursor: pointer;
+    text-align: center;
+    -webkit-transition: all 250ms ease;
+    transition: all 250ms ease;
+}
+
+.radio input[type='radio']:checked + .radio-label:before{
+    background-color: #16db93;
+    box-shadow: inset 0 0 0 4px #e9ecef;
+}
+
+.radio input[type='radio']:focus + .radio-label:before{
+    outline: none;
+    border-color:#16db93;
+}
+
+.radio input[type='radio']:disabled + .radio-label:before{
+    box-shadow: inset 0 0 0 4px #e9ecef;
+    border-color: #b4b4b4;
+    background: #b4b4b4;
+}
+
+#update_user .form-group .btn,
+#add_user .form-group .btn{
+    width: 100%;
+    padding: .9em 1em;
+    background-color:#16db93; 
+    border: none;
+    font-family: 'PT Sans', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: .2em;
+    margin: .5em 0;
+}
+
+#update_user .form-group .btn:hover,
+#add_user .form-group .btn:hover{
+    background-color: var(--dark);
+    color: var(--border);
+}
+----------------------------------------------------------
+assets/js
+
+$("#add_user").submit(function(event){
+    alert("Data Inserted Successfully!");
+})
+
+$("#update_user").submit(function(event){
+    event.preventDefault();
+
+    var unindexed_array = $(this).serializeArray();
+    var data = {}
+
+    $.map(unindexed_array, function(n, i){
+        data[n['name']] = n['value']
+    })
+
+
+    var request = {
+        "url" : `http://localhost:3000/api/users/${data.id}`,
+        "method" : "PUT",
+        "data" : data
+    }
+
+    $.ajax(request).done(function(response){
+        alert("Data Updated Successfully!");
+        window.location="/";
+    })
+
+})
+
+if(window.location.pathname == "/"){
+    $ondelete = $(".table tbody td a.delete");
+    $ondelete.click(function(){
+        var id = $(this).attr("data-id")
+
+        var request = {
+            "url" : `http://localhost:3000/api/users/${id}`,
+            "method" : "DELETE"
+        }
+
+        if(confirm("Do you really want to delete this record?")){
+            $.ajax(request).done(function(response){
+                alert("Data Deleted Successfully!");
+                location.reload();
+            })
+        }
+
+    })
+}
+
+--------------------------------------------------------------
+server.js
+
+const express = require('express');
+const dotenv = require('dotenv');
+const morgan = require('morgan');
+const bodyparser = require("body-parser");
+const path = require('path');
+const connectDB = require('./server/database/connection');
+
+const app=express();
+
+dotenv.config( { path : 'config.env'} )
+const PORT=process.env.PORT || 8080 
+
+//log request
+app.use(morgan('tiny'));
+
+// mongodb connection
+connectDB();
+
+// parse request to body-parser
+app.use(bodyparser.urlencoded({ extended : true}))
+
+// set view engine
+app.set("view engine", "ejs")
+//app.set("views", path.resolve(__dirname, "views/ejs"))  
+
+// load assets
+app.use('/css', express.static(path.resolve(__dirname, "assets/css")))
+app.use('/img', express.static(path.resolve(__dirname, "assets/img")))
+app.use('/js', express.static(path.resolve(__dirname, "assets/js")))
+
+// load routers
+app.use('/', require('./server/routes/route'))
+
+
+app.listen(3000,()=>{ console.log(`Server is running on http://localhost:${PORT}`)}); 
+------------------------------------------------------------------------
+config.env
+
+PORT=3000
+MONGO_URI=mongodb+srv://senthil:abcd123@cluster0.r3kbkxw.mongodb.net/users?retryWrites=true&w=majority 
+---------------------------------------------------------------------------
+views/include/_footer.ejs
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script src="/js/index.js"></script>
+</body>
+</html>
+----------------------------------------------------------------------------
+view/include/_header.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crud Application</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+         <header id="header">
+             <nav>
+                 <div class="container">
+                     <div class="text-center">
+                         <a href="/" class="nav-brand text-dark">User Management System</a>
+                     </div>
+                 </div>
+             </nav>
+         </header>
+    <!-- /Header -->
+--------------------------------------------------------------------------
+views/include/_form.ejs
+
+ <!-- form handling -->
+ <form  action="/api/users" method="POST" id="add_user">
+    <div class="new_user">
+        <div class="form-group">
+            <label for="name" class="text-light">Name</label>
+            <input type="hidden" name="id" value="">
+            <input type="text" name="name" value="" placeholder="Mark Stoenis">
+        </div>
+        <div class="form-group">
+            <label for="Email" class="text-light">Email</label>
+            <input type="text" name="email" value="" placeholder="example@gmail.com">
+        </div>
+        <div class="form-group">
+            <label for="gender" class="text-light">Gender</label>
+            <div class="radio inline">
+                <input type="radio" id="radio-2" name="gender" value="Male" >
+                <label for="radio-2" class="radio-label">Male</label>
+            </div>
+            <div class="radio inline">
+                <input type="radio" id="radio-3" name="gender" value="Female" >
+                <label for="radio-3" class="radio-label">Female</label>
+            </div>
+        </div>
+    
+        <div class="form-group">
+            <label for="gender" class="text-light">Status</label>
+            <div class="radio inline">
+                <input type="radio" id="radio-4" name="status" value="Active" >
+                <label for="radio-4" class="radio-label">Active</label>
+            </div>
+            <div class="radio inline">
+                <input type="radio" id="radio-5" name="status" value="Inactive" >
+                <label for="radio-5" class="radio-label">Inactive</label>
+            </div>
+        </div>
+    
+        <div class="form-group">
+            <button type="submit" class="btn text-dark update">Save</button>
+        </div>
+    
+    </div>
+    </form>
+--------------------------------------------------------------------------
+views/include/_show.ejs
+
+<!-- <tr>
+    <td>1</td>
+    <td>Ram</td>
+    <td>ram@gmail.com</td>
+    <td>Male</td>
+    <td>Active</td>
+    <td>
+        <a href="/update-user" class="btn border-shadow update">
+            <span class="text-gradient"><i class="fas fa-pencil-alt"></i></span>
+        </a>
+        <a class="btn border-shadow delete">
+            <span class="text-gradient"><i class="fas fa-times"></i></span>
+        </a>
+    </td>
+</tr> -->
+
+<% for(var i = 0; i < users.length; i++) { %>
+    <tr>
+        <td><%= i + 1 %></td>
+        <td><%= users[i].name %></td>
+        <td><%= users[i].email %></td>
+        <td><%= users[i].gender %></td>
+        <td><%= users[i].status %></td>
+        <td>
+            <a href="/update-user?id=<%= users[i]._id%>" class="btn border-shadow update">
+                <span class="text-gradient"><i class="fas fa-pencil-alt"></i></span>
+            </a>
+            <a class="btn border-shadow delete" data-id=<%= users[i]._id%> >
+                <span class="text-gradient"><i class="fas fa-times"></i></span>
+            </a>
+        </td>
+    </tr>
+<% } %>
+---------------------------------------------------------------------------
+views/add_user.ejs
+
+<!-- include header -->
+<%- include('include/_header') %>
+<!-- /include header -->
+
+<!-- Main site-->
+<main id="site-main">
+    <div class="container">
+        <div class="box-nav d-flex justify-between">
+            <div class="filter">
+                <a href="/"><i class="fas fa-angle-double-left"></i> All Users</a>
+            </div>
+         </div>
+         <div class="form-title text-center">
+             <h2 class="text-dark">New User</h2>
+             <span class="text-light">Use the below form to create a new account</span>
+         </div>
+
+       <!-- add user form -->
+       <%- include('include/_form') %>
+
+    </div>
+</main>
+<!-- /Main site -->
+
+
+<!-- include footer -->
+<%- include('include/_footer') %>
+<!-- /include footer -->
+----------------------------------------------------------------------------
+views/index.ejs
+
+
+<!-- include header -->
+<%- include('include/_header') %>
+<!-- /include header -->
+
+<!-- Main site-->
+<main id="site-main">
+    <div class="container">
+        <div class="box-nav d-flex justify-between">
+            <a href="/add-user" class="border-shadow">
+                <span class="text-gradient">New User <i class="fas fa-user"></i></span>
+            </a>
+        </div>
+
+        <!-- form handling -->
+        <form action="/" method="POST">
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>@Email</th>
+                        <th>Gender</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <%- include('include/_show') %>
+                </tbody>
+            </table>
+        </form>
+    </div>
+</main>
+<!-- /Main site -->
+
+<!-- include footer -->
+<%- include('include/_footer') %>
+<!-- /include footer -->
+--------------------------------------------------------------------------
+views/update_user.ejs
+
+<!-- include header -->
+<%- include('include/_header') %>
+<!-- /include header -->
+
+  <!-- Main Site -->
+  <main id="site-main">
+    <div class="container">
+        <div class="box-nav d-flex justify-between">
+           <div class="filter">
+               <a href="/"><i class="fas fa-angle-double-left"></i> All Users</a>
+           </div>
+        </div>
+        <div class="form-title text-center">
+            <h2 class="text-dark">Update User</h2>
+            <span class="text-light">Use the below form to Update an account</span>
+        </div>
+
+        <!-- add user form -->
+         <!-- form handling -->
+  <form  method="POST" id="update_user">
+    <div class="new_user">
+        <div class="form-group">
+            <label for="name" class="text-light">Name</label>
+            <input type="hidden" name="id" value="<%= user._id %>">
+            <input type="text" name="name" value="<%= user.name %>" placeholder="Mark Stoenis">
+        </div>
+        <div class="form-group">
+            <label for="Email" class="text-light">Email</label>
+            <input type="text" name="email" value="<%= user.email%>" placeholder="example@gmail.com">
+        </div>
+        <div class="form-group">
+            <label for="gender" class="text-light">Gender</label>
+            <div class="radio inline">
+                <input type="radio" id="radio-2" name="gender" value="Male" <%= user.gender == 'Male' ? 'checked' : '' %>>
+                <label for="radio-2" class="radio-label">Male</label>
+            </div>
+            <div class="radio inline">
+                <input type="radio" id="radio-3" name="gender" value="Female"  <%= user.gender == 'Female' ? 'checked' : '' %> >
+                <label for="radio-3" class="radio-label">Female</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="gender" class="text-light">Status</label>
+            <div class="radio inline">
+                <input type="radio" id="radio-4" name="status" value="Active" <%= user.status == 'Active' ? 'checked' : '' %> >
+                <label for="radio-4" class="radio-label">Active</label>
+            </div>
+            <div class="radio inline">
+                <input type="radio" id="radio-5" name="status" value="Inactive" <%= user.status == 'Inactive' ? 'checked' : '' %> >
+                <label for="radio-5" class="radio-label">Inactive</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn text-dark update">Save</button>
+        </div>
+
+    </div>
+</form>
+       
+    </div>
+</main>
+<!-- /Main Site -->
+
+<!-- include footer -->
+<%- include('include/_footer') %>
+<!-- /include footer -->
+---------------------------------------------------------------------------
+views/add_user.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crud Application</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../assets/css/style.css"> 
+</head>
+<body>
+    <!-- Header -->
+         <header id="header">
+             <nav>
+                 <div class="container">
+                     <div class="text-center">
+                         <a href="/" class="nav-brand text-dark">User Management System</a>
+                     </div>
+                 </div>
+             </nav>
+         </header>
+    <!-- /Header -->
+    <!-- Main site-->
+    <main id="site-main">
+        <div class="container">
+            <div class="box-nav d-flex justify-between">
+                <div class="filter">
+                    <a href="/"><i class="fas fa-angle-double-left"></i> All Users</a>
+                </div>
+             </div>
+             <div class="form-title text-center">
+                 <h2 class="text-dark">New User</h2>
+                 <span class="text-light">Use the below form to create a new account</span>
+             </div>
+
+            <!-- form handling -->
+ <form  method="POST" id="add_user">
+    <div class="new_user">
+        <div class="form-group">
+            <label for="name" class="text-light">Name</label>
+            <input type="hidden" name="id" value="">
+            <input type="text" name="name" value="" placeholder="Mark Stoenis">
+        </div>
+        <div class="form-group">
+            <label for="Email" class="text-light">Email</label>
+            <input type="text" name="email" value="" placeholder="example@gmail.com">
+        </div>
+        <div class="form-group">
+            <label for="gender" class="text-light">Gender</label>
+            <div class="radio inline">
+                <input type="radio" id="radio-2" name="gender" value="Male" >
+                <label for="radio-2" class="radio-label">Male</label>
+            </div>
+            <div class="radio inline">
+                <input type="radio" id="radio-3" name="gender" value="Female" >
+                <label for="radio-3" class="radio-label">Female</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="gender" class="text-light">Status</label>
+            <div class="radio inline">
+                <input type="radio" id="radio-4" name="status" value="Active" >
+                <label for="radio-4" class="radio-label">Active</label>
+            </div>
+            <div class="radio inline">
+                <input type="radio" id="radio-5" name="status" value="Inactive" >
+                <label for="radio-5" class="radio-label">Inactive</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn text-dark update">Save</button>
+        </div>
+
+    </div>
+</form>
+        </div>
+    </main>
+    <!-- /Main site -->
+</body>
+</html>
+---------------------------------------------------------------------------
+views/index.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crud Application</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../assets/css/style.css"> 
+</head>
+<body>
+    <!-- Header -->
+         <header id="header">
+             <nav>
+                 <div class="container">
+                     <div class="text-center">
+                         <a href="/" class="nav-brand text-dark">User Management System</a>
+                     </div>
+                 </div>
+             </nav>
+         </header>
+    <!-- /Header -->
+    <!-- Main site-->
+    <main id="site-main">
+        <div class="container">
+            <div class="box-nav d-flex justify-between">
+                <a href="/add-user" class="border-shadow">
+                    <span class="text-gradient">New User <i class="fas fa-user"></i></span>
+                </a>
+            </div>
+
+            <!-- form handling -->
+            <form action="/" method="POST">
+                <table class="table">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>@Email</th>
+                            <th>Gender</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Ram</td>
+                            <td>ram@gmail.com</td>
+                            <td>Male</td>
+                            <td>Active</td>
+                            <td>
+                                <a href="#" class="btn border-shadow update">
+                                    <span class="text-gradient"><i class="fas fa-pencil-alt"></i></span>
+                                </a>
+                                <a class="btn border-shadow delete">
+                                    <span class="text-gradient"><i class="fas fa-times"></i></span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </main>
+    <!-- /Main site -->
+</body>
+</html>
+----------------------------------------------------------------------------
+server/controller/controller.js
+
+var Userdb = require('../model/model');
+
+// create and save new user
+exports.create = (req,res)=>{
+    // validate request - if user makes post req with empty body 
+    if(!req.body){
+        res.status(400).send({ message : "Content can not be emtpy!"});
+        return;
+    }
+
+    //all the form data is stored in body of req obj and using
+    //body we can access all form data 
+    // new user
+    const user = new Userdb({
+        name : req.body.name,
+        email : req.body.email,
+        gender: req.body.gender,
+        status : req.body.status
+    })
+
+    // save user in the database
+    user
+        .save(user) //save data in mongodb, then call promise to return data to user, if there is any error we call catch block 
+        .then(data => {
+            //res.send(data)
+            res.redirect('/add-user');
+        })
+        .catch(err =>{
+            res.status(500).send({
+                message : err.message || "Some error occurred while creating a create operation"
+            });
+        });
+
+}
+
+// retrieve and return all users/ retrive and return a single user
+exports.find = (req, res)=>{
+
+    //pass id as query parameter 
+    if(req.query.id){
+        const id = req.query.id;
+
+        Userdb.findById(id)
+            .then(data =>{
+                if(!data){
+                    res.status(404).send({ message : "Not found user with id "+ id})
+                }else{
+                    res.send(data)
+                }
+            })
+            .catch(err =>{
+                res.status(500).send({ message: "Erro retrieving user with id " + id})
+            })
+
+    }else{
+        //first get all data from db and return as response
+        Userdb.find()
+            .then(user => {
+                res.send(user)
+            })
+            .catch(err => {
+                res.status(500).send({ message : err.message || "Error Occurred while retriving user information" })
+            })
+    }
+
+    
+}
+
+// Update a new idetified user by user id
+exports.update = (req, res)=>{
+    if(!req.body){
+        return res
+            .status(400)
+            .send({ message : "Data to update can not be empty"})
+    }
+
+    const id = req.params.id; //get id from url using req.params.id called as url parameters
+    Userdb.findByIdAndUpdate(id, req.body, { useFindAndModify: false})
+        .then(data => {
+            if(!data){
+                res.status(404).send({ message : `Cannot Update user with ${id}. Maybe user not found!`})
+            }else{
+                res.send(data)
+            }
+        })
+        .catch(err =>{
+            res.status(500).send({ message : "Error Update user information"})
+        })
+}
+
+// Delete a user with specified user id in the request
+exports.delete = (req, res)=>{
+    const id = req.params.id;
+
+    Userdb.findByIdAndDelete(id)
+        .then(data => {
+            if(!data){
+                res.status(404).send({ message : `Cannot Delete with id ${id}. Maybe id is wrong`})
+            }else{
+                res.send({
+                    message : "User was deleted successfully!"
+                })
+            }
+        })
+        .catch(err =>{
+            res.status(500).send({
+                message: "Could not delete User with id=" + id
+            });
+        });
+}
+---------------------------------------------------------------------------
+server/database/connection.js
+
+const mongoose = require('mongoose');
+
+const connectDB = async () => {
+    try{
+        // mongodb connection string
+        const con = await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        })
+
+        console.log(`MongoDB connected : ${con.connection.host}`);
+    }catch(err){
+        console.log(err);
+        process.exit(1);
+    }
+}
+
+module.exports = connectDB
+-----------------------------------------------------------------------------
+server/model/model.js
+
+const mongoose = require('mongoose');
+
+var schema = new mongoose.Schema({
+    name : {
+        type : String,
+        required: true
+    },
+    email : {
+        type: String,
+        required: true,
+        unique: true
+    },
+    gender : String,
+    status : String
+})
+
+const Userdb = mongoose.model('userdb', schema);
+
+module.exports = Userdb;
+--------------------------------------------------------------------------
+server/routes/route.js
+
+const express=require('express');
+const route=express.Router();
+
+const services=require('../services/render');
+const controller = require('../controller/controller');
+
+/*route.get('/',(req,res)=> {
+    res.render('index');
+})
+ 
+route.get('/add-user',(req,res)=> {
+     res.render('add_user');
+ })
+ 
+route.get('/update-user',(req,res)=> {
+     res.render('update_user');
+})*/
+
+route.get('/',services.homeRoutes)
+ 
+route.get('/add-user',services.add_user)
+ 
+route.get('/update-user',services.update_user)
+
+//API
+route.post('/api/users', controller.create);
+route.get('/api/users', controller.find);
+route.put('/api/users/:id', controller.update);
+route.delete('/api/users/:id', controller.delete);
+
+module.exports=route
+-------------------------------------------------------------------------
+server/services/render.js
+
+/* exports.homeRoutes = (req, res) => {
+    res.render('index');
+}
+
+exports.add_user = (req, res) => {
+    res.render('add_user');
+}
+
+exports.update_user = (req, res) => {
+    res.render('update_user');
+} */
+
+const axios = require('axios');
+
+
+exports.homeRoutes = (req, res) => {
+    // Make a get request to /api/users
+    axios.get('http://localhost:3000/api/users')
+        .then(function(response){
+            res.render('index', { users : response.data });
+        })
+        .catch(err =>{
+            res.send(err);
+        })
+
+    
+}
+
+exports.add_user = (req, res) =>{
+    res.render('add_user');
+}
+
+exports.update_user = (req, res) =>{
+    axios.get('http://localhost:3000/api/users', { params : { id : req.query.id }})
+        .then(function(userdata){
+            res.render("update_user", { user : userdata.data})
+        })
+        .catch(err =>{
+            res.send(err);
+        })
+}
+------------------------------------------------------------------------------
+2. Node_testing
+
+index.js
+
+const express = require('express');
+const app = express();
+const utils = require('./utils/task-schema.js')
+
+app.use(express.json());
+
+const tasks = [
+    {
+        id: 1,
+        name: "Task 1",
+        completed: false
+    },
+    {
+        id: 2,
+        name: "Task 2",
+        completed: false
+    },
+    {
+        id: 3,
+        name: "Task 3",
+        completed: false
+    }
+];
+
+// GET
+app.get("/api/tasks" , (request, response) => {
+    response.send(tasks);
+});
+
+// GET (BY ID)
+app.get("/api/tasks/:id" , (request, response) => {
+    const taskId = request.params.id;
+    const task = tasks.find(task => task.id === parseInt(taskId));
+    if(!task) return response.status(404).send("The task with the provided ID does not exist.");
+    response.send(task);
+});
+
+// POST
+app.post("/api/tasks", (request, response) => {
+    const { error } = utils.validateTask(request.body);
+
+    if(error) return response.status(400).send("The name should be at least 3 chars long!")
+
+    const task = {
+        id: tasks.length + 1,
+        name: request.body.name,
+        completed: request.body.completed
+    };
+
+    tasks.push(task);
+    response.status(201).send(task);
+});
+
+//PUT
+app.put("/api/tasks/:id", (request, response) => {
+    const taskId = request.params.id;
+    const task = tasks.find(task => task.id === parseInt(taskId));
+    if(!task) return response.status(404).send("The task with the provided ID does not exist.");
+
+    const { error } = utils.validateTask(request.body);
+
+    if(error) return response.status(400).send("The name should be at least 3 chars long!")
+
+    task.name = request.body.name;
+    task.completed = request.body.completed;
+
+    response.send(task);
+});
+
+
+
+//PATCH
+app.patch("/api/tasks/:id", (request, response) => {
+    const taskId = request.params.id;
+    const task = tasks.find(task => task.id === parseInt(taskId));
+    if(!task) return response.status(404).send("The task with the provided ID does not exist.");
+
+    const { error } = utils.validateTask(request.body);
+
+    if(error) return response.status(400).send("The name should be at least 3 chars long!")
+
+    task.name = request.body.name;
+
+    if(request.body.completed) {
+        task.completed = request.body.completed;
+    }
+    response.send(task);
+});
+
+//DELETE
+app.delete("/api/tasks/:id", (request, response) => {
+    const taskId = request.params.id;
+    const task = tasks.find(task => task.id === parseInt(taskId));
+    if(!task) return response.status(404).send("The task with the provided ID does not exist.");
+
+    const index = tasks.indexOf(task);
+    tasks.splice(index, 1);
+    response.send(task);
+});
+
+
+const port = process.env.PORT || 3000;
+module.exports = app.listen(port, () => console.log(`Listening on port ${port}...`));
+---------------------------------------------------------------------------
+utils/task-schema.js
+
+const Joi = require('joi');
+
+const validateTask = data  => {
+    const schema = Joi.object({
+        name: Joi.string()
+            .min(6)
+            .required(),
+        completed: Joi.boolean()
+    });
+    return schema.validate(data);
+};
+module.exports.validateTask = validateTask;
+----------------------------------------------------------------------------
+test/task.js
+
+let chai = require("chai");
+let chaiHttp = require("chai-http");
+let server = require("../index");
+
+//Assertion Style
+chai.should();
+
+chai.use(chaiHttp);
+
+describe('Tasks API', () => {
+
+    /**
+     * Test the GET route
+     */
+    describe("GET /api/tasks", () => {
+        it("It should GET all the tasks", (done) => {
+            chai.request(server)
+                .get("/api/tasks")
+                .end((err, response) => {
+                    response.should.have.status(200);
+                    response.body.should.be.a('array');
+                    response.body.length.should.be.eq(3);
+                done();
+                });
+        });   
+
+        it("It should NOT GET all the tasks", (done) => {
+            chai.request(server)
+                .get("/api/task")
+                .end((err, response) => {
+                    response.should.have.status(404);
+                done();
+                });
+        });
+    });
+
+    /**
+     * Test the GET (by id) route
+     */
+    describe("GET /api/tasks/:id", () => {
+        it("It should GET a task by ID", (done) => {
+            const taskId = 1;
+            chai.request(server)                
+                .get("/api/tasks/" + taskId)
+                .end((err, response) => {
+                    response.should.have.status(200);
+                    response.body.should.be.a('object');
+                    response.body.should.have.property('id');
+                    response.body.should.have.property('name');
+                    response.body.should.have.property('completed');
+                    response.body.should.have.property('id').eq(1);
+                done();
+                });
+        });
+
+        it("It should NOT GET a task by ID", (done) => {
+            const taskId = 123;
+            chai.request(server)                
+                .get("/api/tasks/" + taskId)
+                .end((err, response) => {
+                    response.should.have.status(404);
+                    response.text.should.be.eq("The task with the provided ID does not exist.");
+                done();
+                });
+        });
+
+    });
+    
+
+    /**
+     * Test the POST route
+     */
+    describe("POST /api/tasks", () => {
+        it("It should POST a new task", (done) => {
+            const task = {
+                name: "Task 4",
+                completed: false
+            };
+            chai.request(server)                
+                .post("/api/tasks")
+                .send(task)
+                .end((err, response) => {
+                    response.should.have.status(201);
+                    response.body.should.be.a('object');
+                    response.body.should.have.property('id').eq(4);
+                    response.body.should.have.property('name').eq("Task 4");
+                    response.body.should.have.property('completed').eq(false);
+                done();
+                });
+        });
+
+        it("It should NOT POST a new task without the name property", (done) => {
+            const task = {
+                completed: false
+            };
+            chai.request(server)                
+                .post("/api/tasks")
+                .send(task)
+                .end((err, response) => {
+                    response.should.have.status(400);
+                    response.text.should.be.eq("The name should be at least 3 chars long!");
+                done();
+                });
+        });
+
+    });
+
+    /**
+     * Test the PUT route
+     */
+    describe("PUT /api/tasks/:id", () => {
+        it("It should PUT an existing task", (done) => {
+            const taskId = 1;
+            const task = {
+                name: "Task 1 changed",
+                completed: true
+            };
+            chai.request(server)                
+                .put("/api/tasks/" + taskId)
+                .send(task)
+                .end((err, response) => {
+                    response.should.have.status(200);
+                    response.body.should.be.a('object');
+                    response.body.should.have.property('id').eq(1);
+                    response.body.should.have.property('name').eq("Task 1 changed");
+                    response.body.should.have.property('completed').eq(true);
+                done();
+                });
+        });
+
+        it("It should NOT PUT an existing task with a name with less than 3 characters", (done) => {
+            const taskId = 1;
+            const task = {
+                name: "Ta",
+                completed: true
+            };
+            chai.request(server)                
+                .put("/api/tasks/" + taskId)
+                .send(task)
+                .end((err, response) => {
+                    response.should.have.status(400);
+                    response.text.should.be.eq("The name should be at least 3 chars long!");
+                done();
+                });
+        });        
+    });
+    
+
+    /**
+     * Test the PATCH route
+     */
+
+    describe("PATCH /api/tasks/:id", () => {
+        it("It should PATCH an existing task", (done) => {
+            const taskId = 1;
+            const task = {
+                name: "Task 1 patch"
+            };
+            chai.request(server)                
+                .patch("/api/tasks/" + taskId)
+                .send(task)
+                .end((err, response) => {
+                    response.should.have.status(200);
+                    response.body.should.be.a('object');
+                    response.body.should.have.property('id').eq(1);
+                    response.body.should.have.property('name').eq("Task 1 patch");
+                    response.body.should.have.property('completed').eq(true);
+                done();
+                });
+        });
+
+        it("It should NOT PATCH an existing task with a name with less than 3 characters", (done) => {
+            const taskId = 1;
+            const task = {
+                name: "Ta"
+            };
+            chai.request(server)                
+                .patch("/api/tasks/" + taskId)
+                .send(task)
+                .end((err, response) => {
+                    response.should.have.status(400);
+                    response.text.should.be.eq("The name should be at least 3 chars long!");
+                done();
+                });
+        });        
+    });
+    
+
+    /**
+     * Test the DELETE route
+     */
+    describe("DELETE /api/tasks/:id", () => {
+        it("It should DELETE an existing task", (done) => {
+            const taskId = 1;
+            chai.request(server)                
+                .delete("/api/tasks/" + taskId)
+                .end((err, response) => {
+                    response.should.have.status(200);
+                done();
+                });
+        });
+
+        it("It should NOT DELETE a task that is not in the database", (done) => {
+            const taskId = 145;
+            chai.request(server)                
+                .delete("/api/tasks/" + taskId)
+                .end((err, response) => {
+                    response.should.have.status(404);
+                    response.text.should.be.eq("The task with the provided ID does not exist.");
+                done();
+                });
+        });
+
+    });
+
+
+    
+});
+----------------------------------------------------------------------------
+3. NodeAuthentication
+
+app.js
+
+const express=require('express');
+const app=express();
+const UserModel = require('./config/database');
+const bcrypt=require('bcryptjs');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const passport = require('passport');
+
+app.set('view engine','ejs');
+app.use(express.urlencoded({ extended: true }))
+
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/passport', collectionName: "sessions" }),
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24
+    }
+}))
+
+require('./config/passport');
+
+app.use(passport.initialize())
+app.use(passport.session())
+
+app.get('/login',(req,res)=>{
+    //res.send('Login get');
+    res.render('login');
+})
+
+app.get('/register',(req,res)=>{
+    //res.send('Register get');
+    res.render('register');
+})
+
+/*app.post('/login',(req,res)=>{
+    res.send('Login post');
+})*/
+
+app.post('/login', passport.authenticate('local', { successRedirect: 'protected' }))
+
+app.post('/register',(req,res)=>{
+   // res.send('Register post');
+   let user = new UserModel({
+    username: req.body.username,
+    password: bcrypt.hashSync(req.body.password,10)
+})
+
+user.save().then(user => console.log(user));
+
+res.send({ success: true })
+})
+
+/*app.get('/logout',(req,res)=>{
+    res.send('Logout');
+})*/
+
+app.get('/logout', (req, res) => {
+    req.logout(function(err) {
+        if (err) { return next(err); }
+        res.redirect('/login');
+      });
+})
+
+/*app.get('/protected',(req,res)=>{
+    console.log(req.session);
+    console.log(req.user);
+    res.send('Protected');
+})*/
+
+app.get('/protected', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.send("Protected")
+    } else {
+        res.status(401).send({ msg: "Unauthorized" })
+    }
+    console.log(req.session)
+    console.log(req.user)
+})
+
+app.listen(5000,(req,res)=>{
+    console.log('Server is listening at port 5000');
+})
+--------------------------------------------------------------------------
+config/database.js
+
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/passport');
+
+const userSchema = mongoose.Schema({
+    username: String,
+    password: String
+})
+
+const UserModel = mongoose.model('User', userSchema);
+
+module.exports = UserModel;
+----------------------------------------------------------------------------
+config/passport.js
+
+const passport = require('passport')
+const LocalStrategy = require('passport-local').Strategy;
+const UserModel = require('./database')
+const { compareSync } = require('bcryptjs');
+
+passport.use(new LocalStrategy(
+  async  function (username, password, done) {
+       let user= await UserModel.findOne({ username: username });
+
+            if (!user) {  //When username is invalid
+                return done(null, false, { message: 'Incorrect username.' });
+            }
+
+            if (!compareSync(password, user.password)) { //When password is invalid 
+                return done(null, false, { message: 'Incorrect password.' });
+            }
+
+            return done(null, user); //When user is valid
+        }
+));
+
+//Persists user data inside session
+passport.serializeUser(function (user, done) {
+    done(null, user.id);
+});
+
+//Fetches session details using session id
+passport.deserializeUser(async function (id, done) {
+   let user = await UserModel.findById(id);
+   done(null,user);
+});
+---------------------------------------------------------------------------
+views/login.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+
+<body>
+    <form action="/login" method='post'>
+        <input type="text" name='username' placeholder="Enter username"><br/>
+        <input type="password" name='password' placeholder="Enter password"></br/>
+        <a href="register">New here?</a>
+        <button type="submit">Log in</button>
+    </form>
+</body>
+
+</html>
+----------------------------------------------------------------------------
+views/register.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REGISTER</title>
+</head>
+
+<body>
+
+    <body>
+        <form action="/register" method='post'>
+            <input type="text" name='username' placeholder="Enter username"><br/>
+            <input type="password" name='password' placeholder="Enter password"><br/>
+            <a href="login">Already have an account?</a>
+            <button type="submit">Register</button>
+        </form>
+    </body>
+</body>
+
+</html>
+-----------------------------------------------------------------------------
+4. NodeAuthentication_OAuth
+
+app.js
+
+const express=require('express');
+const app=express();
+const UserModel = require('./config/database');
+const bcrypt=require('bcryptjs');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const passport = require('passport');
+
+app.set('view engine','ejs');
+app.use(express.urlencoded({ extended: true }))
+
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/passport-google', collectionName: "sessions" }),
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24
+    }
+}))
+
+require('./config/passport');
+
+app.use(passport.initialize())
+app.use(passport.session())
+
+app.get('/login',(req,res)=>{
+    //res.send('Login get');
+    res.render('login');
+})
+
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile'] }));
+
+app.get('/auth/callback', 
+  passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/protected' })
+);
+
+app.get('/logout', (req, res) => {
+    req.logout(function(err) {
+        if (err) { return next(err); }
+        res.redirect('/login');
+      });
+})
+
+app.get('/protected', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.render("protected",{
+            name: req.user.name
+        })
+    } else {
+        res.status(401).send({ msg: "Unauthorized" })
+    }
+    console.log(req.session)
+    console.log(req.user)
+})
+
+app.listen(5000,(req,res)=>{
+    console.log('Server is listening at port 5000');
+})
+------------------------------------------------------------------------
+config/database.js
+
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/passport-google');
+
+const userSchema = mongoose.Schema({
+    name: String,
+    googleId: String
+})
+
+const UserModel = mongoose.model('User', userSchema);
+
+module.exports = UserModel;
+--------------------------------------------------------------------------
+config/passport.js
+
+const passport = require('passport')
+const UserModel = require('./database')
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+passport.use(new GoogleStrategy({
+    clientID: "409215015377-r40pj09p19ejt239nhb4tdeqb3ppdg4q.apps.googleusercontent.com",
+    clientSecret: "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",
+    callbackURL: "http://localhost:5000/auth/callback"
+  },
+  async function(accessToken, refreshToken, profile, cb) {
+        let user= await UserModel.findOne({ googleId: profile.id });
+ 
+             if (!user) {  //When username is invalid
+                let newUser= new UserModel({
+                    googleId:profile.id,
+                    name:profile.displayName
+                })
+                newUser.save();
+                return cb(null, newUser); 
+            }
+            else {
+                return cb(null, user);
+            }
+    })
+);
+
+//Persists user data inside session
+passport.serializeUser(function (user, done) {
+    done(null, user.id);
+});
+
+//Fetches session details using session id
+passport.deserializeUser(async function (id, done) {
+   let user = await UserModel.findById(id);
+   done(null,user);
+});
+---------------------------------------------------------------------------
+views/login.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+
+<body>
+   <a href="/auth/google">Login with Google</a>
+</body>
+
+</html>
+--------------------------------------------------------------------------
+views/protected.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=<device-width>, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Greetings, user <%=name%></h1> <br/>
+    <a href="/logout">Logout</a>
+</body>
+</html>
+----------------------------------------------------------------------------
+5. NodeAuthentication_Jwt
+
+app.js
+
+const express=require('express');
+const app=express();
+const cors=require('cors');
+const UserModel = require('./config/database');
+const bcrypt=require('bcryptjs'); 
+const jwt=require('jsonwebtoken');
+const passport=require('passport');
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+app.use(passport.initialize());
+
+require('./config/passport')
+
+app.post('/register',(req,res)=>{
+    const user=new UserModel({
+        username: req.body.username,
+        password: bcrypt.hashSync(req.body.password,10)
+    })
+    user.save().then(user=>{
+        res.send({
+            success: true,
+            message: 'User Inserted Successfully',
+            user: {
+                id: user._id,
+                username: user.username
+            }
+        });
+    }).catch(err => {
+        res.send({
+            success: false,
+            message: 'Something went wrong',
+            error: err
+        })
+    })
+})
+
+app.post('/login',(req,res)=>{
+   // console.log('Login post request');
+   UserModel.findOne({username:req.body.username}).then(user => {
+    //No user found
+    if(!user){
+        return res.status(401).send({
+           success: false,
+           message: 'Could not find the user'
+        })
+    }
+    //Incorrect password
+    if(!bcrypt.compareSync(req.body.password, user.password)){
+        return res.status(401).send({
+             success: false,
+             message: 'Incorrect Password'
+        })
+    }
+
+    const payload = {
+        username: user.username,
+        id: user._id
+    }
+    const token = jwt.sign(payload,"Random string",{expiresIn:"1d"});
+
+    return res.status(200).send({
+        success: true,
+        message: "Logged in successfully",
+        token: "Bearer " + token
+    })
+   })
+})
+
+app.get('/protected', passport.authenticate('jwt', {session:false}),(req,res)=>{
+    return res.status(200).send({
+        success: true,
+        user: {
+           id: req.user._id,
+           username: req.user.username
+        }
+    })
+})
+
+app.listen(5000,(req,res)=>{
+    console.log('Server is listening at port 5000');
+})
+--------------------------------------------------------------------------
+config/database.js
+
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/passport-jwt');
+
+const userSchema = mongoose.Schema({
+    username: String,
+    password: String
+})
+
+const UserModel = mongoose.model('User', userSchema);
+
+module.exports = UserModel;
+----------------------------------------------------------------------------
+config/passport.js
+
+const JwtStrategy = require('passport-jwt').Strategy,
+    ExtractJwt = require('passport-jwt').ExtractJwt;
+const opts = {}
+const passport=require('passport');
+const UserModel=require('./database');
+
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = 'Random string';
+
+passport.use(new JwtStrategy(opts, async function(jwt_payload, done) {
+    let user = await UserModel.findOne({_id: jwt_payload.id});
+         if (user) {
+             return done(null, user);
+         } else {
+             return done(null, false);
+         }
+ }));
+
+-----------------------------------------------------------------------------
+
