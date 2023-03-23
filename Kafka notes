@@ -2772,3 +2772,1025 @@ spring:
  
 topic:
   name: "employeetopic"
+  
+  
+  
+  KSQL
+    - It is an SQL interface to Kafka Streams, so most of the things which u can do using Kafka Streams are available to u in KSQL, which means we can create scalable and fault tolerant stream processing workloads without the need to write code in a programming language such as Java or Scala
+    - KSQL has got two operating modes 
+1. Interactive mode is using a command line interface or a web based UI to submit KSQL and get an immediate response. The CLI works like any database SQL interface would work
+
+2. Headless mode is a non-interactive mode that allows you to submit ur KSQL files which are executed by the KSQL server. 
+    The headless mode is ideal for the prod env, whereas CLI mode is ideal for the development env
+
+KSQL Architecture
+    The KSQL comes with 3 components 
+      1. KSQL Engine
+      2. REST interface
+      3. KSQL Client(CLI/UI)
+
+     - The KSQL engine and REST interface together form the KSQL server. The KSQL server can be deployed in one of the available modes (ie) interactive or headless mode
+     - We can also deploy multiple KSQL servers to form a scalable KSQL cluster. However all servers that run in a cluster must use the same deployment mode 
+     - The KSQL engine is core component which is responsible for KSQL statement and queries. KSQL engine is going to parse ur KSQL statements, build corresponding Kafka streams topology, and run them as stream tasks. These streams tasks are executed on the available KSQL servers in the cluster
+     - Here KSQL cluster is separate from Kafka cluster, and ur KSQL server will internally communicate to the Kafka cluster for reading inputs and writing outputs 
+     - REST interface is to power the KSQL clients, so the KSQL clients will send the commands to REST interface which will internally communicate with KSQL engine to execute ur KSQL commands
+
+What we can do with KSQL?
+    - KSQL allows you to use ur Kafka topics as a table and fire SQL like queries over those topics like
+     1. Grouping and aggregating on ur topics
+     2. Grouping and aggregating over time window
+     3. Apply filters
+     4. Join 2 topics
+     5. Sink the result of ur query to another topic
+
+KSQL Commands
+1. show topics;
+      - used to list down the topics from kafka brokers
+2. PRINT "topic_name"
+      - used to read the data from particular topic, we can go for console consumer or Java appl 
+3. SHOW PROPERTIES
+      - Used to see the server properties 
+
+Installation
+1. > ./confluent start
+
+2. > ./confluent local status 
+
+3. To start ksql
+   > ./ksql 
+
+ksql> show topics
+ksql> print "topicname"
+ksql> print "topicname" from beginning
+ksql> show properties
+
+
+What is stream in KSQL?
+    - A stream in Kafka is the full history from the start of time
+     Streams is the most fundamental concepts in event driven architecture, a streaming kafka is the full history of events from the start of time. You can think of that as real world events, business events from the beginning of time until right now
+     Generally these represent the past right upto the present as we go from today to tomorrow, new events are constantly being added, its just forming up a history of the state of events 
+    - Messages in a stream
+        1. Messages in a stream are constantly arriving, they are always being added to the end of a topic 
+        2. Messages in a stream are independent and they form a never ending sequence of events 
+        3. They arrived in a time ordered manner in a stream 
+        4. They do not have a relationship to one another, they can be processed independently 
+
+Example of what a stream could be:
+     1. Website clicks on a website form a click stream 
+     2. Orders arriving in a warehouse also represents a stream of business events 
+     3. Twitter represents a stream of events in the real world 
+
+
+    - Stream is unbounded sequence of events (ie) there is no limit of messages or records, we can get unlimited number of events or messages 
+    - Contains each and every event associated 
+   If we talk about particular domain, consider one twitter account, stream will show all the tweets associated with that account, so for any event in the world it will show full history 
+    - Events arrive constantly and can be processed independently 
+    - All these events are immutable, they are just by inserts we cant update them 
+    eg: Click streams, logs, Sales transaction etc 
+
+Creating Stream in KSQL - 2 ways
+1. Create stream from kafka topic
+
+Step 1: Create kafka topic
+> ./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic customer
+
+Step 2: Producer message using console producer
+> ./kafka-console-producer --broker-list localhost:9092 --topic customer 
+>John, US
+>Adam, UK
+
+Step 3: Now we move to KSQL 
+ksql> show topics 
+
+Step 4: Create stream in KSQL CLI
+ksql> show streams;
+      - we can see existing stream available, we have KSQL_PROCESSING_LOG stream which is default stream, when we install KSQL we can see this stream on server
+
+Now we create the stream
+ksql> create stream customer (name varchar,country varchar) with (kafka_topic='customer', value_format='DELIMITED');
+    We have multiple options available, if we want to insert json records we can have value_format as json and for avro we can have as avro
+
+To view the streams
+ksql> show streams;
+
+Step 5: Query the stream
+ksql>select * from customer;   
+
+But sometimes we get error, so we have to specify EMIT_CHANGES which came from Confluent 5.4, until 5.3 we no need to specify this property 
+
+ksql>select * from customer EMIT CHANGES;
+    - We wont see any output, because it will display only latest value, so we have to go to producer console and insert new values
+
+If we want to access from the beginning 
+ksql> set 'auto.offset.reset'='earliest';
+
+ksql>select * from customer EMIT CHANGES;
+    Now it will display all the records, it also insert default columns called rowtime and rowkey. Rowtime is message timestamp and rowkey for particular record, in case if we specify the key at time of producing messages it will display 
+
+Now we produce some more message using console producer
+> ./kafka-console-producer --broker-list localhost:9092 --topic customer 
+>John, US
+>Adam, UK
+>Jack, UAE
+>Jim, Russia
+
+Now it will reflect in the stream output also 
+
+2. Create stream from another stream 
+Step 1: We already have customer stream,now we create stream from that stream
+
+ksql> create stream customer_derived as select name from customer where country='US';
+
+So from customer stream we create another stream with only name column, so customer_derived stream will have only one column and that column will have only the customers which belong to country 'US'
+
+KSQL> SHOW STREAMS;
+
+Step 2:
+    So whenever we create derived streams, basically we create persistent queries so if we want to list down what all queries that are running in KSQL cluster we can issue
+
+ksql> show queries;
+
+We can see 3 columns, first query id which specify unique id for each query running in KSQL cluster, next kafka topic and query string which means what query are running to create that stream 
+
+Now we run the stream
+KSQL> select * from customer_derived emit changes;
+
+Now we can see one name column and its corresponding data 
+
+ksql> clear
+
+Limit clause
+ksql> select * from customer emit changes;
+      We can see all the records, so if we want to limit the number of rows in the output we can use LIMIT clause
+
+ksql> select * from customer emit changes limit 2;
+     - It will return 2 records and automatically query will be terminated
+
+Stream Metadata 
+     If we want to see the schema of the stream 
+
+ksql> describe customer; 
+     - It will describe the schema of stream 
+
+If the information is not sufficent to analyze the streams metadata or if we want to explore more than
+
+ksql> describe extended customer;
+      - Now we get some more info like what is key field and its format, timestamp field, value format, underlying topic and also how many partitions are available in topic and what is replication factor. It will also give u list of queries which are reading from this stream (ie) customer_derived 
+
+DROP STREAM/TERMINATE QUERY
+ksql> show streams;
+     - List all stream
+
+Now we try to drop the stream
+ksql> drop stream customer_derived;
+   - So before dropping the query we need to make sure all associated queries should be terminated
+
+ksql> terminate "copy the query name from previous"
+
+ksql> drop stream customer_derived;
+      - Now it will be dropped
+
+ksql> show streams;
+
+ksql> drop stream customer;
+    - The query will be dropped and it wont ask to terminate any query because no query is associated with customer stream 
+
+
+What is KSQL table?
+    - It is current state of flow, it dosent show any history, so technically for each key it will always show you current value, it wont show any history 
+    - It is mutable, you can insert, update in KSQL table 
+
+Consider we have customer events that we are inserting in our Kafka cluster, so these are incoming events as key value pairs 
+
+123:123,Tom,US
+123:123,Tom,UK
+234:234:Harry,US
+
+So for this particular customer we have 123  customer id as key and value contains id, name and country. Then we got one new event which is the updated version of previous event for the same customer 123, for this customer now we have country as UK while in previous version we have US. There is one more customer for that we have only single record and that customer is 234 and it belongs to US.
+     But when we will create KSQL table on top of this topic so we will get output as
+
+123:123,Tom,UK
+234:234:Harry,US
+
+In output we always see the updated or latest record for particular customer, so you can see we are not seeing any history for 123 customer and for customer 234 we have single record we are seeing here, so this is how ksql table works you wont see any history, you will always see latest value for each key
+
+Different ways of creating a KSQL Table - 3ways
+1. Create table from Kafka topic
+
+Step 1: Create a topic
+>./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic customerkey
+
+Step 2: Produce some data into topic using kafka producer console, we have to remember one thing while inserting data for ksql table that we need to maintain a key in a topic, because ksql table dosent work without keys, so key is mandatory so we specify key specific property while writing data through kafka producer 
+
+>./kafka-console-producer --broker-list localhost:9092 --topic customerkey --property "parse.key=true" --property "key.separator=:"
+>123:123,Sam,US
+
+Step 3: Create KSQL table
+
+ksql> create table customerkey(customerid varchar,name varchar, country varchar) with(kafka_topic='customerkey',value_format='DELIMITED',KEY='customerid');
+
+ksql> show tables;
+
+ksql> select * from customerkey;
+   It will display 123,Sam,US along with Rowtime and rowkey 
+
+Step 4: Update record in the table
+     Consider now the customer 123 moves from US to UK, so we specify the country as UK in new record and we see in the table we should get the updated record
+
+>./kafka-console-producer --broker-list localhost:9092 --topic customerkey --property "parse.key=true" --property "key.separator=:"
+>123:123,Sam,US
+>123:123,Sam,UK
+>234:234,Tom,HK
+
+Step 5: Now we query ksql table
+ksql> select * from customerkey emit changes;
+     Now we can see for customerid 123, the country is updated as UK and also inserted one new customerid 234
+
+2. Create table from another ksql table
+
+Step 1: Create table from another ksql table
+       
+ksql> create table customerkey_hk as select customerid,name,country from customerkey where country='HK';
+
+ksql> show tables;
+
+Step 2: Query new table
+
+ksql> select * from customerkey_hk emit changes;
+    Now it will display HK related records 
+
+3. Create table from a stream 
+
+Step 1: We already created a stream called customerstream
+
+ksql> create stream customerstream (customerid varchar,name varchar,country varchar) with (kafka_topic='customer', value_format='DELIMITED');
+
+
+ksql> show streams;
+
+Now we produce some more message using console producer
+> ./kafka-console-producer --broker-list localhost:9092 --topic customerstream
+>123,Sam,US
+>234,Harry,HK 
+
+
+ksql> select * from customerstream emit changes;
+
+Step 2: Create table from this stream 
+
+ksql> create table customerstream_table as select customerid,name,country from customerstream where country='US' emit changes;
+    We get an error invalid resulttype, select query produces a stream while we are creating a table, but why it is producing stream the reason is we just gave it a filter condition and we are taking everything from our underlying stream.
+    So while creating a table from a stream we need to specify some aggregate functions like count, sum then only we will be able to create a table, because ksql table is a summarized view of ur underlying data 
+
+ksql> create table customerstream_table as select customerid,count(*) as total from customerstream where country='US' group by customerid;
+
+ksql> show tables;
+
+ksql> select * from customerstream_table emit changes;
+   So for customerid 123 we have only one record 
+
+Now if we want to insert more data then we produce some data using console producer
+> ./kafka-console-producer --broker-list localhost:9092 --topic customerstream
+>123,Sam,US
+>234,Harry,HK 
+>123,Sam,US
+
+ksql> select * from customerstream_table emit changes;
+   So now it will give the count as 2. So if we observer our underlying stream dosent have rowkey available, but in table we got rowkey as 123, so whatever value in customerid field, ksql framework automatically assign that to rowkey because for ksql table key is must 
+
+To view the metadata of the table
+ksql> describe extended customerstream_table;
+
+
+Create a stream with CSV
+     So we are going to create a stream represented as comma delimited or CSV 
+   1. We create topic called users
+   2. Create a stream using ksql
+   3. work with consumer offsets
+   4. Build an aggregate
+   5. Introducing LIMIT clause
+
+Push Queries
+   - Initially we use push queries which constantly query and constantly output. Push queries will continue to output results until 
+    1. Terminated by the user
+    2. Exceed LIMIT condition
+   - Push queries is new addition to KSQL db, so push queries were always a default upto KSQL5.3, after 5.3 you have to describe that you want to use push query by using 'EMIT CHANGES', this is required in KSQL from 5.4 onwards 
+
+1. Create topic
+>./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic users
+
+2. Produce some messages to the topic
+> ./kafka-console-producer --broker-list localhost:9092 --topic users
+>Alice,US
+>Bob,GB
+>John,AU
+>Tim,US
+
+3. Create stream from our kafka topic
+ksql> list topics;
+
+ksql> create stream users_stream(name VARCHAR, countrycode VARCHAR) with (KAFKA_TOPIC='users', VALUE_FORMAT='DELIMITED');
+
+KSQL> list streams;
+ 
+ksql> select name, countrycode from users_stream;
+      It wont display any data, because ksql is going to show us newly arriving data
+
+> ./kafka-console-producer --broker-list localhost:9092 --topic users
+>Alice,US
+>Bob,GB
+>John,AU
+>Tim,US
+>Jim,UK
+
+Now we can see the data has been displayed newly arriving data  
+
+4. Now if we want to display all data, since ksql will display only the latest data so we use offset property
+
+ksql> SET 'auto.offset.reset'='earliest';
+
+ksql> select name, countrycode from users_stream;
+    It will display all the data
+
+ksql> select name, countrycode from users_stream limit 4;
+    It will display only 4 records 
+
+ksql> select countrycode,count(*) from users_stream group by countrycode;
+
+ksql> drop stream if exists users_stream delete topic;
+
+
+KSQLDB 
+    - KSQLDB is a database for building realtime appl that leverage stream processing. Its architecture separate compute layer from its distributed storage layer for which it uses and tightly integrates with Apache Kafka 
+    - Using lightweight SQL syntax, KSQLDB provides everything that a developer needs to quickly and efficiently create a complete realtime appl
+
+KSQLDB Features
+1. Filters
+     Lets say you have a kafka topic that captures the widget manufactured by ur company, each data event in the stream also captures the color of widget created
+     Now we want a separate stream that filters only events that are built for blue widgets, ksqldb would allow you to do that in real time 
+
+2. Joins
+    We also want to merge two topics together, which is common for many stream processing use cases. KSQLDB can easily join topics to one another 
+    Here we can join the original topic to another topic that focuses on green and yellow widgets.
+
+3. Aggregate
+     KSQLDB can be used to aggregate streams into tables and capture summary statistics over a window of time within the stream. These tables can then be subsequently joined with other tables and streams.
+     Here we use stream processing to get a count of the number of widgets by color type within the topic 
+
+4. Easily connect to data systems right from KSQLDB
+       If we are building event streaming appl where we work with data that exists in a variety of other data stores. Confluent provides 100 plus prebuilt connectors to easily move ur data in and out of kafka, but it still requires deploying a separate Kafka connect cluster which can take time
+      Thats why ksqldb supports running connectors directly on its servers, rather than need to run a separate kafka connect cluster for capturing events, ksqldb can run pre-built connectors in embedded mode 
+
+1. Create topic movements
+>./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic movements;
+
+2. Create stream for that topic
+ksql>create stream movements(person varchar key,location varchar) with (value_format='JSON', partitions=1, kafka_topic='movements');
+
+3. Inserting data to stream 
+ksql> insert into movements values('John','Denver');
+ksql> insert into movements values('Robin','Leeds');
+ksql> insert into movements values('Robin','Ilkley');
+ksql> insert into movements values('John','Boulder');
+
+ksql> set 'auto.offset.reset'='earliest';
+
+ksql> select * from movements emit changes;
+
+
+Creating,Exporting and Importing Data Streams
+     We can insert data directly into ksql streams or tables using UI or CLI or Java client. If we already have data in an existing kafka topic, we can create a stream or table on that topic and begin streaming that data into KSQLDB.
+     Any data produced to that topic will be streamed into KSQLDB and any data inserted into our new stream will be written to that kafka topic automatically. But we dont have to have an existing topic, we can create a new stream or table and KSQLDB will create the backing topic for us 
+
+Filtering with KSQLDB
+    Sometimes we want to filter a stream of events that show only which matches certain criteria. For example, the team in a regional sales office want to see all of the orders from customers in NewYork.
+     So we create new stream in KSQLDb that uses a where clause on select, this stream will now contain all of the order events from customers in Newyork
+
+1. Create topic orders
+>./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic orders;
+
+2. Create order stream which contain data from various different places
+
+ksql> CREATE STREAM orders(id INTEGER KEY, item VARCHAR, address STRUCT <city VARCHAR, starte VARCHAR>) WITH (KAFKA_TOPIC='orders', VALUE_FORMAT='json', PARTITIONS=1);
+
+3. Insert some data into orders
+ksql> insert into orders(id,item,address) values(140,'Mavve Widget', STRUCT(city:='Ithaca', state:='NY'));
+ksql> insert into orders(id,item,address) values(141,'Teal Widget', STRUCT(city:='Dallas', state:='TX'));
+ksql> insert into orders(id,item,address) values(142,'Violet Widget', STRUCT(city:='Pasadena', state:='CA'));
+ksql> insert into orders(id,item,address) values(143,'Purple Widget', STRUCT(city:='Yonkers', state:='NY'));
+ksql> insert into orders(id,item,address) values(144,'Tan Widget', STRUCT(city:='Amarillo', state:='TX'));
+
+4. Create stream only for Newyork orders
+ksql> create stream ny_orders as select * from orders where address->state='NY' emit changes;
+
+5. To validate we run a push query against ny_order stream 
+ksql> select * from ny_orders emit changes;
+
+
+Lookups and Joins in KSQLDB
+     Consider we have inbound stream of raw order events, each one has a code that denotes information about the item that was bought 
+
+{
+   "ordertime":1560070133853,
+   "orderid";67,
+   "itemid":"Item_9",
+   "orderunits":5
+}
+
+In relational term, this is a foreign key. To make the stream of events useful, we want to add the info about the item to each order as the event is received in Kafka.
+    The item data includes primary key and several attributes of the item, this info is in separate topic and could be populated directly by the producer, but inject into kafka topic using kafka connect. Kafka Connect brings in the info from an external system such as relational db  
+
+{
+   "id":"Item_9",
+   "make":"ABC",
+   "model":"XYZ",
+   "unit_cost":19.9
+}
+
+We can use KSQLDB to do join between the two topics in Kafka, the orders are treated as streams and items are as tables, both are kafka topics. Here we use left outer join, which means that any order thats received with an item code that isnt found on the item data will still be processed, but written with no values for item information
+    The enriched order info is written into a new kafka topic. KSQLDB can process every existing event in orders topic and then every single new order event that arrives in real time
+
+1. Create topic
+>./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic items;
+
+2. Create table called items
+ksql> create table items(id varchar primary key, make varchar, model varchar, unit_price double) with (kafka_topic='items', value_format='avro', partitions=1);
+
+3. Insert some items into item table
+ksql> insert into items values('item_3','Spalding','IF-150',19.9);
+ksql> insert into items values('item_4','Wilson','NCAA Replica',29.29);
+ksql> insert into items values('item_7','SKLZ','Control training',49.99);
+
+4. Create orders streams, where it create orders topic automatically
+
+ksql> create stream orders(ordertime bigint, orderid integer, itemid varchar, orderunits integer) with (kafka_topic='orders', value_format='avro',partitions=1);
+
+5. Insert some data into orders
+ksql> insert into orders values(1620501334477, 65, 'item_7',5);
+ksql> insert into orders values(1620502553626, 67, 'item_3',2);
+ksql> insert into orders values(1620501334475, 68, 'item_2',2);
+ksql> insert into orders values(1620501334474, 70, 'item_4',1);
+ksql> insert into orders values(1620501334473, 72, 'item_7',9);
+ksql> insert into orders values(1620501334472, 73, 'item_3',3);
+ksql> insert into orders values(1620501334471, 74, 'item_7',3);
+
+6. Create stream orders_enriched
+ksql> create stream orders_enriched as select o.*,i.*, o.orderunits=i.unit_price as total_order_value from orders o left outer join items i on o.itemid=i.id;
+
+7. Enter push query on orders_enriched
+ksql> select * from orders_enriched emit changes;
+
+Transforming data with KSQLDB 
+     KSQLDB allows us to transform our events, while creating a new stream. For example, we can change Linux timestamp to a hum readable format or we can remove sensitive fields from the event 
+    When creating a new stream based on existing one, we can pick and choose which fields we want to exist in the new stream. We can also use functions to modify data or create derived fields 
+
+1. We use previously created order stream
+ksql> select * from orders emit changes;
+      We can see set of records
+
+2. Now we create transform query where we modify the ordertime to human readable format
+
+ksql> create stream orders_no_address as select timestamptostring(ordertime, 'yyyy-MM-dd HH:mm:ss') as order_timestamp, orderid, itemid, orderunits from orders emit changes;
+
+ksql> select * from orders_no_address emit changes;
+
+Flatten Nested Records in KSQLDB
+     KSQLDB makes it easy to transform the schema of event stream. For example if we have events with a nested record structure and we want to flatten them like
+
+{
+   "ordertime":1566670133853,
+   "orderid":67,
+   "itemid":"Item_9",
+   "orderunits":5,
+   "address":{
+       "street":"243 Utah Kay",
+       "city":"Orange",
+       "state":"California"
+    }
+}
+
+Using "as" field we can convert nested fields into top level fields and leave the nested field out of the select for our new stream, the new stream  contains all of the events of the original, but with new schema. It is important to note that the original stream has not changed, so downstream appl that are expecting the nested data structure are not affected 
+
+{
+   "ordertime":1566670133853,
+   "orderid":67,
+   "itemid":"Item_9",
+   "orderunits":5,
+   "address-street":"243 Utah Kay",
+   "address-city":"Orange",
+   "address-state":"California"
+}
+
+
+1. Create orders topic
+
+2. Create orders stream
+ksql> create stream orders (ordertime bigint, orderid integer, itemid varchar, orderunits integer, address STRUCT<street varchar, city varchar, state varchar>) with (kafka_topic='orders', value_format='json', partitions=1);
+
+3. Insert some data into orders stream
+ksql> insert into orders values(156773783828,70,'item_4',1, STRUCT(street:='abc street', city:='Sacramento', state:='California'));
+
+ksql> select * from orders emit changes;
+     Now it will list all orders but with nested fields
+
+4. Create new stream to flatten those records
+ksql> create stream orders_flat with(kafka_topic='orders_flat') as select ordertime, orderid, itemid, orderunits, 
+address->street as street, address->city as city, address->state as state from orders emit changes;
+
+ksql> select * from orders_flat emit changes;
+    	Now the records of the new stream has been changed 
+
+
+Converting data formats with KSQLDB
+      Depending on ur use case we want the data in different format. KSQLDB provides a way for us to specify the data format for our event streams and to convert event data from one format to another.
+      Many event streams flowing through kafka are on avro format, which is very efficient and useful, but we have legacy system which needs this event data in a comma delimited format. We can do that while creating a new stream by using VALUE_FORMAT property in a WITH clause. Our new stream will mirron the existing avro stream, but the data will be comma separated 
+
+1. ksql> PRINT oredrs_flat from beginning;
+        It will display the existing JSON data 
+
+2. Now we create stream with VALUE_FORMAT as delimited 
+
+ksql> create stream orders_csv with (VALUE_FORMAT='DELIMITED', KAFKA_TOPIC='orders_csv') as select * from orders_flat emit changes;
+
+ksql> PRINT orders_csv FROM BEGINNING;
+    It will display all records in comma separated 
+
+
+Merging two streams with KSQLDB
+     Sometimes we have separate event streams with data that logically goes together, ksqldb makes easy to do 
+     Using 'INSERT INTO' we can add events from multiple streams into one combined stream. As new events arrive in either source stream, the combined stream will have them too
+
+1. Create orders_uk stream
+ksql>CREATE STREAM orders_uk (ordertime BIGINT, orderid INTEGER, itemid VARCHAR, orderunits INTEGER,
+    address STRUCT< street VARCHAR, city VARCHAR, state VARCHAR>)
+WITH (KAFKA_TOPIC='orders_uk', VALUE_FORMAT='json', PARTITIONS=1);
+
+2. Insert some data into orders_uk
+
+ksql> INSERT INTO orders_uk VALUES (1620501334477, 65, 'item_7', 5,
+  STRUCT(street:='234 Thorpe Street', city:='York', state:='England'));
+ksql> INSERT INTO orders_uk VALUES (1620502553626, 67, 'item_3', 2,
+  STRUCT(street:='2923 Alexandra Road', city:='Birmingham', state:='England'));
+ksql> INSERT INTO orders_uk VALUES (1620503110659, 68, 'item_7', 7,
+  STRUCT(street:='536 Chancery Lane', city:='London', state:='England'));
+
+3. Run orders_uk stream
+ksql> SELECT * FROM orders_uk EMIT CHANGES;
+
+4. Create orders_us stream
+
+ksql> CREATE STREAM orders_us (ordertime BIGINT, orderid INTEGER, itemid VARCHAR, orderunits INTEGER,
+    address STRUCT< street VARCHAR, city VARCHAR, state VARCHAR>)
+WITH (KAFKA_TOPIC='orders_us', VALUE_FORMAT='json', PARTITIONS=1);
+
+5. Insert data into your orders_us stream
+
+ksql> INSERT INTO orders_us VALUES (1620501334477, 65, 'item_7', 5,
+  STRUCT(street:='6743 Lake Street', city:='Los Angeles', state:='California'));
+ksql> INSERT INTO orders_us VALUES (1620502553626, 67, 'item_3', 2,
+  STRUCT(street:='2923 Maple Ave', city:='Mountain View', state:='California'));
+ksql> INSERT INTO orders_us VALUES (1620503110659, 68, 'item_7', 7,
+  STRUCT(street:='1492 Wandering Way', city:='Berkley', state:='California'));
+
+6. Run orders_us stream
+ksql> SELECT * FROM orders_us EMIT CHANGES;
+
+7. Merge two streams
+
+ksql> CREATE STREAM orders_combined AS
+SELECT 'US' AS source, ordertime, orderid, itemid, orderunits, address
+FROM orders_us;
+
+8. To complete our merge, we insert records from orders_uk stream to orders_combined
+
+ksql>INSERT INTO orders_combined
+SELECT 'UK' AS source, ordertime, orderid, itemid, orderunits, address
+FROM orders_uk;
+
+ksql> select * from orders_combined emit changes;
+
+Splitting streams with KSQLDB
+     KSQLDB's create stream 'as' feature allows us to create many different views of our data. We can create streams from a sub-set of events in another stream or from a combination of events in multiple streams or tables 
+     Previously we have orders_combined stream from that we create a stream that is only getting US orders and we create another stream with a select for UK orders. Now US and UK specific appl can read from streams that are custom built for them and not to worry about filtering out events 
+
+1. First we look orders_combined stream which has orders from both US and UK 
+ksql> select * from orders_combined emit changes;
+
+2. Now we create new stream called us_orders which have orders only from US
+
+KSQL> CREATE STREAM US_ORDERS AS
+   SELECT * FROM ORDERS_COMBINED
+   WHERE SOURCE = 'US'; 
+
+3. Now we create new stream called uk_orders which have orders only from UK
+
+KSQL> CREATE STREAM UK_ORDERS AS
+   SELECT * FROM ORDERS_COMBINED
+   WHERE SOURCE = 'UK'; 
+
+4. ksql> select * from us_orders emit changes;
+           - It will contain only US orders
+   ksql> select * from uk_orders emit changes;
+           - It will contain only UK orders
+
+
+Streams and Tables
+    
+KSQLDB Stream                    KSQLDB Tables
+Person    Location             Person    Location
+Robin      Leeds               Robin       Leeds
+
+Here we have sample data which shows where people are going. Each event has a persons name and their current location. We see how these events can be modeled as either stream or table. We have stream on left and table on right, with one event they appear identical
+
+KSQLDB Stream                    KSQLDB Tables
+Person    Location             Person    Location
+Robin      Leeds               Robin       London
+Robin      London
+
+As we add second event, the stream grows. Streams behave same as underlying kafka topics, they are unbounded and append only so they grow with each new event. Table on other hand stores the latest value of given key, its important that key is required to have a table 
+
+KSQLDB Stream                    KSQLDB Tables
+Person    Location             Person    Location
+Robin      Leeds               Robin       London
+Robin      London              Allison     Denver
+Allison    Denver
+
+The only way that table grows in size when new keys are added. 
+
+KSQLDB Stream                    KSQLDB Tables
+Person    Location             Person    Location
+Robin      Leeds               Robin       London
+Robin      London              Allison     Boulder
+Allison    Denver
+Allison    Boulder
+
+Now any events arriving with either key will cause an update to our table, while our stream continues to grow with each new event. So table are fast way to get the current state of a given key. But if we want to replay the history of their recent movements, the table wouldnt help us. So in realtime we can have inventory as table and orders as stream 
+
+Stateful Aggregation 
+      We can do like how many times has someone moved?, what is the total value of orders places in the last hour?, KSQLDB supports those types of stateful aggregations. 
+      We call them stateful because even if KSQLDB node is removed, the aggregation can be rebuilt on another node and retain its accurate state. We can perform aggregations with functions like count, count distinct, sum, avg, min, max etc. The data returned by the aggregation is always a table with the key being the field or fields in group by clause
+    So when we have the query fine tune to get the results we are looking for, we can use query in a create table as statement to make it persistent. Now the new table will always have the latest aggregated data for our events.
+
+1. Create stream called movements
+
+ksql> DROP STREAM MOVEMENTS DELETE TOPIC;
+
+ksql> CREATE STREAM MOVEMENTS(PERSON VARCHAR KEY, LOCATION VARCHAR)
+	WITH (VALUE_FORMAT='JSON', PARTITIONS=1, KAFKA_TOPIC='movements');
+
+2. Insert data into MOVEMENTS
+INSERT INTO MOVEMENTS VALUES ('Robin', 'York');
+INSERT INTO MOVEMENTS VALUES ('Robin', 'Leeds');
+INSERT INTO MOVEMENTS VALUES ('Allison', 'Denver');
+INSERT INTO MOVEMENTS VALUES ('Robin', 'Ilkley');
+INSERT INTO MOVEMENTS VALUES ('Allison', 'Boulder');
+
+3. To see the number of movements per person in the stream
+
+ksql> SELECT PERSON, COUNT (*)
+FROM MOVEMENTS GROUP BY PERSON EMIT CHANGES;
+
+4. Edit the query to count the unique locations that each person has visited:
+
+ksql> SELECT PERSON, COUNT_DISTINCT(LOCATION)
+FROM MOVEMENTS GROUP BY PERSON EMIT CHANGES;
+
+5. Now create a table that shows both aggregated calculations, combining PERSON, COUNT(*) and COUNT_DISTINCT(LOCATION)
+
+ksql> CREATE TABLE PERSON_STATS AS
+SELECT PERSON,
+		LATEST_BY_OFFSET(LOCATION) AS LATEST_LOCATION,
+		COUNT(*) AS LOCATION_CHANGES,
+		COUNT_DISTINCT(LOCATION) AS UNIQUE_LOCATIONS
+	FROM MOVEMENTS
+GROUP BY PERSON
+EMIT CHANGES;
+
+6. Insert more data into your MOVEMENTS stream
+
+INSERT INTO MOVEMENTS VALUES('Robin', 'Manchester');
+INSERT INTO MOVEMENTS VALUES('Allison', 'Loveland');
+INSERT INTO MOVEMENTS VALUES('Robin', 'London');
+INSERT INTO MOVEMENTS VALUES('Allison', 'Aspen');
+INSERT INTO MOVEMENTS VALUES('Robin', 'Ilkley');
+INSERT INTO MOVEMENTS VALUES('Allison', 'Vail');
+INSERT INTO MOVEMENTS VALUES('Robin', 'York');
+
+7. SELECT a person’s name to see how many times they have changed locations and how many unique locations they have visited
+
+ksql> SELECT * FROM PERSON_STATS WHERE PERSON = 'Allison';
+
+Push and Pull Queries
+     Previously we have create table from a stream of events called PERSON_MOVEMENTS
+
+1. Now we can query that table to get the current state of the data for a given key 
+
+ksql> select LOCATION_CHANGES, UNIQUE_LOCATIOBS from PERSON_MOVEMENTS where ROWKEY='robin';
+   
+The result is returned and the query terminates, much like relational db, in ksqldb this is referred as Pull query.
+
+2. We can take the same query and add 'EMIT CHANGE' keyword, then it becomes push query 
+
+ksql> select LOCATION_CHANGES, UNIQUE_LOCATIOBS from PERSON_MOVEMENTS where ROWKEY='robin' emit changes;
+
+This query will continue running and emit the results of the query for any changes that occur in the underlying stream. A push query will run until it is deliberately shutdown.
+    Push queries are applicable to all streams and table objects and indicated with EMIT CHANGES clause. Pull queries have some limitations currently, they are available against tables
+
+1. Issue a pull query on the PERSON_STATS table
+
+ksql> SELECT LATEST_LOCATION, LOCATION_CHANGES, UNIQUE_LOCATIONS
+FROM PERSON_STATS WHERE PERSON = 'Allison';
+
+When we run,it will display the LATEST_LOCATION, LOCATION_CHANGES, UNIQUE_LOCATIONS and query terminates
+
+2. Issue a push query on the PERSON_STATS table
+
+ksql> SELECT LATEST_LOCATION, LOCATION_CHANGES, UNIQUE_LOCATIONS
+FROM PERSON_STATS WHERE PERSON = 'Allison' EMIT CHANGES;
+
+Now it will display LATEST_LOCATION, LOCATION_CHANGES, UNIQUE_LOCATIONS and still query will be running
+
+3. In another window, we insert some more data into the MOVEMENTS stream on which the PERSON_STATS table is based
+
+ksql> INSERT INTO MOVEMENTS VALUES ('Robin', 'York');
+INSERT INTO MOVEMENTS VALUES ('Robin', 'Leeds');
+INSERT INTO MOVEMENTS VALUES ('Allison', 'Denver');
+INSERT INTO MOVEMENTS VALUES ('Robin', 'Ilkley');
+INSERT INTO MOVEMENTS VALUES ('Allison', 'Boulder');
+
+Now we can see new entries, reflecting this new data, appearing in the results of the push query. So push queries are run continuously until they are manually killed 
+
+
+KSQLDB and Lambdas
+    We know KSQLDB can perform transformations and filters on each event in a stream based on values and the events, even values and nested fields. But what about elements of an array or map fields, thats where ksqldb lambdas come in
+    We can perform transformation, filters or reductions on every element in an array or map fields in our events 
+    The transform function will change the key and our value of each element in a map or the value of each element in an array field, based on lambda expr given. For map field two lambda expr are required, one for the key and one for the value, if no changes desired for either key or value, the lambda can just return the existing data 
+     Reduce will take all of the elemts of an array or map and produce a single result based on the lambda expr, for an array the lambda will take 2 arguments, the array elemt and an accumulator. For map the lambda will take 3 argument, the key, value and an accumulator 
+     Filter function will take an array or map and return the same type, but with only elements that meet the filter criteria given in lambda expression 
+
+1. Create stream1 with exam_scores as map field
+
+ksql> create stream stream1(id int, name varchar, exam_scores MAP<STRING,DOUBLE>) with (kafka_topic='topic1', partitions=1, value_format='json');
+
+2. Create stream called transformed using transform function
+
+ksql> create stream transformed as select id,name, transform(exam_scores,(k,v)=>ucase(k), (k,v)=>(round(v))) as rounded_scores  from stream1 emit changes;
+
+3. Insert some data into stream1
+
+ksql> insert into stream1 values(1,'Lisa',MAP('Nov':=93.53, 'Feb':=94.13, 'May':=96.03));
+
+ksql> insert into stream1 values(1,'Larry',MAP('Nov':=83.53, 'Feb':=84.13, 'May':=86.03));
+
+ksql> insert into stream1 values(1,'Melissa',MAP('Nov':=97.53, 'Feb':=96.13, 'May':=98.03));
+
+ksql> insert into stream1 values(1,'Chris',MAP('Nov':=92.53, 'Feb':=91.13, 'May':=93.03));
+
+4. Run push query on transformed stream
+
+ksql> select * from transformed emit changes;
+      Now it will transform all map keys into uppercase and values as rounded value 
+
+5. Create stream stream2 with an array field
+
+ksql> create stream stream2 (name varchar, points ARRAY<INTEGER>) with (kafka_topic='topic2', partitions=1, value_format='json');
+
+6. Create reduced stream using reduce function
+
+ksql> create stream reduce as select name, reduce(points, 0, (s,x)=>(s+x)) as total from stream2 emit changes;
+
+7. Insert some data into stream2
+
+ksql> insert into stream2 values('Misty', ARRAY[7,5,8,8,6]);
+ksql> insert into stream2 values('Masty', ARRAY[3,5,4,6,8]);
+ksql> insert into stream2 values('Mary', ARRAY[9,7,8,7,8]);
+ksql> insert into stream2 values('Mickey', ARRAY[8,6,8,7,5]);
+
+8. Run push query on reduced stream
+
+ksql> select * from reduces emit changes;
+    We can sum of array values 
+
+9. Create stream3 with numbers array field
+
+ksql> create stream stream3 (id varchar, numbers ARRAY<INTEGER>) with (kafka_topic='topic3', partitions=1, value_format='json');
+
+10. Create filtered stream using filter function
+
+ksql> create stream filtered as select id, filter(numbers, x=>(x%2==0)) as even_numbers from stream3 emit changes;
+
+11. Insert some data into stream3
+
+ksql> insert into stream3 values('Group1', ARRAY[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+
+12. Run push query on filtered stream
+
+ksql> select * from filtered emit changes;
+     It will display only even numbers
+
+
+Kafka Connect
+      We learnt that kafka was initially developed at LinkedIn to solve the data integration problem. We cannot produce single standalone system that does everything in an enterprise because it is not possible and not economical. So in typical enterprise we may have bunch of independent and running appl, some of them are custom designed and developed in-house, others have been purchased from 3rd party vendor, few of the appl may be running outside of the organization boundary and maintained by the partners or the service providers 
+     They all generating some data and owning it, however they also need some additional data which is created and owned by other systems. For eg, Financial accounting software needs data from Invoicing system, Inventory mgt system needs data from Invoicie, Warehouse and Shipment, Analytics would need data from all over the enterprise, so data integration is a common problem, we start solving it but in sometime it becomes a messy network of data pipelines, when we reach that state it is almost impossible to maintain it 
+      LinkedIn created and used Kafka to simplify these pipelines 
+
+How did they do it?
+     We have invoice appl which has backend database where it maintains all generated data, now we have a requirement to bring some of the data from here to Snowflake datawarehouse
+     So we decided to use Kafka as broker because kafka will keep ur data integration simple, bringing data from invoicing system to kafka broker is a one time activity, once it is in Kafka cluster we can bring it to snowflake 
+     If we need to move the same data to other applications, they can also consume it from the brokers, all these pipelines are going to 1-1 link. Now in case if we move Kafka, then we may build 1-many pipeline and invoicing appl cannot handle so many connections and workloads
+     So we know we are using Kafka broker.
+     
+How do we bring data from Invoice appl to kafka cluster?
+       We need to create producer, there are 2 ways to create a Producer depending upon the source code availability of ur source system
+     1. If we have source code of Invoice appl and it is practically feasible to modify the source appl, then we can create embedded kafka producer using kafka producer API. This producer becomes part of source appl, and it runs inside the appl and sends invoices to the kafka cluster
+     2. But if we dont have source code of invoice appl or not possible to modify source appl, then we create an independent kafka producer for reading and writing. On one side it will connect to source appl database, reads the data and sends it to kafka cluster on the other side 
+
+Both are good, it is upto us we can use any one. But if we use second option of creating an independent producer, then we are solve the problem which was already solved, thats what Kafka connect is designed for 
+
+What is Kafka Connect?
+     It is a system which we can place between ur data source and Kafka cluster, then all we do just to configure to consume the data from the source system and send it to kafka cluster, we do not need to write a single line of code, everything is already done and made available to you. You just configure and run and kafka connect will do the job for you.
+    We also need to bring data from Kafka cluster to Snowflake datawarehouse, now we place Kafka connect between kafka cluster and datawarehouse, configure it and Kafka connect will read from cluster and write to Snowflake database
+    The left side of the connector is called Source Connector and right side of the connector is called Sink Connector. We use source connector to pull data from the source system and send it to kafka cluster, these source connector internally uses Kafka Producer API. Similarly we use Sink Connector to consume the data from Kafka topic and sink it to external system, these sink connector internally uses Kafka Consumer API
+      So Kafka Connect is a component of Kafka for connecting and moving data between Kafka and external systems
+
+How Kafka Connect works?
+       We learnt that we can place the kafka connect in between ur source or target system and the kafka cluster, then we configure it and kafka connect will take care of copying data from one to another, we dont need to write single line of code
+       
+How it is possible?
+       We have bunch of different system like relational databases, datawarehouses like terradata, IOT hubs, Salesforce, Twitter, Reddit, Local file system directories, cloud storage, Hadoop storage, Elastic Search, Cassandra, MongoDB, Google Firebase etc. All of them are different systems, reading and writing to these systems have different mechanisms and consideration. So how it is possible for Kafka connect to do this copy without writing code
+       So Kafka developers made a smart decision and created a new framework for implementing kafka Connect called as Kafka Connect Framework. Kafka connect frameworks allows to write connectors, these connectors are implemented in 2 ways (ie) Source connectors and Sink Connectors 
+       Kafka Connect framework takes care of all heavy lifting like scalability, fault tolerance, error handling etc. As a connector developer we have to implement 2 java classes (ie) Source Connector or Sink Connector class and second one is SourceTask or SinkTask. Once ur connector is developed, we can package as jar or zip and share it with others, and thats what all source and target system vendors are doing
+     Consider if we want to bring some data from RDBMS to kafka cluster, all we need to do is to take an appropriate source connector like JDBCConnector, then we install in kafka connect, configure and run, so JDBCConnector will takes care of all. Similarly if we want to move data from kafka cluster to Snowflake database, get Snowflake sink connector, install it in kafka connect, configure and run it
+
+
+Kafka Connect Scalability
+      In Apache Kafka, we will able to scale producer by adding more producers to send data in parallel, we scale the cluster by adding more brokers, we scale the consumers by adding more consumers in consumer groups 
+      In kafka connect, the kafka connect itself is a cluster, each individual unit in the connect cluster is called connect worker (ie) a group of computers each running one kafka connect worker. On the left side we have source task running to share the workload. For example, one task might be pulling data from one table in db and other task pulling data from another table, we can configure all these things and use in the way connector developer has designed.
+     Similarly on right side we have bunch of sink tasks running to share their workload. So nothing to worry about scalability and we can play with number of tasks and scale the cluster capacity by adding more workers.
+     So we need two kafka clusters, one for source and another for sink, no need we can have one kafka connect cluster and run as many connectors as we want. In this example we have 1 source connector and 1 sink connector and running in same kafka connect cluster, if ur kafka connect cluster still have some available capacity, we can install salesforce connector and start one more connector in the same cluster. If ur cluster is fully utilized, u can scale it by adding more workers in same cluster and do it dynamically without stopping any existing connectors
+
+
+Kafka Connect - Transformations
+      Kafka connect was designed to perform plain copy or data movement between 3rd party systems and kafka, in both cases source or sink, one side should be kafka cluster, however kafka connect also allowed some fundamental Single Message Transformation(SMT's) which means we can apply some transformations or changes to each messages on fly, this is allowed for both source and sink. Here we have list of some common SMT's
+   1. Add a new field in ur record using static data or metadata
+   2. Filter or Rename fields
+   3. Mask some fields with a null value
+   4. Change the record key
+   5. Route the record to a different kafka topic 
+
+Kafka Connect Architecture - 3 things
+     1. Worker
+     2. Connector
+     3. Task
+
+We know Kafka connect is a cluster and it runs with 1 or more workers. Consider we started kafka connect cluster with 3 workers, these workers are fault tolerant and they use groupid to form a cluster. This groupid mechanism is same like kafka consumer group, so we need to start all worker with same groupid and they join hands to form kafka connect cluster 
+     These workers are the main part of kafka connect (ie) they work like a container process and they will responsible for starting and running connector and the task. 
+     These workers are fault tolerant and self managed (ie) if a worker process is stopped or crashes then other worker in connect cluster will recognize that and reassign the connectors and task that ran on that worker to the remaining worker. 
+      If new worker joins the connect cluster, other workers will notice that and assign connectors or task to it and make sure the load is balanced. So in nutshell this workers will give relability, high availability, scalability anf load balancing
+      Now we need to copy the data, lets assume we need to copy data from relational database, so we download JDBC source connector, install it within the cluster (ie) make sure the jar files and all its dependencies are available to the workers. Next we need to configure the connector (ie) providing some necessary info like db connection details, list of tables to copy, frequency to poll the source for the new data, maximun number of tasks etc depending upon the requirement. All these configurations are goes into file and start using connector using some commandline tool. Kafka connect offers you REST API's, so we can begin the connectors using REST API's instead of command line tool
+     At this stage, one of workers will start the connector process because workers are like container (ie) they start and run other process. This connector process is responsible for 2 things, first is to determine the degree of parallelism which means how many parallel tasks can we start to copy the data from source, so the first thing to decide how to split the data copying work
+     Consider we want to inject data from 5 tables, so we list 5 tables in configuration file and started JDBC connector. So it is easy for connector to detect the spliting mechanism (ie) 1 table per task, so max number of parallelism is 5 in this case. However the spliting mechanism for different source system is written in the connectors and give configuration options accordingly, so we must know ur connector and configure accordingly. So the connectors knows it can start 5 parallel tasks and assign 1 table to each task of copying data from source system. 
+      Remember the connector is not going to copy the data, it is only responsible for defining and creating a task list. Each task will be configured to read data from assigned list of tables, in our case it is just 1 table. Connector will also include some additional configuration such as db connection details and other things to make sure that the task operate as independent process
+      Finally the list of tasks given to the workers, and they will start the task. So ur task is distributed across the workers for balancing the cluster load. Now the task is responsible for connecting to the source system, polling the data at regular interval, collecting the records and handing over to the worker. They do not send the record to the kafka cluster, the task is only responsible for interacting with the external system. The source task will hand over the data to worker and worker is responsible for sending it to the kafka. In case of sink task we get the kafka record from the worker and the task is only responsible for inserting the record into target system.
+     Why it is designed like this because that is reusable design, reading and writing data to kafka cluster is a standard activity so it taken care by the framework. We have 2 things that are changing for different source and target system
+    1. How to split the input for parallel processing ? - This is taken care by Connector class 
+    2. How to interact with the external system? - This is taken care by Task class  
+    So these are things that the connector developer needs to take care of, most of other things like interacting with kafka, handling configurations, errors, monitoring connectors, tasks, scaling up and down, handling failures are standard things that taken care by kafka connect frameworks 
+
+Database Integration with Kafka 
+      We see how to integrate external relational databases to Kafka and stream data from the database tables into kafka topics, for that purpose we use JDBC source connector present under Confluent kafka connect plugin 
+
+1. We use Mysql database to source data into kafka topic. We have money_transfer_data table with some data like sender_name, receive_name etc which is a money transfer related data. Now we use this table to source this data into the kafka topic 
+
+mysql> create database kafkaconnect;
+Query OK, 1 row affected (0.10 sec)
+
+mysql> use kafkaconnect;
+Database changed
+
+mysql> create table money_transfer_data(sender_name varchar(50),receiver_name varchar(50),sender_acct int, receiver_acct int,amount double,sender_bank varchar(75),receiver_bank varchar(70),txn_id int,txn_date date);
+Query OK, 0 rows affected (0.25 sec)
+
+mysql> select * from money_transfer_data;
++-------------------+---------------------+-------------+---------------+--------+---------------------+-----------------------+--------+------------+
+| sender_name       | receiver_name       | sender_acct | receiver_acct | amount | sender_bank         | receiver_bank         | txn_id | txn_date   |
++-------------------+---------------------+-------------+---------------+--------+---------------------+-----------------------+--------+------------+
+| TEST SENDER       | RECEIVER-5 PVT LTD  |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |      5 | 2021-10-22 |
+| SENDER-4 PVT LTD  | RECEIVER-4 PVT LTD  |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |      6 | 2021-10-22 |
+| SENDER-7 PVT LTD  | RECEIVER-7 PVT LTD  |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |     76 | 2021-10-22 |
+| SENDER-4 PVT LTD  | RECEIVER-4 PVT LTD  |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |      8 | 2021-10-22 |
+| SENDER-9 PVT LTD  | RECEIVER-9 PVT LTD  |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |      9 | 2021-10-22 |
+| SENDER-10 PVT LTD | RECEIVER-10 PVT LTD |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |     10 | 2021-10-22 |
+| SENDER-13 PVT LTD | RECEIVER-13 PVT LTD |      123455 |        987655 | 5000.2 | SENDER BANK PVT LTD | RECEIVER BANK PVT LTD |     13 | 2021-10-22 |
++-------------------+---------------------+-------------+---------------+--------+---------------------+-----------------------+--------+------------+
+7 rows in set (0.02 sec)
+
+2. Create folder confluent-kafka-connector-configs, create another folder source inside that 
+
+Creating Connector Config inside source folder called money-transfer-data-jdbc-source-connector-v1.json, always connector config will be created in json format   
+
+{
+   "name": "unique connector name",
+   "config" :{
+    }
+}
+
+This is the common structure of any connector we write, it might be a source or sink connector or any connector    
+
+1. name - name of connector
+
+So within config we will write some properties which are common to all connectors and some properties which are specific to that connector for which we are writing 
+
+Common Connector properties 
+1. "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector"
+      - It is a Java connector class name from kafka connect jdbc plugin, since we are building JDBC source connector we provide source connector class name
+
+2. "task.max": "1"
+       - It is number of maximum task instance should be created, so when we deploy this connector config in the confluent platform so there are tasks created and if we want to parallelize any connector (ie) we want to read the data from the table in multiple instances we want multithread or parallelize the operation then we provide more than 1 task so that ur operation to read the data would be faster. 
+    Here we provide 1, since we are running in local machine so we dont want to burden on confluent server
+
+3. "key.converter": "io.confluent.connect.avro.AvroConverter"
+       - used to convert external source system data (ie) mysql table data into a format which can be written into kafka in a serialized form, because table data in different format and when we write into the kafka topic it should be in different format 
+      So there are 3 types of converters like StringConverter (which is used only for single valued data, so if we have single value and we want to pull the data from any external system then it is a StringConverter), JsonConverter, and another industry wide famous is AvroConverter. Here we use AvroConverter 
+
+
+4. "value.converter": "io.confluent.connect.avro.AvroConverter"
+     - used to convert external source system data (ie) mysql table data into a format which can be written into kafka in a serialized form
+
+5. "key.converter.schema.registry.url": "http://localhost:8081",
+    "value.converter.schema.registry.url": "http://localhost:8081"
+
+When we use AvroConverter we need to specify the schema registry, so schema registry is one component which starts when we start ur confluent server so we have to give the url for schema registry 
+
+6. "transforms": "createKey,setSchema"
+         - Functions to be applied on key or value to transform into another form, so transforms are not mandatory, so it is like if we want to reform the data into another format then we use transforms
+         - Here we provide custom name to functions and later we define it, we create 2 functions 
+   1. createKey which is used to convert or to pull some value from the value format, since topic data will be in key and value format so if we read data from database, it will always in the form of objects, so we want to create a key out of object data so we used this function 
+   2. setSchema which is to give a specific customized schema name to my value object when we write into kafka topic
+
+7. Next property is inline with my custom functions, where we define details about the functions
+
+"transforms.createKey.type": "org.apache.kafka.connect.transforms.ValueToKey"
+      - Our first custom function is createKey and we define its type which is the type of transform function, so we use transform function called valueToKey class to convert the object or the data we read from the table, we use some properties or some column names to convert or to create a key 
+
+"transforms.createKey.fields": "TXN_ID,TXN_DATE"   
+        - which is a column names we want to use to convert into a key format. Here we use 2 columns txn_id and txn_date to set them as key
+
+"transforms.setSchema.type": "org.apache.kafka.connect.transforms.SetSchemaMetadata$Value"
+      - Next function we define is setSchema and type of transform function to set the custom name of value schema is setSchemaMetadata
+
+"transforms.setSchema.schema.name": "MoneyTransferRecords"
+     - what customize name we want to give to our schema 
+
+Specific Connector properties
+1. We have to specify database credentials specific to particular database
+
+ "connection.url": "jdbc:mysql://localhost:3306/kafkaconnect",
+    "connection.user": "root",
+    "connection.password": "root",
+    "dialect.name": "MySqlDatabaseDialect", 
+
+2. "mode": "timestamp+incrementing"
+        - It is the way to pull or read table data, so when you read the data from the table, which way you want to read the data. Valid values are 
+    1. Bulk(we will read entire table data, no matter how much records the table have in the production, when connector make a connection with that database, not preferrable in prod env)
+    2. Timestamp (we will have some column in the database where the timestamo gets updated when new record is inserted or any record is updated, so based on timestamp we will fetch the latest data)
+    3. Incrementing - where we will have some column in ur database which will be incremented as and when new records are inserted
+    4. timestamp+incrementing - most preferred and strongest way to pull data from the table 
+
+3. When we use timestamp+incrementing we have to specify the column names which are used for timestamp and for incrementing 
+
+"timestamp.column.name": "TXN_DATE"
+"incrementing.column.name": "TXN_ID"
+
+4. "numeric.precision.mapping": true
+         - default value is true
+   "numeric.mapping": "best_fit",
+         - which way we want to use (ie) best_fit (ie) kafka will decide what should be the best fit for any value which is coming from the table, so we have amounts column in table, so for those amount value it will do its best to fit that value into kafka topic 
+
+5. "query": "SELECT * FROM (SELECT SENDER_NAME,RECEIVER_NAME,SENDER_ACCT,RECEIVER_ACCT,AMOUNT,SENDER_BANK,RECEIVER_BANK,TXN_ID,TXN_DATE FROM kafkaconnect.money_transfer_data) AS MONEY_TRANSFER_DATA",
+      - Represent the query to read the data from table or views or alias. So whenever it runs, kafka will always timestamp and incrementing column to read the latest data 
+
+6. "table.type": "TABLE"
+        - Represent from where we query the data (ie) either table or view or alias 
+
+7. "poll.interval.ms": "5000"
+        - Represent the frequency in ms to poll new data from table (ie) after how much time we want to read the data from the table. So here after 5sec we poll to the database to check for the new data 
+
+8. "batch.max.rows": "5"
+        - Maximum number of rows we want to pull from the table when u make request to that database to read the data
+
+9. "topic.prefix": "money-transfer-data-v1"
+         - It is the topic name to push ur data
+
+10. "db.timezome": "Asia/Kolkata"
+         - It is the timezone where we are running this connector 
+
+Now we deploy this connector config onto the confluent platform and see how it behaves
+
+3. Create the topic called money-transfer-data-v1 with partition 1
+
+4. Run connector config
+
+5. We use kafka-avro-console-consumer to check the data which receive from table into the kafka topic
+
+
