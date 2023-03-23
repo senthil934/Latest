@@ -1355,3 +1355,595 @@ Include in: Any Scope
 Now when restart and run the appl once again, now we can see edit,delete and add button
 
 Now if we inspect "http://localhost:8000/oauthinfo", we can see new attribute called "groups" with value Everyone and ROLE_ADMIN. Spring will automatically extract groups claim from JWT and maps it to Spring authority, so user now has both roles so he can do all operations
+
+
+Spring Boot with JWT
+     
+1. Create SpringBoot-JWT1 project with web, data jpa and mysql,spring security dependency
+2. Create Role Entity class
+3. Create RoleRepository interface
+4. Create RoleService class 
+5. Now we want to create a new entity to store user info, create User entity class, with many user have many roles 
+6. Create UserRepository interface
+7. Create UserService class
+8. Create UserController class
+9. Now run the appl, it will create user,role, user_role table in db
+10. In UserController, we create 2 endpoint "/forAdmin" and "/forUser". But in this case the appl is not secured, since both endpoints will be accessible to everyone 
+  In order to make appl secured, we apply JWT token and role based authentication 
+
+11. Apply 2 dependency spring security, jwt 
+
+12. We need to tell our appl that the appl needs to use Spring security, so we have to configure the appl
+  - Create CorsConfiguration, used to define the allowed mappings, methods in to the appl 
+  - Create JwtAuthenticationEntryPoint, this class will basically an entry point which take care if something goes wrong, we just send message that u r not authorized 
+  - Create WebSecurityConfiguration, with @Configuration, @EnableWebSecurity,@EnableGlobalMethodSecurity which will take care role based authentication, now we have multiple roles like admin, user and we use many endpoints specifically for admin and specifically for users
+    This class will extends WebSecurityConfigurerAdapter class and override authenticationManagerBean() and configure() 
+
+
+SpringBoot JWT
+Step 1:  User/Client Register process
+    - Client has to send above details as JSON format and that will be converted into User object and finally saved in database
+    - When u run the appl, it will create user_tab and roles_tab
+    - In Postman, run localhost:9000/user/save with POST request, in Body - Raw - JSON
+{
+   "name" : "Sam",
+   "username": "sam",
+   "password": "abcd",
+   "roles": [
+              "ADMIN",
+              "EMP"
+            ]
+}
+
+Step 2: JWTUtil class code
+      - We use JJWT dependency to pom.xml 
+      - We create JWTUtil class with @Component 
+
+1. In application.properties file we create JWT secret 
+       app.secret=kumar
+2. Now we access that secret inside JWTUtil class using @Value 
+3. Next we need to write method to generate token which returns string. Here if we give subject,it will prepare subject with details and compact() will return string representation of token 
+4. Next method is used to read token data with token  
+5. Next we create method to read expriry date from claims 
+6. Next we create method to read subject/username
+7. We create method to validate exp date
+8. We validate the token, if it is not expired and validate the username/subject. From the token we take username and we check it is similar with database username and if token is still not expired then it is valid 
+
+Step 3: JWT Token generation without security for testing
+    - Read username and password as JSON format, convert to UserRequest object. Generate token and define one message, return this data as JSON format using UserResponse object 
+
+1. Create UserRequest model class with username and password 
+2. Create UserResponse class with token and message
+3. Create loginUser() inside UserController
+4. Run the appl
+5. In Postman, run localhost:9090/user/login with POST request - in Body - Raw - JSON
+{
+   "username":"abc",
+   "password":"xyz"
+}
+Now it will be generated token for the dummy username and password, which will be provided with header, payload and signature
+
+Step 4: JWT Token after User Authentication 
+1. Add Spring Security dependency
+2. Create AppConfig class, to define PasswordEncoder before saving user into db
+3. Modify UserServiceImpl to implement password encoding 
+4. Create SecurityConfig class which extends WebSecurityConfigAdapter and overrider 2 configure() one with AuthenticationManagerBuilder and HttpSecurity 
+    We will having a login process with username and password as json format. Now it will go to UserDetailsService interface with loadUserByUsername() which takes username as argument and communicates with our database, which returns model class User object and later converted into Spring Security User object 
+
+5. In UserRepository, add findByUsername()
+6. In IUserService declare the same method and override in UserServiceImpl class and fetch username from db
+7. Now in UserServiceImpl class also implements UserDetailsService interface and override loadUserByUsername()
+   Here we are returning Spring security User object which takes username,password and collection that contains GrantedAuthority objects and we have taken SimpleGrantedAuthority class which is implementation of GrantedAuthority 
+
+8. Now we inject UserDetailsService, BCryptPasswordEncoder in SecurityConfig program for authentication 
+@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+	}
+
+Now we write authorization, that everyone can access "/user/save" and "/user/login". In case if any exception occurs we need to convert into a readable message 
+
+9. We need to create authenticationEntryPoint to verify the user is loggedin
+   Create InvalidUserAuthEntryPoint implements AuthenticationEntryPoint and override commence(), in case of form based we will write access denied page, but here it is Rest so we create simple JSON message
+
+10. Normally AuthenticationManager checks for username and password incase of session, but here it is stateless session so checking should be manula, so we need to inject one more bean AuthenticationManager 
+
+  @Override
+    @Bean
+    protected AuthenticationManager authenticationManager() throws Exception {
+    	// TODO Auto-generated method stub
+    	return super.authenticationManager();
+    }
+
+11. In UserController, loginUser() use AuthenticationManager and validate the username and password from database and generate  token 
+    So in case form based login authenticationManager will automatically happen but in stateless session we need to provide as authenticationmanager to generate the token
+    authenticationManager.authenticate() and pass UsernamePasswordAuthenticationToken which takes username and password as arguments. In case if it is not valid then automatically AuthenticationEntryPoint will be invoked 
+   If it is valid then it will generate the JWT token and not valid means InvalidUserAuthEntryPoint is triggered 
+
+12. Start the appl
+13. Create new user in postman 
+
+- In Postman, run localhost:9000/user/save with POST request, in Body - Raw - JSON
+{
+   "name" : "Ram",
+   "username": "ram",
+   "password": "xyz",
+   "roles": [
+              "ADMIN",
+              "EMP"
+            ]
+}
+
+14. In Postman, run localhost:9090/user/login with POST request - in Body - Raw - JSON
+{
+   "username":"sss",
+   "password":"xyz"
+}
+Since username and password is wrong it will show 401 error "Unauthorized user"
+
+15. In Postman, run localhost:9090/user/login with POST request - in Body - Raw - JSON
+{
+   "username":"ram",
+   "password":"xyz"
+}
+Now it will be generated token
+
+Step 5: JWT token verification from 2nd request onwards
+    Now we write filter which will check verification process and that will implement session type authentication token, if it is valid then we have to continue 
+   Consider we send http request to "/user/welcome", this can be accessed only by logged in person, so we need to pass generated token as authorization, if it is valid then only it gives the response. 
+  Whenever we made request we are going to build one request filter called OncePerRequestFilter which is abstract class. It will first read and validate the token from authorization header using JWTUtil validate(), once it is valid we have to create SecurityContext object. Inside that we have to create object for Authentication
+   From there it will go to WebSecurityConfigureAdapter and reads the authentication object we created, if it is valid it will access the resource or else it will show unauthorized user 
+   In case of form based login, there is no need to create request filter, it will automatically created.
+
+Define one filter which gets executed for every request, if request is having authorization heade, then validate using JWTUtil. If it is valid then create Authentication inside SecurityContect which will again communicate with WebSecurityConfigAdapter 
+
+1.Create SecurityFilter class which extends OncePerRequestFilter and override doFilterInternal()
+
+2. Register security filter in SecurityConfig 
+.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
+
+3. Create a request in UserController class and return username from Principal interface 
+
+4. Start the login
+5. In Postman, run localhost:9090/user/login with POST request - in Body - Raw - JSON
+{
+   "username":"ram",
+   "password":"xyz"
+}
+Now login into appl
+6. Now access the resource 
+In Postman, run localhost:9090/user/welcome with GET request, in headers
+   Authorization: generated token
+
+
+Spring documentation using OpenAPI and Swagger
+     Documentation is an essential part of building REST api, the api documentation not only helps internal teams but it is very critical for external clients to tell how to consume ur apis. 
+      There are several ways in which we can document ur rest apis, we can just use plain text and tell these are all the endpoints we have exposed and explain what our method does and how we consume our data and these are various exceptions. We can also use word document and write lot of text over there and create flow diagram about how data is flowing in our api, but now we have a standard to document REST apis and it is called OpenAPI specification 
+     We use Spring doc which is a tool that simplifies the generation and maintainence of api docs based on openapi specification for spring boot appl
+
+1. SpringDoc - openapi java library which helps in automating the generation of API documentation using Spring boot projects. It automatically generates documentation in json,yml and html format 
+    This library supports openapi 3, swagger-ui, spring boot, JSR 303 annotation specifically for @NotNull, @Min,@Max and @Size, and also oauth2 
+
+OpenAPI and Swagger
+    Actually the standards are started by company called Smartbear software in 2015, now this openapi is managed openly. The first version cames as openapi 3.0, since 2015 it also renamed as swagger ui to openapi. Currently openapi we can see as specification which tells us how to document the rest api 
+    Swagger now becomes a tool for implementing open api and also have set of tools which not only implement this specification but it can used by developers to interact with apisto visualize and generate some code
+
+
+OpenAPI Specification (OAS)
+      - It defines the standard, language interface to RESTful API's which allows both humans and computers to discover and understand the capabilities of the service without access to source code, documentation. When properly defined, a consumer can understand and interact with the remote service with minimal amount of implementation logic
+     In order to understand this defination, we need to know why we need to apply this specification in our API 
+     1. Imagine we will have a document which describe the whole api regardless of prg lang its built in, so basically if u have spring boot appl with rest api and we apply this open api specification standards, we can extract a json file for example which contains all the info of ur api, all th responses, all the tags everything. We can use this document to generate the code or the boilerplate code for ur api within different prg lang like nodejs, we can also use this document to benefit a large set of open api compatible tools like Postman 
+     So basically we apply standards, we extract those standards and those standards are readable by all api tools 
+     2. The ability to have ur API routing operations build in different prg lang with a click of a button (ie) We have one document and we can use this document to do lot of work 
+
+
+There are 2 ways to create Open API Specification
+   1. We use swagger editor to build json/yml file then use swagger code generator to create boilerplate code with ur preferred code lang for both backend and frontend
+     Here we open swagger.io website, we use the editor over there to start building the schema and yml file or json file of open api specification, then we generate the boilerplate code for ur preferred code language 
+     2. Implement openapi library dependency in ur project (java, node) and use swagger or openapi annotation to document and build the api 
+     We use 2nd approach here
+
+1. Create spring boot project spring web dependency
+and add some controller into it
+
+2. In postman, run all endpoints 
+POST - http://localhost:8080/items
+
+{
+    "itemId":"5000",
+    "title":"Java",
+    "description":"core java",
+    "completed":"true"
+}
+
+PUT - http://localhost:8080/items/5000?isClient=true
+and in Headers part give key as fromHost and value as true 
+
+{
+    "itemId":"5000",
+    "title":"J2EE",
+    "description":"core java",
+    "completed":"true"
+}
+
+GET - http://localhost:8080/items
+GET - http://localhost:8080/items/200 - getById
+DELETE - http://localhost:8080/items/200
+
+3. Add open api dependency in pom.xml
+
+<dependency>
+   <groupId>org.springdoc</groupId>
+   <artifactId>springdoc-openapi-ui</artifactId>
+   <version>1.6.4</version>
+</dependency>
+
+Now start the appl and we can access swagger ui
+http://localhost:9090/swagger-ui/index.html
+
+We have user interface which displays all endpoints. Swagger interface gives u a lot of functionality to your project, for example to test each endpoint we have used postman to send request, now we can use swagger interface to do that.
+
+Swagger user Interface 
+    We can see that the naming is not correct, we need to start customize this user interface and we need to start to see the section of this swagger user interface
+     First at the sections of this user interface we have search button in the top, where we can search if we have lot of endpoints and we need to search for specific endpoint. Next we have project title in this case it is "OpenAPI defination", next we have version of project as v0, next 0AS3 specifies the openapi specification version that we are using 
+   Under that we can see small link "/v3/api-docs" which is the link for actual openapi specification document json file, we can take this json file and apply it on multiple tools to build api 
+   Next we have servers section which include all the servers that we are using, in our case we have only one server since we are running locally, but if we are running ur project on cloud then we can have another server and we can switch between them 
+   Next sections we have actual endpoints which has its own title. At the end of the section of this user interface we can see schemas or data model, in our case we have 1 data model called "Item" which is POJO class which has attributes and methods 
+
+Now we customize this user interface and add some openapi defination to our project in order to describe the whole api
+
+1. First we can change the project name and changing the version, we can do that by going to main class and use 
+
+@OpenAPIDefination(info=@Info(title="Items API Project", version="1.0.0"))
+
+If we save and run the project and refresh swagger ui, we can see changed project name and version for our specification and all those changes will be reflected inside json file of openapi specification itself (ie) "/v3/api-docs" 
+
+2. Now we want to define our server info, here we are working on one server but what if we have another copy of this project running on some container in cloud and we also want to test some endpoints after the pipeline is executed 
+
+@OpenAPIDefinition(
+		info = @Info(title="Items API Project", version="1.0.0"),
+		servers = {@Server(url="http://localhost:8080"), @Server(url="http://abc.com")}
+)
+
+Now if we run the project and refresh swagger ui, we can see 2 servers 
+
+3. Now we describe our endpoint endpoint one by one and now we focus on one endpoint called UpdateItem because it has all the property that we want to define. Each one of the endpoint has its own tag or own category but it dosent make sense because all of those endpoints belonging to /items and all working with one data model so it make sense if we have all of those endpoints inside one tag only 
+    We can define it by using @Operation which is swagger3 wrapper, so if we want to describe any endpoint it will be inside @Operation 
+
+1. First tags attribute which is String[] so we give curly brackets and write tags, its array because each one of these endpoints can have more than one tag 
+
+@Operation(
+    tags = {"Items"}
+)
+
+When we run the project and refresh swagger ui, we can see Items tag for PUT endpoint. Now we copy same annotation and paste in all controller programs, if we run the project and refresh swagger ui we can see all endpoints will come under single tag called "Items" which make more sense
+    Each endpoint can have multiple tags, for example if we need PUT request to appear at 2 place
+
+@Operation(
+    tags = {"Items","Items 2"}
+)
+ 
+If we run the project and refresh the swagger interface we can see PUT request will be under different tags 
+
+2. In case if we want to provide some description for that tags, we can do it in main class with @OpenApiDefination annotation 
+
+@OpenAPIDefinition(
+		info = @Info(title="Items API Project", version="1.0.0"),
+		servers = {@Server(url="http://localhost:8080"), @Server(url="http://abc.com")},
+		tags = {@Tag(name="Items", description="This is Items API endpoints")}
+)
+
+If we run the project and refresh the swagger interface we can see description will be provided for Items tag
+
+3. Next we describe endpoints and start putting some tags inside operation and we have more description for this endpoint
+    First we can put operationId which is for referencing purposes maybe we have some callbacks or some other endpoints to communicate with this endpoint so we define a unique operation id and use it in the future 
+ @Operation(
+    	    tags = {"Items","Items 2"},
+    	    operationId = "updateItem"
+    	)
+   - Next we can provide summary and description, so summary will come on the endpoint and description will come under the title 
+   @Operation(
+    	    tags = {"Items","Items 2"},
+    	    operationId = "updateItem",
+    	    summary = "This is the summary",
+    	    description = "This is the description"
+    )
+
+   - This PUT endpoint have couple of parameters in this endpoint, first as a request this endpoint required a path variable called itemId, cookie parameter, header parameter and also query parameter. So inorder to fulfill this request we need to provide a path variable, cookie, header and query parameters. We put everything inside this endpoint and we can start to describe this endpoint 
+   In request body we can provide the item object that to be updated in json format 
+    1. First we describe our request body, we can have some description for this request body and even we can change the schema for this request body for any reason 
+    In order to change the schema of the request body we create our own custom data model. In our case we create Customer.java
+
+public class Customer {
+    public String customerId;
+
+	public Customer(String customerId) {
+		super();
+		this.customerId = customerId;
+	}
+}
+
+Now we can implement this custom model in @Operation annotation 
+
+@Operation(
+    	    tags = {"Items","Items 2"},
+    	    operationId = "updateItem",
+    	    summary = "This is the summary",
+    	    description = "This is the description",
+    	    requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description="This is request body description",
+    	    content = @Content(schema=@Schema(implementation=Customer.class)))
+    )
+
+If we run and refresh the interface, we can description under request body and it will have different schema which is customerid
+ 
+    2. Next we define list of parameters like pathvariable, cookie, header and query parameters and for all parameters we can define one attribute called parameters 
+
+@Operation(
+    	    parameters = {@Parameter(name="itemId",description="This is path variable",example="4556")}
+    )
+
+When we run and refresh the interface, we can see description for path variable along with some example value which will be automatically filled in.
+    Next it dosent make sense if we change the place of this parameters because we already defined it in Spring boot and swagger already know it, but in case if we want to change the place of parameter, for example from pathvariable to cookie value we can do that by using "in" which is enum type
+
+  @Operation(
+    	    parameters = {@Parameter(name="itemId",description="This is path variable",example="4556",in=ParameterIn.COOKIE)}
+    )
+
+When we run and refresh, we can see pathvariable will be changed to cookie, but now we have to provide as 
+ 
+  @Operation(
+    	    parameters = {@Parameter(name="itemId",description="This is path variable",example="4556",in=ParameterIn.PATH)}
+    )
+
+   - For other parameters it would same process so we can just copy and paste it, we can change name, description and put some example as we want 
+
+    3. Next is hidden attribute, for some reason we want to hide the whole endpoint from user interface we can by using hidden, by default is false. If we set to true, ur endpoint will be hidden
+
+  @Operation(
+    	     hidden=true
+    )
+
+    4. Next we can define some external documents, sometimes we can have some description for your endpoint in this user interface but also we have extended documentation in other places, so we can define an external documentation which is external link for ur documentation
+
+@Operation(
+    	    externalDocs = @ExternalDocumentation(url="http://abc.com",description="For more details check the link")
+    )
+
+If we save and refresh, we can find more details and check the links 
+
+     5. Next we can describe what kind of  responses we are expected, so as we know HTTP response code 200 means successful, 400 means bad request, 404 means its not found so we can describe all of this in here. We can also provide some description and also media type, in what format we need to get response
+
+ @Operation(
+    	    responses = {@ApiResponse(responseCode = "200",content = @Content(schema=@Schema(implementation=Item.class), mediaType = MediaType.APPLICATION_JSON_VALUE),description="Success Response")}
+    )
+
+If we save and refresh we can see response code 200 which is successful and we get schema as an example of the value we can get 
+    If we have couple of responses variable here but we can define only one api response for each status code, but maybe there are some cases where sometimes we will have this as response and another data model as response, it dosent make sense but we are going to see how to work on it
+    @Operation(
+       responses = {@ApiResponse(responseCode = "200",
+    	    content = @Content(schema=@Schema(implementation=Item.class), mediaType = MediaType.APPLICATION_JSON_VALUE,
+    	              examples = {@ExampleObject(name="Success 1",value="Object"),
+    	            		  @ExampleObject(name="Success 2",value="String")}
+    	    		),description="Success Response")}
+    )
+
+If we save and refresh the interface, we can see under 200 status code we have Example1 and Example2, if we change the option we can see its related values
+
+
+Security schemes
+     Our endpoint will use some kind of authentication maybe http basic or bearer token or oauth flow. We can define this by doing 2 things, first we can define the global authentication in which the project will be used and we can see it as a description. Next is which authentication system each endpoint will use so it is endpoint specification but we defined it on the global term
+ 
+1. In main class, we define security schema using @SecurityScheme 
+
+@SecurityScheme(name="BearerJWT",type=SecuritySchemeType.HTTP,
+        scheme="bearer",bearerFormat="JWT",
+        description = "Bearer token for this project")
+
+If we save and refresh the interface, we can see Authorize button, when we click it we can see Bearer JWT as we define the name, description, type. 
+     So we have defined the global authorization system but not even one of those endpoints are using it, because sometimes we will have public endpoints and where u will have a private endpoints, so we create endpoint specific authentication and not like a global one 
+
+2. Now we define authentication for particular PUT endpoint, again we define configuration inside @Operation annotation
+
+@Operation(
+    	    security= {@SecurityRequirement(name="BearerJWT")} //provide same name as global auth
+    )
+
+If we save and refresh the interface, we can see lock icon for PUT request, so when we click it we can see Bearer JWT, which determine that this endpoint need an authentication 
+
+Benefits of OpenAPI document (ie) json file
+      We can access the file from "/v3/api-docs", now save this file as api-docs.json which is regardless of any prg lang
+    1. We can use this with swagger code generation to generate some boilerplate code and also to preview the api itself 
+
+Goto Swagger Codegenerator in Google - goto https://swagger.io - Editor - Try Swagger Editor - File - Import file - select json file 
+
+Now we can see the entire endpoint, so benefit is that if u have any meeting with any client and we dont have ur project with u and we want to show the result of ur documentation for client or other part of team without having full springboot appl running, we can use editor here in code generation in swagger.io, to review ur swagger documentation 
+
+2. This documentation is regardless of any prg language, we can see we built that using springboot and java, but what if for any reason we want to change the prg lang of ur api, for example nodejs with express 
+   Once we have json file we can use swagger.io and we can generate a boilerplate code project for server as well as client
+Click Generate server - Nodejs server  
+
+3. We can use this json file with the postman and create whole api and documentation inside postman 
+In Postman - File - Import json file 
+  The postman identified this project as openapi and create whole api and documentation
+
+
+OpenAPI documentation in yml file
+
+openapi: 3.0.0
+info:
+   title: SpringBoot API 
+   description: Springboot Course appl
+   version: 1.0.0
+   contact:
+     email: abc@gmail.com
+     name: Springboot
+
+paths:  #define all endpoint urls
+   /course/{course_id}:  #path for getting detail of course
+      get:
+        description: Fetch details of course
+        parameters:
+            name: course_id
+            required: true
+            in: path
+            schema:
+               type: integer 
+        responses:
+           "200":
+              description: 200 responses
+              content:
+                 application/json:
+                   schema:
+                      $ref: "#/components/schemas/course"
+   /course:
+      post:
+        description: Used to create course 
+        requestBody:
+          description: Structure of course
+          required: true
+          content:
+             application/json:
+               schema:
+                 $ref: "#/components/schemas/course"
+        responses:
+           "200":
+              description: Course created successfully 
+
+components:
+   schemas:
+     course:
+        type: object
+        properties:
+           title:
+             type: string
+           description:
+             type: string
+           id:
+             type: integer 
+
+
+ 
+Web Application Security
+      Security is one of the most important non-functional requirement whenever we build appl. We might have a very strong appl, we might have very strong infrastructure but one small flaw can break security and thats where its very important that architects, developers, testers and functional users are aware about the security 
+
+OWASP(Open Web Application Security Project) Top 10
+     OWASP is non profit security organization which does analysis into security and provides a list called OWASP top 10 which gives an overview of what are major security flaws that are present in an application
+
+1. Broken Access Control
+2. Cryptographic Failures
+3. Injection
+4. Insecure Design
+5. Security Misconfiguration
+6. Vulnerable and Outdated Components
+7. Identification and Authentication Failures
+8. Software and Data Integrity Failures
+9. Security Logging and Monitoring Failures
+10. Server Side Request Forgery (SSRF)
+
+
+1. Broken Access Control
+         Broken access control moves up from the 5th position back in 2017 which is previous version of owasp top 10, and the appl that are tested for different security threads by owasp organization, 94% of appl had some form of broken access control
+        Consider we have an appl and we have users that want to access the appl, but we also have attackers who are trying to do bad things to the appl and we want to let these good users in and we want to block the bad attackers. So there should be some kind of access controls that built in ur appl and one of the issues with this is that, there are so many different endpoints and that needs to be control around the appl to let the good people in and keep the bad people out
+     So failures around access control will lead to things like information disclosure, information modification and these attackers may delete all ur data. 
+     Consider we have an api endpoint like mail.example.com/messages/1234, so if we change that id to 5678, so behind the scene it is typically a sql or database call that something like
+  select id,data from messages where id=1234
+So now if we change id as 5678 then that would change the structure of this or change the contents of this sql message which is not good, so we could add few info like 
+  select id,data from messages where id=1234 and messages.owner=owner
+   So point here is we not only check the id is correct but also the actual owner who can access that message, so now we are doing some extra check to put control on the access to who can gain access to that api endpoint 
+    We have some common access control vulnerabilities like violation of principle of least privilege where access should only be granted to users or roles, but instead its given to anyone, so the least privilege is basically give someone the least amount of privilege that they need to do their job, but if that starts to expand then we have problem
+   Another is when we bypass access control checks by modifying the url or html page or using some kind of attack tool to modify api requests. 
+   Another is viewing or editing of someone else account by providing unique identifier 
+   Next is accessing an api with missing access controls for post,put and delete, so if we dont have controls around the methods that the api is able to handle 
+   Next is force browsing to unauthenticated pages as an unauthenticated users. For example example.com/app/get_info so if we get to that url as unauthenticated user which is not good beacuse we are getting info about the app. At the same time if we access example.com/app/admin_getInfo so if u r not adming then we should not able to get data, so this is one of unauthenticated user should not be able to get to either one of these and non admin should not be able to get 2nd url, so some people can force browse to these urls and if we gain access then thats a problem 
+     So we can deny by default, then we can implement access control mechanisms once and reuse them throughout the appl. We also should enforce record ownership rather than accepting the user can create or read or update or delete any record, so we need to enforce record owership. Next is log access control failures which is like monitoring and logging, but we need to log these failures 
+    So good access control features are hard to add to an appl late in the development lifecycle so make sure we start this early on development lifecycle 
+
+2. Cryptographic failures
+         This shifts up one position to number 2 from the previous version, in fact previously it is called as sensitive data exposure, but sensitive data exposure is more of broad symptom rather than like a root cause so the focus really on failures related to cryptography which lead to exposure of sensitive data 
+      When we think about cryptographic failures is the protection of data that we have in ur appl, sp data in transit or data at rest. For examples passwords or credit card number or personal info number etc, so if we have sensitive data then we need to  determine the protection needs of that data. 
+     So when we build the appl we can use any kind of cryptographic algorithms or protocols and if we dont have any encrpyption then always use https.
+     Next we can use key mgt which is the server certificate and trust chain is properly validated. Next dont write crypto on ur own, always use trusted libraries 
+
+Example:
+    Consider we have users who are accessing ur appl and this appl is connected to database which contains credit card information. So user access the appl and then appl sends an sql query to database, then the response (ie) credit card number, comes back from the db back to the user in decrypted and user pulls the data out of the database. If a attacker comes and perform an SQL injection attack and grab credit card number out of database which is automatically decrypted, then attacker would have access to that credit card number. So it is an example of cryptographic failure, in this case good to use encryption but bad to use automatic decryption 
+
+Example 2:
+   Consider we have variety of url and first one uses https which is good and another url uses only http, so we dont enforce tls or encryption for every single page on ur appl. So here attacker could listen to all of the traffic and if user accesses 2nd url then attacker could see all of that data which is not good, so we have enforce https across all urls
+
+So finally if we have ur appl and we need to classify the data which is sensitive and which data maybe not sensitive. Next is dont store sensitive data unnecessarilt discard it as soon as possible, next encrypt all of ur sensitive data and rest back to database and no automatic decryption
+
+3. Injection
+       Injection goes down to 3rd position, in fact in 2003 this is number one on the list. When people talk about injection they talk about SQL injection, but injection is broader it is not just sql injection, we have LDAP and we can do injection attack with that or OGNAL(Object Graph Navigation Library) injection attacks etc. Also cross site scripting has been combined and it is part of this injection risk
+     So typically applications are vulnerable to injections when user supplied data is not validated or filtered. Consider we have users that are sending input and ur appl reads and then takes action, so when user supplied data is not validated by the appl then we are opening urself for injection attack 
+
+    Consider a code snippet
+
+public Person find_Unsecure(String inputFromUser){
+   return jdbcTemplate.queryForObject("select * from person where name="+inputFromUser, new BeanPropertyRowMapper<Person>(Person.class));
+}
+
+So here we are taking an input from the user and we are directly appending it to our sql stmt, so what would happen if the input from user is something like Ram or 1=1, then the query would become
+  select * from person where name=Ram or 1=1
+then every row from person table would be returned back which is not good practise and this is called as SQL Injection. But this method is protected because we are using a BeanPropertyRowMapper and try to map it to one person, but if we map into List of persons then this would have a serious security flaw 
+    So here we are taking input from user and directly using it in a query without validating it. So as far as SQL is concerned the best way to do it using parametrized queries, so we use ? and make sure that value is passed into the name  
+    
+public Person find_Secure(String inputFromUsre){
+   return jdbcTemplate.queryForObject("select * from person where name=?", new Object[]{inputFromUser}, new BeanPropertyRowMapper<Person>(Person.class));
+}
+
+So now the query look like
+  select * from person where name='Ram or 1=1'
+So here it will look for that specific name. So the base of preventing SQL injection is by using parameterized queries but in general the way we can prevent any of injections is by validating the data which is provided by the user 
+    In LDAP samething happens instead of interacting with database, it interacts with LDAP server 
+    To wrap up on preventing injection it really requires keeping the data separate from the commands and query. Next always we use server side input validation, also parameterize ur queries whenever we can, use of limit command where it is not loading the entire data  
+
+4. Insecure design 
+        This is new category on 2021 and focuses on the risks that are related to design and architectural flaws 
+        So secure design can still have a problematic implementation or defects related to implementation that leads to vulnerabilities, but this is insecure design which cannot be fixed by a perfect implementation 
+      Consider we are building an appl, prior to building we want to think about the architectural componentsy, how we are going to design and think about how to roll in security into that before even start writing ur first line of code 
+      We have a movie theatre and we have an online appl where people can buy tickets, so they can come into ur appl and buy their tickets. Lets say in ur appl we want all these people to come ur theatre so we offer some kind of bulk discount and say that if there is less than 15 tickets so we can reserve those on this appl. So attackers take advantage of the design, so ur appl is amazing applin the sense it runs very fast, so basically attacker have taken advantage of an insecure design in the appl itself so attacker will buy out or reserve all the tickets and effectively block out any kind of a normal user to watch the movie
+    So secure design is a methodology that constantly evaluates threats and ensures that code is robustly designed and tested to prevent attack methods in ur appl. So secure software requires some sort of secure development lifecycle or secure design pattern or secure component libraries or tools. We also reach out security specialist throughout the whole project and throughout the maintainence of the software, so incorporate security team throughout the entire lifecycle of this code. We use threat modeling for critical authentication, access control and business logic and key flows that going through the appl. Next we need to write test to validate all the critical flows through the threat model. We need to compile use cases but also missed use cases for every tier of appl, so when we do the testing we dont need to just test the appl to works but we need to do a misuse case also 
+
+5. Security misconfiguration  
+         So we have security components within ur appl but they are not configured correctly like we didnt change the default password 
+         So couple of things to look for to know if ur appl might be vulnerable is if unnecessary features are enabled or installed, if default accounts and their passwords are still unchanged, maybe latest security features are disabled if we do an upgrade on ur software, maybe ur appl server is not sending security headers or they are not set to secure values, maybe the software taht we are running is out of date or vulnerable 
+     Consider we have an appl and have designed securely but the software that is used to run this appl is misconfigured or we have appl server that ur appl is running on, that appl server comes with some sample appl and that appl is not removed when we install ur appl, and ur sample appl has some kind of known vulnerability. Now the attacker comes after sample appl and going to exploit these known vulnerability, for example default accounts are not changed, default password are well known in sample appl then the attacker can login with those default passwords and then take over the appl. So thats a problem so that would be a misconfiguration of security so now we need to remove of whole sample appl from the app server 
+     Another scenario is when u r running an appl and its designed correctly, we have an error message that gets sent to the user whenever there is some sort of error, which includes all of the information, maybe as appl developer we are trying to give all the info about the error that we are experienced on my appl, where we are opening door for an attacker to knowingly create an error message and they start looking at all of these detail info and use that info and try to attack some sort of vulnerability that we have in appl. If there is too much detail in error message that could be a security misconfiguration 
+     To wrap up in ur appl we have a minimal platform with least privilege that removes any kind of unnecessary features or components or documentation or samples 
+
+6. Vulnerable and Outdated components
+        This moves up from number 9 on 2017 list to number 6
+       Consider we have an appl which is composed of many different components and that contains different libraries, so ur appl relies on 3rd party libraries or variety of external components that we bring together to build ur appl. When attackers are looking at the appl as wht type of components they made up of and what kind of libraries are in this appl
+   So to know if ur appl is vulnerable we need to know all the different versions of all the components that we use both client side and server side, so if the software is vulnerable or unsupported or out-of-date then ur appl is vulnerable 
+   If we dont scan for vulnerabilities regularly or like subscribe for security then we are vulnerable. If we dont fix or upgrade the underlying platforms or frameworks then we are proably vulnerable. If software developers who develop ur appl, if they dont test the compatibility of the updated or upgraded or patched libraries then we may vulnerable
+     So to secure urself we need to remove any know of unused dependency, unnecesary features, unnecessary components. OWASP has a project called dependency check and it is very useful to run against ur appl to tell there is any unused or unnecessary dependencies. Next we need to continuously inventory the versions of both client side and server side components to see what u r running and we only need to use components from official sources over secure links, so dont and get some unverified component 
+    We also need to monitor for libraries and components that are unmaintained or dont create security patches for older versions 
+
+7. Identification and Authentication Failures
+       Previously known as broken authentication and come down from the list, it was 2nd in 2017 list but now it is 7th position 
+      We have an appl and we got users that want to access ur appl and there needs to be some kind of authentication mechanism that happens to make sure the user is authenticated, so if it is broken or misused then we got the problem. So if the appl itself permits things like credential attack where the attackers have valid usernames and password it could be a problem, if the appl is built in such a way that it permits brute force or other automated attacks then it could be a problem or if ur password policy on ur appl permits weak or default or wellknown passwords which is also not good. Also the password recovery like credential recovery or forgot password process like knowledge base answers like what is mothers maiden name, so those answers can be found out and it could be an unsafe method of password and it is not safe 
+      Next one is session timeout, we have public library where we read books and improving urself, when u sit on the computer there and do all ur work and then instead of logging out of computer we just close the browser tab. If someone comes and sit on same computer then it is open for them to steal that session and start to use that. So if the appl that u had been accessing dosent have proper timeouts then every user can use ur session 
+    To protect against this, wherever possible we need to implement multi-factor authentication so we can prevent some of credential stuffing problem (ie) someone stolen ur credentials and get reused. Next implement password checks on ur appl so test for new passwords or change passwords and not allow user to enter previous passwords. We can align ur password length, complexity and rotation policy against strong passwords. We can use server side secure built-in session managers that generate a new random session id after login and session id also should not be in url and we need to invalidate after logout 
+
+8. Software and data integrity failures
+        This is a new category for 2021 list and it focuses on making assumptions related to software updates, critical data, CICD pipelines without verifying the integrity of that software
+       For example where an appl relies on like plugins or libraries or some untrusted sources or repositories or an insecure CICD pipeline which introduce the potential for unauthorized access and malicious code those kinds of things which is not good
+     Now lot of appl include auto update functionality and these updates are downloaded without sufficient integrity verification, so if we are downloading something without checking the integrity of that download then thats a problem and attackers could come in and could potentially upload their own updates and then those could be distributed and run on all different installation so that is not good 
+     Consider we have home router which gives different wireless access, the router itself has firmware on it, so the router does not verify updates via signed firmware, so unsigned firmware could be a problem where attackers could come in and manipulate this firmware. We have IOT devices whether it is TV or refrigerator which are connected to internet and lot of these devices just dont update their software via verified sources
+       Consider we have monitoring software which is installed on variety of different endpoints, and that monitoring software is not updated and all organization in different endpoints is downloading the software from source, and attackers were able to get into different endpoints organization through this monitoring software 
+      In order to prevent this, use digital signatures or similar kind of mechanisms to verify the software or the data that we have from the expected source. We have to make sure libraries or dependencies are consuming from trusted repositories. Also we should have review process for code and configuration changes within ur organization, make sure ur CI CD pipeline has proper configuration and access control built-in to ensure the integrity of the code 
+
+9. Security logging and Monitoring failures
+        This came up from 10th position in 2017 list 
+     Consider we have an appl which perform many processing and we have users that are accessing ur appl and we need to do some logging on this, so do we do sufficent logging and do we monitor the logs. If we have auditable events like fail logins or high value transactions, if those are not logged then it is a problem 
+     If logs are only stored locally and there is no backup, there should be appropriate alerting thresholds and response escalation process and if those are not then it is problem 
+     Consider we have health plan provider and their website is attacked and patient datas are out, but the website operator couldnt detect that because thresholds are not in place or warnings or alerts are not in place, they didnt log in and they didnt monitor it. Maybe an external 3rd party to inform this health plan provider that an attacker had already accessed and modified these sensitive health records of patients 
+     Lets say that you are an airline and we have data lost that involves 10 yrs worth personal data like millions of passengers passport number, credit card number etc, then we realize that the problem occured at 3rd part cloud hosting provider that we use and they are actually notified you about the  data lost, so that could be a problem if we got some 3rd party hosting provider that u r relying on and they dont do sufficient logging and  monitoring 
+      In order to prevent this, we can ensure that all ur login and access control, server side input validation failures can be logged, and also we make sure that there are enough context in the logs to identify suspicious activity. We can hold the logs for long enough for forensic analysis, also ensure ur log data is encoded correctly to prevent things like injections or attacks on logging and monitoring systems, there was a recent attack on log4j which was an attack on the logging and monitoring system. Also adopt an incident response plan or recovery plan so if and when you are attacked and we need to plan to recover from that problems
+
+10. Server side Request Forgery(SSRF)
+         This is a new category added in 2021 list. This occurs when a web appl fetches a remote resource without validating a user supplied url, so it effectively allows an attacker to force the appl to send request to an unexpected destination, even when that destination is protected by firewall or vpn 
+     Consider there is an shopping appl and we have users to access ur appl, one of feature of the shopping appl is allow the user to check and see if an item is in stock by sending a query to backend rest api, then api endpoint returns and then the appl returns to the user. In typical scenario what could happen is the user sends http POST request, the appl sends stock api call to restful api endpoint and then it sends back the information
+     In server side request forgery, we take appl server and forge a request to an unexpected endpoint and we are going to get back information that u should not have been able to get back. So attacker can modify all this url like /admin  and request the url on server as /admin and the appl server is going to fetch the contents of /admin url and return back to attackers 
+     So the attacker is going to forge the request and use the server to access the url, because the server is a known trusted place, so the contents of url from the server request are going to return to the attacker 
+     To prevent this, we have some network layer where we can segment out ur remote resource functionality in separate networks and then that reduces the impact of SSRF. We can also enforce a deny by default firewall policy at network level. Next is log all ur accepted and blocked network flows on the firewall 
