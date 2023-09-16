@@ -1,0 +1,52 @@
+Usecases
+Railway System Database
+You need to model to store different train stations, railway tracks between connecting stations, the train details (a unique number for each train), rail routes and schedule of the trains. To simplify your project, you can assume that all the trains run every day and have only a one-day journey to their respective destinations. Also, focus on storing the following details for each station on a rail route: 
+In time: When the train arrives at a station.
+Out time: When the train leaves a station (This would be the same as in-time if the train does not halt at a station).
+Station’s sequential number: The order of the station in the route.
+
+
+Data Model:
+Table
+Train Table - details are:
+Train name
+Train number
+From station code
+To station code
+
+'Ticket Price' Table – details are:
+Train number
+Ticket price
+Ratkal addl price (possible values are 1.5, 2.0, 2.5 - final price for tatkal ticket is ticket price * tatkal addl price)
+Coach type (values are First Class AC, Second Class AC, Third Class AC, Sleeper, Executive Seat, AC Seat)
+
+'Train Route' Table - details are:
+Train number
+station code,  
+In time (Arrival Time), 
+Out Time (Departure Time)
+distance in kms 
+Station’s sequential number
+
+Station Table - details are:
+Station code
+Station name
+
+View
+Create a View "get all rail routes" to display the train routes for all trains, will be used by the procedure "get route details".
+PLSQL Procedure
+Create a procedure "search trains" to display the trains details between two station code (no duplicates result set) and executing this procedure will display following details.
+Train number, train name, price range (normal price w.r.t to tatkal price), total kms (sum of all routes against this train)
+Handle the exception and Show message as No Train found for the criteria.
+Create a procedure "get route details" to display the train routes for the train number/train name, on executing this procedure will display following details.
+Train number, train name, station code, station name, In time (Arrival Time), Out Time (Departure Time).
+Handle following exceptions:
+•	Invalid Train Name
+•	Invalid Train Number
+•	Either Train Number or Train Name should be supplied.
+PLSQL Function
+Create a function to find the ticket cost, parameters are, ‘from station code’, ‘to station code’, tatkal/normal (Default value is Normal), coach type (First Class AC, Second Class AC, Third Class Ac, Sleeper, Executive Seater, AC Seater. Default value is Sleeper), # of passengers (Default value is 1) and executing this function will display following details.
+	Train Name, From Station Name, To Station Name, Coach Type, Ticket Price
+PLSQL Trigger
+Create a trigger "check station code" - to verify the station code value w.r.t both 'to station code' and 'from station code' is available in the station table during insert or update operation into train table.
+
