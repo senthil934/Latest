@@ -1,0 +1,14 @@
+bootstrap.yml
+
+spring.application.name=department-service
+spring.cloud.config.uri=http://localhost:8081
+spring.profiles.active=prod
+
+application.properties
+
+server.port = 8081
+#spring.cloud.config.server.git.uri = https://gitlab.com/kirithik1418/cloudbus-properties.git
+spring.cloud.config.server.git.uri = https://github.com/senthil1418/cloudbus-properties.git
+spring.cloud.config.server.git.searchPaths = configuration-properties/department-service, configuration-properties/employee-service 
+#spring.cloud.config.server.git.searchPaths = configuration-properties employee-service
+spring.cloud.config.server.git.default-label=master
