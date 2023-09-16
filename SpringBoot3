@@ -1,0 +1,1667 @@
+
+Spring Boot 3.0
+    Spring boot has published the final release version of 3.0 on Nov 22,it is based on spring framework version 6 
+
+Features
+1. Spring boot 3.0 will support Java 17 version
+
+2. Jakarta EE 9/10 - Spring boot 3.0 will support only Jakarta EE using servlet5.0 and JPA3.0 specification. J2EE is called as Jakarta EE, our previous javax.servlet pkg is called jakarta.servlet pkg 
+     When we run spring boot appl and look at the console, we can see that tomcat is started and it is 10.1.1, so this is the reason when we talk about spring boot3 and Jakarta EE version, Jakarta is using 9 and 10 in different places 
+   So springboot3 is upgraded to tomcat 10.1, since 10.0 was end of life already and this has a dependency on servlet 6. The goal now is to provide a set of EE-10 providers in springboot3 by retaining an EE9 baseline for optional downgrades, for example Jetty 11 still uses servlet5
+
+3. Spring Native - It supports using GraalVM to compile spring appl into locally executable image file which can significantly improve the startup speed, performance and reduce memory usage 
+   Spring Native will gives us a functionality to create a very lightweight executables files that can be containerized in any form of containerization framework and we can execute those runnables very easily and uses very less memory and very efficient
+    Spring boot 3 appl can now be converted into a GraalVM native images which provide significant memory and startup performance improvements 
+
+We create native images using maven
+>mvn -Pnative native:compile
+
+Now inside target we can see the images, So we can create native image push this to  provider like AWS or Azure or google cloud and this image will start up really fast. In order to run the images
+
+>./target/projectname
+
+We can see how fast the image starts up 
+
+
+4. Observability
+       We are trying to find out how our system is running and based on those outputs what we are getting from the system we will try to figure it out like how our system is behaving, how we can make our appl more efficient, what are the changes that we have to do, all those things we can get from the observability
+    So with springboot 3.0 we are using micrometer internally which will allow us to get a lot of details about how our appl is running and if we want we can export all those data to the different monitoring tools like grafana and all 
+   So using this particular API we can publish ur metrics so that it can be mapped or tracked easily using Zipkin and Sleuth in ur cloud env
+
+4. Problem details
+       As we create an appl, error handling is a critical part, so when we create an appl what are the different errors and how those errors to be represented are very important
+      We have seen for different appl there are different types of error mgt, so how the error is displayed for particular client is different and that is difference between appl to appl. In some of appl we might be showing error codes, status codes, status message etc and in other appl we add some extra details as well 
+    But with Problem details, Springboot 3.0 is trying to give us a unique way or common way to share all those error details to the client. So there is ProblemDetails class introduced which will allow us add all those details about error and display those error details for the client which will make our applications error handling very easy 
+   We just have to use ProblemDetails and all the appl will be using same standards as well and accepted throughtout the industry 
+
+6. HttpExchange
+      In the microservice world and we try to communicate with different services through Rest clients or web clients or feign clients. If we are using rest clients we have to give API details everytime to call that particular api which is very time consuming as well 
+     Now we are moving towards a functional way of writing the code or declarative way of writing the code, HttpExchange gives us this similar things 
+     It allows us to call the different REST clients in the declarative approach, we have to just declare the interface with all apis that we want to call, which are the different services that we have to onboard, all those details we will define in the appl and directly call those services by just using the interfaces we have created 
+    So we do not have to call the api details everytime to post the data or fetch the data, we just define that one time in configuration and with methods and interfaces we can directly call those details, this is very similar to what we have seen in Feignclient where we will define the declarative approach and with that we will call all those apis, so similarly we are going to use HttpExchange which is default part of Spring framework 6 which will give us all those functionalities
+
+1. Create spring boot project with spring web, spring reactive web and actuator dependency
+  Spring boot: 3.0.4
+  Java version: 17
+  Packaging: jar 
+
+2. Create model to pass the data, so we use Java17 feature called Record rather than creating a simple Java class
+    We created simple Student record which will allow us to create a strudent with a constructor with 3 fields and add only getters as well, it is immutable class so once it is created it will be always unique 
+
+public record Student(int id, String name, String email){
+}
+
+3. Create Controller called StudentController 
+
+@RestController
+@RequestMapping("/students")
+public class StudentController {
+}
+
+4. Create Service class where we write business logic
+
+@Service
+public class StudentService {
+   List<Student> studentList=new ArrayList<>();
+}
+
+Now we are not using db, so whatever the data we are storing, we store all those data in list and we get from this list 
+
+Note:  Suppose we want to use any of JavaEE classes like HttpServletRequest etc, we can see all those servlet classes and everything earlier are part of javax, now it was moved to jakarta pkg. This is import thing we want to do when we migrate from Springboot 2 to Springboot 3
+
+5. Now we create simple methods to put and get the data in controller and related service
+
+@RestController
+@RequestMapping("/students")
+public class StudentController {
+
+     @Autowired
+     StudentService studService;
+
+     @PostMapping
+     public Student addStudent(@RequestBody Student student){
+     return studService.addStudent(student);
+     }
+
+     @GetMapping
+     public List<Student> getAllStudents() {
+         return studService.getAllStudents();
+     }
+
+     @GetMapping("/{id}")
+     public Student getStudent(@PathVariable("id") Integer id){
+      return studService.getStudent(id);
+     }
+
+}
+
+@Service
+public class StudentService {
+   List<Student> studentList=new ArrayList<>();
+
+     public Student addStudent(Student s){
+          studentList.add(s);
+          return s;
+     }
+     public List<Student> getAllStudents(){
+        return studentList;
+     }
+     public Student getStudent(Integer id){
+         return studentList.stream()
+                    .filter(s->s.id()==id)
+                    .findFirst()
+                    .orElseThrow(()->new RuntimeException("Student id is not found"));
+     }
+}
+
+6. Start the application
+
+7. Goto Postman 
+Post - http://localhost:8080/students 
+In body -raw - json
+{
+   "id":1,
+   "name":"Ram",
+   "email":"ram@gmail.com"
+}
+
+{
+   "id":2,
+   "name":"Sam",
+   "email":"sam@gmail.com"
+}
+
+Get - http://localhost:8080/students - fetch all students
+
+Get - http://localhost:8080/students/2 - fetch particular student
+
+Get - http://localhost:8080/students/3 - It will display error details 
+
+8. Now we will discuss about problem details features
+   Currently we can see the error we are getting where we are showing timestamp format, status, error and path which is default that we are getting. But we are going to standardize everything using ProblemDetails class which will allow us to standardize all those error handling throughout our appl 
+     First we have to wrap around our controllers with ControllerAdvice so that whenever there is an exception we can use that to capture those exception and we can convert those objects to response body 
+  Se we will create Java class ErrorMessage which contains all error details
+
+public class ErrorMessage {
+   private String status;
+   private String errorCode;
+   private String errorMessage;
+}
+
+which is standard format but now we use ProblemDetails class rather than using the class that we are going to create 
+
+1. To handle the errors first we create ControllerAdvice and annotate with @RestControllerAdvice to make it as advice for all the controllers that we are going to create 
+    Next we have a method to handle this exception, currently we have added RuntimeException so we need to handle that 
+
+@RestControllerAdvice
+public class CustomExceptionHandler {
+    
+     @ExceptionHandler(RuntimeException.class)
+     public ProblemDetail onRuntimeException(RuntimeException ex){
+         ProblemDetail detail=ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,ex.getMessage());
+      return detail;
+     }
+}
+
+We can see ProblemDetail has been recently added in Spring framework
+
+Ctrl+Shift+T - ProblemDetail class
+
+Where we can different details like type of URI, title, status, detail, instance etc with this we can set all those details and that will be standard throughout the different appl 
+
+9. Start the application
+
+10. Goto Postman 
+Post - http://localhost:8080/students 
+In body -raw - json
+{
+   "id":1,
+   "name":"Ram",
+   "email":"ram@gmail.com"
+}
+
+{
+   "id":2,
+   "name":"Sam",
+   "email":"sam@gmail.com"
+}
+
+Get - http://localhost:8080/students - fetch all students
+
+Get - http://localhost:8080/students/2 - fetch particular student
+
+Get - http://localhost:8080/students/3 - It will raise RuntimeException and able to get details here which is different 
+    We are getting the type as we are defining any type we get about blank, we got the title as bad request and we got the status as 400 because we define the status as 400 and detail as "Student id is not available" and also instance url
+   So this is standard and we can define this for all our appl that we are using whenever we are upgrading from spring boot 2 to spring boot 3
+
+11. Currently we have created few of the apis and for all those apis we can see that for some of the places we are getting exceptions and for some places we are getting the correct responses, so all those details we want to capture using Observability. We will get all those metrics and we want to capture those details and publish to any of monitoring tools to monitor the appl like wht is happening 
+    Internally it uses Micrometer here, so with the help of actuator and springboot3.0 all those details we can fetch very easily
+     So whatever happening in my service layer, what all the business logics and what request and respone coming here, so we want to monitor everything and get all my metrics. To store all those we need a registry which is called ObservationRegistry and autowired it 
+
+In StudentService, we use
+
+@Autowired
+private ObservationRegistry ob;
+
+So as we created ObservationRegistry, whatever the observation that we are going to create that will be part of this registry to get me all the details, and all those details we can see in the actuator 
+   So when we expose the actuator endpoints in that we can see all those details 
+
+1. First whenever we are adding the student and returning data back, alongside we want to get the metrics also, so rather than returning student we will wrap around Observation 
+
+public Student addStudent(Student s){
+          studentList.add(s);
+          //return s;
+          return Observation.createNotStarted("addStudent",ob).observe(()->s);
+     }
+
+So whenever we want to get the metrics of addStudent, we can get all those details using "addStudent" whatever we mentioned in Observation and store all those details in ObservationRegistry
+   Then we call observe() which takes Supplier as argument which is going to observe the student which we are returning 
+    So here we have wrapped around return stmt within this observation and this observation is going to store all data into observation registry with name of addStudent, so whatever happening in addStudent() we can get all those details using addStudent 
+     Similarly we can do this for getStudent() and getAllStudents() also 
+
+public List<Student> getAllStudents(){
+        //return studentList;
+    	 return Observation.createNotStarted("getStudents",ob)
+		            .observe(()->studentList);
+     }
+
+
+public Student getStudent(Integer id){
+        /* return studentList.stream()
+                    .filter(s->s.id()==id)
+                    .findFirst()
+                    .orElseThrow(()->new RuntimeException("Student id is not found"));*/
+    	 return Observation.createNotStarted("getStudent",ob)
+		            .observe(()->studentList.stream()
+		                    .filter(s->s.id()==id)
+		                    .findFirst()
+		                    .orElseThrow(()->new RuntimeException("Student id is not found")));
+     }
+
+12. Now we need to enable actuator endpoints in properties file 
+
+management.endpoints.web.exposure.include=*
+management.endpoints.health.show-details=always
+
+13. Start the application
+
+14. To check the information from micrometer we run 
+
+http://localhost:8000/actuator/metrics
+
+which will display all the metrics, but we cant able to see the metrics which we have added like addStudent, getStudents etc because this will be only added once there are any calls, currently there are no calls so only it is not showing 
+
+15. Goto Postman 
+Post - http://localhost:8080/students 
+In body -raw - json
+{
+   "id":1,
+   "name":"Ram",
+   "email":"ram@gmail.com"
+}
+
+{
+   "id":2,
+   "name":"Sam",
+   "email":"sam@gmail.com"
+}
+
+Get - http://localhost:8080/students - fetch all students
+
+Get - http://localhost:8080/students/2 - fetch particular student
+
+16. Now when we run http://localhost:8000/actuator/metrics
+   we can see addStudent, addStudent.active, getStudents, getStudents.active etc
+
+17. Now if we run to get more details about addStudent
+
+http://localhost:8000/actuator/metrics/addStudent
+
+we can under statistics, count=2 since we have hit the endpoint 2 times, total_time it took to complete the request, max_time it took to complete the request and any errors available or not. So we can get a complete metrics of our apis that we have created like what is happening within our api
+
+http://localhost:8000/actuator/metrics/addStudent.active
+    It will try to give any active task happening on that  particular api 
+
+http://localhost:8000/actuator/metrics/getStudents
+
+http://localhost:8000/actuator/metrics/getStudent - Here it will display within the errors we can see that we got once RuntimeException 
+
+So with simple code we are able to add a complete metrics for our different apis 
+
+18. Now we see about HttpExchange, previously we are using REST client or web client or feign client to define our rest api calls for communicating between different services. But with spring boot3 we have HttpExchange by default which will allow us to define our rest api calls for different services using declarative approach 
+    We just define the interfaces and that interface will define that we need to call this api at this place and with just a method calls we will be able to get those details, we dont need to worry about getting the rest api calls defining the api parameters and all those details everytime 
+
+1. Now we create a client for this StudentService and this client will be using HttpExchange to call this StudentService and get all data from it 
+
+1. Create SpringBootClient spring boot project with spring web, spring reactive web dependency
+  Spring boot: 3.0.4
+  Java version: 17
+  Packaging: jar  
+
+2. Create Student record
+
+public record Student(int id, String name, String email){
+}
+
+3. Create StudentClientService interface and annotate with @HttpExchange instead of @Service along with api which we want to expose
+    Inside the interface we need to declare the getAllStudents() method as @GetExchange, because from HttpExchange we need a get method. Similarly we can use @PostExchange,@DeleteExchange etc
+
+@HttpExchange("/students")
+public interface StudentClientService {
+    @GetExchange
+    List<Student> getAllStudents();
+}
+
+4. Next we create controller which will call this different service to get the data
+
+@RestController
+@RequestMapping("/client/students")
+public class StudentClientController {
+
+      @GetMapping
+      public List<Student> getAllStudents() {
+
+}
+}
+
+Now we want to call rest endpoint from another SpringBoot appl using StudentClientService interface and we cant autowire interface directly, so we need to create the implementation of that interface
+    
+5. So we create a class which create StudentClientService object to get all details using WebClient 
+   For that WebClient we need to have configuration (ie) whenever we need StudentClientService it should inject that object for me and it should define the url where we need to hit and get the data. This is one time configuration we have to do for entire service then for everytime we just go to ur StudentClientService and get all details 
+
+@Configuration 
+public class WebClientConfig {
+
+    @Bean
+    public WebClient studentServiceWebClient() {
+     return WebClient.builder()
+                .baseUrl("http://localhost:8000/")
+                 .build();
+     }
+}
+
+Now we have created a webclient but there has to be a configuration where whenever we want StudentClientService it should inject within WebClient, for that we create another method 
+   Inside that method we need to create proxy service implementation for WebClient using HttpServiceProxyFactory which binds the client with ur webclient 
+
+@Bean
+public StudentClientService studentClientService() {
+   HttpServiceProxyFactory h=HttpServiceProxyFactory.builder(WebClientAdapter.forClient(studentServiceWebClient()).build();
+    return h.createClient(StudentClientService.class);
+  }
+
+Now we have a bean for StudentClientService so that we can injected into controller prg
+
+@RestController
+@RequestMapping("/client/students")
+public class StudentClientController {
+
+     @Autowired
+StudentClientService studentClientService;
+
+      @GetMapping
+      public List<Student> getAllStudents() {
+   return studentClientService.getAllStudents();
+}
+}
+
+19. Start the client appl
+
+20. Start student service appl, insert the data
+
+21. Now if we run http://localhost:8001/client/students
+   It should fetch all students added in student service app to client appl
+
+
+Spring boot 3.0 
+https://www.youtube.com/watch?v=TR254zh-f3c
+
+
+- Create spring boot project SpringBoot3-Blog with web, h2, spring data jpa, spring reactive dependency
+
+1. Create a new model 
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
+public class Post {
+    @Id
+    private Integer id;
+    private Integer userId;
+    private String title;
+    private String body;
+    //getter or setters, default cons and argu cons
+}
+
+Here we can use lombok and we cant use records as jpa dosent support records because it has no arg constructor 
+
+2. Spring data 2022
+      Spring boot3 uses Spring data 2022, so in the past we extends CrudRepository which contains different method, one method to return all values we use "Iterable findAll()" which returns Iterable but we work with list
+     So spring data 2022 introduce ListCrudRepository which extends CrudRepository and it contains saveAll(), findAll(), findAllById() where all these methods are returning lists
+    We have PagingAndSortingRepository which extends Repository, whereas in past version it was extending CurdRepository because we want to give you the choice to extend either CurdRepository or ListCurdRepository 
+
+public interface PostRepository extends ListCrudRepository<Post,Integer> {
+
+}
+
+or
+
+public interface PostRepository extends PagingAndSortingReposiotry<Post,Integer>,
+ListCrudRepository<Post,Integer> {
+
+}
+
+3. Create controller 
+
+@RestController
+@RequestMapping("/api/posts")
+public class PostController {
+
+    @Autowired
+    PostRepository postRepository;
+
+    @GetMapping
+    public List<Post> findAll() {
+        return postRepository.findAll();
+    }
+}
+
+4. Now we will discuss about HTTP Interfaces, now we need to get lot of blog posts and we need to get this from another service, this is not coming from this particular database, we will load some initial blog posts from another service 
+     The service is public api called Jsonplaceholder which comes with common resources like /posts which we want to load into db, so we create model class called Post 
+   Now we create new service called PostService and create loadPosts() which returns list of posts by calling Jsonplaceholder service. We can do that by using either RestTemplate or WebClient 
+
+@Service
+public class PostService {
+
+    @Autowired
+    RestTemplate restTemplate;
+
+    public List<Post> loadPosts() {
+        ResponseEntity<List<Post>> exchange = restTemplate.exchange("https://jsonplaceholder.typicode.com/posts", HttpMethod.GET, null, new ParameterizedTypeReference<List<Post>>() {});
+        return exchange.getBody();
+    }
+
+}
+
+In main class define RestTemplate as bean so that we can inject it
+
+@Bean 
+public RestTemplate restTemplate() {
+    return new RestTemplate();
+}
+
+4. Now we have loadPosts() now we can use this method somewhere to load all these posts into database 
+   So we set datasource name and enable h2 console in application.yml file
+
+spring:
+   datasource:
+      name: blog
+   generate-unique-name: false
+   h2:
+      console:
+        enabled: true
+
+Now we have db connection because we are using H2 in-memory db, so we need a way to call PostService when appl loads and feed all those posts that we grabbed into db using CommandLineRunner interface which takes instance of PostService and using that we call loadPosts() and call PostRepository to save that data 
+
+@Bean
+CommandLineRunner commandLineRunner(PostRepository postRepo, PostService postService){
+    return args -> {
+       List<Post> posts=postService.loadPosts();
+       postRepo.saveAll(posts);
+    };
+}
+
+So when appl loads we are going to call PostService loadPosts we will get 100 post from JsonPlaceholder service and we will call repository to persist those posts inside database 
+
+5. Start the appl, we can see Tomcat 10.0 and Hibernate 6.1.5 latest version starts, we have connection to our jdbc H2 inmemory db called blog
+
+Open h2 console http://localhost:8000/h2-console and check for Post table where we can see 100 posts 
+
+So here basically telling spring we want to list the posts by using RestTemplate with lots of code,instead Spring framework define a Http Service as a Java interface with annotated method like HttpExchange
+   We can generate a proxy at runtime that implements this interface to perform those exchanges, this helps to simplify any HTTP remote access 
+
+6. Create an interface JsonPlaceHolderService instead of using PostService and create the method which we want to use like loadPosts with @GetExchange
+
+public interface JsonPlaceholderService {
+
+    @GetExchange("/posts")
+    List<Post> loadPosts();
+
+}
+
+7. Now we will use WebClient and bind the url with service class 
+
+@Bean
+	CommandLineRunner commandLineRunner(PostRepository postRepository) {
+		return args -> {
+			WebClient client = WebClient.builder().baseUrl("https://jsonplaceholder.typicode.com").build();
+			HttpServiceProxyFactory factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(client)).build();
+			JsonPlaceholderService jps = factory.createClient(JsonPlaceholderService.class);
+
+            List<Post> posts=jps.loadPosts();
+            postRepository.saveAll(posts);
+        };
+	}
+
+8. Start the appl and check in H2 db whether we have 100 posts 
+
+This is HTTP interfaces which is allowing us to just declare methods in interface and this is working with public api, like this we can call another service within ur appl or microservice 
+
+Observability
+     It is the ability to observe the internal state of a running system from the outside, this will contain 3 important things like logging, metrics and traces. For metrics and traces spring boot uses micrometer observation and more 7 importantly distributed traces are now wrapped up into micrometer, whereas in past we use 3rd partly library like Spring cloud Sleuth 
+    This is a consistent API that the framework is now using together metrics and traces about whats happening in ur appl 
+
+1. We add few dependency related to micrometer like zipkin, actuator 
+
+<dependency>
+			<groupId>net.ttddyy.observation</groupId>
+			<artifactId>datasource-micrometer-spring-boot</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+2. Now start the instance of zipkin
+c:softwares>java -jar zipkin-server-2.23.0-exec.jar
+
+3. Start the application
+
+4. Now run http://localhost:7000/api/posts where we will display all posts
+
+5. Now run Zipkin on http://localhost:9411
+  click Run Query 
+Now we can see the call we made /api/posts
+  Click Show 
+
+We can see some info about this api like exception, url, method, status etc. We can see the repo returns all records from the database (ie) 100 posts 
+
+5. Now we will do observation, now we call createNotStarted() which takes name and ObservationRegistry as argument. ObservationRegistry is already created by Spring context so we can use that 
+   Next we set lowCardnalityKeyValue() and set some value which we want to track, then we call observe() which takes what need to be observed 
+  So now using micrometer we will observe using observe()
+
+List<Post> posts= Observation
+					.createNotStarted("json-place-holder.load-posts", ob)
+					.lowCardinalityKeyValue("some-value", "100")
+					.observe(jps::loadPosts);
+            postRepository.saveAll(posts);
+
+Next we are going to observe the repository 
+
+Observation
+					.createNotStarted("post-repository.save-all",observationRegistry)
+					.observe(() -> postRepository.saveAll(posts));
+
+6. Start the appl
+
+7. Now run http://localhost:7000/api/posts where we will display all posts
+
+8. Go to Zipkin - Click Run query
+       Now we have json-place-holder-load-post, the name which is provided in Observation 
+    Click Show
+ - We can see the execution of this is taking some milliseconds, we can see the low cardnality value which we have set 
+ - We can also see trace post-repository this which will display all 100 posts 
+
+ProblemDetails
+     There is a common requirement for Rest services is to include details in the body of error response, the Spring framework supports ProblemDetails for HTTP api specification
+
+1. Create new method in PostController to get a post based on id 
+
+  @GetMapping("/{id}")
+    public Post findById(@PathVariable Integer id) {
+        return postRepository.findById(id).orElseThrow(() -> new PostNotFoundException(id));
+    }
+
+which returns an exception if id is not found
+
+2. Create PostNotFoundException class
+
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class PostNotFoundException extends RuntimeException {
+
+    private Integer id;
+
+    public PostNotFoundException(Integer id) {
+        super("Post not found!");
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+}
+
+3. Start the appl and run
+http://localhost:7000/api/posts/99 - display post 
+
+http://localhost:7000/api/posts/999 - display whitelabel error page and in console we get PostNotFoundException 
+
+4. We goto terminal and run
+>curl http://localhost:7000/api/posts/999
+    It will display Not found with status code 404. But we need more details about why this is failing and this is where ProblemDetails comes into picture 
+
+5. Create ExceptionHandler class
+
+@RestControllerAdvice
+public class ExceptionHandlerAdvice {
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ProblemDetail handlePostNotFoundException(PostNotFoundException e) throws URISyntaxException {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,e.getMessage());
+        problemDetail.setProperty("host","localhost");
+        problemDetail.setProperty("port",8080);
+        problemDetail.setProperty("postId",e.getId());
+        problemDetail.setType(new URI("http://localhost:8080/problems/post-not-found")); 
+       problemDetail.setTitle("Post not found Exception");
+       problemDetail.setDetail("Post is not available");
+      
+        return problemDetail;
+    }
+
+}
+
+6. Start the appl
+
+7. Now we run in terminal
+>curl http://localhost:7000/api/posts/999
+
+Now we get more info about the error, so when it comes to http apis it will supply more info of why this error is happening  
+
+
+Spring Security 6 in Spring boot 3
+https://www.youtube.com/watch?v=bB6A490Uh5M
+
+       If we are creating new spring boot project or updating an existing project that uses spring security, we have deprecated WebSecurityConfigureAdapter and encourage users to move towards component based security configuration. So spring security is a framework that provides authorization, authentication and protection against common attacks
+      In spring boot3, spring security has deprecated lot of apis and classes like WebSecurityConfigureAdapter, EnableGlobalMethodSecurity annotation, antMatchers,authorizeRequest 
+  
+1. Create Spring boot project with 3.0.1 version and spring web, spring security, lombok dependency
+
+2. Create student model 
+
+public class Student {
+    private long id;
+    private String firstName;
+    private String lastName;
+}
+
+3. Create StudentController with few rest endpoints 
+
+@RestController
+public class StudentController {
+      private List<Student> students=new ArrayList<>();
+
+     @GetMapping("/students")
+     public List<Student> students() {
+         Stduent s1=new Student();
+         s1.setId(1);
+         s1.setFirstName("Ramesh");
+         s1.setLastName("Kumar");
+         Stduent s2=new Student();
+         s2.setId(2);
+         s2.setFirstName("uamesh");
+         s2.setLastName("Kumar");
+         students.add(s1);
+         students.add(s2);
+         return students;
+     }
+
+     @PostMapping("/students")
+     public Student createStudent(@RequestBody Student s) {
+        students.add(s);
+        return s;
+     }
+}
+
+4. In pom.xml we have added spring-boot-starter-security which internally provides all the spring security related dependencies like spring-aop, spring-security-config, spring-security-web all of 6.0 version 
+    Whenever we add spring boot starter security dependency in our springboot appl, the spring boot will automatically configure a lot of stuff for spring security like
+1. Spring boot automatically enables Spring security default configuration which creates as servlet Filter as a bean called springSecurityFilterChain and provides default login form 
+2. Spring boot auto configuration provides a default user with username "user" and randomly generated pwd in the console 
+3. Spring boot provides certain properties to customize default username and pwd
+4. Spring security protects the pwd storage with BCrypt algorithm 
+5. It also provides default logout feature 
+6. Also provides CSRF attack prevention by default
+7. If spring security is on classpath, spring boot automatically secures all http endpoints with basic authentication
+
+5. Start the appl, in console we can see default pwd 
+6. Run http://localhost:8080
+    We can see spring security default configuration automatically provides login form so that we can test spring security default configuration 
+   username: user
+   Pwd: random generated pwd
+We can a popup, which is nothing but basic authentication because spring security 6 enables both form based and basic auth
+    username: user
+   Pwd: random generated pwd
+Now it will give error because we didnt configure any api 
+
+Now run http://localhost:8080/students - display all student
+http://localhost:8080/logout - logout 
+
+7. Now we can see how to customize username and password in spring security, so in application.properties we can give
+
+spring.security.user.name=ram
+spring.security.user.password=abcd
+spring.security.user.role=ADMIN
+
+8. Start the appl, we cant see any randomly generated pwd as we have manually specified the pwd
+
+ Run http://localhost:8080 and provide the customize username and pwd to check it is working
+
+Now run http://localhost:8080/students - display all student
+
+9. Spring security provides form based auth as well as HTTP Basic auth, in spring security 6 both form based auth and HTTP Basic auth is enabled by default. In order to use one of the authentication we have to configure SecurityFilterChain bean 
+    Create SecurityConfig class with @Configuration so we can define all spring bean definations within this class. Previously we extend our spring configuration class from WebSecurityConfigureAdapter, but now it is deprecated and it is removed from Spring Security 6
+    Inside this class we create SecurityFilterChain bean which enables component based spring security, which takes HttpSecurity as argument. SecurityFilterChain is an interface and its implemented class is DefaultSecurityFilterChain 
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+         return http.build();
+    }
+
+    Inside this method we configure spring security configuration such a way that we will enable only basic auth. First we call csrf and disable it, then we call authorizeHttpRequests(), authorizeRequests() is deprecated and from spring security 6 we have to use authorizeHttpRequests(), this method is used to authorize the incoming http request to our appl. This method takes an implementation of lambda expr, so here we use anyRequest() because we want to authenticate any type of request (ie) we are going to authenticate all kind of request. Next we call httpBasic() which takes the argument 
+
+@Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+         http.csrf().disable()
+             .authorizeHttpRequests((authorize)->authorize.anyRequest().authenticated()).httpBasic(Customizer.withDefaults());
+         return http.build();
+    }
+   
+So here we are using basic auth  
+
+10. Start the appl
+
+ Run http://localhost:8080, now we have secured our apis using basic auth 
+
+11. Goto postman, with GET request we call
+http://localhost:8080/students 
+
+Goto Authorization - Basic Auth - Give username and password - Click Send
+
+Now we can see list of all students
+
+How postman client send username, pwd in header of each request?
+     Under headers, we can see key as Authorization and value as Basic with some string which is base64 format string 
+     Now copy that string and paste in base64decode.org, we can it will print username and password (ie) postman client basically convert the combination of username and password into string and then it will convert that string into base64 format and pass in the header by using authorization as key and value as a basic followed by base64 formatted string 
+
+11. Remove customize username and pwd from application.properties file 
+
+12. Now we see how to secure the rest endpoint using in-memory auth. Now we create different users using UserDetails and User class and store those users in-memory object that is provided by spring security 
+   When we pass password the plain text wont work, in case of spring security we have to encode the password 
+
+@Bean
+public static PasswordEncoder passwordEncoder() {
+   return new BCryptPasswordEncoder();
+}
+
+@Bean
+public UserDetailsService userDetailsService() {
+    UserDetails user=User.builder().username("ram").password(passwordEncoder().encode("abcd")).roles("USER").build();
+    UserDetails admin=User.builder().username("admin").password(passwordEncoder().encode("abcd")).roles("ADMIN").build();
+    return new InMemoryUserDetailsManager(usr,admin);
+   }
+
+Basically AuthenticationManager component will use this UserDetailsService to get username and password 
+
+13. Start the appl
+
+14. Goto Postman, with GET request we call
+http://localhost:8080/students 
+
+Goto Authorization - Basic Auth - Give username and password as ram and abcd- Click Send - Display list of students
+
+Now check for username and password as admin and abcd - Display list of students
+
+13. Previously we use method level security using @EnableGlobalMethodSecurity but this annotation is deprecated and Spring Security 6 provides new annotation @EnableMethodSecurity which by default enables PreAuthorize, PostAuthorize, PreFilter and PostFilter annotations 
+
+-Define @EnableMethodSecurity in SecurityConfig class
+
+    Now we use @PreAuthorize to provide method level security. In StudentController we provide access to rest api "/students" with Post mapping only by admin user 
+
+@PreAuthorize("hasRole('ADMIN')")
+ @PostMapping("/students")
+     public Student createStudent(@RequestBody Student s) {
+        students.add(s);
+        return s;
+     }
+
+So admin user can only access createStudent(), other user cant access this method
+
+14. Start the appl
+
+15. Goto Postman, in Post request, run http://localhost:8080/students 
+In body - raw - Json
+{
+   "id":3,
+   "firstname":"Ramu",
+   "lastname":"kumar"
+}
+In Authorization - Basic Auth - Give admin username and password-Click Send
+  Now admin user can add new student, but if another user try to access the endpoint it will say unauthorized
+
+Spring boot 3.0 - New Features
+A. To use spring boot3.0, you need minimum JDK17 or above but not work below JDK17. We can use JDK17 features like Records, text blocks, switch expr and sealed classes etc
+
+1. create Spring boot project with spring web dependency
+
+2. Create record called Student
+
+public record Student(int id, String name, String address) {
+}
+
+3. Create controller 
+
+@RestController
+@RequestMapping("/test")
+public class TestController {
+ 
+    @RequestMapping("/info")
+    public ResponseEntity<Student> testing() {
+    var address="""
+               ABC Street
+               Chennai
+               Tamilnadu
+               727272
+               """;
+     var student = new Student(10,"Ram",address);
+      System.out.println(address);
+      return ResponseEntity.ok(student);
+    }
+},
+
+4. Start the appl, run http://localhost:8080/test/info 
+     
+So spring boot3 supports spring 6 and JPA3 version 
+
+B. Jakarta EE in Spring boot 3.0
+       Spring boot 3 is based on Spring framework 6 and Jakarta EE (ie) Java EE is now changed as Jakarta EE
+    javax.* changed to jakarta.* pkg 
+      When initial version of Java is launched which has only one version J2SE, after that we have J2SE and J2EE, so in J2SE we have all standard features and in J2EE we have enterprise features and it can be run on server like servlets, jsp etc
+     So in 2006 oracle have changed J2EE to Java EE, then in 2017 Oracle foundation handover to Apache foundation to maintain and upgrade all enterprise features and changed the name to Jakarta EE. Since Java related all rights are under Oracle so apache foundation changed the name from JavaEE to JakartaEE
+
+@RequestMapping("/info1")
+public String test1(HttpServletResponse r,ServletConfig s1, ServletContext s2){
+   return "This is a testing";
+}
+
+Now we can see everything is imported from Jakarta package 
+
+3. Observability
+      It is about getting a clear picture of whats happening inside of an applications, suppose in appl we are exposing multiple apis and how those apis or services how it is performing, so those can be easily measured using this observability. To achive this observability we need to use some tools and techniques to collect the data from the sources like logs, metrics and tracing, this data actually help us to understand how the appl is performing
+   So developers or anyone can keep an eye of this appl and check if there any kind of issues is coming or not, or the appl is running smoothly or not, so those kind of things we can easily check using Observability 
+    In Observability, we have handlers which is responsible for capturing the event during the execution of many methods or services, they allow us to measure the execution time, handle exceptions and perform the additional actions
+  ObservationRegistry acts as a centralized repository for storing and managing the observe metrics, so this is actually help us to organize and analyze the data collected from the observability handler. This registers provides a consolidated view of the appl performance 
+   Observeaspect is a kind of AOP in component which allows us to apply observe in our code using @Observed annotation, which can be applied on any method in the class so that method can be observed 
+    When we create custom monitoring handler, this is kind of lifecycle so it is having start, stop, onError etc. 
+
+1. Create springboot project Springboot-Observability with web, datajpa, h2 and lombok dependency 
+
+To measure the method performance and to get the execution time of particular method, we need to use observabilty for that we have to provide actuator and aop dependency 
+
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+
+2. Create User entity class
+
+@Getter
+@Setter
+@ToString
+@Entity
+@Table(name = "demo_user")
+public class User {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private int id;
+	private String name;
+	private String address;
+	private String hobby;
+
+}
+3. Create UserRepository
+public interface UserRepository extends JpaRepository<User, Integer> {
+
+}
+4. Create UserService
+@Service
+public class UserService {
+
+	@Autowired
+	private UserRepository repository;
+
+	public User addUser(User product) {
+		return repository.save(product);
+	}
+
+	public User getUser(int id) {
+		return repository.findById(id).get();
+	}
+
+	public List<User> getUsers() {
+		return repository.findAll();
+	}
+}
+5. Create UserController
+@RestController
+@RequestMapping("/api")
+public class UserController {
+
+	@Autowired
+	private UserService service;
+
+	@PostMapping("/addUser")
+	public User addUser(@RequestBody User user) {
+		return service.addUser(user);
+	}
+
+	@GetMapping("/getUser/{id}")
+	public User getUser(@PathVariable int id) {
+		return service.getUser(id);
+	}
+
+	@GetMapping("/getAllUser")
+	public List<User> getUsers() {
+		return service.getUsers();
+	}
+}
+
+6. To create our own observability handler method, so we need to create one handler class and then particular observability things we need to register in this Observer Registry 
+   Now we create class called MeasureApiPerformance which is used to measure the performance of any apis. This class should implements ObservationHandler with Observation.Context and define all default methods and we can define our own logic
+    Inside onStart() we can write all log and we want to find how much time is taking for executing any particular method so we need to add time in the context as key value pair 
+    @Override
+	public void onStart(Context context) {
+		log.info("Method execution started.");
+		context.put("execution-time", System.currentTimeMillis());
+	}
+   Inside stop() we need to get the starting time and subtract from current time 
+    @Override
+	public void onStop(Context context) {
+		long timeTaken = System.currentTimeMillis() - context.getOrDefault("execution-time", 0L);
+		log.info("Method execution completd {} for name {}", timeTaken, context.getName());
+	}
+
+@Slf4j
+public class MeasureApiPerformace implements ObservationHandler<Observation.Context> {
+
+	@Override
+	public void onStart(Context context) {
+		log.info("Method execution started.");
+		context.put("execution-time", System.currentTimeMillis());
+	}
+
+	@Override
+	public void onStop(Context context) {
+		long timeTaken = System.currentTimeMillis() - context.getOrDefault("execution-time", 0L);
+		log.info("Method execution completd {} for name {}", timeTaken, context.getName());
+	}
+
+	@Override
+	public void onError(Context context) {
+		log.info("Error cuured while executing method.");
+	}
+
+	@Override
+	public void onEvent(Event event, Context context) {
+		ObservationHandler.super.onEvent(event, context);
+	}
+
+	@Override
+	public void onScopeOpened(Context context) {
+		ObservationHandler.super.onScopeOpened(context);
+	}
+
+	@Override
+	public void onScopeClosed(Context context) {
+		ObservationHandler.super.onScopeClosed(context);
+	}
+
+	@Override
+	public boolean supportsContext(Context context) {
+		return true;
+	}
+
+}
+
+
+7. Now we have created custom handler so we need to register in ObservationRegistry. So we create another class ObservationRegister with @Configuration. Next we create a bean for registering the handler 
+
+@Configuration
+public class ObservationRegister {
+
+	@Bean
+	public ObservedAspect observedAOP(ObservationRegistry observationRegistry) {
+		observationRegistry.observationConfig().observationHandler(new MeasureApiPerformace());
+		return new ObservedAspect(observationRegistry);
+	}
+}
+
+
+
+8. For enabling this observability we need to put some properties in application.properties
+
+management.endpoints.web.exposure.include = *
+management.endpoints.health.show-details= always
+
+9. Now we add annotations in service layer to observe the performance
+@Service
+public class UserService {
+
+	@Autowired
+	private UserRepository repository;
+
+	@Observed(name = "add.user")
+	public User addUser(User product) {
+		return repository.save(product);
+	}
+
+	@Observed(name = "get.user")
+	public User getUser(int id) {
+		return repository.findById(id).get();
+	}
+
+	@Observed(name = "get.all.user")
+	public List<User> getUsers() {
+		return repository.findAll();
+	}
+}
+
+10. Start the appl
+
+11. In Postman, run http://localhost:2000/api/addUser with POST request - In body - raw -json
+{
+   "name":"Ram",
+   "address":"Chennai",
+   "hobby":"play"
+}
+
+Now run with GET - http://localhost:2000/api/getUser/1
+
+Now run with GET - http://localhost:2000/api/getAllUser
+
+12. Now run with GET request - http://localhist:2000/actuator/metrics
+    Now we can see metrics add.user,add.user.active,get.user, get.all.user etc 
+
+13. Now if we run http://localhist:2000/actuator/metrics/add.user
+   We can get details for this particular service like total time, how much time it is executed etc
+
+14. In the console also we can see the logs that actually added in Handler prg 
+
+15. Now run with GET - http://localhost:2000/api/getUser/4, wrong user id it will throw an exception
+Now if we run http://localhist:2000/actuator/metrics/get.user
+   It will display the details how much time it is executed,what is the error etc
+
+
+Another example for observability
+https://github.com/Java-Techie-jt/observability-demo/tree/main
+
+
+
+Monitor spring boot appl using Micrometer monitoring system 
+https://www.youtube.com/watch?v=2wr9njNdywk
+ 
+    Micrometer provides a simple facade to integrate actuator metrics with external monitoring systems and it allowing us to instrument ur JVM  based appl (ie) Micrometer provide one registry which will hepls to get feed from JPA something like JPA memory, heap memory and garbage collector and map those data metrics into graphical format 
+      Micrometer supports several monitoring system like Netflix Atlas, AWS cloudwatch, Datadog, InfluxData, SignalFx, Graphite, WaveFront, Prometheus etc 
+
+Prometheus
+    - It an open source monitoring system that was originally built by SoundCloud, it consists of
+  1. A data scraper that pulls mertics data over HTTP periodically at a configured interval
+  2. A time-series database to store all the metrics data
+  3. A simple UI where you can visualize, query and monitor all the metrics
+
+Grafana
+   - It allows u to bring data from various data sources like ElasticSearch, Prometheus, Graphite, InfluxDB etc and visualize them with beautiful graphs
+   - It also lets you to set alert rules based on ur metrics data. when an alert changes state, it can notify you over email, slack or various other channels 
+
+1. Create spring boot appl with web, actuator and micrometer registry for prometheus dependency 
+
+2. Enable all actuator endpoints in application.properties
+
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=always
+
+3. Create an endpoint to verify the appl, in main class
+
+@RestController
+
+   final static Logger logger=LoggerFactory.getLogger(.class);
+    @GetMapping("/message")
+    public String getMessage(){
+         logger.warn("Just checking");
+         return "Testing";
+    } 
+
+4. Start the appl 
+
+5. Now run http://localhost:2000/actuator
+       - It will display all the endpoints enabled by actuator dependency, in that we can see
+http://localhost:2000/actuator/prometheus, which means micrometer metrics have registered our prometheus registry
+
+6. Now run http://localhost:2000/actuator/prometheus, 
+   We can see we will get some info, and wht this info categorized as, it is categorized as labels and its attributes (ie) present in {}
+    First we have jvm_buffer_total_capacity_bytes, this is the label through which we can identify this particular metric inside prometheus and we can then query it based on various attributes. One of the most important metric we usually look is jvm_memory_used_bytes which has heap and non-heap area for which we are getting this particular info 
+
+7. Download prometheus from http://prometheus.io/download  and extract it 
+
+8. To work with prometheus we need to provide a yml configuration file to this prometheus server by mentioning our scrap details and host ip
+   Inside Prometheus, we update prometheus.yml file with job info
+
+  - job_name: 'spring-actuator'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['127.0.0.1:2000']
+      labels:
+        application: "My Spring boot application"
+
+We have specified a particular job, so prometheus actually queries the appl or any place from which it has to gather metrics data. So what this job do is, it has a particular regular interval called as scrape interval using which it actually calls an endpoint to get the metrics info
+   We have specified some target that is our localhost appl which runs on 2000 and we specify the metrics path (ie) actuator/prometheus, along with this we are giving a particular label to specify from which appl it is running, and we specify the job name "apring-actuator"
+    The above configurations are default configurations where we get endpoint of prometheus itself which is running at 9090 
+
+
+9. Start prometheus server - run prometheus.exe
+c:/promethus> .\prometheus.exe
+which starts in 9090
+   - Run http://localhost:9090 which opens prometheus dashboard where we can query for particular label 
+   - Now we can query jvm_memory_used_bytes - Click Execute
+   - Goto Status - Targets - we can check whether our job is up and running 
+
+So this was prometheus which is gatering info from Spring boot appl, so prometheus is a time series database as such it actually pulls info and stores it in a time series format 
+
+10. Now we can visualize this in grafana tool 
+
+Download Grafana from http://grafana.com/grafana/download?platform=windows - 8.5.2
+   - Extract the zip file 
+   - Start Grafana server
+c:/Grafana/bin>.\grafana-server.exe
+    which starts the server in port 3000
+   - Open http://localhost:3000 in browser
+       Default username and password is admin,admin
+       After that we can change new password as abcd123
+
+11. First we will configure our data source 
+
+Step 1: Set up data sources
+
+Right side click Configuration - Data sources - Click Add Data Source - Click Select prometheus
+
+url: http://localhost:9090
+Click Save & Test - which shows Datasource Updated 
+
+Step 2: Create a dashboard
+   Right side click + - Create - Dashboard - Add new panel
+
+Metrics browser: 
+Select a metric: logback_events_total
+    - Because we are actually interested in to seeing the various warning logs that we actually we are going to generate once we hit the particular endpoint on our appl 
+   Click Use Query 
+
+we can see, by default it is pulling all the events that it had and showing the graph values with info, warn and trace value  
+
+- Now we add more info in metric browser, press ctrl spacebar, it will give various attributes that are present 
+Metric browser: logback_events_total{level="warn"} - click Run Query
+   It will show there is only one warning 
+
+- Now we will generate some warning logs, now we run the endpoint 
+http://localhost:2000/message
+  - We can see warning logs are created in appl console 
+
+- Now in grafana - click Run Query once again
+   We can see the value is increased and we have 2 warning logs 
+
+- Now we are going to change to show the data of only last 5 minutes, in the top Select Last 5 minutes
+    We can see the warning logs is increased to 2, so we could save this info in the dashboard. Usually we dont want the number of warning logs or error logs, we usually want to know the rate at which the number of warning or error logs that have been increased 
+
+- So we use function called rate() which takes logback_events info and measure it over one min of time
+Metric Browser: rate(logback_events_totak{level="warn"}[1m])
+Click RunQuery
+   Now it will show the rate at which warning logs are generated over period of 1 min. 
+   If we run http://localhost:2000/message and runquery it will show log
+
+- Now we can save the dashboard
+Click Apply - then auto refresh for 5S 
+
+If we run http://localhost:2000/message, we can see the rate is increased 
+
+
+Spring Framework 6: HTTP Interface 
+https://www.youtube.com/watch?v=A1V71peRNn0&t=12s
+
+      Till Java11 it was very difficult to create HTTP clients just with the classes that where offered in JDK
+     So Spring framework has a class called RestTemplate and later on added also a WebClient as a reactive alternative to RestTemplate and using these two classes we had some higher level utilities to create HTTP clients but it still requires lot of boilerplate code and Spring framework 6 takes it to the next level, so the idea is that instead of writing a lot of repetitive code we can just declare an interfaces and then the implementation for it will be generated for you
+      Consider we are going to build http client for publicly available api called jsonplaceholder which exposes list of posts and todos 
+
+1. Create Springboot project SpringBoot-HTTPClient with reactive web and web dependency
+    Eventhough we dont necessarly need to build a reactive appl, this declarative HTTP client capabilities requires some of the reactive classes  
+
+2. Create a record that will map to this post entry 
+
+record Post(Long userId, Long id, String title, String body){
+}
+
+3. Create HttpClient interface which has 3 methods
+
+interface PostClient {
+   List<Post> posts();
+   Post create(Post post);
+   ResponseEntity<Post> get(Long id);
+}
+
+Before we have to implement this interface and use RestTemplate, but in Spring framework 6, we need to create a bean which is a type of PostClient which we actually want 
+ @Bean
+ PostClient postClient() {
+
+ }
+
+We have HttpServiceProxyFactory where we can pass HttpClientAdapter, right now we have WebClientAdapter implementation which takes WebClient as argument. Now we create a Webclient that will have the baseurl pointing to the api.
+   WebClient webClient=WebClient.builder().baseUrl("https://jsonplaceholder.typicode.com/posts").build();
+   HttpServiceProxyFactory factory=HttpServiceProxyFactory.builder(WebClientAdapter.forClient(webClient)).build();
+   Now the factory is capable of creating a client where we just passed an interface
+    return factory.createClient(PostClient.class);
+
+ @Bean
+	 PostClient postClient() {
+	     WebClient webClient=WebClient.builder().baseUrl("https://jsonplaceholder.typicode.com").build();
+	     HttpServiceProxyFactory factory=HttpServiceProxyFactory.builder(WebClientAdapter.forClient(webClient)).build();
+	     return factory.createClient(PostClient.class);
+	 }
+
+4. Next we need to annotate the PostClient interface and its methods to tell Spring that what http methods like get or post etc
+   If we want make get request then we can annotate with @GetExchange and post request means @PostExchange, annotate the interface as @HttpExchange 
+
+@HttpExchange("/posts")
+interface PostClient {
+   @GetExchange
+   List<Post> posts();
+   @PostExchange
+   Post create(@RequestBody Post post);
+   @GetExchange("/{postId}")
+   ResponseEntity<Post> get(@PathVariable("postId")Long id);
+}
+
+5. Now we create a bean of type ApplicationRunner which will be executed when the appl starts and pass PostClient as method parameter 
+
+@Bean
+ApplicationRunner applicationRunner(PostClient postClient){
+    return args -> {
+            System.out.println(postClient.posts());
+     Post post=postClient.create(1000l,1000l,"Spring","HttpClient");
+System.out.println(post);
+    System.out.println(postClient.get(1));
+      };
+}
+
+6. Start the appl
+     We can see it will print all list of posts in the appl console, then we created a post and we have fetched the post based on id
+     
+
+Spring Framework 6: RestClient - Supports from Spring boot 3.2
+https://www.youtube.com/watch?v=Kv6JEn5HL-M
+  
+    First we can start with the term client, a client is just a way to call to another service in our organization or public API. So traditionally in Spring we have many implementations of clients.
+     If we are building out a Spring MVC app, we traditionally use for something called RestTemplate which has bunch of overloaded methods and the ability to construct a service to call to another service, but the problem with that is there are lot of overloaded methods 
+    Next came is WebClient in reactive world using spring webflux, we needed a new client called WebClient which is asynchronous 
+    Next we have RestClient which has fluent API but we can use it in our MVC apps without having to bring in that external dependency. It also supports for HTTP Interfaces that came in Springboot3 and Spring framework6, this will also support that no longer to bring in webflux to use HTTP interfaces in ur MVC appl 
+
+    Spring framework 6 introduces RestClient, a new way to interact with HTTP backends in Spring framework. There are different ways to interact with HTTP backends in Spring framework 
+  1. RestTemplate introduce Spring framework 3 in 2009
+  2. WebClient introducing Spring framework 5 for reactive stack
+
+RestTemplate started as a relatively small class with a time it grew to cover every use case of possible HTTP interactions and it ended by being like a very long list of methods so its not very convenient to use, 
+   RestTemplate r=new RestTemplate();
+   r.
+So the webclient is introduced for the reactive stack is completely different, it has a fluent interface which means that first step is to select method then we can provide the details about the request like uri, headers then we finally execute the request and then we get the response 
+   WebClient w=WebClient.builder().build();
+   w.get().uri("http://..").header("name","value").retrive().bodyToFlux();
+    Theoretically we can also use WebClient also in traditional servlet appl then we have to bring all the reactive stack and most people dont prefer to do it
+    In addition to that, HTTP interfaces introducing in Spring framework 6 will work only with webclient, so if u want to use HTTP interfaces as declarative HTTP clients we are forced to use WebClient 
+
+     RestClient is a synchronous Http client and fluent api of WebClient and the same infrastructure as RestTemplate and it can be used with declarative HTTP interfaces.  So it is a new modern alternative to RestTemplate 
+
+1. Create SpringBoot project with web dependency
+
+2. Create a bean ApplicationRunner, 
+@Bean
+ApplicationRunner applicationRunner() {
+   return args-> {
+     RestClient restClient=RestClient. 
+   };
+}
+
+inside that we use RestClient, it has static methods called create() which creates a default version of RestClient, another create(String url) which takes base url and another create(RestTemplate) that takes RestTemplate as argument which means it copies all RestTemplate configuration and put them on the RestClient 
+   So if you have an existing appl it is very convenient way to move from existing RestTemplate to RestClient. We also builder() which is very similar to RestTemplate and WebClient builder().
+
+In Springboot 3 appl, we will not do it in this way, we will follow autoconfiguration provided by Springboot, so we create a bean of type RestClient and we inject RestClient.Builder that comes autoconfigured by Spring boot. Using builder we can set baseUrl and call build() and return it. 
+
+@Bean
+RestClient restClient(RestClient.Builder builder){
+   return builder.baseUrl("http://jsonplaceholder.typicode.com/posts/").build();
+}
+
+Now we are to inject RestClient wherever we need in ApplicationRunner which will be executed when springboot appl starts
+
+@Bean
+ApplicationRunner applicationRunner(RestClient restClient){
+    return args -> {
+
+    };
+}
+
+Inside it, now we are going to create a RestClient that hits an API returning a individual  post, so we call get() then we make the uri more specific using uri() and if we need to set some headers like accept header then we call header(), next we need response so we call retrieve(), then we can either call body() where we can put what type of data returning (ie) Post record
+
+Post body=restClient.get()
+           .uri("/{id}",1)
+           .retrieve()
+           .body(Post.class);
+System.out.println(body); 
+
+@Bean
+ApplicationRunner applicationRunner(RestClient restClient){
+    return args -> {
+         Post body=restClient.get()
+           .uri("/{id}",1)
+           .retrieve()
+           .body(Post.class);
+           System.out.println(body); 
+    };
+}
+
+3. Start the appl, we can see one post in appl console
+
+    But actually we dont have an info about the HTTP status or Http response except the body so we have another toEntity() so here instead of returning actual body it will return ResponseEntity 
+
+@Bean
+ApplicationRunner applicationRunner(RestClient restClient){
+    return args -> {
+         ResponseEntity<Post> response=restClient.get()
+           .uri("/{id}",1)
+           .retrieve()
+           .toEntity(Post.class);
+           System.out.println(response.getStatusCode()+" "+response.getBody()); 
+    };
+}
+
+- In case if we want to execute a post request where we dont care about the response body and we just want to get access to status code we use toBodilessEntity() which returns ResponseEntity<Void>
+
+@Bean
+ApplicationRunner applicationRunner(RestClient restClient){
+    return args -> {
+         ResponseEntity<Void> response=restClient.get()
+           .uri("/{id}",1)
+           .retrieve()
+           .toBodilessEntity();
+           System.out.println(response.getBody()); 
+    };
+}
+
+- In case if we want to return all posts, then we have to set the body of concrete type because we want list of posts 
+
+@Bean
+ApplicationRunner applicationRunner(RestClient restClient){
+    return args -> {
+         var response=restClient.get()
+           .retrieve()
+           .body(new ParameterizedTypeReference<ResponseEntity<Post>>());
+           System.out.println(response.getBody()); 
+    };
+}
+ 
+
+4. We have discussed if we want to use HTTP interface then we have to define reactive web dependency eventhough we are not using also 
+   But if want to use HTTP interface but we dont want to use reactive then we can use RestClient
+
+1. First we create an interface
+
+interface PostClient
+   @GetExchange
+   List<Post> posts();
+}
+
+2. Create a bean 
+
+@Bean
+PostClient postClient(RestClient restClient) {
+   HttpServiceProxyFactory factory=HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient)).build();
+   return factory.createClient(PostClient.class);
+ }
+
+@Bean
+ApplicationRunner applicationRunner(PostClient postClient){
+    return args -> {
+         var response=postClient.posts();
+           System.out.println(response); 
+    };
+}
+ 
+3. Start the appl, it will display all the posts 
+
+So RestClient gives u imperative interface , we have more control on HTTP interfaces. There is another difference between RestClient and RestTemplate, so we know either RestTemplate or WebClient or RestClient they are not actual HTTP clients that execute the network requests, they are like sitting like a higher level interface sitting on top of something that does the lower level work
+    In case of RestTemplate this could be either the default one which is HTTP url connection or Apache HTTP client. For Webclient this is either Netty or Jetty and it is similar on RestClient like Apache WebClient or Http, but we can also use HTTPClient that was introduced in JDK11 so there is no need for extra dependency
+
+
+https://github.com/danvega/rest-client/tree/main  - Example of another RestClient 
+
+
+Spring framework
+      It is a massive project that used for variety of appl, so we could build secure responsive web apps connected to any datastore. It also support reactive stack, so if want some async non-blocking architecture using spring webflux. We can also use spring to build nicroservices which deliver production ready features with independently evolvable microservices 
+     Spring boot is used to simplify the spring development by using 3 core principles like spring boot starters, autoconfiguration and production ready 
+    In spring boot starters, when we want to create a new project, in the past we have to declare all of the dependencies that ur project needed, but in spring boot if we use spring-boot-starter-web it will give all of the things that are need to build a web appl like spring core, spring mvc, logging, embedded tomcat and Jackson. So spring boot starters is kind of bundling all the required dependencies together and using the correct versions
+    Autoconfiguration - If we are building a web appl and connect to the database  and we need datasource configuration configured for it and we need to do it manually. So we provide bunch of defaults based on type of appl we are building we autoconfigured it 
+    Production ready - we have spring boot actuator module which provides all of spring boots production ready features like endpoints which give us some insight into our appl, what are the beans in our appl, what is the health of the appl, we can find info metrics, mappings and etc.
+    Observability which is combination of logging, metrics and distributed tracing. 
+    The ability to build something for production (ie) we can create a executable jar so anywhere that has a JVM this jar will run, if we dont have JVM we can build a container using Docker or cloud native build packs to build an image. Spring boot 3 have this idea of native executables 
+
+
+JDBCClient in Spring Framework 6.1 in Spring Boot3.2
+https://www.youtube.com/watch?v=JBu5GibEJ4k&list=PLZV0a2jwt22tG2DEcsY7s3GJWIxlPo5bt
+
+       So communicating with database reading and persisting data in Java has never been the easiest thing to do, we have to construct JDBC url, we have to think about how to open a connection when it is done then how to close it. When we get into a real world appl we need to think about connection pools, so we have Spring and some of the abstractions in Spring make this a easier by using JdbcTemplate, this gives us a nice abstraction to communicate with database 
+    The downside to this is that building out simple crud services based on resource, we have to understand all the methods that we need to communicate with the database, we need to understand about rowmappers, how do we map a column to a field etc 
+    JdbcClient is used to improve somethings like similar to RestClient, it will give us nice fluent API which is easy to understand and read. This is autoconfigured for us in Springboot3.2 so we can ask for bean in our appl or service wherever we want to use it and we can get an instance of it 
+
+1. Create SpringBoot-JdbcClient project with spring web, JDBC api(spring-boot-starter-jdbc), h2 db dependency with Spring boot 3.2.0(M2) version 
+
+2. Create record Post which holds certain info
+
+public record Post(String id, String title, String slug, LocalDate date, int timeToRead, String tags) {
+
+}
+
+3. Create PostController which provides all endpoints
+
+@RestController
+@RequestMapping("/api/posts")
+public class PostController {
+
+    @Autowired
+    @Qualifier("jdbcClientPostService")
+    //@Qualifier("jdbcTemplatePostService")
+    PostService postService;
+
+    @GetMapping("")
+    List<Post> findAll() {
+        return postService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    Optional<Post> findById(@PathVariable String id) {
+        return postService.findById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    void create(@RequestBody Post post) {
+        postService.create(post);
+    }
+
+    @PutMapping("/{id}")
+    void update(@RequestBody Post post, @PathVariable String id) {
+        postService.update(post, id);
+    }
+
+    @DeleteMapping("/{id}")
+    void delete(@PathVariable String id) {
+        postService.delete(id);
+    }
+
+}
+   
+4. Create PostService which is going to talk to database
+
+public interface PostService {
+    List<Post> findAll();
+    Optional<Post> findById(String id);
+    void create(Post post);
+    void update(Post post, String id);
+    void delete(String id);
+}  
+
+We are going to create 2 different implementation of PostService, one using JdbcTemplate and others JdbcClient
+
+5. Create schema.sql in resources and configure h2 properties in application.properties file
+
+schema.sql
+
+DROP TABLE IF EXISTS Post;
+
+CREATE TABLE Post (
+  id varchar(255) NOT NULL,
+  title varchar(255) NOT NULL,
+  slug varchar(255) NOT NULL,
+  date date NOT NULL,
+  time_to_read int NOT NULL,
+  tags varchar(255),
+  version INT,
+  PRIMARY KEY (id)
+);
+
+server.port=1000
+spring.datasource.generate-unique-name=false
+spring.datasource.name=blog
+spring.h2.console.enabled=true
+
+6. Next we create JdbcTemplatePostService which uses JdbcTemplate to communicate with database and write the specific SQL for that and add a RowMapper to map each of the columns in the database table to the entity or in this case it is post record 
+    First we autowired JdbcTemplate which is autoconfigured. Next we have findAll() where we selected all fields from Post, then we use jdbcTemplate.query() where it takes sql and rowmapper. RowMapper is an functional interface used by JdbcTemplate for mapping rows of a ResultSet on a per row basis, so for every row it will map the columns 
+
+@Service
+@Transactional
+public class JdbcTemplatePostService implements PostService {
+
+    private static final Logger log = LoggerFactory.getLogger(JdbcTemplatePostService.class);
+    
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    RowMapper<Post> rowMapper = (rs, rowNum) -> new Post(
+            rs.getString("id"),
+            rs.getString("title"),
+            rs.getString("slug"),
+            rs.getDate("date").toLocalDate(),
+            rs.getInt("time_to_read"),
+            rs.getString("tags")
+    );
+
+    public List<Post> findAll() {
+        var sql = "SELECT id,title,slug,date,time_to_read,tags FROM post";
+        return jdbcTemplate.query(sql, rowMapper);
+    }
+
+    public Optional<Post> findById(String id) {
+        var sql = "SELECT id,title,slug,date,time_to_read,tags FROM post WHERE id = ?";
+        Post post = null;
+        try {
+            post = jdbcTemplate.queryForObject(sql,rowMapper,id);
+        } catch (DataAccessException ex) {
+            log.info("Post not found: " + id);
+        }
+
+        return Optional.ofNullable(post);
+    }
+
+    public void create(Post post) {
+        String sql = "INSERT INTO post(id,title,slug,date,time_to_read,tags) values(?,?,?,?,?,?)";
+        int insert = jdbcTemplate.update(sql,post.id(),post.title(),post.slug(),post.date(),post.timeToRead(),post.tags());
+        if(insert == 1) {
+            log.info("New Post Created: " + post.title());
+        }
+    }
+
+    public void update(Post post, String id) {
+        String sql = "update post set title = ?, slug = ?, date = ?, time_to_read = ?, tags = ? where id = ?";
+        int update = jdbcTemplate.update(sql,post.title(),post.slug(),post.date(),post.timeToRead(),post.tags(),id);
+        if(update == 1) {
+            log.info("Post Updated: " + post.title());
+        }
+    }
+
+    public void delete(String id) {
+        String sql = "delete from post where id = ?";
+        int delete = jdbcTemplate.update(sql,id);
+        if(delete == 1) {
+            log.info("Post Deleted: " + id);
+        }
+    }
+
+}
+
+So JdbcTemplate is a nice level of abstraction but still lot of methods so often confused on which one to use
+
+7. In main class, we use command line runner which has an instance of PostService and we call create() to persist the post into database 
+
+@Bean
+	CommandLineRunner commandLineRunner( PostService postService) {
+		return args -> {
+			postService.create(new Post("1234", "Hello World", "hello-world", LocalDate.now(), 1, "java, spring"));
+		};
+	}
+
+8. Start the appl
+9. Run http://localhost:1000/h2-console, to check the data is inserted or not 
+
+10. Now we want to simplify this PostService using JdbcClient 
+    So we create JdbcClientPostService which implements PostService and then we autowired JdbcClient to communicate with database 
+   1. findAll() - we can use jdbcClient sql() where we pass the sql query and then call query() and return list of post using list()
+   So here there is no need to create a RowMapper, spring will create a rowmapper based on select stmt 
+
+@Service
+@Transactional
+public class JdbcClientPostService implements PostService {
+
+    private static final Logger log = LoggerFactory.getLogger(JdbcClientPostService.class);
+    
+    @Autowired
+    JdbcClient jdbcClient;
+
+    public List<Post> findAll() {
+        return jdbcClient.sql("SELECT id,title,slug,date,time_to_read,tags FROM post")
+                .query(Post.class)
+                .list();
+    }
+
+    @Override
+    public Optional<Post> findById(String id) {
+        return jdbcClient.sql("SELECT id,title,slug,date,time_to_read,tags FROM post WHERE id = :id")
+                .param("id", id)
+                .query(Post.class)
+                .optional();
+    }
+
+    @Override
+    public void create(Post post) {
+        var updated = jdbcClient.sql("INSERT INTO post(id,title,slug,date,time_to_read,tags) values(?,?,?,?,?,?)")
+                .params(List.of(post.id(),post.title(),post.slug(),post.date(),post.timeToRead(),post.tags()))
+                .update();
+
+        Assert.state(updated == 1, "Failed to create post " + post.title());
+    }
+
+    @Override
+    public void update(Post post, String id) {
+        var updated = jdbcClient.sql("update post set title = ?, slug = ?, date = ?, time_to_read = ?, tags = ? where id = ?")
+                .params(List.of(post.title(), post.slug(), post.date(), post.timeToRead(), post.tags(), id))
+                .update();
+
+        Assert.state(updated == 1, "Failed to update post " + post.title());
+    }
+
+    @Override
+    public void delete(String id) {
+        var updated = jdbcClient.sql("delete from post where id = :id")
+                .param("id", id)
+                .update();
+
+        Assert.state(updated == 1, "Failed to delete post " + id);
+    }
+}
+
+11. In PostController, use @Qualifier when we want to use anyone of the service and also in main class
+
+@Bean
+	CommandLineRunner commandLineRunner(@Qualifier("jdbcClientPostService") PostService postService) {
+		return args -> {
+			postService.create(new Post("1234", "Hello World", "hello-world", LocalDate.now(), 1, "java, spring"));
+		};
+	}
+
+12. Start the appl
+
+
+Spring Data JDBC
+      We build new spring boot appl that connects to database using spring data jdbc, we already have spring data jpa which is using ORM and specifically using Hibernate. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
