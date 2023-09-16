@@ -1,0 +1,2436 @@
+
+livesql.oracle.com - sign in
+username: senthil1418@gmail.com
+pwd: Birthday12!@
+
+SQL is basically a prg lang that is used to interact with relational database, consider we are building an appl or software, now ur appl would definitely need data, but data is not stored in the appl itself in most cases the data is stored in relational database. So u have an appl it needs data and the data is stored in a relational database, so there needs to be a way for ur appl to interact with the relational db. Now relational db can understand only one lang called SQL, so if ur appl needs to communicate with the relational db then it has to communicate in the lang of SQL 
+
+
+
+
+Data models
+    - underlying structure of database (ie) it is a conceptual tool which describe data+relationship+semantics+constraints
+   - So we need to design the database at physical, logical and view level, we know db uses 3 tier architecture so we need to look into the db in the design perspective at 3 levels (ie) physical, logical and view level
+
+Types
+1. Relational model
+        Basically db is collection of tables, tables are represent both data and  relationships
+2. ER model
+3. Object based data model
+       - we know oops lang like c++, java, c# etc, suppose if our front end is designed using oop lang, we need to have the backend which also supports the front end so in that case we are in need for object oriented data model and that is why we object based data model
+   object based model=er model+oop features
+So in object based model we are going to make use of the features of the er model along with the object oriented deatures like data encapsulation, inheritance etc 
+4. Semistructured data model
+       - It deal with specification of data (ie) individual data items of the same datatype may have different sets of attributes 
+      - This data model is mainly used for tranferring the data among appl, so if there are 2 different appl and data transfer needs to be done then data needs to be stored somewhere. In the db if we use semi-structured data model then transferring the data among appl is also easier using xml 
+
+5. Network and Hierachrial data model which is widely used in old db by using trees and graphs structure
+
+Super key:
+    - It is like superset which is all possible keys that can be formed from a table. This is a key which basically uniquely identify the records 
+
+    - Consider we have employee table with id, name, SSN, salary, phone, email column.
+    Id cannot be null because we need to identify particular employee in that case every empl will be associated with a id, every empl will have a name and in table multiple empl can have same name so name cannot be unique, SSN is also unique and not null
+   So super key can contain one attribute or set of attribute and there can be null value in attribute 
+1. id is a superkey because it is unique as well as there is no null value
+2. name is not super key because it cannot be unique 
+3. {id},{ssn},{id,name},{id,ssn},{id,phone},{name,phone},{id,email},{name,ssn,phone},{name,email},{id,ssn,phone} etc
+
+Candidate key
+   - So super key is the superset which contains all possible combination of keys keys 
+   - minimal of super key is candidate key, we have lot of super keys  from that we derive candidate key
+    - candidate key - {id},{ssn},{name,phone},{email}
+     id is candidate key, we can take ssn also candidate key but make sure previously taken key does not have this attribute, the previously choose candidate key is id which is not having SSN with it, so id is separate candidate key and ssn as separate candidate key 
+    {id,name} is super key, we cant take it as candidate key because there is attribute id which is already acting as candidate key.
+     Similarly say abt others 
+
+primary key - {id}
+alternate key - {ssn},{name,phone},{email}
+
+unique key - There are situation where we need to choose a key where it should be unique in terms of values but it can also have null values 
+   {email}
+
+Anti-join is used to make the queries run faster. It is a very powerful SQL construct Oracle offers for faster queries.
+
+Anti-join between two tables returns rows from the first table where no matches are found in the second table. It is opposite of a semi-join. An anti-join returns one copy of each row in the first table for which no match is found.
+
+Anti-joins are written using the NOT EXISTS or NOT IN constructs.
+
+ 
+Semi-join is introduced in Oracle 8.0. It provides an efficient method of performing a WHERE EXISTS sub-query.
+
+A semi-join returns one copy of each row in first table for which at least one match is found.
+
+Semi-joins are written using the EXISTS construct.
+
+
+
+
+
+UTL_FILE Package
+    Suppose we have table and we want to store table data into OS files on server side and also read data from OS files and store inside oracle database
+    If we want to read data from file and write data to file, oracle provide predefined package called UTL_FILE package, it was introduced from oracle 7.3 version onwards
+    This package is used to load data into OS files and also read data from OS files, But SQLLoader also used to retrieve data from flat file into Oracle db, but SQLLoader it works pn both client and server side but utl_file handles only server side files. Using SQLLoader loading data into flat file is impossible but through UTL_File package we can loading data into file and also read data from file 
+
+1. Before writing or reading data from OS file, first we have to create alias directory. Actually PL/SQL program does not directly interact with OS files, if we want to interact with OS files then we must create logical directory, that logica; dir name whenever we specifying in PL/SQL program then automatically through that path OS reference that file only 
+
+Syntax: Create or replace directory directoryname as 'path';
+
+Suppose we want to store employee data into c: or d: where oracle resides where we specify 'path'
+
+1. To create alias dir by scott user is not possible because scott user dosent have priviledge, so first we connect as admin user and give priviledge  to scott user using "create any directory" system priviledge 
+
+Syntax: grant create any directory to 'username';
+
+We try to store data in c:/ 
+
+1. First we connect as admin user
+sql>conn sys as sysdba
+password: sys
+
+sql>grant create any directory to scott;
+
+2. Now connected as scott
+sql>conn scott
+password: tiger
+
+Now we created alias directory called XYZ 
+sql>create or replace directory XYZ as 'c:\';
+
+3. When we perform read, write operation using utl_file package, so we must give read,write object priviledge to alias directory 
+
+Syntax: grant read,write on directory 'dirname' to 'username';
+
+sql>conn sys as sysdba
+password: sys
+
+sql> grant read,write on directory XYZ to scott;
+
+sql>conn scott
+password: tiger
+
+4. Now we write data to OS file using putf(),put_line() procedure of utl_file package 
+
+Step 1: Declare file pointer variable through which we are opening the file, loading data and closing the file using predefined record type called 'file_type' 
+
+Syntax: varname utl_file.file_type;
+
+Step 2: Before loading data into file first we should open the file using predefined fopen() function in executable section of pl/sql
+   fopen() takes 3 parameter called alias directory,filename,mode(r,w,a)
+
+Syntax: varname:=utl_file.fopen(alias directory,filename,mode);
+
+Step 3: If we want to write data into file we use putf() or put_line() 
+
+Syntax: utl_file.putf(varname,'content');
+
+Step 4: After that we have to close the file using fclose(0 procedure
+   
+Syntax: utl_file.fclose(varname);
+
+sql> declare
+     fp utl_file.file_type;
+     begin
+       fp:=utl_file.fopen('XYZ','file1.txt','w');
+       utl_file.putf(fp,'Hello world');
+       utl_file.fclose(fp);
+     end;
+/
+
+Now file1.txt is created in C:/ with the data 
+
+5. Suppose we want to transfer employee table data into file 
+
+>set line 100
+>set pagesize 50;
+>select * from emp;
+
+Now we want to get multiple data from table to file, we are using cursor concepts 
+
+sql> declare
+     fp utl_file.file_type;
+     cursor c1 is select ename from emp;
+     begin
+       fp:=utl_file.fopen('XYZ','file2.txt','w');
+       for i in c1
+       loop
+       utl_file.putf(fp,i.ename);
+       end loop;
+       utl_file.fclose(fp);
+     end;
+/
+Now file2.txt is created in C:/ with the data in horizontal format
+
+But in this case since we use putf() it stores table data in horizontal format (ie) single line, so instead of putf we can use put_line so it will print one by one
+    But samething can be achicve in putf() by using second parameter as format specifier  
+
+ utl_file.putf(fp,'My employee name is: %s\n',i.ename);
+
+6. Using put_line() procedure
+
+Syntax: utl_file.put_line(filepointername,format);
+
+sql> declare
+     fp utl_file.file_type;
+     cursor c1 is select * from emp;
+     begin
+       fp:=utl_file.fopen('XYZ','file3.txt','w');
+       for i in c1
+       loop
+       utl_file.put_line(fp,i.ename||' '||i.sal);
+       end loop;
+       utl_file.fclose(fp);
+     end;
+/
+
+Now file3.txt is created in C:/ with the data in vertical format 
+
+7. Read data from OS file using get_line() procedure and store into the table or display in sql env
+
+Syntax: utl_file.get_line(filepointername,buffervarname);
+
+sql> declare
+     fp utl_file.file_type;
+     x varchar2(200);
+     begin
+       fp:=utl_file.fopen('XYZ','file1.txt','r');
+       utl_file.get_line(fp,x);
+       dbms_output.put_line(x);
+       utl_file.fclose(fp);
+     end;
+/
+
+Now data will read from file1.txt and printed in sql env
+
+8. If we have multiple data items in file and if we want to read and display in sql env 
+
+sql> declare
+     fp utl_file.file_type;
+     x varchar2(200);
+     begin
+       fp:=utl_file.fopen('XYZ','file2.txt','r');
+       loop
+       utl_file.get_line(fp,x);
+       dbms_output.put_line(x);
+       end loop;
+       exception no_data_found then 
+       utl_file.fclose(fp);
+     end;
+/
+
+It will print all data one by one and whenever control reach end of file it will show error "no data found", so we can handle using exception part, so if no data found means we close the file pointer
+
+BFile datatype
+    - Binary file LOB is a data type added in oracle 8i version 
+    - used for storing files, the data will be stored only in the form of files into BFile datatype, we cannot store anyother data, it can be txt file, csv file, excel file, doc file, pdf file or zip file, audio file, video file, animation, movie, exe files 
+    - no maximum size limit for bfile datatype because data will never be stored inside the database in case of bfile data type, the data will always be stored outside the database that is in OS, so in order to work with bfile datatype we need to have read and write privileges on that particular folder which is alias directory 
+    - we need to have alias directory with that path, we need to have read,write privilege to interact with the files which are stored through bfile datatype, all files will be stored in OS, all files will be stored outside the database due to this reason there is no guarantee for the security or consistency or protection 
+    - one table can any number of bfile datatype, since data is stored outside so there is no restriction for the number of bfile data type in tables
+    - no file size for bfile datatype because database is not going to hold the data 
+
+sql> conn sys as sysdba
+sql> sho user
+sql> desc dba_directories;
+sql> select * from dba_directories;
+
+- Create alias directory
+sql> create or replace directory dir1 as 'C:\Dir1';
+sql> grant read,write on directory dir1 to scott;
+
+sql> conn scott/tiger
+
+sql> create table emp_bfile(c1 number, c2 bfile);
+sql> desc emp_bfile;
+
+-Inserting data into bfile table using bfilename() which is a function used to insert data into bfile data type with 2 args (ie) name of dir and name of file 
+
+sql> insert into emp_bfile values(1, Bfilename('dir1','abc.txt'));
+//here we are storing abc.txt file in dir1 directory, so db will internally find the path which is associated with this directory from DBA_DIRECTORIES and store the file specified into that particular dir
+//we have manually move file into that dir 
+
+sql> insert into emp_bfile values(2, Bfilename('dir1','abc.jpg'));
+sql> insert into emp_bfile values(NULL, NULL);
+sql> insert into emp_bfile values(NULL,'');
+sql> insert into emp_bfile values(1, Bfilename('',''));
+sql> insert into emp_bfile values(1, Bfilename(NULL,NULL));
+
+sql> select c2 from emp_bfile;
+    - We cannot display bfile content in sqlplus because they are files so we should  have UI or front end appl to view these 
+
+>bfile column cannot be updated, but we can delete the record 
+> we cannot enter number, char or any type of data except files 
+
+DBMS_LOB and BFiles
+    - Oracle allows you to manipulate bfiles through DBMS_LOB package 
+    - Bfile is a pointer to an OS file 
+
+DBMS_LOB BFILE functionality
+    - Open and close BFILEs
+    - Compare two bfiles with compare
+    - Get info abt bfile like name,location,exists and length
+    - Read contents of bfile - they are read only structured
+    - perform instr and substr operations on bfile
+
+1. Open and close Bfiles
+sql> declare
+     l_bfile BFILE:=BFILENAME('DIR1','abc.txt');
+     begin
+       DBMS_OUTPUT.PUT_LINE('Exists' \\ DBMS_LOB.fileexists(l_bfile));
+       DBMS_OUTPUT.PUT_LINE('Open before open'|| DBMS_LOB.fileisopen(l_bfile));
+       DBMS_LOB.fileopen(l_bfile);
+       DBMS_OUTPUT.PUT_LINE('Open after open'|| DBMS_LOB.fileisopen(l_bfile));
+       DBMS_LOB.fileclose(l_bfile);
+       DBMS_OUTPUT.PUT_LINE('Open after close'|| DBMS_LOB.fileisopen(l_bfile));
+     End;
+/
+       
+2. Compare two Bfiles are same or not, 0=same, 1=different 
+      - Specify amount of file you want to compare and the offset locations in each
+
+- Create file1.txt with first 5 lines we give Line 1 and then the word 'same' and next 5 lines with Line number and going to generate guid which is string with unique value so each line should have a different value
+
+sql> declare
+        fid utl_file.file_type;
+     begin
+        fid := utl_file.fopen('dir1','file1.txt','w',max_linesize => 32767);
+        for i in 1 .. 5
+        loop
+           utl_file.put_line(fid, 'Line ' || i || ' same');
+        end loop;
+        for i in 1 .. 5
+        loop
+           utl_file.put_line(fid, 'Line ' || i || SYS_GUID);
+        end loop; 
+        utl_file.fclose(fid);
+     End;
+/
+
+-Create file2.txt
+
+sql> declare
+        fid utl_file.file_type;
+     begin
+        fid := utl_file.fopen('dir1','file2.txt','w',max_linesize => 32767);
+        for i in 1 .. 5
+        loop
+           utl_file.put_line(fid, 'Line ' || i || ' same');
+        end loop;
+        for i in 1 .. 5
+        loop
+           utl_file.put_line(fid, 'Line ' || i || SYS_GUID);
+        end loop; 
+        utl_file.fclose(fid);
+     End;
+/
+
+- So we created 2 file with some of the same content and some different content 
+
+sql> declare
+        l_bfile1 BFILE:=BFILENAME('dir1','file1.txt');      
+        l_bfile2 BFILE:=BFILENAME('dir1','file2.txt');      
+     begin
+        DBMS_LOB.fileopen(l_bfile1);
+        DBMS_LOB.fileopen(l_bfile2);
+
+//compare portions of file that are same
+        DBMS_OUTPUT.PUT_LINE(DBMS_LOB.compare(file_1 => l_bfile1, file_2 => l_bfile2,amount => 33,offset_1=>1,offset_2=>1));  //0
+
+//compare portions of file that are different
+        DBMS_OUTPUT.PUT_LINE(DBMS_LOB.compare(file_1 => l_bfile1, file_2 => l_bfile2,amount => 33,offset_1=>55,offset_2=>25));  //1
+
+//compare the entire file
+        DBMS_OUTPUT.PUT_LINE(DBMS_LOB.compare(file_1 => l_bfile1, file_2 => l_bfile2,amount => 18446744073709551615)); //here amt refers lob maxsize  //1
+        DBMS_LOB.fileclose(l_bfile1);
+        DBMS_LOB.fileclose(l_bfile2);
+End;
+/
+
+3. Get information about BFILE
+      - Get name of the file: FILEGETNAME
+      - Get length of file: GETLENGTH
+      - Does the file exists: FILEEXISTS
+      - Is the file open: FILEISOPEN
+
+sql> declare
+        l_bfile BFILE := BFILENAME('DIR1','file1.txt');
+        l_dir varchar2(1000);
+        l_name varchar2(1000);
+     begin
+        DBMS_OUTPUT.PUT_LINE(DBMS_LOB.fileexists(l_bfile));//1
+        DBMS_LOB.fileopen(l_bfile);
+        DBMS_OUTPUT.PUT_LINE(DBMS_LOB.fileisopen(l_bfile));//1
+        DBMS_OUTPUT.PUT_LINE(DBMS_LOB.getlength(l_bfile));
+        DBMS_LOB.filegetname(l_bfile,l_dir,l_name);
+        DBMS_OUTPUT.PUT_LINE(l_dir||' '||l_name);
+        DBMS_LOB.fileclose(l_bfile);
+     ENd;
+/
+
+4. Read contents of Bfile
+        - Use DBMS_LOB.READ to read into raw or varchar2 variable for clob, but for bfiles only raw
+        - Here open the file and using read() procedure we specify the amount we want to get using l_amount and starting location and the buffer that will receive it using l_contents 
+
+sql> declare
+        l_bfile BFILE:=BFILENAME('dir1','file1.txt');
+        l_contents raw(32767);
+        l_amount pls_integer := 100;
+     begin
+        dbms_lob.fileopen(l_bfile);
+        dbms_lob.read(l_bfile,l_amount,1,l_contents);
+        dbms_output.put_line(l_contents);
+        dbms_lob.fileclose(l_bfile);
+     end;
+/
+
+It will print the raw data 
+
+5. Other Bfile operation
+       - Read a bfile into blob or clob
+       - Perform instr operation on the contents of bfile (ie) to check this string exists in my bfile
+       - Perform substr operation on the contents of bfile (ie) we can pull out chunks of my bfile using substring
+
+sql> declare
+       l_bfile bfile:=BFILENAME('dir1','file1.txt');
+       l_clob clob;
+       l_dest_offset pls_integer := 1;
+       l_src_offset pls_integer := 1;
+       l_context pls_integer := 0;
+       l_warning pls_integer;
+     begin
+//we need to create temporary clob otherwise it will not be able to use l_clob as clob
+       dbms_lob.createtemporary(l_clob,false);
+
+//open file for read only access 
+       dbms_lob.open(l_bfile,dbms_lob.file_readonly);
+
+//convert bfile to clob
+//use lobmaxsize to specify entire bfile
+       dbms_lob.loadclobfromfile(dest_lob=>l_clob,src_bfile=>l_bfile,amount=>dbms_lob.lobmaxsize,est_offset=>l_dest_offset,src_offset=>l_src_offset,bfile_csid=>0,lang_context=>l_context,warning=>l_warning);
+
+DBMS_OUTPUT.PUT_LINE('Clob length'||DBMS_LOB.getlength(l_clob));
+ 
+If dbms_lob.instr(file_loc=>l_bfile,pattern=>'123',offset=>1,nth=>1)>0
+then
+   DBMS_OUTPUT.PUT_LINE('Found 123');
+END IF;
+
+DBMS_OUTPUT.PUT_LINE(DBMS_LOB.SUBSTR(file_loc=>l_bfile,amount=>5,offset=>1));
+END;
+/
+
+
+Subquery
+   Consider we have given a requirement to find the employees whos salary is more than the average salary earned by all employees.
+
+create table employee
+( emp_ID int primary key
+, emp_NAME varchar(50) not null
+, DEPT_NAME varchar(50)
+, SALARY int);
+
+insert into employee values(101, 'Mohan', 'Admin', 4000);
+insert into employee values(102, 'Rajkumar', 'HR', 3000);
+insert into employee values(103, 'Akbar', 'IT', 4000);
+insert into employee values(104, 'Dorvin', 'Finance', 6500);
+insert into employee values(105, 'Rohit', 'HR', 3000);
+insert into employee values(106, 'Rajesh',  'Finance', 5000);
+insert into employee values(107, 'Preet', 'HR', 7000);
+insert into employee values(108, 'Maryam', 'Admin', 4000);
+insert into employee values(109, 'Sanjay', 'IT', 6500);
+insert into employee values(110, 'Vasudha', 'IT', 7000);
+insert into employee values(111, 'Melinda', 'IT', 8000);
+insert into employee values(112, 'Komal', 'IT', 10000);
+insert into employee values(113, 'Gautham', 'Admin', 2000);
+insert into employee values(114, 'Manisha', 'HR', 3000);
+insert into employee values(115, 'Chandni', 'IT', 4500);
+insert into employee values(116, 'Satya', 'Finance', 6500);
+insert into employee values(117, 'Adarsh', 'HR', 3500);
+insert into employee values(118, 'Tejaswi', 'Finance', 5500);
+insert into employee values(119, 'Cory', 'HR', 8000);
+insert into employee values(120, 'Monica', 'Admin', 5000);
+insert into employee values(121, 'Rosalin', 'IT', 6000);
+insert into employee values(122, 'Ibrahim', 'IT', 8000);
+insert into employee values(123, 'Vikram', 'IT', 8000);
+insert into employee values(124, 'Dheeraj', 'IT', 11000);
+
+    So we need to find the details of only those employees who are earning more salary than the average salary earned by all employee in this table
+    Now we divide this query into different parts 
+1. Find avg salary 
+2. Then once we get avg salary then filter out data from employee table based on avg salary we calculated 
+
+>select * from employee where salary >  (select avg(salary) from employee);
+
+Whenever sql comes across stmt like this, first sql will look at the stmt, it will realize that there is a subquery that has been used and it will also realize that it can execute this subquery on its own, so it does not need to have any dependency on the outer query so it will straight away execute this query and whatever is returned from this query sql will hold it and then it will execute the outer query and in the outer query it will filter this salary info based on the result that is fetched from this subquery 
+
+Types of subquery
+1. Scalar subquery
+       - It is simply a subquery which will always return just one row and one column 
+       - Previous query is example of scalar subquery 
+
+>select * from employee where salary >  (select avg(salary) from employee);
+
+So here subquery returns just one row and one column 
+
+2. Multi row subquery - returns multiple rows
+       - 2 types 
+1. subquery which returns multiple column and multiple rows
+2. subquery which returns only 1 column and multiple rows
+
+Find the employees who earn the highest salary in each department?
+     First find wht is the highest salary in each dept then we can compare this salary with employee table so that we can get final result
+
+>select * from employee where (dept_name,salary) in (select dept_name,max(salary) from employee group by dept_name);
+
+As soon as sql execute this query, first it will process the subquery and this subquery has no dependency or no relation on the outer query, it will execute and hold the result then it will try to process the outer query and for every record from outer query it will match the combination of deptname and salary from employee table with the values that is written from this subquery 
+    This is a subquery which returns multiple rows but also multiple columns 
+
+
+
+
+
+-- single column, multiple row subquery
+
+Find department who do not have any employees?
+     Employee table contains info abt all the dept and the employees that belong to this department, we have department table which contains info abt all the departments and the location that the employees that belong to that dept
+    Now we want to find which dept where there are no employees, for that we need to select all fields from dept and then we need to add some filter condition which will eliminate all those depts who are having employees
+
+>create table department(dept_id int primary key,dept_name varchar2(20),location varchar2(20));
+
+insert into department values(1,'Admin','Bangalore');
+insert into department values(2,'HR','Bangalore');
+insert into department values(3,'IT','Bangalore');
+insert into department values(4,'Finance','Mumbai');
+insert into department values(5,'Marketing','Bangalore');
+insert into department values(6,'Sales','Mumbai');
+
+>select * from department where dept_name not in (select distinct dept_name from employee);
+
+Which returns 2 department which dont have any employee, since subquery returns single column with multiple rows  
+ 
+
+3. Correlated Subquery
+      - It is a subquery which is related to outer query, so basically the processing of ur subquery depends on the values that are returned from the outer query 
+      - Previously single, and multiple row subquery we can execute by itself, we did not need to execute the whote query to execute the subquery because subquery are not dependent on anyother query 
+     So when sql processes a stmt which contains a single or multiple row subquery, sql will just execute the subquery first and it will execute the subquery just once, so once the sql will execute the subquery the data is avaialble or the output is available for sql to use it to process every record from outer query 
+
+Find the employees in each dept who earn more than the average salary in that dept?
+     We need to find the average salary specific to the department that emp belongs to and then compare his salary with that average salary of that dept
+
+select * from employee e1 where salary>(select avg(salary) from employee e2 where e2.dept_name=e1.dept_name);
+
+So here for every record in empl table, this subquery will be executed, so when sql try to process this stmt, sql will come and see there is a subquery but not able to execute the subquery because we are referring to a column in the subquery which is coming from my outer query, this is called correlated subquery because this subquery is dependent on some of the values from the outer query 
+
+So for every single employee, sql will process this subquery once  (ie) it fetch this dept name from outer query so for every deptname from outer query the subquery will be executed. So if we have correlated sunquery and if ur outer query is going to process millions of records then ur subquery also process millions of records so we prefer not to use correlated subquery, we can use joins or normal subqueries, but it is still useful in certain cases like compare the data between 2 different tables, where record exists in one table or not,
+
+2. Find departments who do not have any employees
+
+select * from dept d where not exists(select 1 from emp e where e.deptname=d.deptname)
+
+Subquery inside a subquery
+
+create table sales(store_id int,store_name varchar2(50),product	varchar2(50),
+quantity int,cost int); 
+
+insert into sales values
+(1, 'Apple Originals 1','iPhone 12 Pro', 1, 1000),
+insert into sales values(1, 'Apple Originals 1','MacBook pro 13', 3, 2000);
+insert into sales values(1, 'Apple Originals 1','AirPods Pro', 2, 280);
+insert into sales values(2, 'Apple Originals 2','iPhone 12 Pro', 2, 1000);
+insert into sales values(3, 'Apple Originals 3','iPhone 12 Pro', 1, 1000);
+insert into sales values(3, 'Apple Originals 3','MacBook pro 13', 1, 2000);
+insert into sales values(3, 'Apple Originals 3','MacBook Air', 4, 1100);
+insert into sales values(3, 'Apple Originals 3','iPhone 12', 2, 1000);
+insert into sales values(3, 'Apple Originals 3','AirPods Pro', 3, 280);
+insert into sales values(4, 'Apple Originals 4','iPhone 12 Pro', 2, 1000);
+insert into sales values(4, 'Apple Originals 4','MacBook pro 13', 1, 2500);
+
+
+>select * from sales
+sid   st_name  prod_name  quantity  price
+1     Apple store 1  iphone12   1     1000
+1     Apple store 1  macbook    3     6000
+1     Apple store 1  airpods    2     500
+2     Apple store 2  iphone13   2     2000
+3     Apple store 3  iphone14   1     750
+3     Apple store 3  macbook    1     2000
+3     Apple store 3  macbookair 4     4400
+3     Apple store 3  iphone10   2     1800
+3     Apple store 3  Airpods   2      750
+4     Apple store 4  iphone16   2     1500
+4     Apple store 4  macbook16  1     3500
+
+Find stores whos sales where better than the average sales across all stores?
+
+1. First we need to find total sales for each store
+      This we have to do because for same storeid we have multiple records
+
+select store_name, sum(price) as total_sales from sales group by store_name;
+
+Apple store 3   9700
+Apple store 2   2000
+Apple store 1   7500
+Apple store 4   5000
+ 
+2. find avg sales for all the stores
+        We need to sum the total data that we got from step 1  and then find the avg
+
+select avg(total_sales) from (select store_name, sum(price) as total_sales from sales group by store_name) x;
+
+avg(total_sales)
+6050.000
+
+3. compare 1 and 2
+
+select * from (select store_name, sum(price) as total_sales from sales group by store_name) sales
+ join
+(select avg(total_sales) as sales from (select store_name, sum(price) as total_sales from sales group by store_name) x) avg_sales
+on sales.total_sales > avg_sales.sales;
+
+Apple store 3  9700   6050.00
+Apple store 1  7500   6050.00
+
+We can see that only 2 stores whose total sales are greater than average sales
+
+Here we have this outerquery inside this we have subquery and then joining it with another subquery which has another subquery, so we have subquery inside another subquery, inside another subquery. 
+
+This is not best way of writing this query is because first subquery is repeated multiple times, so whenver we are writing a sql stmt and if we are using a subquery and if we are using same subquery multiple times in ur query then we can use "with" clause 
+
+with sales as 
+(select store_name, sum(price) as total_sales from sales group by store_name)
+select * 
+from  sales
+ join (select avg(total_sales) as sales from sales x) avg_sales
+on sales.total_sales > avg_sales.sales;
+
+-----------------------------------------------
+
+Window function/Analytic function
+    - Consider we asked to write a query where we want to fetch the top 3 empl from each dept in ur empl table who earn the max salary or write a query where we want to display the minimum and max salary in each dept corresponding to each empl record then this type of query would almost be impossible to write without using window function 
+
+create table employee
+( emp_ID int
+, emp_NAME varchar(50)
+, DEPT_NAME varchar(50)
+, SALARY int);
+
+insert into employee values(101, 'Mohan', 'Admin', 4000);
+insert into employee values(102, 'Rajkumar', 'HR', 3000);
+insert into employee values(103, 'Akbar', 'IT', 4000);
+insert into employee values(104, 'Dorvin', 'Finance', 6500);
+insert into employee values(105, 'Rohit', 'HR', 3000);
+insert into employee values(106, 'Rajesh',  'Finance', 5000);
+insert into employee values(107, 'Preet', 'HR', 7000);
+insert into employee values(108, 'Maryam', 'Admin', 4000);
+insert into employee values(109, 'Sanjay', 'IT', 6500);
+insert into employee values(110, 'Vasudha', 'IT', 7000);
+insert into employee values(111, 'Melinda', 'IT', 8000);
+insert into employee values(112, 'Komal', 'IT', 10000);
+insert into employee values(113, 'Gautham', 'Admin', 2000);
+insert into employee values(114, 'Manisha', 'HR', 3000);
+insert into employee values(115, 'Chandni', 'IT', 4500);
+insert into employee values(116, 'Satya', 'Finance', 6500);
+insert into employee values(117, 'Adarsh', 'HR', 3500);
+insert into employee values(118, 'Tejaswi', 'Finance', 5500);
+insert into employee values(119, 'Cory', 'HR', 8000);
+insert into employee values(120, 'Monica', 'Admin', 5000);
+insert into employee values(121, 'Rosalin', 'IT', 6000);
+insert into employee values(122, 'Ibrahim', 'IT', 8000);
+insert into employee values(123, 'Vikram', 'IT', 8000);
+insert into employee values(124, 'Dheeraj', 'IT', 11000);
+
+
+insert into department values(1,'Admin','Bangalore');
+insert into department values(2,'HR','Bangalore');
+insert into department values(3,'IT','Bangalore');
+insert into department values(4,'Finance','Mumbai');
+insert into department values(5,'Marketing','Bangalore');
+insert into department values(6,'Sales','Mumbai');
+
+1. Find the max salary earned by an employee
+>select max(salary) as max_salary from employee;
+
+2. If we want to extract max salary earned by an employee in each dept then we can do that by using group by clause 
+>select dept_name,max(salary) as max_salary from employee group by dept_name; 
+
+But our requirement is to extract max salary in each dept but along with that we also want to display all other details of empl table then we cant do that just by using group by clause or aggregate function, may be we can use "with" clause or subquery to do, but the best way to form this kind of query using window function or analytic function 
+
+3. Now we consider max() as analytic function by using "over" clause 
+>select e.*, max(salary) over() as max_salary from employee e;
+
+When we execute we can see all the column from the table and with additional column called max_salary, but for every record it was having the same value. Here basically we are using max(salary) which is aggregate function, but also we are using "over" clause, since we are using "over" clause what sql will do is it will not treat max() as aggregate function but as window function 
+    over clause is basically used to specify SQL that we need to create a window of records and we didnt specify any column in over clause so sql will create one window for all the records in this resultset (ie) max(salary) 11000 for all the records 
+
+4. If we extract the max salary corresponding to each dept then we can use "partition by" clause 
+>select e.*, max(salary) over(partition by dept_name) as max_salary from employee e; 
+
+Here it create one window and apply max(salary) function for each dept, so output shows max(salary) related to that department 
+-- By using MAX as an window function, SQL will not reduce records but the result will be shown corresponding to each record.
+
+row_number()
+    It will assign a unique value to each of the record in the table 
+
+>select e.*,
+row_number() over() as rn
+from employee e;
+
+When we execute we can get one unique identifier for every record in the table, since we didnt pass any column name sql will treat all of the records in this table as one window and for whole window it will assign a row number 
+
+If we want to assign row number based on different department then 
+
+>select e.*,
+row_number() over(partition by dept_name) as rn from employee e;
+
+Now we can see for each department record it will generate a unique row number.
+
+Now you may ask what is the actual use of having this kind of function where it can be useful 
+-- Fetch first two empl that joined the company in each dept, consider employee id of employees who joined previously would be lower than the employee id of the employees who joined later 
+
+>select e.*,
+row_number() over(partition by dept_name) as rn from employee e;
+
+But here emp id is not sorted related to each dept, so we have sort it first 
+
+>select e.*,
+row_number() over(partition by dept_name order by emp_id) as rn from employee e;
+
+Now we can see data is sorted, now my requirment is to fetch first 2 employees from each dept 
+
+>select * from (
+	select e.*,
+	row_number() over(partition by dept_name order by emp_id) as rn
+	from employee e) x
+where x.rn < 3;
+
+Now it will fetch first 2 employee from each dept to join the company 
+
+Rank()
+    Consider we have requirement to fetch the top 3 employee in each department earning the max salary, so we need to rank the employees based on their salaries and then you need to fetch the top 3 employees from each of the department 
+
+-- Fetch the top 3 employees in each department earning the max salary.
+>select * from (
+	select e.*,
+	rank() over(partition by dept_name order by salary desc) as rnk
+	from employee e) x
+where x.rnk < 4;
+
+dense_rank()
+    - It is similar to rank() with one difference
+
+>select e.*,
+	rank() over(partition by dept_name order by salary desc) as rnk,
+        dense_rank() over(partition by dept_name order by salary desc) as dense_rnk
+	from employee e;
+
+So for every record in the department it will be ranked, in the case of rank() it will skipped one value because the previous record had duplicate rank, but in dense_rank as the name suggests it will not skip any value. So rank will skip a value for every duplicate value that it found previously, whereas dense_rank will not skip a value 
+
+Lead() and Lag()
+     Consider we have requirment to fetch a query to display if the salary of an employee is higher, lower or equal to the previous employee we use lag()
+
+> select e.*,
+lag(salary) over(partition by dept_name order by emp_id) as prev_empl_sal 
+from employee e;
+
+When we execute it will fetch the salary of the previous record, so in this case we have partitioned the data based on dept_name and then sorted based on employeeid. Now first record the emp_id is 101 and salary is 4000 but there is no record previous to this, so by default 
+lag() will return as null. But for second record it will take previous record salary as 4000, for 3rd record it will take previous record salary as 4000 and for 4th record it will take previous record salary as 2000
+   So lag() function will fetch the record from ur previous rows. 
+
+> select e.*,
+lag(salary, 2,0) over(partition by dept_name order by emp_id) as prev_empl_sal 
+from employee e;
+
+Here 2 represent by default it always look for the previous record that is one row prior to the current row and 0 represent default value, so in this case since there is no previous value for first record it returns null by default, but in last arg we can specify a particular value what need to be displayed if there is no previous value 
+    For 1st record there is no previous 2 values so it displays 0, for 2nd record also there is no previous 2 values so it displays 0, for 3rd record previous 2 values is 4000 and for 4th record previous 2 values is 4000 
+   lead() is basically the rows that are following the current record 
+
+>select e.*,
+lag(salary) over(partition by dept_name order by emp_id) as prev_empl_sal,
+lead(salary) over(partition by dept_name order by emp_id) as next_empl_sal
+from employee e;
+
+So 1st record it will take next value as 4000 and 2nd record it will take next value as 2000 and 3rd record it will take next value as 5000 and 4th record since there is no value it return null by default 
+
+-- fetch a query to display if the salary of an employee is higher, lower or equal to the previous employee.
+select e.*,
+lag(salary) over(partition by dept_name order by emp_id) as prev_empl_sal,
+case when e.salary > lag(salary) over(partition by dept_name order by emp_id) then 'Higher than previous employee'
+     when e.salary < lag(salary) over(partition by dept_name order by emp_id) then 'Lower than previous employee'
+	 when e.salary = lag(salary) over(partition by dept_name order by emp_id) then 'Same than previous employee' end as sal_range
+from employee e;
+
+-------------------------------------------
+CREATE TABLE product
+( 
+    product_category varchar(255),
+    brand varchar(255),
+    product_name varchar(255),
+    price int
+);
+
+INSERT INTO product VALUES
+('Phone', 'Apple', 'iPhone 12 Pro Max', 1300),
+('Phone', 'Apple', 'iPhone 12 Pro', 1100),
+('Phone', 'Apple', 'iPhone 12', 1000),
+('Phone', 'Samsung', 'Galaxy Z Fold 3', 1800),
+('Phone', 'Samsung', 'Galaxy Z Flip 3', 1000),
+('Phone', 'Samsung', 'Galaxy Note 20', 1200),
+('Phone', 'Samsung', 'Galaxy S21', 1000),
+('Phone', 'OnePlus', 'OnePlus Nord', 300),
+('Phone', 'OnePlus', 'OnePlus 9', 800),
+('Phone', 'Google', 'Pixel 5', 600),
+('Laptop', 'Apple', 'MacBook Pro 13', 2000),
+('Laptop', 'Apple', 'MacBook Air', 1200),
+('Laptop', 'Microsoft', 'Surface Laptop 4', 2100),
+('Laptop', 'Dell', 'XPS 13', 2000),
+('Laptop', 'Dell', 'XPS 15', 2300),
+('Laptop', 'Dell', 'XPS 17', 2500),
+('Earphone', 'Apple', 'AirPods Pro', 280),
+('Earphone', 'Samsung', 'Galaxy Buds Pro', 220),
+('Earphone', 'Samsung', 'Galaxy Buds Live', 170),
+('Earphone', 'Sony', 'WF-1000XM4', 250),
+('Headphone', 'Sony', 'WH-1000XM4', 400),
+('Headphone', 'Apple', 'AirPods Max', 550),
+('Headphone', 'Microsoft', 'Surface Headphones 2', 250),
+('Smartwatch', 'Apple', 'Apple Watch Series 6', 1000),
+('Smartwatch', 'Apple', 'Apple Watch SE', 400),
+('Smartwatch', 'Samsung', 'Galaxy Watch 4', 600),
+('Smartwatch', 'OnePlus', 'OnePlus Watch', 220);
+COMMIT;
+
+
+first_value()
+     - used to extract a value or a column value from the very first record within a partition 
+     Consider we want to write a query to fetch the most expensive product under each category and display the data corresponding to each row of ur resultset 
+    first_value() take one argument which is the value that is going to get displayed in that column (ie) product_name. when we use window function we need to use "over"  clause and here we want to extract expensive product corresponding to each category and then order by based on price 
+
+>select *,
+first_value(product_name) over(partition by product_category order by price desc) as most_exp_product
+from product;
+
+When we execute it will display all 27 records along with additional column called "most_exp_product". So in first product category (ie) Earphone, so under earphone we have 4 different records and record with price 280 is corresponding to product Airpods Pro and that is wht it is displaying under most_exp_product and this is because first_value, within a particular partition it will go to the very first record and extract whatever column that we have specified as an argument (ie) product_name 
+    Similarly in headphone partition we have 3 records and very first row belongs to Airpods max which is most expensive product and that will be displayed
+
+last_value()
+     used to fetch a value or column from the very last record of a particular parititon 
+     Consider we want to write a query to extract the least expensive product under each category corresponding each record
+
+>select *,
+first_value(product_name) over(partition by product_category order by price desc) as most_exp_product,
+last_value(product_name) over(partition by product_category order by price desc) as least_exp_product,
+from product; 
+
+When we execute it will display all records along with most_exp_product and least_exp_product column, but if u see least expensive data is not correct. If we look at all the data corresponding to Earphone product, the most expensive product is Airpods Pro whos eprice is $280 and least product is Galaxy Buds Live of $170, so under least_exp_product column it has to display Galaxy Buds Live in all records, but it is not doing that because the reason is because of default "frame" clause that sql is using
+
+Frame clause
+    Whenever we are using a window function, the window function creates a partition and it applies that window functions to each of those partitions, inside each of these partitions we can create a subset of records which is called as frames 
+    So frame is a subset of a partition, so in earphone partition has 4 records but last_value window function when its going to process all the records in this partition, its not basically going to use all the 4 records at once, its going to use all the records which are within its frame.
+     Here sql uses default frame clause which looks like 
+
+>select *,
+first_value(product_name) over(partition by product_category order by price desc) as most_exp_product,
+last_value(product_name) over(partition by product_category order by price desc
+range between unbounded preceding and current row) as least_exp_product,
+from product;  
+
+"range between unbounded preceding and current row" is the default frame clause SQL uses. 
+   range - tells what is the range of records that this last_value window function needs to consider. So range will consider the rows between unbounded preceding and current row 
+   unbounded preceding - it is basically the rows preceding to the current row, and unbounded means from the first row of the partition 
+    Consider if the query is processing the first record, then unbounded preceding for the first row would be first row because there is no rows prior to first row, so it will just consider the first row and the current row is again is just first row. So when sql is going to process the first record the unbounded preceding will also lead to the first record and current row is also the first record, so the frame will only be pointing to this first record, so last_value will only have access to only first record and from this first record it will fetch the last value and since there is only one record the last value will also be same as first value, so both first value and last value is returning the same output (ie) Airpods Pro
+     When sql is trying to process the second record, now unbounded preceding will point to first record of the partition where brand is Apple and product_name is Airpods Pro and the current row would be second record. So when sql processing second record, the last value would have access to 2 records and from these 2 records its going to fetch the last value which is product_name WF-1000XM4 and that is only get displayed
+     When sql processing 3rd row, the frame clause would let last_value to access the first 3 records because unbounded preceding will point to the first record and current row is 3rd record, so within this 3 records the last value is Galaxy BUds Pro and that is displayed as last value, similarly for other records and other partitions
+     This is why frame clause becomes important when we use last_value, not every window function will be impacted by this default frame clause, it generally impacts the last_value and nth_value function. The reason why last_value is not able to extract the proper least expensive value because it does not have access to all the records of this partition, so we need to modify default frame clause such that it will access all the records from the beginning to end of the partition by using "range between unbounded preceding and unbounded following"
+    unbounded following means all the records following the current row and preceding means all the records prior to the current row 
+
+>select *,
+first_value(product_name) 
+    over(partition by product_category order by price desc) 
+    as most_exp_product,
+last_value(product_name) 
+    over(partition by product_category order by price desc
+        range between unbounded preceding and unbounded following) 
+    as least_exp_product    
+from product
+
+When we execute now we can see that least_exp_product column will display the correct values for all records, so under Earphone product the most expensive is Airpods pro and least expensive is Galaxy Buds Live. Similarly in headphone partition, the most expensive is Airpods Max and least expensive is Surface Headphones 2 and etc
+   So just by changing frame clause we are now able to extract the last value 
+
+1. when we specify frame clause we can either specify it as range or we can specify it as rows 
+
+>select *,
+first_value(product_name) 
+    over(partition by product_category order by price desc) 
+    as most_exp_product,
+last_value(product_name) 
+    over(partition by product_category order by price desc
+        rows between unbounded preceding and unbounded following) 
+    as least_exp_product    
+from product
+WHERE product_category ='Phone';
+
+When we execute it will display correctly, we can see it will display most expensive as Galaxy Z Fold 3 and least expensive is Oneplus Nord 
+
+Now instead of unbounded following we provide current row, then
+
+>select *,
+first_value(product_name) 
+    over(partition by product_category order by price desc) 
+    as most_exp_product,
+last_value(product_name) 
+    over(partition by product_category order by price desc
+        rows between unbounded preceding and current row) 
+    as least_exp_product    
+from product
+WHERE product_category ='Phone';
+
+When we execute, we focus on 5,6,7 id which having the same price which is $1000 and least expensive product is different for each row and instead of rows if we change as range and execute it, we can see least expensive product as GalaxyS21. So this is difference between range and row, so whenever we say "current row in rows", it will consider the exact current row but what range will do is if that particular row has some other rows with duplicate values then range will consider last row with that price 
+   The only difference would be when you have duplicate data then range will consider everything all the duplicate data also will be considered until last row, when we are using rows it will only stick to that current row 
+
+>select *,
+first_value(product_name) 
+    over(partition by product_category order by price desc) 
+    as most_exp_product,
+last_value(product_name) 
+    over(partition by product_category order by price desc
+        rows between 2 preceding and 2 following) 
+    as least_exp_product    
+from product
+WHERE product_category ='Phone';
+
+It will consider two rows prior to the current row and two rows after the current row so first 5 rows will be under current frame  
+
+Alternate way of writing this query
+      When we have to write a query where we use multiple window functions then repeating the same over clause again and again would be taking a lot of lines in our code
+
+>select *,
+first_value(product_name) over w as most_exp_product,
+last_value(product_name) over w as least_exp_product    
+from product
+window w as (partition by product_category order by price desc
+            range between unbounded preceding and unbounded following);
+
+Instead of mentioning whole window function in over clause, we can use windows clause and inside the windows clause we can specify everything mentioned in over clause. Even if we use 10 different windows function we can just use this "w" to represent whatever we wanted to mention within over clause which saves lot of lines in ur query
+
+nth_value()
+    - It is similar to first_value and last_value function, first_value will fetch value or a column from the very first record of your partition, last_value would fetch the value or a column from the last record of the partition and nth_value can fetch a value from any particular position that you specify, so we can specify a position and from that position or from that row a value will be extracted 
+
+Write query to display the second most expensive product under each category?
+
+>select *,
+first_value(product_name) over w as most_exp_product,
+last_value(product_name) over w as least_exp_product,
+nth_value(product_name, 2) over w as second_most_exp_product
+from product
+window w as (partition by product_category order by price desc
+            range between unbounded preceding and unbounded following);
+
+Here we have first_value, last_value and nth_value() which takes 2 arg, first arg is what that we want to display (ie) product_name, next we need to specify from which position we want to fetch (ie) second most expensive, so from each partition it will look for the second row within that partition
+
+When we execute a new column will be added which will always print second most expensive product from each category. So in the output under Earphone category, Airpods Pro is most expensive, Galaxy Buds Live is least expensive error and WF-1000XM4 is second most expensive product, similarly for all other products
+ 
+>select *,
+first_value(product_name) over w as most_exp_product,
+last_value(product_name) over w as least_exp_product,
+nth_value(product_name, 3) over w as second_most_exp_product
+from product
+window w as (partition by product_category order by price desc
+            range between unbounded preceding and unbounded following);
+
+When we execute, it will display the 3rd record of each partition 
+
+>select *,
+first_value(product_name) over w as most_exp_product,
+last_value(product_name) over w as least_exp_product,
+nth_value(product_name, 5) over w as second_most_exp_product
+from product
+window w as (partition by product_category order by price desc
+            range between unbounded preceding and unbounded following);
+
+If we specify 5 and in first 2 partitions we dont have 5 records, so it will print the null value, so under each partition nth_value() function will look for 5th record and in that partition if it does not find 5 records then it returns null.
+
+For nth_value as well specifying the proper frame clause is important, so consider we didnt provide frame clause
+
+>select *,
+first_value(product_name) over w as most_exp_product,
+last_value(product_name) over w as least_exp_product,
+nth_value(product_name, 2) over w as second_most_exp_product
+from product
+window w as (partition by product_category order by price desc);
+
+In this case, sql will consider default frame as the range to be unbounded preceding and current row, so when we execute it will not printing properly, so in 1st partition we have 4 records and 2nd most expensive is WF-1000XM4 for last 3 records it is printing fine, but for the 1st record it is not printing fine because when its processing the 1st record, the frame is only having access to 1st record and within that 1st record it is not able to fetch the second record so it is printing null. But when it comes to processing of 2nd record, it has access to the 2nd record so its printing. So whenever we use last_value and nth_value specify proper frame clause to get desire result
+
+
+Ntile()
+    - used to group together a set of data within ur partition and then place it into certain buckets and sql will try  its best that each bucket that it creates within the partition will have almost the equal number of records 
+
+Write a query to segregate all the expensive phones,midrange phones and cheaper phones?
+    Here we need to create 3 different buckets where 1st bucket should have all expensive phones, 2nd bucket should have mid-range phones and 3rd bucket should have all cheaper phones, so when we want to segregate the data equally within few different groups and that is where we can use ntile window function 
+    ntile() will take one argument which is number of buckets that u want to create, here we want to create 3 buckets for expensive, mid-range and cheaper phones. Then we use over clause without any partition because the query is only interested on phones, so we write a filter condition, then we need to specify order by clause which is based on price of each phones so we know at top we have expensive phone and next less expensive phone
+
+>select *,
+    ntile(3) over (order by price desc) as buckets
+    from product
+    where product_category = 'Phone';
+
+When we execute it will create a new column called buckets and it has values like 1,2,3 etc so totally we have 10 records because we 10 phones and what sql is doing is since we have specified 3 buckets, it will try to equally split among these 3 buckets, we cannot equally split 10 into 3 buckets so it will give priority to first bucket so first bucket will get one additional record (ie) 4 records, 2nd bucket will get 3 records and 3rd bucket will get 3 records 
+
+
+>select *,
+    ntile(5) over (order by price desc) as buckets
+    from product
+    where product_category = 'Phone';
+
+If we give 5, then it will create 5 different buckets and since we have 10 records and each bucket is equally distributed with 2 records 
+
+Now we want to write query which segregate as expensive, mid-range and cheaper phones 
+
+>select x.product_name, 
+case when x.buckets = 1 then 'Expensive Phones'
+     when x.buckets = 2 then 'Mid Range Phones'
+     when x.buckets = 3 then 'Cheaper Phones' END as Phone_Category
+from (
+    select *,
+    ntile(3) over (order by price desc) as buckets
+    from product
+    where product_category = 'Phone') x;
+
+Now it will expensive phones, mid range and cheaper phones
+
+
+cume_dist()
+    - It is called as cumulative distribution and basically a mathematical formula 
+    - used to identify the distribution percentage of each record with respect to all the rows within result set. cume_dist() will always provide a value which is within a range of 0 and 1
+
+Write a query to fetch all products which are constituting the first 30% of the data in products table based on price?
+    We have products table which have list of products, now if we want to fetch the products which are constituting the first 30% of ur data, in this case we have 27 records we might be dealing in real time projects where you have 1000s of records, so if we want to find out 30% of data and in 30% of data if we want to know which are the products that constitute this 30% of data, then in order to write this type of query we can use cume_dist()
+
+cume_dist() dosent take any argument, and we call over() and inside over() we dont need to specify a partition because we want to cume_dist() to run on entire resultset, next we order by based on price 
+
+>select *,
+    cume_dist() over (order by price desc) as cume_distribution
+    from product;
+
+When we execute it creates a new column cume_distribution with decimal values, for better understanding instead of displaying in decimal format, we convert into % format using round()
+
+>select *,
+    cume_dist() over (order by price desc) as cume_distribution,
+    round(cume_dist() over (order by price desc)::numeric * 100,2) as cume_dist_percetage
+    from product;
+
+When we execute, both column have same data but last column will display in % format by multiplying by 100 and round to 2 decimal places. Basically last column represents the cume_dist value of each of the record in resultset. First row have distribution 3.7% compared to the entire resultset of 27 records 
+    If we want to identify first 30% of records of this resultset then we can do that by fetching less than 30, so first 7 records basically consitutes 30% of data from this table.
+    Especially in sales data if someone tells you that in sales data go and fetch the data for 20% of products which are performing badly then we can go and use cume_dist()
+   Now to fetch first 30% percent of data we can use subquery 
+
+> select product_name, (cume_dist_percetage||'%') as cume_dist_percetage
+from (
+    select *,
+    cume_dist() over (order by price desc) as cume_distribution,
+    round(cume_dist() over (order by price desc)::numeric * 100,2) as cume_dist_percetage
+    from product) x
+where x.cume_dist_percentage <= 30;
+
+When we execute it will extract the query where its returning all the product names which constituted the first 30% of data in product table 
+   We have formula to calculate cume_dist is 
+Formula = current row no / total no of rows
+   So for 1st row it will take 1/27, then for 2nd record it is 2/27. So for every record its just going to divide the row number by total number of rows, until it finds a row where there are duplicate values 
+   Consider row num 4 and 5, we have duplicate price so instead of considering the row number of the very first record its going to see how many duplicate rows are there, so here we have 2 duplicate rows for price and its going to consider the last record 5, so its going to do 5/27 so it will give 0.185 and this will be common for all duplicate records 
+
+percent_rank()
+      - It stands for percentage ranking which basically provides a relative rank to each row in the form of percentage
+       It is almost similar to cume_dist but the formula to calculate percent_rank is slightly different from cume_dist
+ 
+Write a query to identify how much percentage more expensive is "Galaxy Z Fold 3" when compared to all products?
+    Here we use percent_rank() which does not accept any argument, then we use over clause inside that we order the data based on its price 
+
+>select *, percent_rank() over(order by price) as percentage_rank from product;
+
+When we execute, a new column added called percentage_rank which is not clear, so now we represent this decimal value into more meaningful by converting into percentage using round()
+
+>select *, 
+percent_rank() over(order by price) as percentage_rank, 
+round(percent_rank() over(order by price):: numeric * 100, 2)as per_rank
+from product;
+
+When we execute it create another column per_rank with percentage, the first value that is calculated by percent_rank or by cume_dist will be always within a range of 0 and 1. In percent_rank, the first record will have value as 0 and last record will have as 1
+   The formula it consider is 
+Formula=current row no - 1/Total no of rows - 1
+   So when it process 1st row, it consider row number of 1st row and subtract by 1, so row number - 1 which is 0, then it divide it by (total no of rows - 1) (ie) 27-1=26, so 0/26 which displays 0
+   For 2nd row its calculating as (2-1)/(27-1) (ie) 1/26 = 0.038 etc
+   So this is basically how the calculation of percent_rank works, so if we want to identify how expensive is "Galaxy Z Fold 3" is 80.77% more expensive than other phones  that are available in the table
+
+>select product_name, per_rank
+from (
+    select *, 
+percent_rank() over(order by price) as percentage_rank, 
+round(percent_rank() over(order by price):: numeric * 100, 2)as per_rank
+from product) x
+where x.product_name='Galaxy Z Fold 3';
+
+  
+TCL Statement
+The transaction allows us to group a set of related tasks as one logical unit and all of these sets of related tasks are either get committed or get rollback if there is an error.
+
+So, a transaction in Oracle ensures that either all of the command succeeds or none of the commands succeeds. If one of the commands in the transaction fails, then all of the commands fail and any data that is modified in the database is rolled back. If all the commands are executed successfully, then the modification made to the database are committed.
+
+COMMIT: It indicates that the transaction was completed successfully and all the DML performed since the start of the transaction are committed to the database as well as frees the resources held by the transaction.
+
+ROLLBACK: It will roll back the data to its previous state.
+
+SAVEPOINT: This is used for dividing or breaking a transaction into multiple units so that the user has a chance of rolling back a transaction up to a point or location. It creates points within the groups of transactions in which to ROLLBACK.
+
+Note: The Transactional Control Language commands are only used with the DML statements such as INSERT, UPDATE, and DELETE. The TCL Commands cannot be used while creating tables or dropping (basically DDL operations) them because these operations are automatically committed to the database.
+
+SQL> create table sample(id int,name varchar2(10));
+Table created.
+
+SQL> insert into sample values(1,'Ram');
+1 row created.
+
+SQL> insert into sample values(2,'Sam');
+1 row created.
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> rollback;
+Rollback complete.
+
+SQL> select * from sample;
+no rows selected
+
+SQL> insert into sample values(1,'Ram');
+1 row created.
+
+SQL> insert into sample values(2,'Sam');
+1 row created.
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> create table sample1(id int,name varchar2(10));
+Table created.
+
+SQL> rollback;
+Rollback complete.
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> insert into sample1 values(1,'Ram');
+1 row created.
+
+SQL> insert into sample1 values(2,'Sam');
+1 row created.
+
+SQL> update sample set name='Raj' where id=1;
+1 row updated.
+
+SQL> delete from sample where id=2;
+1 row deleted.
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Raj
+
+
+SQL> select * from sample1;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> rollback;
+Rollback complete.
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> select * from sample1;
+no rows selected
+
+SQL> savepoint s1;
+Savepoint created.
+
+SQL> insert into sample1 values(1,'Ram');
+1 row created.
+
+SQL> insert into sample1 values(2,'Sam');
+1 row created.
+
+SQL> savepoint s2;
+Savepoint created.
+
+SQL> update sample set name='Raj' where id=1;
+1 row updated.
+
+SQL> delete from sample where id=2;
+1 row deleted.
+
+SQL> savepoint s3;
+Savepoint created.
+
+SQL> insert into sample values(3,'Raju');
+1 row created.
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Raj
+         3 Raju
+
+SQL> select * from sample1;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> rollback to s1;
+Rollback complete.
+
+SQL> select * from sample1;
+no rows selected
+
+SQL> select * from sample;
+        ID NAME
+---------- ----------
+         1 Ram
+         2 Sam
+
+SQL> rollback to s2;
+rollback to s2
+*
+ERROR at line 1:
+ORA-01086: savepoint 'S2' never established
+
+
+SQL> rollback to s3;
+rollback to s3
+*
+ERROR at line 1:
+ORA-01086: savepoint 'S3' never established
+
+Merge stmt
+   - We have 2 tables, contact1 and contact2, in both the table we have one PK called contactid. Now we want to update the record of contact1 (ie) based on id if the record is found in contact2 then we want to update the record from contact2 to contact1. If id is not found for eg, 5 and 6 are in contact2 but it is not available in contact1, then we want to insert 5 and 6 record in contact1 
+
+Syntax:  Merge into dest_table 
+             using source_table
+             on(condition)
+             when MATCHED then
+                UPDATE
+             when NOT MATCHED Then
+                INSERT
+
+
+CREATE TABLE CONTACT1(CID NUMBER(3) PRIMARY KEY,
+                     NAME VARCHAR2(30),
+                     MOBILE NUMBER(10),
+                     EMAIL VARCHAR2(30))
+/ 
+CREATE TABLE CONTACT2(CID NUMBER(3) PRIMARY KEY,
+                      NAME VARCHAR2(30),
+                      MOBILE NUMBER(10),
+                      EMAIL VARCHAR2(30))
+/                       
+
+INSERT INTO CONTACT1 VALUES(1,'PARAG SHUKLA',1234567890,'parag@gmail.com');
+INSERT INTO CONTACT1 VALUES(2,'KAPIL',8888888888,'kapil@sidhpur.com');
+INSERT INTO CONTACT1 VALUES(3,'Dr. Deven J. Patel',7777777777,'djp@patel.com'); 
+INSERT INTO CONTACT1 VALUES(4,'Mr. Sandip Ramani',4444444444,'sandip@ramani.com'); 
+
+INSERT INTO CONTACT2 VALUES(1,'Dr. Parag C. Shukla',9999999999,'drparagshukla@gmail.com');
+INSERT INTO CONTACT2 VALUES(2,'Mr. Kapil K. Shukla',8888888888,'kapil@shukla.com');
+INSERT INTO CONTACT2 VALUES(5,'Mr. Dharmik Chotaliya',6666666666,'dharmik@astik.com');
+INSERT INTO CONTACT2 VALUES(6,'Mr. Jigish Chitaliya',5555555555,'jigish@wadhvan.com');
+
+>MERGE INTO CONTACT1 C1
+       USING CONTACT2 C2
+       ON(C1.CID=C2.CID)
+       WHEN MATCHED THEN
+          UPDATE SET 
+              C1.EMAIL=C2.EMAIL, C1.MOBILE=C2.MOBILE,C1.NAME=C2.NAME
+       WHEN NOT MATCHED THEN
+          INSERT VALUES(C2.CID,C2.NAME,C2.MOBILE,C2.EMAIL);
+
+>select * from contact1;
+     We can see 6 rows, since id 1 and 2 is available, so record from contact2 is updated in contact1, since id 5 and 6 is not available so record from contact2 is inserted in contact1 and other rows are available as such
+
+
+Case 2:
+   Here we have source table with id, name, salary, and we use similar target table. The source table have 3 records and initially target table is empty 
+   For 1st scenario if the record doesnt exists in the target table we are going to insert, so all 3 records should be inserted in target table and if the records exists in target table then we update it 
+   For 2nd scenario, we add 1 more condition, if some record gets deleted from source, it should get deleted in target as well. So we are going to insert,update,delete using just one stmt
+
+>select * from source_demo;
+id     name    salary
+1      Jane      10000
+2      John      20000
+3      Ron       30000
+
+>select * from target_demo;
+no rows selected 
+
+Now we have to write merge stmt, so if these rows doesnt exist they get inserted and if they exist they gets updated 
+
+>MERGE INTO TARGET_DEMO T
+       USING SOURCE_DEMO S
+       ON(T.ID=S.ID)
+       WHEN MATCHED THEN
+            UPDATE SET T.NAME=S.NAME,T.SALARY=S.SALARY
+       WHEN NOT MATCHED THEN
+            INSERT(ID,NAME,SALARY) VALUES(S.ID,S.NAME,S.SALARY);
+
+Now 3 rows will be inserted into target_demo table 
+
+>select * from target_demo;  - 3 rows
+
+Now we insert and update row into source table
+>insert into source_demo values(4,'PAM',30);
+>UPDATE source_demo set salary=50 where id=3;
+
+>select * from source_demo;  - 4 rows
+
+Now when we execute same merge stmt again, then it will say 4 rows merged 
+
+>select * from target_demo; - 4 rows
+     - our target_demo will have the new row called Pam and salary for Ron will also will be updated 
+
+Lets change the salary in our source_demo table 
+>update source_demo set salary=60 where name in('John','PAM');
+
+We can also add a where condition in our update stmt, for example if we specify t.name='PAM' in our merge stmt 
+
+>MERGE INTO TARGET_DEMO T
+       USING SOURCE_DEMO S
+       ON(T.ID=S.ID)
+       WHEN MATCHED THEN
+            UPDATE SET T.NAME=S.NAME,T.SALARY=S.SALARY
+            WHERE T.NAME='PAM'
+       WHEN NOT MATCHED THEN
+            INSERT(ID,NAME,SALARY) VALUES(S.ID,S.NAME,S.SALARY);
+
+Now we can see that only 1 row got merged 
+
+>select * from target_demo;
+     - Now we can see for PAM the salary will be updated as 60, so even if we have matching data with our source_demo, we can restrict what we want to update 
+
+2. Now we go to other scenario where we will delete from our target_demo, in case if the record is not present in source_demo 
+
+- Now we delete id=1 from our source_demo table
+>delete from source_demo where id=1;
+>select * from source_demo; -- only 3 rows, it will delete id=1
+
+- Now we need to make sure it will delete from target_demo as well, for that 1st we need to identify the id's that have been deleted from source, we will join target_demo table with source_demo using full outer join and we will use this new query as our source or reference dataset 
+
+>select a.*, b.id source_id, b.name as source_name, b.salary as source_salary from target_demo a full join source_demo b on a.id=b.id;
+
+After executing this query we can see that id=1 exists in target table but it dosent exists in source_demo table, the values are null and we also have changed the names of our source_demo table columns as source_id, source_name and source_salary.
+    In order to delete a record using merge statement in oracle, we first have to update it, so we can either update the name and salary as null in target_demo table for id=1 and then we can delete the records where name or salary is null 
+    So we can say it may not work if we have not null constraints on our target_demo table, the update itself will fail or there is a possibility for a record that source  table only sent empid and the name and salary will be updated later and the record also deleted
+    So the correct approach is to update the record with a value like -999 for salary which is not feasible for source data and we can use that for our deletion. We use nvl function to change this null to -999
+
+
+
+select a.*, b.id source_id, b.name as source_name, nvl(b.salary,-999) as source_salary from target_demo a full join source_demo b on a.id=b.id;
+
+Now we replace the source table in our merge query with this new dataset and since we named our salary and name column from source table differently we have to update that also 
+
+>MERGE INTO TARGET_DEMO T
+       USING (select a.*, b.id source_id, b.name as source_name, nvl(b.salary,-999) as source_salary from target_demo a full join source_demo b on a.id=b.id) S
+       ON(T.ID=S.ID)
+       WHEN MATCHED THEN
+           UPDATE SET T.NAME=S.SOURCE_NAME,
+                   T.SALARY=S.SOURCE_SALARY
+       WHEN NOT MATCHED THEN
+            INSERT(ID,NAME,SALARY) VALUES(S.SOURCE_ID,S.SOURCE_NAME,S.SOURCE_SALARY);
+
+After the execution we will see that 4 rows are merged and if we see target_demo table, and salary for id=1 will be updated as -999
+
+- Now we have to delete the records when salary=-999, for that we can update the existing merge stmt
+
+>MERGE INTO TARGET_DEMO T
+       USING (select a.*, b.id source_id, b.name as source_name, nvl(b.salary,-999) as source_salary from target_demo a full join source_demo b on a.id=b.id) S
+       ON(T.ID=S.ID)
+       WHEN MATCHED THEN
+           UPDATE SET T.NAME=S.SOURCE_NAME,
+                   T.SALARY=S.SOURCE_SALARY
+           DELETE WHERE SALARY=-999
+       WHEN NOT MATCHED THEN
+            INSERT(ID,NAME,SALARY) VALUES(S.SOURCE_ID,S.SOURCE_NAME,S.SOURCE_SALARY);
+
+But before we execute, we add 1 more row in source_demo, we update salary for 'PAM' and delete name='John'
+
+>insert into source_demo values(5,'Rick',100);
+>update source_demo set salary=200 where name='Pam';
+>delete from source_demo where name='John';
+
+- If we run our source query
+
+select a.*, b.id source_id, b.name as source_name, nvl(b.salary,-999) as source_salary from target_demo a full join source_demo b on a.id=b.id;
+
+we can see that we have 2 records id=1 and id=2 that have been deleted from source and for PAM the salary is updated and we have Rick which is new in source_demo and it should be inserted in target_demo 
+   If we use inner or left or right join we will see that some records will get dropped from our dataset and the target will not changed correctly, so we have used full outer join 
+    So if we have written our query correctly then row for Rick should be inserted, row for PAM should be updated and the rows for Jane and John with id=1 and id=2 should be deleted from target_demom because they have been deleted from our source_demo table  
+
+Now we run merge stmt,
+
+>MERGE INTO TARGET_DEMO T
+       USING (select a.*, b.id source_id, b.name as source_name, nvl(b.salary,-999) as source_salary from target_demo a full join source_demo b on a.id=b.id) S
+       ON(T.ID=S.ID)
+       WHEN MATCHED THEN
+           UPDATE SET T.NAME=S.SOURCE_NAME,T.SALARY=S.SOURCE_SALARY
+           DELETE WHERE SALARY=-999
+       WHEN NOT MATCHED THEN
+            INSERT(ID,NAME,SALARY) VALUES(S.SOURCE_ID,S.SOURCE_NAME,S.SOURCE_SALARY);
+
+>SELECT * FROM SOURCE_DEMO;
+>SELECT * FROM TARGET_DEMO;
+
+ID	NAME	SALARY
+5	Rick	100
+3	Ron	50
+4	PAM	200
+
+Now we can see both tables will have same values and we have  insert , update and delete our table using a single statement
+
+yyyy and rrrr
+
+>select to_char(to_date('20-mar-77','dd-mon-yy'),'yyyy') from dual;
+
+-what is the result, it would be 1977 or 2077 or 0077. If we give 4 digit there is no confusion, the issue is all with 2 digit.
+
+For this reason, oracle has introduced 'RRRR' format to cope up with y2k issues 
+
+SELECT 
+    TO_CHAR(TO_DATE('20-Dec-81', 'DD-Mon-RR'), 'YYYY') AS "RR",
+    TO_CHAR(TO_DATE('20-Dec-81', 'DD-Mon-YY'), 'YYYY') AS "YY"
+FROM DUAL;
+Result:
+     RR      YY 
+_______ _______ 
+1981    2081   
+
+We can see that RR interprets the year 81 as 1981, while YY interprets it as 2081.
+
+When using YY, the year returned always has the same first 2 digits as the current year.
+With RR, the century of the return value varies according to the specified two-digit year and the last two digits of the current year.
+
+Here’s how the Oracle documentation explains it:
+
+If the specified two-digit year is 00 to 49, then
+    - If the last two digits of the current year are 00 to 49, then the returned year has the same first two digits as the current year.
+    - If the last two digits of the current year are 50 to 99, then the first 2 digits of the returned year are 1 greater than the first 2 digits of the current year.
+
+
+If the specified two-digit year is 50 to 99, then
+   - If the last two digits of the current year are 00 to 49, then the first 2 digits of the returned year are 1 less than the first 2 digits of the current year.
+   - If the last two digits of the current year are 50 to 99, then the returned year has the same first two digits as the current year.
+The RRRR and YYYY Format Elements
+
+Here’s an example that compares the RRRR and YYYY format elements:
+SELECT 
+    TO_CHAR(TO_DATE('20-Dec-81', 'DD-Mon-RRRR'), 'YYYY') AS "RRRR",
+    TO_CHAR(TO_DATE('20-Dec-81', 'DD-Mon-YYYY'), 'YYYY') AS "YYYY"
+FROM DUAL;
+   RRRR    YYYY 
+_______ _______ 
+1981    0081  
+ In this case, RRRR returns the same year that RR did, but YYYY returns the year 0081.
+
+
+to_char()
+SELECT TO_CHAR(12345.67, '99999.9') FROM DUAL; 12345.7
+SELECT TO_CHAR(12345, '00000000') FROM DUAL;  00012345
+
+TO_CHAR(1210.73, '9999.9')
+Result: ' 1210.7'
+
+TO_CHAR(-1210.73, '9999.9')
+Result: '-1210.7'
+
+TO_CHAR(1210.73, '9,999.99')
+Result: ' 1,210.73'
+
+TO_CHAR(1210.73, '$9,999.00')
+Result: ' $1,210.73'
+
+TO_CHAR(21, '000099')
+Result: ' 000021'
+
+Oracle TO_CHAR	Format Specifier
+YYYY	4-digit year
+YY	2-digit year
+MON	Abbreviated month (Jan - Dec)
+MONTH	Month name (January - December)
+MM	Month (1 - 12)
+DY	Abbreviated day (Sun - Sat)
+DD	Day (1 - 31)
+HH24	Hour (0 - 23)
+HH or HH12	Hour (1 - 12)
+MI	Minutes (0 - 59)
+SS	Seconds (0 - 59)
+
+TO_CHAR(sysdate, 'month')
+
+TO_CHAR(sysdate, 'yyyy/mm/dd')
+Result: '2003/07/09'
+
+TO_CHAR(sysdate, 'Month DD, YYYY')
+Result: 'July 09, 2003'
+
+FM - zero are suppressed 
+TO_CHAR(sysdate, 'FMMonth DD, YYYY')
+Result: 'July 9, 2003'
+
+TO_CHAR(sysdate, 'MON DDth, YYYY')
+Result: 'JUL 09TH, 2003'
+
+TO_CHAR(sysdate, 'FMMON DDth, YYYY')
+Result: 'JUL 9TH, 2003'
+
+TO_CHAR(sysdate, 'FMMon ddth, YYYY')
+Result: 'Jul 9th, 2003'
+
+Sequence
+
+NEXTVAL - sequence next value
+CURRVAL - sequence current value
+
+CREATE SEQUENCE id_seq
+    INCREMENT BY 10
+    START WITH 10
+    MINVALUE 10
+    MAXVALUE 100
+    CYCLE
+    CACHE 2;
+
+SQL> SELECT id_seq.NEXTVAL from dual;
+
+Each time it will increment by 10 and once it reaches 100, once again it starts with 10, since we gave cycle
+
+>CREATE SEQUENCE id_seq1
+    INCREMENT BY 10
+    START WITH 10
+    MINVALUE 10
+    MAXVALUE 50;
+
+Each time it will increment by 10 and once it reaches 50, it gives error as by default it is no cycle
+
+ALTER SEQUENCE invoice_seq
+CACHE 10;
+
+Drop sequence invoice_seq
+
+We created sequence in db and need to hit by u (ie) we need to call seq.next_val. Consider if someone joined in company we insert his info into db so we need his empid, so we call seq.nextval
+
+  So if we hit the query it is going to fetch the data from actual sequence. In case if 100 people came to join the company then we need to execute that sequence 100 times so instead of that we can hit sequence one time and fetch group of sequence values 
+   So if we specify cache 50 then it will fetch 50 numbers at single fetch and stored inside SGA so its improves performance
+   If we didnt specify cache, by default cache will be 20, so 20 values will be preallocated but if we need more values to be stored in cachememory so we declare cache 
+
+>create sequence seq
+  start with 1
+  increment by 1 
+  maxvalue 1000
+  minvalue 1
+  cycle
+  cache 100;
+
+   The cache should be less than 1 cycle (ie) it should be less than 1000. If we declare cache 1000 it will give error 
+
+Synomyn
+    - It is a simple alias for a table, view, sequence or database objects. It is just an alternative name for an object so it requires no storage space
+    - Oracle stores only defination of a synomyn in data dictionary but it wont take any memory space in db. Oracle allows us to create both public and private synomyn. A public synomyn is a synonym that is available to every user in database. A private synonym is a synonym within the schema of a specific user
+   - If table is dropped, synonym is also dropped
+why?
+1. create an easier reference to a table that is owned by another user
+    Consider we have server1 which has database and inside that db we create a table. If we are in server1 we can directly access it, if another user wants to access the table then we have to give entire reference like server.db.table, so we create synonym and access it
+
+2. Shorten lengthy object names
+
+Syntax: create [public] synonym synonym_name for object
+
+>create synonym employee_syn for employee;
+>desc employee_syn;
+>select * from employee_syn;
+>drop synonym employee_syn;
+
+View
+  - View is a database object which is created over an sql query (ie) view will just represent the data that is returned by an sql squery, so view does not store any data but everytime you call a view it just executes the sql query underlying
+  - So basically view is a virtual table,so table can store data but view cannot store data 
+
+>create table customer_data(cust_id varchar2(10) primary key, cust_name varchar2(25), phone int, email varchar2(25), address varchar2(25));
+
+insert into customer_data values('C1','Mohan',9900807090,'mohan@abc.com','Bangalore');  
+insert into customer_data values('C2','James',8800807090,'james@abc.com','Mumbai'); 
+insert into customer_data values('C3','Priya',9800807090,'priya@abc.com','Chennai'); 
+insert into customer_data values('C4','Eshal',9700807090,'eshal@abc.com','Delhi'); 
+
+create table product_info(prod_id varchar2(10) primary key,prod_name varchar2(50),brand varchar2(50),price integer);
+
+insert into product_info values('P1','Samsung S22','Samsung',800); 
+insert into product_info values('P2','Google Pixel 6 Pro','Google',900); 
+insert into product_info values('P3','Sony Bravia TV','Sony',600); 
+insert into product_info values('P4','Dell XPS 17','Dell',2000); 
+insert into product_info values('P5','iphone 13','Apple',800);
+insert into product_info values('P6','Macbook Pro 16','Apple',5000);  
+
+create table order_detail(ord_id int primary key,prod_id varchar2(20) references product_info(prod_id),quantity int,cust_id varchar2(20) references customer_data(cust_id),disc_percent int, date date);
+
+insert into order_detail values(1,'P1',2,'C1',10,'01-Jan-20');
+insert into order_detail values(2,'P2',1,'C2',0,'01-Jan-20');
+insert into order_detail values(3,'P2',2,'C3',20,'01-Feb-20');
+insert into order_detail values(4,'P3',1,'C1',0,'01-Feb-20');
+insert into order_detail values(5,'P3',1,'C1',0,'01-Mar-20');
+insert into order_detail values(6,'P3',4,'C1',25,'01-Apr-20');
+insert into order_detail values(7,'P3',1,'C1',0,'01-May-20');
+insert into order_detail values(8,'P5',1,'C2',0,'01-Feb-20');
+
+Consider we are working on project where we are recording the info about customers, products and orders. Now ur manager tells you to generate a report to gather the order summary so that is can be shared with clients 
+   To get order summary we need to provide orderid, date when the order happened, what was the product that was purchases, who is the customer who purchased it and cost
+
+>select o.ord_id,o.odate,p.prod_name,c.cust_name,
+(p.price * o.quantity)-((p.price*o.quantity) * disc_percent/100) as cost from customer_data c join order_detail o on o.cust_id=c.cust_id
+join product_info p on p.prod_id=o.prod_id;
+
+Now we want to give this sql query to client in this case we will be sharing all confidential info like customer table which has phone no, email etc, so we dont want the client to know what ur internal db structure or wht is logic that we used to generate a report. 
+   So we create a view called order_summary and execute the view, it will display the same output when we execute the query 
+
+> create view order_summary as
+select o.ord_id,o.odate,p.prod_name,c.cust_name,
+(p.price * o.quantity)-((p.price*o.quantity) * disc_percent/100) as cost from customer_data c join order_detail o on o.cust_id=c.cust_id
+join product_info p on p.prod_id=o.prod_id;
+
+>select * from order_summary;
+
+- To drop the view
+  >drop view viewname
+
+Updatable views - rules
+    1. Views should be created using 1 table/view only
+
+>create or replace view exp_product as select * from product_info where price>1000;
+
+>select * from exp_product;
+
+>update exp_product set prod_name='Airpods Pro', brand='Apple' where prod_id='P10';
+
+We can update the view, if view contains single table, in case if view contains more than one table it cant be updatable 
+
+>update order_summary set cost=10 where ord_id=1;   -- error
+
+2. View cannot have distinct clause
+
+>create or replace view exp_product1 as select distinct * from product_info where price>1000;
+
+>select * from exp_product1;
+>update exp_product1 set prod_name='Airpods Pro 2', brand='Apple' where prod_id='P10'; -- error
+
+3. View cannot have group by clause
+
+>create view order_count as
+select odate,count(1) as no_of_order from order_detail group by date;
+
+>select * from order_count;
+
+>update order_count set no_of_order=0 where date='01-Feb-20';   -- error
+
+Index
+    - Index is a db object that makes data retrieval faster 
+    - Oracle will not index the data, if the data is null, it will index only non null value
+    - Database index works same way as a text book index, so in textbook every textbook comes with indexes, because using that index a particular topic can be located fastly, so if textbook dosent come with index, if we want to locate a particular topic we need to go to each and every page to locate particular topic 
+     - How book index works the same way, a db index works but in textbook we try to locate a particular topic but in db we search for particular record 
+     - So with the help of index we can locate the records fastly. Index is created on columns and that index is called index key 
+
+Types of Index
+   1. BTree index - internally it creates tree structure
+   2. Bitmap index - internally a structure is created which contains bits 
+
+BTree index
+
+> create index i1 on emp(sal);
+
+Why we create index on salary column?
+     Consider we are executing a query
+>select * from emp where salary=3000;
+
+Assume this query is taking more time to locate the record sal=3000, so we want to improve the performance of this query, so we create index on salary to make this operation faster because the search is based on salary 
+   At the time of creating index we didnt mention whether it is BTree or bitmap and by default it creates BTree index. When index created means internally one structure is created and that structure looks like a tree structure 
+    Consider in emp table, we have salary as 5000,1000,2500,3000,1500,3000,4000,2000. So when u create index on salary column, so internally tree structure is created like
+                      3000 - index node
+      2000                         4000
+1000       2000              3000         4000       data node
+1500       2500                           4500
+
+In this tree each one is called node, top we have index nodes and down are called data nodes. Every index node contain left pointer, value and right pointer. Every data node contains value (ie) index key and * which represent row id (ie) address of record  
+
+If we have huge volume of data in database, if u are selecting 
+"select * from table where status='success'"
+   So if we do not have indexes on the table, it will go and check one by one all the records which is called as full table scan which leads to a performance issue because we have huge volume of data so db is going to check each and every record one by one, it will take lot of time. To avoid this type of scenario we use some performance tuning method and indexing is one of performance tuning method 
+    Consider we have book and book has 1000 pages, it dosent have any content or index page, so if we want to take detail about particular topic and if the book dosent have any index page then one by one we will checking all the pages, so instead of checking all the pages if we have index page then we can directly search in index page 
+    So if we have table with many data, if we are creating index on the table, so whatever the data has been stored in table will be separately stored in indexed table. So when we issue select stmt, first oracle will go to the indexed table and it will take rowid of the record, then with rowid it will go and search where the row it is present and it will give you the data 
+
+Types of index
+1. Unique index -  oracle will automatically create unique index for primary key and unique key constraints
+
+2. Non unique index- we have create explicit index for columns 
+   After creating table if we have indexed particular column, but after that if we are creating that column as primary key, it will not create unique index 
+
+3. Composite index 
+       If we are creating an index by combining more than one column 
+
+4. Function based index
+       The indexed column's data is based on some calculation. eg: where UPPER(firstname)='JOHN'
+
+To check whether table is indexed or not
+>select * from all_indexes where table_name='EMPLOYEE';
+
+To find column name and index name of columns
+>select * from all_IND_columns where table_name='EMPLOYEE';
+
+
+Based on data we have to create index, mainly we have 2 index
+1. B-Tree index - By default if we create any index it will create a btree index 
+2. Bit map index 
+
+B-Tree index
+    - It is a balanced index (ie) based on  cardinality we create index 
+   cardinality =  no of distinct record/total number of records
+
+For example, cardinality of emp_id and email column, if we have 100 records and all 100 record would be unique so 
+cardnility = 100/100 = 1 - high cardinality
+    If we have high cardinality then we have to go for BTree index 
+  Consider we have job_id or dept_id, it will have repeated values so consider we have 10 unique job_id then
+   cardnility = 10/100 = 0.1 - less cardnility
+   If we have less cardinality then we have to go for Bitmap index  
+
+How data is stored in index table in BTree?
+     Consider we have 100 records on emp_id, oracle first split 100 records into 2 groups (ie) 1-50 and 51-100
+      Again 1-50 will be divided into 2 groups (ie) 1-25 and 25-50 emp id. Again 51-100 is split into 2 groups(ie) 51-75 anf 76-100
+      Again 1-25 will be divided into 2 groups (ie) final node which is called as leaf node 
+     Consider we issue query "select * from employee where empid=70", first oracle will go to indexed table  and it knows where empid=70 is available which goes 51-100 and then to 51-75 node. This way it will choose the path and oracle will not search other path
+    Oracle will find the path where the record is stored and take rowid and given to main table and give the final result 
+
+https://docs.oracle.com/cd/E11882_01/server.112/e40540/indexiot.htm#CNCPT1170
+      Here we have branch blocks and leaf blocks, so leaf blocks are last one. Consider we have value 0-250, it divided into different branches (ie) 0-40, 41-80 etc. Again each node is splitted as 0-10, 11-19 etc along with rowid
+     So if we are searching any values like 221, it will select the particular path and it will choose the rowid and check the main table and give the result and does not check other path 
+
+2. Btree index stored the rowid and the index key value in tree structure
+3. when creating an index, a root block is created, then branch blocks are created and finally leaf blocks
+4. Btree index are most useful on columns that appear in where clause (ie) more unique values 
+5. Btrees provide excellent retrieval performance for a wide range of queries, including exact match and range searches
+   Lets say user need to fetch the report of Students from Student table where the admission is between 1st Jan 2018 to 31 Jan 2018.So User need to add index on date.
+     
+>drop index indexname
+
+Index Creation
+1. BTree index
+>create index ind1 on emp(empid); - by default creates btree index with high cardinality 
+
+2. Bitmap index
+>create bitmap index ind2 on emp(deptno) - with less cardinality  or less number of distinct values like gender, status, grade etc
+
+3. Function based index
+>create index ind3 on emp(upper(ename));
+    Suppose if we create index on ename column, since we frequently use in where condition, and if we use some function on top of that column while creating index. So indexed data will be stored along with function converted value 
+
+   So once we created function based index so whenever we use
+>select * from emp where upper(ename)='RAM';
+   then that index will be used as part of execution
+
+4. Reverse key index
+>create index ind4 on emp(sal) reverse;
+    It is also another variation of btree, but in BTree the index values are stored as it is but in reverse key the index value wil be reversed and stored in btree
+    To avoid index block contention we use reverse key (ie) moment we create an index it will equally distributed in btree. Suppose we are storing student info and their mark and 90% of the students has got marks between 90-100 and only 10% of students have got marks between 0-90, in that case if we create btree index on the mark column, the data will not equally distributed, though it is btree index and 90% of marks lies between 90-100 and all these row ids will be available in a certain block of index which is called index block contention 
+
+   To avoid this we are actually reversing the key values and then will be storing 
+
+5. Composite index
+>create index ind5 on emp(job,dept_no);
+   - Creating more than one column in index and this column will be more frequently used in where condition
+
+To check created indexes
+>select * from user_indexes where table_name='EMP';
+
+To check on which column index is created
+>select * from user_ind_columns where table_name='EMP';
+
+For function based index oracle will not display the column directly, this particular info are available in one more data dictionary called 
+
+>select * from user_ind_expressions where table_name='EMP';
+
+which displays what is the expression defined in the index creation 
+
+B-tree index
+    It is balanced index, at the moment when we create an index on the column, oracle creates a ordered list of values divided into range, so what happen is when we create an index it will collects the info about the column on which we are creating an index and stores that info in a ordered list of values divided into range along with rowid info in a separate index table, so it can efficiently access particular record whenever we use that particular column in where condition
+
+How index data is stored?
+    Suppose for a employee table we create an index on empid column 
+>select rowid,e.* from employee e order by emp_id;
+>create index ind1 on emp(empid);
+
+So oracle will take all info from empid, it orders it and divide this info in a group or ranges and store this empid info along with rowid in a separate index table  
+   Consider we have 24 emp, so it divide into 2 groups 1-12 and 13-24, again 1-12 is divided into 1-6 and 7-12, then 13-24 will be divided into 13-18 and 19-24. Now all this info are stored in ordered way along with its rowid inside indexed table
+  If we issue "select * from emp where empid=5" through metadata info oracle knows that there is a index already created on empid column, so it directly goes to index root node and checks where empid=5 exists, it comes to 1-12 and then to 1-6 path, then it will starts the search from 1 and keeps on searching till it finds 5 and also till it ends
+   Because in case if the column is non unique column chances are there where we have more than one record with same value, so it starts with 5 and keep on goes till it finds 5, so when it finds all record which has 5 it iakes all the rowid from indextable and directly goes to the particular record, because accessing the table through rowid is most efficient way of accessing the data
+ 
+    If index is not there obviously it will go for full table scan (ie) it goes through entire info of the table and keeps checking each and every empno and finally returns the record whatever matches with empid=5
+
+When to create b-tree index?
+    Created for columns containing huge number of unique values like account_no, empid, studid, mailid etc
+
+How to find whether index is used by the query?
+    1. First way is to find by using explain plan, in case if the index is used then in the explained plan we can see table access through index, next name of index 
+
+SQL> explain plan for select * from employee;
+
+Explained.
+
+SQL> select * from table(dbms_xplan.display);
+
+When we use explain plan, it is estimator plan (ie) oracle is saying this is the plan which is going to execute (ie) the plan is not executed still  
+
+  2. By executing the query, then we check what the actual plan was getting used 
+
+>select * from employee where emp_id=5;
+
+>select * from v$sql where sql_text like '%from employee where emp_id=5%';
+
+v$sql will have all the info about the queries, copy the sqlid
+
+>select sql_id, operation, options,object_name, object_type,cost,cardinality from v$sql_plan where sql_id='1gdba0crts0fs';
+
+
+SQL> create table empl(empid int, ename varchar2(20), salary number(5), deptno int);
+
+Table created.
+
+insert into empl values(1,'smith',800,20)
+insert into empl values(2,'allen',1600,30);
+insert into empl values(3,'ward',1250,30);
+insert into empl values(4,'jones',2250,20);
+insert into empl values(5,'martin',1400,30);
+insert into empl values(6,'blake',2850,30);
+insert into empl values(7,'clark',2550,10);
+insert into empl values(8,'scott',3000,20);
+insert into empl values(9,'king',5100,10);
+insert into empl values(10,'jim',4100,30);
+insert into empl values(11,'jack',4500,20);
+insert into empl values(12,'james',3500,30);
+insert into empl values(13,'lim',6500,20);
+insert into empl values(14,'adam',6000,10);
+
+
+What types of scan operation Btree will do?
+1. Range scan
+      Here we created index on emp_id, as we saw it will index data in a range and ordered by employee no, so when we issue
+>select * from emp where emp_id=105;
+It will go through the path and pick the empid=105, since it is non unique index there are chances that there can be more than one value with same key value, so it keeps searching till it finds all the empid=105
+  This is called range scan, it searches for a range within empid=5 and we can see keyword range scan in explain plan
+
+SQL> create index eidx1 on empl(empid);
+SQL> select empid,ename from empl where empid>8 order by empid;
+SQL> explain plan for select empid,ename from empl where empid>8 order by empid;
+SQL> select * from table(dbms_xplan.display);
+
+2. Unique scan
+      To perform unique scan we need to create unique index 
+>create unique index ind2 on empl(empid);
+>select * from empl where empid=6;
+SQL> explain plan for select * from empl where empid=6;
+SQL> select * from table(dbms_xplan.display);
+
+In explain plan, we can see unique scan, since it is unique index oracle know that there is no duplicate record, so moment it finds empid=105 it takes particular rowid and directly fetch the data 
+   Range scan does not know whether it has more than one record or not, but in unique index it knows it can have only one rowid, so unique scan is much faster than range scan 
+
+3. Full scan
+      Now we create index on salary column,
+>create index ind3 on emp(salary);
+     when we create index on salary column, obviously index data will get stored in a sorted order, now when we give
+>select sum(sal) from employee;
+   So oracle will go through entire index segment and read all the salary and computes the total salary 
+   In explain plan we get full scan 
+
+4. Fast full scan
+      Consider we create 2 index one for emp_id and another for salary column
+>create index inf on emp(emp_id);
+>create index inf1 on emp(salary);
+     Since we create 2 index, it creates 2 indexed table one for emp_id and another for salary 
+>select emp-id,salary from employee;
+    So when we issue the above query, since we are selecting only the column which are already indexed, oracle dosent have to goto table instead it will fetch from index table itself, combine the info and gives the output 
+   In explain plan we can see fast full scan
+
+5. Full scan(min/max)
+ Now we create index on salary column,
+>create index ind4 on emp(salary);
+     when we create index on salary column, obviously index data will get stored in a sorted order, now when we give
+>select max(sal) from employee;
+    So when we give max(sal) or min(sal) oracle will goto the index and selects the first or the last depends, since in index it will be in sorted order and that scan is called index fullscan(min/max)
+    In explain plan it will be showing that scan info
+ 
+Can we create index for all column?
+   Not recommended, unless we use the column frequently in where condition
+
+Drawbacks
+   Whenever we do dml operation, oracle internally has to manage the index also, everytime when we insert oracle has to rearrange the data whatever it is stored, so as table grows the index also grows so if huge dml operation concurrently happen then dml performance will be degrade, so create indexes only for column which are actually using where conditions
+
+Bitmap index
+    It is another type of index which stores the data in the form of bitmap array mainly for the columns having less number of distinct values (ie) low cardinality columns 
+    In btree index, the index values are stored as balanced tree format sorted in the indexed column data along with rowid  whereas in bitmap index, the index key column info along with its bit info matrix are stored 
+
+How bitmap is stored in db?
+   We have student db which contain info abt list of student along with result. The result column contains 'P' for pass, 'F' for fail and not applicable for the student whose grade is not finalized. So this is potential column to create bitmap index 
+
+>create bitmap index ind2 on student(result);
+
+The moment when this index is created, the index column along with key info (ie)P,F,Not available and rowid are stored as map of bit 
+   So when we issue the query
+>select * from student where result='P';
+   Oracle fetches all the row from 'P' column wherever there is 1 and take all rowid from indextable and for those rowid it goes to the table and access the data 
+
+How to know bitmap index is used?
+   Using explain plan it will display
+>select * from student where sresult in ('P','F');
+   Here oracle will gets list of rowids for P and F, so whereever there is 1 for P and F it takes all those rowids and for those rowids it will access the table data which is provided in explain plan
+   Oracle is using bitmap index and for result =F and P it does bitmap conversion to get all rowids, then it is accessing the table by index rowid batched which is single value scan 
+
+>select count(*) from student where result='P';
+
+Here the entire info to compute the output is available in index table itself, here oracle dosent even goes to table data so it will do fast full scan. So in explain plan there is no table access it will compute the info from index table 
+
+When to use bitmap index?
+1. Table column with less cardinality value like gender, grade, deptid etc
+2. very less dml activity 
+
+Function based index
+   It is not a new type of index like btree or bitmap index instead this is slight variation from btree or bitmap in the way the index data is getting stored.Typically in btree or bitmap index whenever we create index on particular column, the key value of that column is exactly stored in the index table, so that is how ehenever we use that particular column in where condition optimizes start searching in the index segment, then from their it picks the rowid and it directly goes to table data.
+    However in function based index, the key columns are not exactly stored instead the key columns are applied over this function and the converted value is only getting stored in the index table 
+
+How to create function based index and how data is stored?
+
+>select * from employee;
+   We have employee table, first we create btree index and see how data is stored and from their we try to understand how to create function based index and how data is stored
+
+>create index idx1 on emp(ename);
+    Now we create index on ename column, once index is created, rowid info along with column info will be stored in index table. So index key column is exactly same what is there in the table, which is sorted and the rowid info will be stored in index table
+   So when we query
+>select * from emp where ename='Allen';
+    Then oracle will search from index segment then it will pick rowid of allen and goes to table to pick the data from table 
+    But if we give query like
+>select * from emp where upper(ename)='SCOTT';
+    Here we are not using the column directly instead we are using function, so whenever we apply a function or if the column is part of any expression then oracle will not use the index, even if index is created on this table it will not use index instead it will go through the full table scan 
+    To avoid this we have new index called function based index 
+
+>create index ind2 on emp(upper(ename));
+    So instead of creating column directly now  we are creating using function with the column names. Once we create the index, then the key column will be stored after applying the function (ie) in uppercase 
+   Now when we execute 
+>select * from emp where upper(ename)='SCOTT';
+   Now it will use the index, so this function based index will be used only if we that particular function in where condition 
+
+Function based index can also used on expression
+>create index ind3 on loan(p*n*r/100);
+
+Reverse key index
+    It is btree type index but one difference is that the way it reverse the key value and stores in index 
+    The main advantage reverse key index solves is index block contention and disadvantage is it will not be able to do index range scan once we create reverse key index 
+
+How to create reverse key index?
+     We have student table with 3 column sno, sname, smark, we can see lot of students score more than 90 and few students who scored 20, 25 etc. 
+>create index ind1 on student(smark);
+If we create btree on this mark column basically it creates a tree structure and stores all the info in sorted way 
+    So 10,15 will be stored in 0-25, then 27,32,40 will be stored in 26-50, 55,65 will be stored in 51-75 and remaining wil be stored on 76-100
+    One problem here is lot of students scored more than 90 so in index table lot of leaf node is accumulated in 76-100 bucket so this creates a index block contention 
+    Reverse key index is try to address this problem by just reversing the key value before storing the index
+
+>create index ind1 on student(smark) reverse;
+
+Once we create the index, index key will be reversed and stored in sorted order in index table, in this case 
+100,10,40,91,32 will be stored as 001,01,04,19,23 in 0-25
+92,94 will be stored as 29,49 in 26-50 etc
+   So advantage of reversing and storing is, it will distribute the values equally 
+   
+  It is not suitable for range queries, consider if we give
+>select * from student where smark>25;
+   In case of btree it will be in sorted manner so it will perform range scan. But samething in reverse key index the data is not sorted so obviously it will go for full scan 
+
+Materialized Views
+     It is a database object which is created over sql query similar to view but when we create a materialized view, it stores 2 things 
+1. It stores the sql query that is used to create materialized view
+2. stores the data returned from sql query, so only it improves the performance of ur query 
+
+So everytime we execute the materialized view its not going to internally execute the query that is associated with materialized view but its only going to return the data that is already stored in the materialized view, this is the reason why the performance of materialized view is good
+
+>create table example(id int,val decimal);
+
+-Insert random values into table
+declare
+             myNumber number;
+         begin
+             for i in 1 .. 1000
+           loop
+                myNumber := dbms_random.random;
+                insert into example select 1,myNumber from dual;
+            end loop;
+            commit;
+       end;
+
+declare
+             myNumber number;
+         begin
+             for i in 1 .. 1000
+           loop
+                myNumber := dbms_random.random;
+                insert into example select 2,myNumber from dual;
+            end loop;
+            commit;
+       end;
+
+>select id,avg(val),count(*) from example group by id;
+
+In order to execute it takes 0.66 secs
+
+- Next if we create materialized view on this query then we can see how fast the execution will happen, in order to create a materialized view we give
+
+>create materialized view mv_view as 
+select id,avg(val),count(*) from example group by id;
+
+It will do two things, its going to store this query itself and also store the result from this query 
+
+To execute materaializedview
+>select * from mv_view;
+
+Now we can see it takes only 0sec to execute the query, but if we had to execute this normal query where we fetch data from base table it takes 0.66 sec. So if we had a complex query which was taking few different minutes or seconds then if we create a materialized view we will have great performance 
+   So if we create materialized view on this query and executing materialized view we will get the same data but performance is so much better, the reason is beacuse when we create the materialized view sql generate the data and stored in the materialized view, so everytime we execute the materialized view it will not go back and execute the query again, it will went to this materialized view and saw the data stored for this materialized view and just return that data 
+   But there is one problem that this data will not get automatically updated (ie) if we change data in base table (ie) example table then materialized view will not going to have that data updated automatically, we have to manually do that using refresh
+
+- We try to delete the data in example table and check whether it is updated in materialized view
+
+>delete from example where id=1;
+
+>select id,avg(val),count(*) from example group by id;
+   - It will display only id=2
+
+But when we run materialized view, we can still see old data 
+>select * from mv_view;
+
+Since when materialized view was created it had stored the data that it found when the creation happened, even though after that table got changed materialized view is not going to automatically update 
+   So if we want to update the data in materialized view we need to manually do a refresh 
+
+>execute dbms_mview.refresh('mv_view');
+
+     Internally sql went and executed the query and whatever the data was returned from this query at this moment, it got stored into the materialized view 
+
+>select * from mv_view;
+    Now we get updated data from materialized view 
+
+Why materialized view?
+     Because materialized view is not going to have the latest data and this is the reason we do not create a materialized view for each and every query that is taking time because many times we might be executing a query and we expect the latest data to be displayed from that query
+    But several times when we are working on real time projects we would not really bother about the latest data in the base table or we would know that the data in base table does not get updated or modified frequently and in that case creating materialized view is much better approach
+
+Materialized view
+Materialized views
+    It is db objects that holds the output of a query on storage disk, but views are just metadata and they dont physically store the output of the query, which means every time u execute a dml stmt on view, it is going to run the original underlying query in view defination 
+   As soon as we create materialized view, it will store the output of that particular query on physical storage disk, the way it stores a table. And next time when we run a query on MV, it is not going to rerun the entire query, rather its going to process the output from the storage location where it has stored the data pertaining to that particular query  
+
+Advantage
+1. can store out of a complex time taking query
+2. Accessing data from remote db where it consume lot of nw bandwidth and its very  slow, so we create mv in local database which is also known as snapshot from remote db and use that mv as per business needs 
+3. Data refresh - complete, fast, force strategy
+
+In Complete refresh, our mv is truncated and loaded again, so when we do complete refresh, it will truncate or delete the entire data of mv and reload it again. But there are certian challenges
+ 1. This particular approach can be very time taking 
+ 2. Redo and archive logs - Since we are truncating and loading the mv, there is a possibility that our process may fail. In that case, oracle wants to make sure that it can populate the old data again. So it creates redo and archive logs, so that in case if our current refresh process fails, it can go and repopulate that particular data 
+   If ur refresh process takes a lot of time or ur mv has lot of data, these redo logs and archive logs can get really huge which can be performance problem for entire db
+  3. Significant IO usage - Also when we are rebuilding entire view (ie) we will run the entire underlying query again which has billions of rows, it can actually lead to significant IO usage which again will increase CPU utilization and it will impact the performance 
+
+When to use complete refresh?
+    When ur underlying query does not take too much time and mv does not have too much data
+
+2. Fast refresh
+      Here instead of doing a truncate anf load on mv, we do an incremental refresh
+      But there is a prerequisite to do incremental refresh (ie) oracle should be able to tell what exactly has changed since the last refresh was done for this particular mv, and that prerequiste is achieved by maintaining mv log or snapshot log. These logs contain the info that since the last refresh, what exactly has changed in master table
+     In order to execute fast refresh on mv we have to create a mv log on the master table for my underlying query 
+   - Captures changes to the master table and it forms the basis for updates in mv 
+
+3. Force refresh
+      First it will try to implement fast refresh using the incremental approach. But for some reason, if mv log is corrupted or not accessible in that case it will go and implement the complete refresh
+     So force refresh is combination of fast and complete refresh
+
+When to refresh?
+1. Refresh on commit
+      If u feel that ur mv is going to be used throughout the day by users, then we can configure refresh on commit, so that every time mv runs it comes with latest values
+2. Periodic refresh
+Consider order tables are populated multiple times during the day as a part of batch process, we have to update my mv once the order tables are updated 
+   So here we are refreshing mv on a periodic basis, during multiple times in a day adhering to the update of my order tables.
+  
+3. Never refresh
+     There are certain list of value in tables that actually wont change over period of time like number of states in india which dosent change often, in that case we can configure ur mv as never refresh
+
+We learned than mv will physically stores the output of a query and if we dont refresh mv on a regular basis, it may actually contain old data which gives false impression, so it is important that we update mv on regular basis
+
+>create table mv_table(id int,val decimal);
+
+-Insert random values into table
+declare
+             myNumber number;
+         begin
+             for i in 1 .. 1000
+           loop
+                myNumber := dbms_random.random;
+                insert into mv_table1 select 2,myNumber from dual;
+            end loop;
+            commit;
+       end;
+
+>select id,avg(val),count(*) from mv_table group by id;
+
+Now we create a mv on this and create a additional line that we want to do a complete refresh on demand (ie) oracle will not perform the refresh if the underlying tables are updated only when we request the command then it will refresh materialized view
+
+>create materialized view mv_view1 
+ refresh complete on demand
+ as
+ select id,avg(val),count(*) from mv_table group by id;
+
+- If we run mv, it will provide same output as previous
+>select * from mv_view1;
+
+- Now we insert certain records in mv_table 
+declare
+             myNumber number;
+         begin
+             for i in 1 .. 1000
+           loop
+                myNumber := dbms_random.random;
+                insert into mv_table select 3,myNumber from dual;
+            end loop;
+            commit;
+       end;
+
+- Now we run sql query, we can see the data is updated
+>select id,avg(val),count(*) from mv_table group by id;
+
+-Now when we run mv, the new data is not reflected 
+>select * from mv_view1;
+
+-Since we have specified manual refresh strategy on demand, so we have to execute the command in order to refresh mv
+>exec dbms_mview.refresh('mv_view1');
+
+- Now if we run mv, then we can see the data has been reflected which is same as the query as well
+>select * from mv_view1;
+
+When we have to go for on demand startegy?
+    When we are certain that we want to refresh mv at a specific time and we want  to control. For eg, there are certain tables which are refreshed at a particular time as part of batch process, so instead of doing a refresh on commit which can happen multiple times during that duration, we can do manual on demand refresh once the load has complete 
+
+Refresh on commit
+> Create materialized view mv_view2 
+refresh complete on commit
+as
+select sum(val) from mv_table;
+
+This is telling oracle that we need to refresh this view as soon as there is a change in underlying query and the changes are committed to db.
+
+- If we run mv, it will provide same output as previous
+>select * from mv_view2;
+
+- Now we try to insert few values from mv_table 
+>delete from mv_table where id>2;
+
+- Now we run sql query, we can see the data is updated
+>select sum(val) from mv_table;
+
+-Now when we run mv, the new data is not reflected 
+>select * from mv_view2;
+
+-But when we give commit stmt, the data is stored inside db
+>commit;
+
+-Now when we run mv, the new data is reflected 
+>select * from mv_view2;
+
+We can use refresh on commit when query is not taking too much time or ur mv size is not huge 
+
+2. Incremental/Refresh fast
+      Materialized view will be fast refresh only if there are changes in base table. If there are any changes happened in base table then only mv will ve refreshed otherwise it wont refresh. To maintain the history of changes in base table it requires a log table which is called as materialized view log 
+    This log basically store what are dml changes made in base table and stores in db where ur base table resides. It will be created as MLOG$_<basetable name>
+
+>create materialized view log on employee with primary key;
+
+If base table has PK we can provide "with PK", if base table dosent have PK then we can use "with rowid"
+
+- Now we create mv
+>create materialized view mvview 
+refresh fast
+with primary key
+as 
+select * from employee;
+
+In case if we create "with rowid" (ie) base table dosent have PK then we have to create mv as 
+
+>create materialized view mvview 
+refresh fast
+with rowid
+as 
+select * from employee;
+
+- Now we select from mv
+SQL> select rowid,e.* from mvview e;
+ 
+We are selecting also because when there are any dml changes happen we can check whether rowid is changed or not, since we use refresh fast rowid should not change for mv
+
+- Now we open mvlogs 
+SQL> select * from mlog$_employee;
+ It will say no rows selected since we didnt do any dml operation
+
+>desc mlog$_employee;
+    It will have 2 important rows called emp_id and dmltypes, since we created with primary key emp_id. If we create mv with rowid then it will have rowid and dmltypes column
+   If any change happens in base table that empid will be displayed and in dmltypes it will display U or I or D 
+
+- Now we create dml operation like
+
+>update employee set emp_name='Kirithik' where emp_id=105;
+
+>insert into employee values(125,'Mahesh','HR',20000);
+
+>delete from employee where emp_id=123;
+
+>select * from employee;  - check whether data is populated
+
+>select * from mvview;  - data is not populated in mv
+
+- Now we check materialized view log
+SQL> select * from mlog$_employee;
+    We can see it will display for which emp_id we have done insert, update and delete 
+    So 3 kinds of operation are performed on the base table, so if we refresh mv, it will refresh based on entries present in mv log, so it wont recreate all the rows present in base table, only for changes present in mv log it will be refreshed 
+
+-Refresh mv
+>exec dbms_mview.refresh('mvview');
+
+- Now we run mv
+>select rowid,e.* from mvview e;
+     The mv is refreshed and we can see rowid is not updated for update and delete, only for insert operation new rowid is created
+    This is speciality of fast refresh whereas in refresh complete even if there is no dml operation is performed on base table, if we refresh mv again it will create all rows and rowid will populated newly 
+
+Fast refresh on commit
+1. Drop the materialized view
+>drop materialized view mvview;
+>drop materialized view log on employee;
+
+2. Create mv log with rowid
+>create materialized view log on employee with rowid;
+
+3. Create mv
+>create materialized view mvview 
+refresh fast on commit
+with rowid
+as 
+select * from employee;
+ 
+- Now we open mvlogs 
+SQL> select * from mlog$_employee;
+ It will say no rows selected since we didnt do any dml operation
+
+>desc mlog$_employee;
+    It will have 2 important rows called rowid and dmltypes
+
+- Now we create dml operation like
+
+>update employee set emp_name='Kirithik' where emp_id=105;
+
+>insert into employee values(125,'Mahesh','HR',20000);
+
+>delete from employee where emp_id=123;
+
+>select * from employee;  - check whether data is populated
+
+>select * from mvview;  - data is not populated in mv
+
+- Now we check materialized view log
+SQL> select * from mlog$_employee;
+    We can see it will display for which emp_id we have done insert, update and delete 
+    So 3 kinds of operation are performed on the base table, so if we refresh mv, it will refresh based on entries present in mv log, so it wont recreate all the rows present in base table, only for changes present in mv log it will be refreshed 
+
+-Refresh mv by giving commit
+>commit;
+
+- Now we run mv
+>select rowid,e.* from mvview e;
+     The mv is refreshed and we can see rowid is not updated for update and delete, only for insert operation new rowid is created
+
+Benefits of fast refresh
+1. It will not create entire new result set using new rowid like refresh complete
+2. Values will be updated in mv without changing rowid
+3. Once mv is fast refreshed then entries in mv log will be removed
+
+Refresh force
+     First it will try to do fast refresh. If mv log is either corrupted or not available then it will fail to refresh fast and it will do refresh complete 
+
+- Create mv log
+>create materialized view log on employee with primary key;
+
+- Now we create mv
+>create materialized view mv_view_force 
+refresh force
+with primary key
+as 
+select * from employee;
+
+- Now we open mvlogs 
+SQL> select * from mlog$_employee;
+ It will say no rows selected since we didnt do any dml operation
+
+>desc mlog$_employee;
+    It will have 2 important rows called empid and dmltypes
+
+- Chech mv is populated
+>select rowid,e.* from mv_view_force e;
+
+- Now we create dml operation like
+
+>update employee set emp_name='Kirithik' where emp_id=119;
+
+>select * from employee;  - check whether data is populated
+
+>select * from mlog$_employee;
+
+>select rowid,e.* from mv_view_force e;  - data is not populated in mv
+
+- Now we have to refresh mv 
+>exec dbms_mview.refresh('mv_view_force','?');
+     Here ? indicates we dont know in which way we have to refresh either refresh fast or refresh complete 
+    So if mv log is available and it is not corrupted it will use refresh fast, if mv log is not available then it goes for refresh complete 
+
+- Now we run mv
+>select rowid,e.* from mv_view_force e;
+     The mv is refreshed and we can see rowid is not updated for update (ie) for empid=119, so since we have log it was doing refresh fast
+
+- Now we drop mv log
+>drop materialized view log on employee;
+     Since mv log is removed we cant refresh using refresh fast, the only option is refresh complete 
+
+- So even there are no dml changes in refresh complete the rowid will be changed, so now we refresh mv 
+>exec dbms_mview.refresh('mv_view_force','?');
+
+- Now we run mv
+>select rowid,e.* from mv_view_force e;
+     We can see all rowid will be changed because it uses refresh complete 
+
+Never refresh
+     It wont be refreshed at any cost, so if there are any dml changes happen in the base table then those changes will not be reflected into mv 
+
+- Create mv
+>create materialized view mv_view_never
+ never refresh
+ as
+ select * from employee;
+
+>select rowid,e.* from mv_view_never e;
+
+- Now we want to see whether it is refreshing or not, in case if we want to refresh mv with never refresh we have to give
+>alter materialized view mv_view_never refresh complete;
+
+- Now we can refresh using
+>exec dbms_mview.refresh('mv_view_never','C');
+
+- Now run mv
+>select rowid,e.* from mv_view_never e;
+     We can see all rowid is refreshed
+
+- Even we can refresh mv using refresh force also
+>alter materialized view mv_view_never refresh force;
+>exec dbms_mview.refresh('mv_view_never','?');
+
+- Now run mv
+>select rowid,e.* from mv_view_never e;
+     We can see all rowid is refreshed
+
+
+Instead of trigger
+    -  Certains views are updatable, if select stmt should not contain distinct operator, set operator, group by, order by, having clause, subquery,joins 
+    - Even if the views contains joins, subquery then we want to make the views to be updatable for that we use instead of trigger
+
+
+SQL> create table customer_details(customer_id int primary key,customer_name varchar2(20),country varchar2(30));
+
+Table created.
+
+SQL> create table project_details(project_id int primary key,project_name varchar2(50),project_start_date date,customer_id int references customer_details(customer_id));
+
+Table created.
+
+SQL> select * from customer_details;
+
+no rows selected
+
+SQL> select * from project_details;
+
+no rows selected
+
+SQL> create view cust_view as select c.customer_id,c.customer_name,c.country,p.project_id,p.project_name,p.project_start_date from customer_details c, project_details p where c.customer_id=p.customer_id;
+
+View created.
+
+SQL> select * from cust_view;
+
+no rows selected
+
+SQL> insert into cust_view values(1,'Ram Pvt Ltd','India',101,'Banking appl',sysdate);
+insert into cust_view values(1,'Ram Pvt Ltd','India',101,'Banking appl',sysdate)
+*
+ERROR at line 1:
+ORA-01779: cannot modify a column which maps to a non key-preserved table
+
+
+SQL> create or replace cust_trig
+  2  /
+create or replace cust_trig
+                  *
+ERROR at line 1:
+ORA-00922: missing or invalid option
+
+
+SQL> create or replace trigger cust_trig
+  2  INSTEAD OF INSERT ON CUST_VIEW
+  3  begin
+  4     insert into customer_details values(:new.customer_id,:new.customer_name,:new.country);
+  5     insert into project_details values(:new.project_id,:new.project_name,:new.project_start_date,:new.customer_id);
+  6  end;
+  7  /
+
+Trigger created.
+
+SQL> insert into cust_view values(1,'Ram Pvt Ltd','India',101,'Banking appl',sysdate);
+
+1 row created.
+
+SQL> insert into cust_view values(2,'Sam Pvt Ltd','India',102,'Sales appl',sysdate);
+
+1 row created.
+
+SQL> select * from customer_details;
+
+CUSTOMER_ID CUSTOMER_NAME        COUNTRY
+----------- -------------------- ------------------------------
+          1 Ram Pvt Ltd          India
+          2 Sam Pvt Ltd          India
+
+SQL> select * from project_details;
+
+PROJECT_ID PROJECT_NAME                                       PROJECT_S
+---------- -------------------------------------------------- ---------
+CUSTOMER_ID
+-----------
+       101 Banking appl                                       14-SEP-23
+          1
+
+       102 Sales appl                                         14-SEP-23
+          2
