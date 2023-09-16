@@ -1,0 +1,2192 @@
+Why design?
+   Only consistent about the software is it changes. Many times clients do not know their requirements, many times technology changes so the software changes.
+   For eg, u create a web app and it not going to change, actually the software always changes. So developers have to accomdate the future changes while they developing present softwares so keeping that in mind we have to design oop code
+   All the design is based on 3 things,
+   1. DRY - Do not repeat urself, if i repeat any code again it affects the software.
+    Consider we are duplicate the code and common piece of code exist in 5 different classes, 5 different functions. Now consider the code needs to changed, so we will be changing in 5 different places since we duplicated.
+   Instead if we extract the code and kept in single reusable component, u will change in only one place
+   2. Divide and conquer
+         When ur code grows bigger and bigger in size, then use divide and conquer.
+   All these things are driven by one thing called software changes
+   3. Software changes
+       you can add new code or remove the code, the software changes
+
+So ur design should accomdate the new changes without destroying the existing working functionality
+
+ 
+
+SOLID Introduction 
+1. SOLID principles are the design principles that enable us manage most of the software design problems
+2. The term SOLID is an acronym for five design principles intended to make software designs more understandable, flexible and maintainable
+3. The principles are a subset of many principles promoted by Robert C. Martin
+4. The SOLID acronym was first introduced by Michael Feathers
+
+SOLID Acronym 
+S : Single Responsibility Principle (SRP) 
+O : Open closed Principle (OSP) 
+L :  Liskov substitution Principle (LSP) 
+I  :  Interface Segregation Principle (ISP) 
+D : Dependency Inversion Principle (DIP)
+
+If we don’t follow SOLID Principles we  
+1. End up with tight or strong coupling of the code with many other modules/applications
+2. Tight coupling causes time to implement any new requirement, features or any bug fixes and some times it creates unknown issues
+3. End up with a code which is not testable
+4. End up with duplication of code
+5. End up creating new bugs by fixing another bug
+6. End up with many unknown issues in the application development cycle
+
+Following SOLID Principles helps us to  
+1. Achieve reduction in complexity of code
+2. Increase readability, extensibility and maintenance
+3. Reduce error and implement Reusability
+4. Achieve Better testability
+5. Reduce tight coupling
+
+
+1. Single Responsbility principle (Sachin)
+As per the single responsibility principle 
+1. A class should have only one reason to change
+    Is it like, a class should have only one reason or only one time it should change ?
+   No, it can have multiple reason to change and it could changed multiple times over period of time
+   But we talk about context. Let us take an example of Sachin, when he retired he talked about much bigger role played by his wife or his family. Because his wife took care of all other matter across his life.
+   So in Sachins life, single responsiblity principal was sachin performance on the field should only and only vary because of cricket reason not for other reasons
+   Your class should change for only one reason in contextual reason
+  Consider a technical example where we create a booking application. 
+   What one class we create here ?
+      Member class -- when we start designing this Member class 
+   What this member can do ?
+       can register, can lend the book, can cancel the membership, this member can notified wiht some new offer 
+   In the member class, what code we can put ?
+       Shall I put the code for makeBooking(), no because the member class can do its only purpose.
+   We can have a separate class called Booking which is looking after  the functionality of bookings, it is not the responsibility of member class to do the booking.
+   So Member class should have functions like create, read,update and delete members.
+  So we have certain rules for creating a member, that mentioned in the member class, consider if the organization decide to change  the rules now we have different requirements for registering the new members, so that change in functionality should drive change in Member class. If you want to change the booking rules, then it should change only in booking class not on Member class.
+  That is SRP, it is easy to maintain and change software when you maintain the context correct 
+
+In Single Responsibility Principle 
+1. Each class and module should focus on a single task at a time
+2. Everything in the class should be related to that single purpose
+3. There can be many members in the class as long as they related to the single responsibility
+4. With SRP, classes become smaller and cleaner
+5. Code is less fragile 
+
+We need to create an appl which performs users login and registration post that it should an email to the user depending on status of his login or registration, we should also log any exception that may occur in this process. So we create an interface with all these methods
+interface IUser
+{
+   boolean Login(String username,String password);
+   boolean registration(String username, String password, String email);
+  // boolean logError(String error);
+  // boolean sendEmail(String emailContent);
+}
+which are required in minimum for any user to perform Login or registration.
+
+But when we look at the code,we dont need to have logError and sendEmail as a part of IUser, because User object will perform only login and registration or one at a time.It should not concern about the logError and sendEmail. So we defintely need to break down to separate interfaces 
+interface ILogger{
+   boolean logError(String error);
+}
+
+interface IEmail {
+   boolean sendEmail(String content);
+}
+
+Now these 3 interfaces perform its own responsibilities
+
+
+2.Open/Closed Principle also known as OCP (hair transplant)
+
+Definition: In object-oriented programming, the open/closed principle states that "software entities such as classes, modules, functions, etc. should be open for extension, but closed for modification"
+
+1. Which means, any new functionality should be implemented by adding new classes, attributes and methods, instead of changing the current ones or existing ones.
+
+   Consider in Booking system obviusly there will some payment involved. So we have two classes Payment and Booking. In Booking class we have makePayment() which checks for card payment or cash payment. But in future if another type of payment occurs, then we have to change the method with another new payment system, where we change the logic all time which is not correct, again you can very well end up making some mistake here and the product is already live which end up costing you severe damage in your business.
+   So best way is OCP (ie)instead of creating concrete Payment class, create an interface IPayment with makePayment(). Wr create classes CardPayment, CashPayment which implement IPayment with implementing method. 
+  So in future anyother payment occurs, we create another class which implements this interface and provide with its own logic without breaking the existing code  
+    
+
+Consider an example which compute the bonus of the employee
+
+public class Employee {
+   private int id;
+   private String name;
+   //getter and setters
+   public float calculateBonus(float sal){
+      return sal * 0.1;
+   }
+}
+
+public class Sample {
+    PSVM {
+       Employee e = new Employee(1,"John");
+       sop(e.calculateBonus());
+   }
+}
+
+Consider we have a new requirement to calculate bonus for permanent and temporary employees, then we tend to modify the class by adding empType property in the Employee class, and calculate bonus based on permanent or temporary employee.
+
+public class Employee {
+   private int id;
+   private String name;
+
+   private String empType;
+   //getter and setters
+   public float calculateBonus(float sal){
+    if(empType.equals("Permanent"))
+      return sal * 0.1;
+    else
+       return sal * 0.5;
+   }
+}
+
+public class Sample {
+    PSVM {
+       Employee e = new Employee(1,"John","Permanent");
+       Employee e1 = new Employee(1,"Johny","Temporary");
+       sop(e.calculateBonus());
+       sop(e1.calculateBonus());
+   }
+}
+
+But here we changed the method to get new requirement, suppose if we have more requirement in the future then we enhance the same method as per the requirements where we not following open closed principle.
+
+In order to achive is
+   1. Make the Employee class as abstract class and make the method to abstract
+
+public abstract class Employee {
+   private int id;
+   private String name;
+   //getter and setters
+   public abstract float calculateBonus(float sal);
+}
+
+create PermanentEmployee and calculate the bonus
+
+public class PermanentEmployee extends Employee {
+    public float calculateBonus(float sal) {
+         return sal * 0.1;
+    }
+}
+
+public class TemporaryEmployee extends Employee {
+    public float calculateBonus(float sal) {
+         return sal * 0.5;
+    }
+}
+
+public class Sample {
+    PSVM {
+       Employee e = new PermanentEmployee(1,"John");
+       Employee e1 = new TemporaryEmployee(2,"Johny");
+       sop(e.calculateBonus());
+       sop(e1.calculateBonus());
+   }
+}
+
+Now Employee class is open for extension but closed for modifying adhering the OCP
+
+
+3. Interface Segregation Principle(bar and resturtant)
+1. The interface-segregation principle (ISP) states that "no client should be forced to depend on methods it does not use".
+2. Which means, Instead of one fat interface many small interfaces are preferred based on groups of methods with each one serving one submodule.
+3. The ISP was first used and formulated by Robert C. Martin while consulting for Xerox. 
+
+Consider a printer interface which performs the following tasks.
+interface IPrintTasks {
+   boolean printContent(String content);
+   boolean faxContent(String content);
+   boolean scanContent(String content);
+   boolean photoCopyContent(String content);
+}
+
+Consider we have a class which implements these methods
+
+public class HPPrinter implements IPrintTasks {
+     // overriden all methods
+}
+
+But we have another class which performs only printing and scanning and dont have ability to fax the content,in that case we stuck where we have to implement all the interface methods.
+
+public class CanonPrinter implements IPrintTasks {
+     // overriden all methods
+}
+
+This is one of the problem.Consider we have some advancement in printing technology so we have to add a method in IPrintTasks interface, then we have to override that method in all  implemented classes. This is second problem.
+Both of these problems can be addressed by segregating one big fat interface to smaller relavent interfaces
+interface IPrintTasks {
+   boolean printContent(String content);
+   boolean scanContent(String content);
+   boolean photoCopyContent(String content);
+}
+
+interface IFaxContent {
+     boolean faxContent(String content);
+}
+
+interface IPrintDuplex {
+    boolean printDuplexContent(String content);
+}
+
+
+
+
+4.Liskov Substitution Principle which is also known as LSP. (Don)
+   Lets have one parent with child1, child2 and child3, any and every children should subsitute the parent for providing the functionality promised by parent 
+Definition : Substitutability is a principle in object-oriented programming and it states that, in a computer program, if S is a Subtype of T, then objects of type T may be replaced with objects of type S 
+
+1. Which means, Derived types must be completely substitutable for their base types
+
+3. This Principle is introduced by Barbara Liskov in 1987 during her conference address on Data abstraction and hierarchy
+
+4. This principle is just an extension of the Open Close Principle
+
+Implementation guidelines : In the process of development we should ensure that  
+
+1. No new exceptions can be thrown by the subtype unless they are part of the existing exception hierarchy.
+
+2. We should also ensure that Clients should not know which specific subtype they are calling, nor should they need to know that. The client should behave the same regardless of the subtype instance that it is given.
+
+3. And last but not the least, New derived classes just extend without replacing the functionality of old classes
+
+As a part of OCP we calculate the bonus of different employees, and from Employee class perspective we adhere to OCP, when we see main class we created Employee object consisting of PermanentEmployee and TemporaryEmployee objects which means derived type objects is completely substitued for base type Employee class so based on LSP we achieved derived class are completely subsituted for their base classes.
+
+Also without using the subtypes we are calculating the bonus of employee from the base class itself. Hence we along with OCP we partially implemented LSP because it dosent adhere to guidelines of LSP.
+
+Now we need to add another class ContractEmployee 
+
+public class ContractEmployee extends Employee {
+   public float calculateBonus(float sal) {
+        throw new Exception();
+   }
+}
+
+But ContractEmployee is not eligible for bonus calculation, hence we are throwing an exception in calculateBonus().
+Now we call main class
+
+public class Sample {
+    PSVM {
+       Employee e = new PermanentEmployee(1,"John");
+       Employee e1 = new TemporaryEmployee(2,"Johny");
+       Employee e2 = new ContractEmployee(3,"Jack");
+       sop(e.calculateBonus());
+       sop(e1.calculateBonus());
+        sop(e2.calculateBonus()); //throws exception
+   }
+}
+
+
+It throws exception and we can say its violates the implemenation guideline of LSP states that no new exception is thrown by the subtypes. To make the implementation to support LSP, we create an interface
+
+interface IEmployeeBonus {
+    float calculateBonus(float sal);
+}
+
+interface IEmployee {
+   double getMinimumSalary();
+}
+
+public abstract class Employee implements IEmployeeBonus, IEmployee {
+   private int id;
+   private String name;
+   //getter and setters
+   public abstract float calculateBonus(float sal);
+}
+
+public class PermanentEmployee extends Employee {
+    public float calculateBonus(float sal) {
+         return sal * 0.1;
+    }
+   public double getMinimumSalary() {
+          return 10000;
+   }
+}
+
+public class TemporaryEmployee extends Employee {
+    public float calculateBonus(float sal) {
+         return sal * 0.5;
+    }
+    public double getMinimumSalary() {
+          return 8000;
+   }
+}
+
+public class ContractEmployee implements IEmployee {
+    public double getMinimumSalary() {
+           return 5000;
+    }
+}
+
+If the requirement is to get list of employee who get bonus then 
+
+public class Sample {
+    PSVM {
+       List<Employee> l = new ArrayList<>();
+       l.add( new PermanentEmployee(1,"John"));
+       l.add( new TemporaryEmployee(2,"Johny"));
+       //l.add( new ContractEmployee(3,"Jack")); //shows compile error
+      for(Employee emp:l)
+        sop(emp);
+   }
+}
+
+If the requirement is to get list of employee who get minimum salary then 
+
+public class Sample {
+    PSVM {
+       List<IEmployee> l = new ArrayList<>();
+       l.add( new PermanentEmployee(1,"John"));
+       l.add( new TemporaryEmployee(2,"Johny"));
+       l.add( new ContractEmployee(3,"Jack")); 
+      for(Employee emp:l)
+        sop(emp);
+   }
+}
+
+
+5. Dependency Inversion principle(team member)
+The Dependency Inversion Principle introduced by Robert C Martin states that   
+
+High level modules should not depend  upon low level modules. Both should depend upon abstractions.
+
+Consider we have controller depend on repoistory, a concrete implementation of repoistory not an interface. In this controller is high level module and repoistory is low level module. Here is the violation of DIP
+
+How to make to follow DIP?
+    Extract an interface from Repository class called IRepoistory which is a abstraction. Now the controller is depend on IRepoistory interface, so controller and repoistory are not depend on each other, they depend on IRepoistory.
+
+Why?
+   To reduce the impact of changes, with these dependency between controller and repoistory. Any time make change in Repoistory class has to compiled and all class depend on this class also have to be compiled 
+   Now with DIP, we can make as many changes in Repoistory class will not impact our controller , because controller is not dependent on Repoistory 
+
+
+SOLID Design Principles
+     SOLID is acromyn for the first five object oriented design principles by Robert C Martin. Solid helps us to write better code, helps us to write code that dosent suffer from code smells. If we are working on large codebase that dosent use SOLID principles then it will be problem to add new features, refactor, fixing the bug it will be difficult, whereas if we implement SOLID then we are following the best practises for building appl whether it is small or large scale appl
+     This principles is effectively used in OOP because when combined together they encorage the developer to create a more maintainable, understandable and flexible software 
+
+1. Single Responsibility Principle
+       A class should have one and only one responsiblity and reason to change
+      Consider we have video class which contains 2 methods, getNumberOfHoursPlayed() which calculates the total number of hours this video was played and persist() which is the persistence control method to open a connection to and save a video in the database 
+
+@Data
+public class Video {
+    private String title;
+    private int time;
+    private int likes;
+    private int views;
+
+    public double getNumberOfHoursPlayed() {
+        return (time/3600.0)*views;
+    }
+
+    public void persist() throws Exception {
+    String url="jdbc:mysql://localhost:3306/youtube";
+    Connection con=DriverManager.getConnection(url,"root,"root");
+    Statement st=con.createStatement();
+    String sql="insert into video(title, time,likes,views) values("+title+","+time+",",+likes+","+views+")";
+    stmt.executeUpdate(sql);
+   }
+}
+
+We know that the way number of hours calculated will not change from one video to another, if this class is extended in the future then getNumberOfHoursPlayed() method is acceptable to be left as it is because it deals directly with its fields
+    However persisting entries into the database should not be done from the video class because this does not only assign to this class, several responsibility but will also force us to replicate the same code snippet when our appl evolves and we try to persist another entity in the appl, therefore we can tackle this by applying Single Responsibility principle
+     This is done by breaking the video class into two classes, first class is Video class and second class will be responsible for video specific data access method	
+
+@Data
+public class Video {
+    private String title;
+    private int time;
+    private int likes;
+    private int views;
+
+    public double getNumberOfHoursPlayed() {
+        return (time/3600.0)*views;
+    }
+}
+----------------------------
+public class VideoDAO {
+     public void persist(Video video) throws Exception {
+    String url="jdbc:mysql://localhost:3306/youtube";
+    Connection con=DriverManager.getConnection(url,"root,"root");
+    Statement st=con.createStatement();
+    String sql="insert into video(title, time,likes,views) values("+video.getTitle()+","+video.getTime()+",",+video.getLikes()+","+video.getViews()+")";
+    stmt.executeUpdate(sql);
+   }
+}
+
+As we can see with this implementation, the persistence logic is decoupled from our java object granting this new class a sole purpose which is accessing the video table whether to persist, update or retrieve rows from it 
+   If we really want to apply SRP, then opening connection to the database can be seggrated into another class, in case if other part of appl is using same piece of code but with a different user or to establish connection to a different database, so we can create separate class 
+
+@Data
+public class Video {
+    private String title;
+    private int time;
+    private int likes;
+    private int views;
+
+    public double getNumberOfHoursPlayed() {
+        return (time/3600.0)*views;
+    }
+}
+----------------------------
+public class VideoDAO {
+     public void persist(Video video) throws Exception {
+    Connection con=new ConnectionDao().createConnection();
+    Statement st=con.createStatement();
+    String sql="insert into video(title, time,likes,views) values("+video.getTitle()+","+video.getTime()+",",+video.getLikes()+","+video.getViews()+")";
+    stmt.executeUpdate(sql);
+   }
+}
+----------------------------------
+public class ConnectionDAO {
+     private Connection connection;
+     //user, password, dbname, server
+     public ConnectionDAO(){}
+     public Connection createConnection(){
+          //create a connection
+     }
+}
+
+So each class should have a minimum responsiblity to accomplish and it is chnage to this responsibility that should induce a modification to the class itself
+
+2. Open Closed Principle
+         A class should be open for extension but closed for modification (ie) we should be able to extend the class behaviour without modifying it 
+        Consider we are adding a category field in Video class, this field is an enum which takes a value like Gaming, Educational or Entertainment
+  
+@Data
+public class Video {
+    private String title;
+    private int time;
+    private int likes;
+    private int views;
+    private Category category;
+
+    public double getNumberOfHoursPlayed() {
+        return (time/3600.0)*views;
+    }
+
+    enum Category {
+       GAMING, EDUCATIONAL, ENTERTAINMENT
+    }
+} 
+
+Now we wish to add a new behaviour in our app which calculates the respective earnings of each video based on its category, since we want to use SRP we create a new class which only job is to do that
+    This class will contain one public method calculateEarnings(), in this method we will create a switch expr and based on the category of the given video, the appropriate helper method will be called and the result will be returned to the user
+
+public class EarningsCalculator {
+
+      public double calculateEarnings(Video v) {
+   return switch(v.getCategory()) {
+      case EDUCATIONAL -> calculateEducationalEarnings(v);
+      case GAMING -> calculateGamingEarnings(v);
+      case ENTERTAINMENT -> calculateEntertainmentEarnings(v);
+    };
+  }
+
+  private double calculateEducationalEarnings(Video video) {
+     return video.getLikes() * 0.013 + video.getViews() * 0.013;
+  }
+
+  private double calculateGamingEarnings(Video video) {
+     return video.getLikes() * 0.012 + video.getViews() * 0.012;
+  }
+
+  private double calculateEntertainmentEarnings(Video video) {
+     return video.getLikes() * 0.011 + video.getViews() * 0.011;
+  }
+
+}
+
+Now the problem with this implementation if we add new category "SPORTS" to enum, then we have to come back to this class and modify it to add missing enum to our switch expr and corresponding calculateEarnings(). Morever in our case the code will not compile anymore, if we add new category inside enum as switch expr requires you to cover all enum possible input values, this type of issue is tackle by Open Closed Principle. We can our class is open for modification but OCP suggest that class should be open for extension but closed for modification 
+     So we create separate class for each category instead of creating one class for all of them 
+
+public class EducationalEarningsCalculator {
+public double calculateEducationalEarnings(Video video) {
+     return video.getLikes() * 0.013 + video.getViews() * 0.013;
+  }
+}
+
+public class GamingEarningsCalculator {
+  public double calculateGamingEarnings(Video video) {
+     return video.getLikes() * 0.012 + video.getViews() * 0.012;
+  }
+}
+
+
+public class EntertainmentEarningsCalculator {
+  public double calculateEntertainmentEarnings(Video video) {
+     return video.getLikes() * 0.011 + video.getViews() * 0.011;
+  }
+}
+
+- Next we create interface for this classes to implement 
+
+public interface IEarningsCalculator {
+      double calculateEarnings(Video video);
+}
+
+public class EducationalEarningsCalculator implements IEarningsCalculator{
+public double calculateEducationalEarnings(Video video) {
+     return video.getLikes() * 0.013 + video.getViews() * 0.013;
+  }
+}
+
+public class GamingEarningsCalculator implements IEarningsCalculator{
+  public double calculateGamingEarnings(Video video) {
+     return video.getLikes() * 0.012 + video.getViews() * 0.012;
+  }
+}
+
+
+public class EntertainmentEarningsCalculator implements IEarningsCalculator{
+  public double calculateEntertainmentEarnings(Video video) {
+     return video.getLikes() * 0.011 + video.getViews() * 0.011;
+  }
+}
+
+Now we can see all this classes now override same method and implement same interface, if we want to add new category then we need to create a new class and make it implement this interface, we dont have to touch the classes anymore they are closed for modification whereas our logic in open for extension 
+
+3. Liskov Substitution Principle
+         Subtypes should be replaceable by their base types. This principles forces us to think twice before using inheritance with our classes. As our classes shouldnt be extended only based on the fact that their share something in common 
+     Consider we add another method to Video class playRandomAd() which will play random advertisement for this video while invoked. Suppose we have premium videos where no ads played. PremiumVideo are basically a video which need all fields inside the video class we created (ie) title, time,likes,views and getNumberOfHoursPlayed() and top of that it  also has premiumId. 
+    So what we normally do is extend the PremiumVideo class with the Video class. However we see in a PremiumVideo we dont need to play ads so to restrict access to playRandomAd() method we can override this method and make it throw an exception
+
+@Data
+public class PremiumVideo extends Video {
+     private int premiumVideo;
+
+     @Override
+     public void playRandomAd() throws Exception {
+      throw new Exception("No Ads play during Premium Videos");
+     }
+}
+
+This is not good idea because if we were trying to access a premium video inside a list of videos, this exception might bve thrown causing our appl to crash
+
+public static void main(String[] args){
+  List<Video> videos=new ArrayList<>();
+  videos.add(new Video());
+  videos.add(new PremiumVideo());
+  for(Video video:videos) {
+      video.playRandomAd();
+  }
+}
+
+So what we do in such cases is refactor our code to use composition as Liskov Substitution Principle suggests. To do that we have to create new class called VideoManager. Every video will now have a manager and all the logic we need is  stored inside this manager, so what the video classes can do now is to pick the behaviours they need using this manager
+
+public class VideoManager {
+    private String title;
+    private int time;
+    private int likes;
+    private int views;
+
+    public double getNumberOfHours() {
+        return (time/3600.0)*views;
+    }
+
+    public void playRandomAd(){
+
+    }
+} 
+
+public class Video {
+    private VideoManager manager;
+ 
+    public double getNumberOfHoursPlayed() {
+       return manager.getNumberOfHours();
+   }
+    public void playRandomAd() {
+        manager.playRandomAd();
+    }
+}
+
+public class PremiumVideo {
+     private int premiumId;
+     private VideoManager manager;
+
+     public double getNumberOfHoursPlayed()  {
+      return manager.getNumberofHours();
+     }
+}
+     
+So the Video class will call both of the behaviours and PremiumVideo class will call only getNumberOfHoursPlayed() method 
+
+4. Interface Segregation Principle
+      This principle suggestd that many specific interfaces are better than a general interface (ie) interfaces having many bahviour is difficult to maintain and hence should be avoided 
+      We take the same video example, you may think why we are using composition to solve the problem, why not just create an interface and put these methods inside it 
+
+public interface IVideoActions {
+    double getNumberOfHoursPlayed();
+    void playRandomAd();
+}
+
+public class Video implementd IVideoActions {
+    @Override
+    public double getNumberOfHoursPlayed() {  }
+    @Override
+    public void playRandomAd() {
+    }
+}
+
+public class PremiumVideo implementd IVideoActions {
+    @Override
+    public double getNumberOfHoursPlayed() {  }
+    @Override
+    public void playRandomAd() {
+    }
+} 
+   
+As we can see it didnt really solve the problem, as we still have to override and implement the playRandomAd() by PremiumVideo class and if we throw an exception then we will be violating Liskov Subsitution principle 
+    However we can create two interfaces, one will store the actions that any video can do and another will be specific for ads related actions. The Video class can implement both of these interfaces whereas PremiumVideo class will only implement the one it needs which ISP suggests (ie) specific interafces are better than one general interface
+
+public interface IVideoActions {
+   double getNumberOfHoursPlayed();
+}
+
+public interface IAdsActions  {
+   void playRandomAd();
+}
+
+public class Video implementd IVideoActions, IAdsActions {
+    @Override
+    public double getNumberOfHoursPlayed() {  }
+    @Override
+    public void playRandomAd() {
+    }
+}
+
+public class PremiumVideo implementd IVideoActions {
+    @Override
+    public double getNumberOfHoursPlayed() {  }
+    @Override
+    public void playRandomAd() {
+    }
+} 
+
+5. Dependency Inversion Principle
+       We must depend on abstractions and not concrete classes 
+       When we created a separate class for each video category while discussing open closed principle and made this class to implement the same interface, we actually also applied the Dependency Inversion principle. 
+     The idea here is to make other parts of our appl or services call abstractions or interfaces instead of concrete classes 
+
+--------------------------------------------
+
+         
+Circle.java
+public class Circle {
+    private final int radius;
+    public Circle(int radius) {
+       this.radius=radius;
+    }
+    public int getRadius() { return radius;}
+}
+
+Square.java
+public class Square {
+    private final int length;
+    public Square(int length) {
+       this.length=length;
+    }
+    public int getLength() {
+        return length;
+    }
+}
+
+
+AreaCalculator.java
+public class AreaCalculator {
+    public int sum(List<Object shapes) {
+       int sum=0;
+       for(int i=0;i<shapes.size();i++) {
+           Object shape=shapes.get(i);
+           if(shape instanceOf Square){
+              sum+=Math.pow(((Square)shape).getLength(),2);
+           }
+           if(shape instanceOf Circle){
+              sum+=Math.PI * Math.pow(((Circle)shape).getRadius(),2);
+           }
+      }
+     return sum;
+   }
+}
+
+This method will return a sum of all the areas for the different shapes that we have. sum() receives a list of shapes, if it is square it calculates the square area and if it is circle it calculates the circle area 
+
+Main.java
+public class Main { PSVM  {
+    AreaCalculator areaCalculator=new AreaCalculator();
+   Circle circle=new Circle(10);
+   Square square=new Square(10);
+   List<Object> shapes=List.of(circle,square);
+   int sum=areaCalculator.sum(shapes);
+   Sop("Sum: "+sum);
+}
+}
+
+When we run main(), it will display the sum
+
+1. Single Responsibility Principle
+          Each class should have only one sole purpose, and not be filled with excessive functionality
+       Consider in AreaCalculator class we want to add a method to print the result of sum as json object as well as in csv format, so we create two method 
+
+ public String json(List<Object> shapes) {
+        return "{Sum: %s}".formatted(
+                sum(shapes));
+    } 
+ public String csv(List<Object> shapes) {
+        return "Sum, %s".formatted(
+                sum(shapes));
+    } 
+
+In main class, we pass as
+
+Sop(areaCalculator.json(shapes));
+Sop(areaCalculator.csv(shapes));
+
+When we run it will print sum in json as well as in csv, but we have broke SRP because a class should have only one purpose, but in AreaCalculator we have sum() which calculates sum, json() and csv() which just prints in json and csv format, and AreaCalculator is filled with excessive functionality 
+    So we create json() and csv() in separate class called ShapesPrinter
+
+public class ShapesPrinter {
+ 
+ public String json(int sum) {
+        return "{ShapesSum: %s}".formatted(sum);
+    } 
+ public String csv(int sum) {
+        return "Shapes_Sum, %s".formatted(sum);
+    } 
+}
+
+public class Main { PSVM  {
+    AreaCalculator areaCalculator=new AreaCalculator();
+   Circle circle=new Circle(10);
+   Square square=new Square(10);
+   ShapesPrinter printer=new ShapesPrinter();
+   List<Object> shapes=List.of(circle,square);
+   int sum=areaCalculator.sum(shapes);
+   Sop(printer.json(sum));
+   Sop(printer.csv(sum));
+}
+}
+
+Run the main program, it will run exactly same as before but now we have dedicated class which deals with formatting the sum of areas for each shapes
+
+2. Open Closed Principle
+         A class should be open for extension but closed for modification (ie) we should be able to extend the class behaviour without modifying it 
+       Consider we have a new shape Cube, then in AreaCalculator sum() we have to write separate if condition to calculate area for cube where we broke the rule of OCP where classes are open for extension and closed for modification. So eachtime when we have new shape we have to add a new if condition in AreaCalculator class which is a bad practice
+      So here we create a new interface calle "Shape" which will have one method called area()
+
+public interface Shape {
+    double area();
+}
+
+- Now we make Circle class implements Shape and override area()
+
+public class Circle implements Shape {
+    private final int radius;
+
+    public Circle(int radius) {
+        this.radius = radius;
+    }
+
+    public int getRadius() {
+        return radius;
+    }
+
+    @Override
+    public double area() {
+        return Math.PI * Math.pow(getRadius(), 2);
+    }
+}
+
+- Now we can implement Shape in Square class and override area()
+
+public class Square implements Shape {
+    private final int length;
+
+    public Square(int length) {
+        this.length = length;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    @Override
+    public double area() {
+        return Math.pow(getLength(), 2);
+    }
+}
+
+- Similarly for Cube class also
+
+public class Cube implements Shape {
+    @Override
+    public double area() {
+        return 100;
+    }
+}
+
+- Create a Rectangle class
+
+public class Rectangle implements Shape {
+    @Override
+    public double area() {
+        return 20;
+    }
+}
+
+- Next we simplify AreaCalculator class 
+
+public class AreaCalculator  {
+
+    @Override
+    public int sum(List<Shape> shapes) {
+        int sum = 0;
+        for (int i = 0; i < shapes.size(); i++) {
+            sum += shapes.get(i).area();
+        }
+        return sum;
+    }
+
+}
+
+- Main.java
+
+public class Main { PSVM  {
+    AreaCalculator areaCalculator=new AreaCalculator();
+   Circle circle=new Circle(10);
+   Square square=new Square(10);
+   Cube cube=new Cube();
+   Rectange rectangle=new Rectangle();
+   ShapesPrinter printer=new ShapesPrinter();
+   List<Shape> shapes=List.of(circle,square,cube,rectangle);
+   int sum=areaCalculator.sum(shapes);
+   Sop(printer.json(sum));
+   Sop(printer.csv(sum));
+}
+}
+
+Now when we run we can see json version and csv version also. So here we are extending AreaCalculator by adding a new shape but we are not modifying 
+
+3. Liskov Substitution Principle
+         Every subclass or derived class should be substitutable for their base or parent class
+      Consider we have a class called "NoShape" which implements Shape interface and override area(), and here we throw IllegalStateException. So this NoShape class cannot calculate area, so here we broke the rule 
+
+public class NoShape implements Shape {
+    @Override
+    public double area() {
+        throw new IllegalStateException(
+                "Cannot calculate area");
+    }
+}
+
+- Now in main class
+
+public class Main { PSVM  {
+    AreaCalculator areaCalculator=new AreaCalculator();
+   Circle circle=new Circle(10);
+   Square square=new Square(10);
+   Cube cube=new Cube();
+   Rectange rectangle=new Rectangle();
+   NoShape noShape=new NoShape();
+   ShapesPrinter printer=new ShapesPrinter();
+   List<Shape> shapes=List.of(noShape,circle,square,cube,rectangle);
+   int sum=areaCalculator.sum(shapes);
+   Sop(printer.json(sum));
+   Sop(printer.csv(sum));
+}
+}
+
+When we run it will throw an exception that cannot calculate area, but we said that NoShape is a Shape, so we give as 
+   Shape noShape=new NoShape();
+Again when we run, we are violating the principle here because derived class is not subsitutable for their base class 
+
+4. Interface Segregation 
+       Interface should not force classes to implement what they cant do, larger interfaces should be divided into smaller ones
+     So we have Cube class which is 3D shape where we can calculate volume(). So in Shape interface we create another method called volume(), then it will be error in Square and Circle class where we broke the rule because Circle, Square is not a 3D shape but we have to override volume() that it cant do 
+     Instead we create a new interface  "ThreeDimensionalShape" which contains volume() method.
+
+public interface ThreeDimensionalShape {
+    double volume();
+}
+
+- Now Cube class will implement Shape and ThreeDimensionalShape and we can calculate the area as well its volume and leaving other classes untouched because it dosent know how to calculate the volume
+
+public class Cube implements Shape, ThreeDimensionalShape {
+    @Override
+    public double area() {
+        return 100;
+    }
+
+    @Override
+    public double volume() {
+        return 0;
+    }
+}
+
+5. Dependency Inversion
+       - Components should depend on abstractions, not on concrete classes 
+      - Now we are going to create AreaCalculator inside ShapesPrinter 
+
+public class ShapesPrinter {
+
+    private final IAreaCalculator areaCalculator;
+
+    public ShapesPrinter(IAreaCalculator areaCalculator) {
+        this.areaCalculator = areaCalculator;
+    }
+
+    public String json(List<Shape> shapes) {
+        return "{shapesSum: %s}".formatted(
+                areaCalculator.sum(shapes));
+    }
+
+    public String csv(List<Shape> shapes) {
+        return "shapes_sum,%s".formatted(
+                areaCalculator.sum(shapes));
+    }
+}
+
+So here we have 2 problem, one is if we make a change to AreaCalculator then we are breaking OCP and also we are depending on actual concrete class and not the abstraction. To fix this we create an interface IAreaCalculator which contains sum() and make AreaCalculator class to implement this interface
+
+public interface IAreaCalculator {
+    int sum(List<Shape> shapes);
+}
+
+public class AreaCalculator implements IAreaCalculator {
+
+    @Override
+    public int sum(List<Shape> shapes) {
+        int sum = 0;
+        for (int i = 0; i < shapes.size(); i++) {
+            sum += shapes.get(i).area();
+        }
+        return sum;
+    }
+
+}
+
+- Now inside ShapesPrinter, pass IAreaCalculator into the constructor, so now instead of depending on concrete class AreaCalculator, now we are depending on the abstraction which is IAreaCalculator interface and we are using dependency injection through the constructor 
+
+public class ShapesPrinter {
+
+    private final IAreaCalculator areaCalculator;
+
+    public ShapesPrinter(IAreaCalculator areaCalculator) {
+        this.areaCalculator = areaCalculator;
+    }
+
+    public String json(List<Shape> shapes) {
+        return "{shapesSum: %s}".formatted(
+                areaCalculator.sum(shapes));
+    }
+
+    public String csv(List<Shape> shapes) {
+        return "shapes_sum,%s".formatted(
+                areaCalculator.sum(shapes));
+    }
+}
+
+- In main class, we need to change few things
+
+public class Main { PSVM  {
+    IAreaCalculator areaCalculator=new AreaCalculator();
+   Circle circle=new Circle(10);
+   Square square=new Square(10);
+   Cube cube=new Cube();
+   Rectange rectangle=new Rectangle();
+   ShapesPrinter printer=new ShapesPrinter(areaCalculator);
+   List<Shape> shapes=List.of(noShape,circle,square,cube,rectangle);
+   int sum=areaCalculator.sum(shapes);
+   Sop(printer.json(shapes));
+   Sop(printer.csv(shapes));
+}
+}
+
+- When we run it will display same exact output 
+
+Liskov Substitution Principle
+     It says that if ur prg is using a base class then the reference of the base class can be replaced with the derived class object without affecting the functionality of the program (ie) children classess must be completely subsitute for their parent classes
+
+- We have Member class which has abstract method called addToDatabase() which is used to add that member to a database
+
+abstract class Member {
+   String name;
+   String memberType;
+   Date startDate;
+
+   public Member(String name) {
+       this.name=name;
+   }
+   public abstract void addToDatabase();
+}
+
+- The defination of abstract method will be implemented by children classes like LifeTimeMember and AnnualMember
+
+class LifeTimeMember extends Member {
+     
+    public LifeTimeMember(String name,Date start){
+     super(name);
+     this.memberType="LifeTime";
+     this.startDate=start;
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         SOP("Added Lifetime member info to db");
+     }
+}
+
+class AnnualMember extends Member {
+     
+    public AnnualMember(String name,Date start){
+     super(name);
+     this.memberType="Annual";
+     this.startDate=start;
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         SOP("Added annual member info to db");
+     }
+}
+
+- Now we have one more child class called Enquiry, a user who is not yet lifetime member or annual member but who has just done some enquiry. Like lifetime and annual member we also want to add the details of the enquiry into the database 
+
+class Enquiry extends Member {
+     
+    public Enquiry(String name){
+     super(name);
+     this.memberType="Enquiry";
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         SOP("Added enquiry member info to db");
+     }
+}
+
+We have Member abstract class which has abstract method, and all the children classes are implementing addToDatabase(). So LSP states that derived types must be able to subsitute for the base types.
+    So in main class we are creating a list of type Member which is parent class and the elements of list are of different child types like LifeTimeMember, AnnualMember and Enquiry. So the list of type Member which is parent class but we can always assign the child class instance to the parent class object
+
+public class Main { PSVM {
+   List<Member> list=new ArrayList<>();
+   list.add(new LifeTimeMember("John",new Date());
+   list.add(new AnnualMember("Jack",new Date());
+   list.add(new Enquiry("Jim");
+   
+   for(Member m:list) {
+       m.addToDatabase();
+   }
+}
+
+Since all three children classes are properly implementing addToDatabase() method the code will works fine, so here LSP is working fine 
+
+- In case if we want to add another method of making a booking so now we declare another abstract method called makeBooking() in Member class
+
+abstract class Member {
+   String name;
+   String memberType;
+   Date startDate;
+
+   public Member(String name) {
+       this.name;
+   }
+   public abstract void addToDatabase();
+
+   public abstract void makeBooking();
+}
+     
+Since it is abstract method all the children classes of this Member class will have to implement that method in all of the children classes. 
+
+class LifeTimeMember extends Member {
+     
+    public LifeTimeMember(String name,Date start){
+     super(name);
+     this.memberType="LifeTime";
+     this.startDate=start;
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         SOP("Added Lifetime member info to db");
+     }
+     public void makeBooking() {
+        SOP("Booking for Lifetime member");
+     }
+}
+
+class AnnualMember extends Member {
+     
+    public AnnualMember(String name,Date start){
+     super(name);
+     this.memberType="Annual";
+     this.startDate=start;
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         SOP("Added annual member info to db");
+     }
+     public void makeBooking() {
+        SOP("Booking for Annual member");
+     }
+}
+
+Now there is a problem that Enquiry member cannot do booking, a person who has just come and enquired but who is not a member. Since Enquiry class extending Member class which has abstract method makeBooking(), it is complusorly for the Enquiry class to provide the implementation 
+    One way we could do that is by throwing an exception, hope that enquiry class will not be used to invoke the makeBooking()
+
+class Enquiry extends Member {
+     
+    public Enquiry(String name){
+     super(name);
+     this.memberType="Enquiry";
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         SOP("Added enquiry member info to db");
+     }
+     public void makeBooking() throws Exception {
+     throw new Exception("Cant do booking");
+    }
+}
+
+- In main class, we have 3 items in the list like LifeTimeMember, AnnualMember and Enquiry because these three are children of Member class and call makeBooking()
+
+public class Main { PSVM {
+   List<Member> list=new ArrayList<>();
+   list.add(new LifeTimeMember("John",new Date());
+   list.add(new AnnualMember("Jack",new Date());
+   list.add(new Enquiry("Jim");
+   
+   for(Member m:list) {
+       m.makeBooking();
+   }
+}
+
+When we execute this code we get an exception because Enquiry child class is not being able to fully substitute the Member class, because it is not actually properly implementing makeBooking() of Member class, here we are violating LSP 
+    But logically this Enquiry child class cannot substitute for the Member class because it is not providing proper expected behaviour for makeBooking() which is violation of LSP. So Enquiry is not actually a Member because Member has a behaviour of makeBooking(), LifeTimeMember and AnnualMember can provide the implementation of that behaviour of makeBooking()
+     But our appl logic says that Enquiry cannot do a booking, so Enquiry in reality is not a member so we should not try to inherit it from Member class. But Enquiry class has certain thing common with the other children classes of Member (ie) adding to database. 
+     So in this case we should create an interface which contain a method to add info to database, then another interface for make booking 
+
+interface IDatabase {
+    public void addToDatabase();
+}
+interface IBooking {
+    public void makeBooking();
+}
+
+- Next we need to make Member class to implements IDatabase and IBooking and children class has to provide the implementation and make Enquiry class to implement IDatabase because it has only a behaviour of adding info to database
+
+interface IDatabase {
+    public void addToDatabase();
+}
+interface IBooking {
+    public void makeBooking();
+} 
+
+abstract class Member implements IDatabase, IBooking {
+   String name;
+   String memberType;
+   Date startDate;
+
+   public Member(String name) {
+       this.name=name;
+   }
+   public abstract void addToDatabase();
+
+   public abstract void makeBooking();
+}
+
+class LifeTimeMember extends Member {
+     
+    public LifeTimeMember(String name,Date start){
+     super(name);
+     this.memberType="LifeTime";
+     this.startDate=start;
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         System.out.println("Added Lifetime member info to db");
+     }
+     public void makeBooking() {
+        System.out.println("Booking for Lifetime member");
+     }
+}
+
+class AnnualMember extends Member {
+     
+    public AnnualMember(String name,Date start){
+     super(name);
+     this.memberType="Annual";
+     this.startDate=start;
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+        System.out.println("Added annual member info to db");
+     }
+     public void makeBooking() {
+        System.out.println("Booking for Annual member");
+     }
+}
+
+class Enquiry implements IDatabase {
+     
+    public Enquiry(String name){
+      
+     }
+     public void addToDatabase() {
+         //logic to add customer to db
+         System.out.println("Added enquiry member info to db");
+     }
+     
+}
+
+public class Main { public static void main(String[] args){
+   List<IDatabase> list=new ArrayList<>();
+   list.add(new LifeTimeMember("John",new Date()));
+   list.add(new AnnualMember("Jack",new Date()));
+   list.add(new Enquiry("Jim"));
+   
+   for(IDatabase m:list) {
+       m.addToDatabase();
+   }
+}
+}
+
+
+Design Pattern
+     Lets imagine a steak, I may have imagined a well done steak, you may have imagined a medium done one, someone will have imagined a vegan steak. So while ordering a steak at a resturtant each one of us orders it differently, we dont all necessarily have to order or eat our steak the same way. But the cook that is preparing it, will take the same piece of meat in addition to the way of how we like our steak and prepare a delicious meal for each one of us using the same piece of meat as a starting point 
+     To compare this to a computer program, suppose we have a Chef class with prepare() method, this method can take a wellDoneInstruction object and in this prepare(), the chef will know how to prepare a welldone steak. But wht about other ways of preparing a steak, so we have to overload this method to take MediumDoneInstruction and VeganInstruction.
+    Now consider the chef has extended his knowledge and now knows another 5 additional ways to cook a steak, then we have to add 5 more additional methods which is not a good design 
+    Instead we replace all these methods with a single prepare() method that takes a SteakCookingInstruction class as object and all other classes inherit the SteakCookingInstruction class. By this way our class is closed for modification and open for extension which means that not only we have to add any methods or touch Chef class in the future 
+    In addition to this when a new instruction is needed all we have to do is to extend SteakCookingInstruction class we created with this new instruction and prepare() will handle it automatically 
+   Now because of our design, the chef is decided to open a new branch for the resturant. So every time a new customer enters the resturant the chef goes and informs them about the opening date and details of the new branch which is not a best approach. Instead of waiting for people to come in, the chef should have instead messaged all his customers about the opening or even posted on Social media 
+      In both scenarios the solutions we suggested hint at a specific pattern, this pattern will not actually solve our problem and generate ready code for us,but rather it will give us a description or template to follow a way of thinking that will help us to solve these problems
+     It is like a series of formalized best practices or steps that programmers have followed and used to solve the common problems which we have just encountered. Design patterns best became known from the design patterns book by Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides  often referred to as Gang of Four book published in mid 90's. This book provides 23 design patterns which were split into 3 groups like Creational, Structural and Behavioural pattern
+     
+1. Creational pattern deal with the creation of objects, instead of you instantiating all objects specifically and explicitly, they give you more flexibility in how the objects are actually created.
+     Consider we have a class with 10 attributes, then everytime we create an object based on this class we need to specify all 10 attributes, sometimes we need only one or in other case 3 or 4, in such cases we are left with 2 solutions which is not best approach 
+   - To create a lot of overloaded constructors for our class or create one constructor that takes all arguments but then we will need to pass the null values for the ones which we dont required. But design patterns tell that we have an other option to follow the template provided by Builder pattern which is widely used and tested by many developers 
+
+2. Structural patterns deal with how classes are actually designed with things like inheritance, composition and aggregation and used to provide extra functionality
+    Lets consider that in our appl we are storing book objects and these books are like in hundreds and thousands of books in a library. For some reason we need to represent each book by an object , in this case we have bunch of book object that will share the same attributes like same author, same physical storage location, same places it can be delivered to, same provider etc and the only attribute that will differ is the title and the price in some cases
+      So why create for each book an object and consume huge amount of memory, while at the same time if we follow template specified by Flyweight pattern we will able to minimize memory usage by sharing as much data as possible between our similar objects
+     This is wht design patterns are trying to do, they are trying to provide us with a schema or step-by-step defination or template to help us overcome development or architectural problems that others have faced before us
+
+3. Behavioural patterns are specifically concerned with communication and assignment of responsibilities between objects as the program is running 
+    Consider that the state of an object in our appl will be changed by a lot of other objects but we need to be able to undo the last changes then we can use Memento design pattern 
+
+
+1. Singleton design pattern
+         It is a creational design pattern, it ensures that only one instance of its kind exists and provides a single point of access to it from any other part of the appl
+       For example take the Government of a country or its president, we can see a given country can have only one official government or one president regardless of the individual who form this government. So the title, the government or the president is a global point of access used to represent the president in charge of this country 
+     Singleton represent exactly the same idea,just like global variables they let you access your object from anywhere in your appl. They encapsulate the attributes of this object in one single class and guarantee that only one instance of this class will be available at any point in time 
+      
+But why anyone want to control how many instance a class has?
+    Consider we have a database instance, only one instance of a database is required amd should be used by all the parts of our appl. So instead of creating new instance every time to query our database, we create a singleton database instance and reuse this same instance everytime to access our tables. By doing this we didnt guarantee faster access and retrieval of the instance but also reduced the possibility of error or exception while creating several instances 
+
+- The first thing we need to do is to create a private static field inside our singleton class, this field will store the singleton instance 
+   private static Singleton instance;
+
+- Next we can add the attributes for ur singleton class, in case of a database these attributes can be username and password to connect   
+     private String data;
+
+- Now we need to add a private constructor to create an object based on this class and initialize all the attributes of our object. 
+        private Singleton(String data){
+              this.data=data;
+        }
+
+- This constructor is made private because we only need access to it using a public static method created inside Singleton class, referred as getInstance() to refer to the same single instance it returns. 
+    This method returns the instance we declared at the beginning of our implementation, but how do we guarantee that same instance is returned every single time. The created instance is wrapped inside an if-statement that checks if the static instance of our singleton is null or not, and only if it is we proceed by creating a new instance of it using our private constructor, however if it is not we return the same instance already stored inside our Singleton class 
+
+public class Singleton {
+
+    private String data;
+
+    private static Singleton instance;
+
+    private Singleton(String data) {
+        this.data = data;
+    }
+
+    public static Singleton getInstance(String data) {
+        if (instance == null) {
+                    instance = new Singleton(data);
+                }
+        return result;
+    }
+}
+
+This is not a robust code, because if we were dealing with multithreaded env nothing in this code prevents two threads from accessing this piece of code at the same time and return with two different instances of this same singleton class 
+     To solve this issue we have wrap to our if-statement with synchronized block. Now everytime a thread tries to create an instance of Singleton class, it will have to wait for its turn as one thread and execute this code block at a given time 
+
+public class Singleton {
+
+    private String data;
+
+    private static Singleton instance;
+
+    private Singleton(String data) {
+        this.data = data;
+    }
+
+    public static Singleton getInstance(String data) {
+       synchronized(Singleton.class) {
+        if (instance == null) {
+                    instance = new Singleton(data);
+                }
+        }
+        return result;
+    }
+}
+
+So singleton pattern should be used when a class must have a single instance available to all its clients, as this pattern disables all other means of creating object of a class except for the static creation method. This method will either creates a new object or returns the existing one if it is already been created 
+
+2. Factory method pattern
+        Consider u have a burgers resturtant and for this resturtant we created a delivery appl that delivers burgers.Now each type of burger we deliver is represented by a class, 
+
+public class BeefBurger {
+    public void prepare() {
+         SOP("Preparing Beef Burger");
+    }
+}
+public class VeggieBurger {
+    public void prepare() {
+         SOP("Preparing Veggie Burger");
+    }
+}
+      After receiving the client request our appl will identify the food it needs to prepare and based on this information, it will proceed by creating the object corresponding to this of burger, prepare it and then return it to the user 
+
+public class Resturtant {
+    public xxx orderBurger(String request){
+         if("BEEF".equals(request)) {
+            BeefBurger burger=new BeefBurger();
+           burger.prepare();
+           return burger;
+         }
+         else if("VEGGIE".equals(request)){
+          VeggieBurger burger=new VeggieBurger();
+           burger.prepare();
+           return burger;
+          }
+    }
+}
+
+      However we see there is a limitation here as BeefBurger and VeggieBurger object we are creating represents the different types of products and the method we are implementing here can only return single object. Therefore if these products do not have a common base class or interface we wont be able to proceed with such an implementation 
+     So we create a interface for our products and try to use it within the code of our application, this will be the Burger interface where it will extract common behaviors of these products to this class as they are already implementing them 
+
+public interface Burger {
+    void prepare();
+}
+public class BeefBurger implements Burger {
+    public void prepare() {
+         SOP("Preparing Beef Burger");
+    }
+}
+public class VeggieBurger implements Burger{
+    public void prepare() {
+         SOP("Preparing Veggie Burger");
+    }
+}
+
+public class Resturtant {
+    public Burger orderBurger(String request){
+         Burger burger=null
+         if("BEEF".equals(request)) {
+           burger=new BeefBurger();
+         }
+         else if("VEGGIE".equals(request)){
+          burger=new VeggieBurger();
+          }
+          burger.prepare();
+           return burger;
+    }
+}
+
+
+    Our application is complete but when we add new recipes to our delivery menu or more products to our resturant then we have to open this code and change it which violates OCP and SRP and also writing same piece of code in several places in the appl making things worse 
+     So when our resturant grows and changes over time we are going to add and remove recipes from the menu, so here we removed VeggieBurger and add ChickenBurger 
+
+public class ChickenBurger implements Burger{
+    public void prepare() {
+         SOP("Preparing Chicken Burger");
+    }
+}
+
+public class Resturtant {
+    public Burger orderBurger(String request){
+         Burger burger=null
+         if("BEEF".equals(request)) {
+           burger=new BeefBurger();
+         }
+         else if("CHICKEN".equals(request)){
+          burger=new ChickenBurger();
+          }
+          burger.prepare();
+           return burger;
+    }
+}
+
+So when we add or remove any recipe then each time we have to modify the code, in order to fix it, we take Burger creation code and encapsulate it into separate class called Factory class, because this is the class whose sole responsibility is to create burgers 
+
+public class SimpleBurgerFactory {
+    public Burger createBurger(String request){
+         Burger burger=null
+         if("BEEF".equals(request)) {
+           burger=new BeefBurger();
+         }
+         else if("CHICKEN".equals(request)){
+          burger=new ChickenBurger();
+          }
+           return burger;
+    }
+}
+
+Now anytime if we want to order something from our resturtant, we will call createBurger() method with its types, then the method will return the requested order for us that implements the Burger interface 
+    Now in the Restaurant class we have to create factory object with its type, and orderBurger() no longer has to worry about the concrete type of the burger requested, because whatever it is we know it will implement Burger interface 
+
+public class Resturant {
+    public Burger orderBurger(String request) {
+    SimpleBurgerFactory factory=new SimpleBurgerFactory();
+    Burger burger=factory.createBurger(request);
+    burger.prepare();
+    return burger;
+   }
+}
+
+public class Main { PSVM {
+   Restaurant r=new Restaurant();
+   r.orderBurger("BEEF");
+}}
+
+The above example can be represented as class diagram also. It starts with the client of the factory, in our case the Resturant class itself, then we have factory which is the only place where the concrete type of burgers is known, then we have concrete products (ie) VeggieBurger and BeefBurger, all concrete products must implement same interface called Burger 
+    But this is not a full fledged factory pattern, but it is the first step in understanding factory design pattern
+    So factory method design pattern is creational design pattern, it loosens the coupling of given code by separating the products construction code from the code that uses this product. In our example the product is burger we are delivering
+    Now we see why the previous code is not considered as full fledged design pattern. When we encapsulate the creation logic of our burger in SimpleBurgerFactory class, we isolated this logic and created a class whose sole purpose is creating burger object, by doing this we follow single responsibility principle 
+    However this class is still opens for modification and when we add more recipes to our menu, we have add if-stmt to this method and one way to fix this by applying factory method design pattern. To do that we remove SimpleBurgerFactory class and put the creation logic of burger inside Resturant class 
+
+public class Resturtant {
+    public Burger orderBurger(String request){
+         Burger burger=null
+         if("BEEF".equals(request)) {
+           burger=new BeefBurger();
+         }
+         else if("VEGGIE".equals(request)){
+          burger=new VeggieBurger();
+          }
+          burger.prepare();
+           return burger;
+    }
+}
+
+- First thing we need to do is abstract the Resturant class, because createBurger() that exists in SimpleFactory class will now become abstract method inside Resturant class and this createBurger() is called Factory method and will be implemented by sub classes of the Resturant class 
+
+public abstract class Resturtant {
+    public Burger orderBurger(String request){
+         Burger burger=null
+         if("BEEF".equals(request)) {
+           burger=new BeefBurger();
+         }
+         else if("VEGGIE".equals(request)){
+          burger=new VeggieBurger();
+          }
+          burger.prepare();
+           return burger;
+    }
+
+    public abstract Burger createBurger();
+}
+
+- In this example based on the burgers we are delivering, these subclasses will be BeefBurgerResturant and VeggieBurgerResturant
+
+public class BeefBurgerResturant extends Resturant {
+    public Burger createBurger() {
+      return new BeefBurger();
+    }
+}
+
+public class VeggieBurgerResturant extends Resturant {
+    public Burger createBurger() {
+      return new VeggieBurger();
+    }
+}
+
+As factory method design pattern relies heavily on inheritance, it delegates objects creation to subclasses that implement the factory method. So after defining an interface for our products in this case Burger interface, we let subclasses decide which class to instantiate 
+
+- Now we write creation code inside our business logic (ie) orderBurger() with the factory method. Here orderBurger() is no longer dependent on request object because we dont need it as the users of our resturant can now directly instanitate and invoke the concrete Resturant class implementation they need and the correct prepared burger will be returned to them 
+
+public interface Burger {
+    void prepare();
+}
+public class BeefBurger implements Burger {
+    public void prepare() {
+         SOP("Preparing Beef Burger");
+    }
+}
+public class VeggieBurger implements Burger{
+    public void prepare() {
+         SOP("Preparing Veggie Burger");
+    }
+}
+
+public abstract class Resturant {
+     public Burger orderBurger() {
+         Burger burger=createBurger();
+         burger.prepare();
+         return burger;
+     }
+     public abstract Burger createBurger();
+}
+
+public class BeefBurgerRestaurant extends Restaurant {
+    @Override
+    public Burger createBurger() {
+        System.out.println("Creating Beef Burger...");
+        return new BeefBurger();
+    }
+}
+
+public class VeggieBurgerRestaurant extends Restaurant {
+    @Override
+    public Burger createBurger() {
+        System.out.println("Creating Veggie Burger...");
+        return new VeggieBurger();
+    }
+}
+
+public class MainApp {
+    public static void main(String[] args) {
+        Restaurant beefResto = new BeefBurgerRestaurant();
+        Burger beefBurger=beefResto.orderBurger();
+        System.out.println("==========================================");
+        Restaurant veggieResto = new VeggieBurgerRestaurant();
+        Burger veggieBurger=veggieResto.orderBurger();
+    }
+}
+
+Now we look at the structure of factory method pattern using class diagram, the product interface and concreteProducts represents the Burger intreface in our example. The Creator class which contains the factory method was represented using Resturant class in our example, then ConcreteCreator is represented by different resturant classes in which creation process of our burger is defined 
+    So finally factory pattern are used if we have no idea of the exact types of the objects your code will be using, which makes it easy to extend the product construction code independently from the rest of the appl and allows to introduce new products without breaking the existing code, by doing this we wouldnt only providing the users of ur appl with a way to extend its internal components but also applying the OCP and SRP as we are centralizing the product creation code in one place in the program
+
+3. Abstract Factory pattern
+        It is a creational design pattern, it allows you to produce families of related objects without specifting their concrete classes 
+       Suppose we are just manufacturing GPUs, now GPU's we are manufacturing belong to a certain brand and the brands covered by the company MSI and ASUS
+       Now we apply factory method pattern on this example. GPU's are our product and to distinguish the brands we create MsiGpu and AsusGpu class, these 2 classes should implement a common interface which is Gpu interface in our case
+
+public interface Gpu {
+      void assemble();
+}
+public class MsiGpu implements Gpu {
+     public void assemble(){
+         System.out.println("Assembling MSI GPU");
+     }
+}
+public class AsusGpu implements Gpu {
+     public void assemble(){
+        System.out.println("Assembling Asus GPU");
+     }
+}
+
+The creator class of this example where our business logic sits can be seen as a whole company 
+
+public abstract class Company {
+     public Gpu assembleGpu() {
+         Gpu gpu=createGpu();
+         gpu.assemble();
+         return gpu;
+     }
+     public abstract Gpu createGpu();
+}
+
+Now the concrete creators with be MsiManufacture and AsusManufacture classes which implement createGpu() method which is a factory method. MsiManufacture class will return MSI brand GPU and AsusManufacture class will return ASUS brand GPU 
+
+public class MsiManufacture extends Company {
+    public Gpu createGpu() {
+       return new MsiGpu();
+    }
+}
+
+public class AsusManufacture extends Company {
+    public Gpu createGpu() {
+       return new AsusGpu();
+    }
+}
+
+Until now we apply factory method pattern, but when does abstract factory come into picture and when should we use it
+     Consider now company started to manufacture monitors on top of GPU's and these monitors can also be MSI and ASUS branded. Now we try to integrate this requirement into the code 
+     Now we create separate interface called Monitor and this interface will be implemented by the AsusMonitor and MsiMonitor classes, so the first thing abstract factory suggests is to explicitly declare interfaces for each distinct product we have and then make all variants of these products follow those interfaces 
+
+public interface Monitor {
+      void assemble();
+}
+public class MsiMonitor implements Monitor {
+     public void assemble() {
+            System.out.println("Assembling MSI Monitor");
+     }
+}
+
+public class AsusMonitor implements Monitor {
+    @Override
+    public void assemble() {
+        System.out.println("Assembling ASUS Monitor");
+    }
+}
+ 
+- Next we create list of creation methods or factory methods in abstract factory class (ie) Company class, for each product we have. In this case we have 2 abstract products (ie) GPU and monitor interfaces
+
+public abstract class Company {
+    public abstract Gpu createGpu();
+    public abstract Monitor createMonitor();
+}    
+
+- Now for each concrete factory we have manufacturer class, which returns a product or interface of a particular kind and by this way we decouple the creation of our products from the part that is actually using it with the help of abstract factory pattern
+
+public class AsusManufacturer extends Company {
+    @Override
+    public Gpu createGpu() {
+        return new AsusGpu();
+    }
+    @Override
+    public Monitor createMonitor() {
+        return new AsusMonitor();
+    }
+}
+
+public class MsiManufacturer extends Company {
+    @Override
+    public Gpu createGpu() {
+        return new MsiGpu();
+    }
+    @Override
+    public Monitor createMonitor() {
+        return new MsiMonitor();
+    }
+}
+
+Now user or clients of appl can now work with any concrete factory as long as it communicates with their objects via their corresponding abstract interfaces
+
+public class Main { PSVM {
+     Company msi=new MsiManufacturer();
+     Gpu msiGpu=msi.createGpu();
+     Monitor msiMonitor=msi.createMonitor();
+     Company asus=new AsusManufacturer();
+     Gpu asusGpu=asus.createGpu();
+     Monitor asusMonitor=asus.createMonitor();
+}
+}
+
+Now we define the structure using class diagram. 
+    The Company class is a abstract factory and this factory is implemented by concrete factories which are manufacture classes. Each concrete factory is responsible for creating both products which means that both factories should and must return the same product or interface. However the concrete product created should correspond or relate to the type of factory it was created from 
+     So to recap we should use abstract factory pattern when ur code needs to work with various families of related products, but we dont want it to depend on the concrete classes of those products. So many design start by using factory method pattern and latter evolve toward as abstract factory design pattern. By using this pattern we follow OCP and SRP as we centralizes the product creation code in one place in the program
+
+Adapter design pattern
+      Imagine we are creating an app like Zomato where we collect the menus and all the relavent data of several resturants and combine them into single delivery platform. Now ur app downloads and collects this data from multiple sources in XML format and then using those it displays menus, images etc 
+    Now we decide to enhance the app, by giving UI chnages that will improve the user experience and we find a 3rd party library that has all kind of fancy components, but there is a problem this 3rd party library only works with data in JSON format
+     Now we can go and change the library to work with XML but this will break some existing code that dependent on this library. Therefore we need a kind of an adapter which takes all of our XML data and transform it to JSON making it compatible with the 3rd party library 
+     So Adapter pattern is a structural design pattern that allows objects with incompatible interfaces to collaborate with one another 
+       We have MultiRestoApp class along with its interface that takes in XML data which was used by UI modules of our appl
+
+public class XmlData {
+
+}
+public interface IMultiRestoApp {
+    void displayMenus(XmlData xmlData);
+    void displayRecommendations(XmlData xmlData);
+}
+
+public class MultiRestoApp implements IMultiRestoApp {
+    @Override
+    public void displayMenus(XmlData xmlData) {
+        System.out.println("Displaying Menus using XML data...");
+    }
+    @Override
+    public void displayRecommendations(XmlData xmlData) {
+        System.out.println("Displaying Recommendations using XML data...");
+    }
+}
+
+Also we have Fancy UI 3rd party library is making use of FancyUIService class which takes input as JSON data object
+
+public class JsonData {
+}
+
+public class FancyUIService {
+    public void displayMenus(JsonData jsonData) {
+        // Make use of the JsonData to fetch menus
+    }
+    public void displayRecommendations(JsonData jsonData) {
+        // Make use of the JsonData to load recommendations
+    }
+} 
+
+So we need a class that will allow us to transform XML data to JSON data, to do that we created a adapter class which use both inheritance and composition by extending one of the object called IMultiRestoApp and wrapping another called FancyUIService class 
+
+public class FancyUIServiceAdapter implements IMultiRestoApp {
+
+    private final FancyUIService fancyUIService;
+
+    public FancyUIServiceAdapter() {
+        fancyUIService = new FancyUIService();
+    }
+}
+
+Since we implement the interface of our app, this will allow us to implement the method and inside the adapters implementation we are going to convert the XML data which receive as input and converted as JSON data which 3rd party UI service expecting 
+
+public class FancyUIServiceAdapter implements IMultiRestoApp {
+
+    private final FancyUIService fancyUIService;
+
+    public FancyUIServiceAdapter() {
+        fancyUIService = new FancyUIService();
+    }
+
+    @Override
+    public void displayMenus(XmlData xmlData) {
+        JsonData jsonData = convertXmlToJson(xmlData);
+        System.out.println("Displaying Fancy Menus using converted JSON data...");
+        fancyUIService.displayMenus(jsonData);
+    }
+
+    @Override
+    public void displayRecommendations(XmlData xmlData) {
+        JsonData jsonData = convertXmlToJson(xmlData);
+        System.out.println("Displaying Fancy Recommendations using converted JSON data...");
+        fancyUIService.displayRecommendations(jsonData);
+    }
+
+    private JsonData convertXmlToJson(XmlData xmlData) {
+        System.out.println("Converting XML to JSON...");
+        return new JsonData();
+    }
+}
+
+We create a main class to use this fancy library
+
+public class MainApp {
+    public static void main(String[] args) {
+
+        XmlData myData = new XmlData();
+
+        // Old UI
+        IMultiRestoApp multiRestoApp = new MultiRestoApp();
+        multiRestoApp.displayMenus(myData);
+        multiRestoApp.displayRecommendations(myData);
+
+        System.out.println("==========================================");
+
+        // New UI
+        IMultiRestoApp adapter = new FancyUIServiceAdapter();
+        adapter.displayMenus(myData);
+        adapter.displayRecommendations(myData);
+    }
+}
+
+Class Diagram of Adapter Design pattern
+     First we have client and its interface which are represented by MultiRestoApp and IMultiRestoApp, the client houses the existing business logic of the app and client interface defines the set of behaviours that other classes must follow to collaborate with the client 
+      Next we have service class which is represented by FancyUIService which is 3rd party code which the client cant use directly because it has an incompatiable interface 
+      Next we have adapter class which is FancyUIServiceAdapter which able to work with both client and the service, which implements Client interface and wrapping the service object which translates the client calls into something that the wrapped service can understand and make use of them 
+     To sumup, the adapter design patter uses inheritance and composition to enable objects with incompatible interfaces to collaborate with one another. To do that it creates a middle layer class that serves as a translator between ur code and the 3rd party class we want to make use of. By applying adapter pattern we follow OCP and SRP because the adapting behaviour is now separated in its own class and have the ability to introduce new types of adapters into the program without breaking existing client code  
+
+public interface JSONData {
+      void readJSONData();
+}
+
+public class JSONSoftware implements JSONData {
+     public void readJSONData() {
+          SOP("Understand only JSON data");
+     }
+}
+
+public interface XMLData {
+      void readXMLData();
+}
+
+public class XMLSoftware implements XMLData {
+     public void readXMLData() {
+          SOP("Understand only XML data");
+     }
+}
+
+public class XMLTOJSONDataAdapter implements JSONData {
+     XMLData xmlData;
+     
+     XMLTOJSONDataAdapter(XMLData xmlData){
+           this.XMLData=xmlData;
+     }
+      
+     public void readJSONData() {
+          xmlData.readXMLData();
+          SOP("Convert XML data to JSON data");
+     }
+}
+
+public class Main { PSVM {
+     XMLSoftware x=new XMLSoftware();
+     JSONData js=new XMLTOJSONDataAdapter(x);
+      js.readJSONData();
+    }
+}
+
+
+Facade design pattern
+     Whenever we are working with any 3rd party appl or any libraries, sometimes that libraries is huge and complicated as well, but we need to have some of the functionalities from that library as well, so rather than using entire library we can create a small class which is helper class that will help to use that particular library, that it is called as facade design pattern 
+   -   Consider we have a library called VideoEncoder which provides lot of information, but from our appl we want to upload one video and that video should be encoded in HD format. We dont need a lot of functionalities provided by video encoder library, we just need particular information and that u can implement it easily 
+    We can create an interface or abstract class which will allow us to use this library internally, so we are adding one abstraction layer and that layer will help us to reduce lot of complexities of other framework or library that we want to use 
+    - Consider we have zomato app which is food delivery appl where  we can order the food and a delivery person or delivery partner will get food from the resturant and it will deliver to us. So ideally we are ordering a food from resturant but zomato is ur facade which will help us to order a particular food from the resturtant and delivery partner will take the food for us and deliver it 
+    So zomato is the abstraction where it will help us to do lot of process, it will help us to order the food, it will also intimidate the resturant to prepare the food and it will assign a delivery partner
+    
+     But according to the facade design pattern, we should only have one unified interface that interacts with and that may cause one interface to get heavily coupled with other classes?
+    Consider we want to develop a home theatre in object oriented env, first we create a Television class where we will on as well as off  the TV, next we need SoundSystem class where we will increase the volume and decrease the volume of the sound system. Next we create class RoomLight so when we on hometheatre then room light should be dim, once it is switched off the light should be bright 
+     So when we want to watch a movie, first we will switch on TV, then switch on soundsystem and roomlight should be dimmed. So if we stop the homethreatre then room light should be bright, stop the sound system and stop the TV  
+     - Facade suggest if we are invoking methods on different classes then we can group everything in single class 
+
+public class Television {
+    public void switchOnTV() {
+          SOP("TV on");
+    }
+     public void switchOffTV() {
+          SOP("TV off");
+    }
+}
+
+public class RoomLights {
+    public void lightsDim() {
+          SOP("Light Dim");
+    }
+     public void lightsBright() {
+          SOP("Light bright");
+    }
+}
+
+public class SoundSystem {
+    public void switchOnSoundSystem() {
+          SOP("Sound system on");
+    }
+     public void switchOffSoundSystem() {
+          SOP("Sound system off");
+    }
+}
+
+All classes are part of home theatre, now we encapsulate all these classes in single class called Facade class
+
+public class HomeTheatreFacade {
+     RoomLights roomLights;
+     SoundSystem soundSystem;
+     Television television;
+
+     public HomeTheatreFacade(RoomLights roomLights, SoundSystem soundSystem, Television television) {
+       this.roomLights=roomLights;
+       this.soundSystem=soundSystem;
+       this.television=television;
+     }
+
+     public void watchMovie() {
+          soundSystem.switchOnSoundSystem();
+          television.switchOnTv();
+          roomLights.lightsDim();
+     }
+     public void stopWatchingMovie() {
+          soundSystem.switchOffSoundSystem();
+          television.switchOffTv();
+          roomLights.lightsBright();
+     }
+}
+
+public class Main { PSVM {
+    RoomLights r=new RoomLights();
+    Television t=new Television();
+    SoundSystem s=new SoundSystem();
+    HomeTheatreFacade h=new HTF(r,t,s);
+    h.watchMovie();
+    h.stopWatchingMovie();
+  }
+}
+    
+https://www.decipherzone.com/blog-detail/facade-design-pattern
+
+Command Design Pattern
+     Consider we are working on smart home automation app, and ur current task is to allow the users of this appl to switch on or off the lights of any room inside the house. So we represented each room as class and made them extend the Room class, where our common code with present 
+
+public class Kitchen extends Room {
+    private Oven oven;
+}
+public class Bathroom extends Room {
+    private String hotWater;
+}
+public class Livingroom extends Room {
+    private Windows windows;
+}
+public class Bedroom extends Room {
+    private String music;
+}
+
+Now we create Light class as every room created should have a lights
+
+public class Light {
+    private boolean switchedOn;
+    public void setSwitchedOn(boolean switchedOn) {
+        this.switchedOn = switchedOn;
+    }
+    public boolean isSwitchedOn() {
+        return switchedOn;
+    }
+}
+
+Then the functionality we require which is turning on the lights of a particular room, if they are off and turning off the lights if they are on can sit inside Room class
+
+public class Room {
+     private Light light;
+     public Room() {
+         this.light=new Light();
+     }
+     public void switchLights() {
+         light.setSwitchedOn(!light.isSwitchedOn());
+     }
+}
+
+Now if we create a specific house for a particular client which consists of a list of rooms basically the client can choose to switch on or off the lights of any room he desires 
+
+public class House {
+     List<Room> rooms;
+     public House() {
+         rooms=new ArrayList<>();
+     }
+     public void addRoom(Room room){
+         rooms.add(room);
+     }
+}
+
+public class Main { PSVM {
+      House house=new House();
+      house.addRoom(new LivingRoom());
+      house.addRoom(new BathRoom());
+      house.addRoom(new Kitchen());
+      house.addRoom(new BedRoom());
+      house.addRoom(new BedRoom());
+      house.rooms.forEach(Room::switchLights);
+     }
+}
+
+Our code is done and we have applied OCP by separating each room into a different class, so in the future if we introduce a functionality that is specific to living rooms then we can add it to the LivingRoom class without affecting other parts of our appl 
+    But this approach is not approachable because,
+  1.  we have an lot number of subclasses and each time u modify the light logic in the Room class then we are breaking the code in subclasses
+     Consider owner equipped sensors for the bathrooms so he no longer needs our app to turn on and off the lights in the bathroom. But our app does not give the flexibility to remove this feature for a specific room because bathroom class extends Room class and the business logic for turning on and off lights is implemented inside the base class of all our rooms
+   2. The invoked operations need to be called from multiple places in our appl, not from the house rooms we created 
+      Suppose the appl we are developing can now switch any light in the house not just room lights, so if we add floor lamp in the living room and want to use our appk to turn it on and off. 
+
+public class LivingRoom extends Room {
+     private Windows windows;
+     private FloorLamp floorLamp;
+}
+
+We cant make FloorLamp class extends Room class because simply its not a room, therefore we need to duplicate the lights logic we wrote in Room class inside FloorLamp class
+
+public class FloorLamp {
+     private Light light;
+     public FloorLamp() {
+         this.light=new Light();
+     }
+     public void switchLights() {
+         light.setSwitchedOn(!light.isSwitchedOn());
+     }
+}
+
+To avoid this we can move light switching logic from Room and FloorLamp class to Light class, by doing this we encapsulate the light switching logic inside the Light class so that any time we change this logic it will be modified across all the parts of our appl 
+
+public class Room {
+     private Light light;
+     public Room() {
+         this.light=new Light();
+     }
+}
+
+public class FloorLamp {
+     private Light light;
+     public FloorLamp() {
+         this.light=new Light();
+     }
+}
+public class Light {
+    private boolean switchedOn;
+    public void setSwitchedOn(boolean switchedOn) {
+        this.switchedOn = switchedOn;
+    }
+    public boolean isSwitchedOn() {
+        return switchedOn;
+    }
+    public void switchLights() {
+         switchedOn=!switchedOn;
+     }
+}
+
+Now business logic is separated from rest of our code, but still have the previous problem that we have several classes that are calling this logic and switching lights themselves and this violates SRP
+    To solve this we extract all of the request details such as object being called, the name of the method and the list of arguments passed to this method into a separate class with a single method that triggers this request which is referred as commands 
+
+public interface Command {
+    void execute();
+}
+public class SwitchLightsCommand implements Command {
+     private Light light;
+     public SwitchLightsCommand(Light light){
+        this.light=light;
+     }
+     public void execute() {
+      light.switchLights();
+     }
+}
+
+Now in this example, our rooms and our floor lamp as well as any other object we might create will have a command object as an attribute and executeCommand() inside it 
+
+public class Room {
+    Command command;
+    public Room() {}
+    public void setCommand(Command command){
+      this.command=command;
+    }
+    public void executeCommand() {
+         command.execute();
+    }
+}
+
+Now when we need to switch the light in any of these objects we set this command to be SwitchLightsCommand and execute it, later on we can expand this and pass the list of commands like close or open curtain command or close or open door command etc and top of that every class has its own responsibility 
+
+public class Main  { PSVM {
+    Room livingRoom=new LivingRoom();
+    livingRoom.setCommand(new SwitchLightsCommand(new Light()));
+    livingRoom.executeCommand();
+}
+}
+
+The decisions, the assignment and the configuration of our program is now decided at runtime by the client giving them way more flexibility on how and what to do with the objects at hands and thats what command pattern
+     It is a behavioral pattern which turns a request or behavior into a stand-alone object that contains everything about the request. It is used to encapsulate all relavent info needed to perform an action so that this action may be reused by other parts of appl
+
+Class Diagram 
+    First we have Command interface which contains a single method for executing the command, next we have concrete command (ie) SwitchLightsCommand which implement various kinds of requests, these classes can perform the work on their own or can pass the call to one of the business logic objects in our appl 
+    Now 2 terms always associated with command pattern called Invoker and Receiver The invoker is responsible for initiating requests which have a field for storing a reference to a command object, the sender triggers that command instead of sending the request directly to the receiver. In our example Rooms of the house were the invoker, however receiver class contains some business logic which was the Light class. The command we created was redirecting the call of Room class to Light class and telling it should switch its lights but the actual switching is being done inside Light class and not inside Command itself 
+    Finally client is responsible of creating and configuring concrete command objects, the client must pass all of the request parameters including a receiver instance into commands constrcutor 
+
+public interface Command {
+     void execute();
+}
+
+public class TubeLightOnCommand implements Command {
+      TubeLight tubeLight;
+      TubeLightOnCommand(TubeLight tubeLight) {
+           this.tubeLight=tubeLight;
+      }
+      public void execute() {
+           tubeLight.switchOn();
+      }
+}
+
+public class TubeLightOffCommand implements Command {
+      TubeLight tubeLight;
+      TubeLightOffCommand(TubeLight tubeLight) {
+           this.tubeLight=tubeLight;
+      }
+      public void execute() {
+           tubeLight.switchOff();
+      }
+}
+
+public class TubeLight {
+     void switchOn() {
+          SOP("TubeLight On");
+     }
+     void switchOff() {
+          SOP("TubeLight Off");
+     }
+}
+
+public class RemoteController {
+    Command command;
+
+    public RemoteController(Command command) {
+         this.command=command;
+    }
+    void setCommand(Command command){
+         this.command=command;
+    }
+    void pressButton() {
+         command.execute();
+    }
+}
+
+public class Main { PSVM {
+      TubeLight t1=new TubeLight();
+      TubeLightOnCommand tc=new TubeLightOnCommand(t1);
+      RemoteController rc=new RemoteController(tc);
+      rc.pressButton();
+
+       TubeLightOffCommand tc1=new TubeLightOffCommand(t1);
+      rc.setCommand(tc1);
+      rc.pressButton();
+   }
+}
+
+Template design pattern
+    - It is a behavioural design pattern where we can define a set of instructions that needs to be followed and there may be a sets of instructions that a client can modify as well 
+     We have studied Factory design pattern where in order to instantiate the object we encapsulate it, in facade pattern in order to invoke the methods we encapsulate in separate class. Now we study about template pattern where method invocation, object creation or the entire process how we are going to execute we are going to encapsulate it 
+     Consider we are going to purchase from some online store, so we have prepare some template and we have to follow that template in order to buy a product. 
+     So first we have to select the product, then make a payment, then package the product, then deliver the product. So when we buy any product we have to follow the same template. If we want to follow specific template, then we need to create proper design pattern and using that pattern we can process any product 
+    Template is just skeleton but we provide different implementations based on the requirement 
+
+- First we created a template which is a abstract class and contains some abstract method like selectProduct() because selecting product is different for each person, makePayment() because making payment it will be different sometimes cash or card like that, packProduct() whether we need a gift wrapper or ordinary packing, deliverProduct() indicates how to deliver the product 
+    We studied that we are not only encapsulate the method invocation but also in which order the method is going to invoke that will be decided by the template 
+
+public abstract class OrderProcessTemplate {
+     boolean isGiftWrap;
+  
+     protected abstract void selectProduct();
+     protected abstract void makePayment();
+     private final void packProduct() {
+       if(isGiftWrap)
+           SOP("Gift Wraping Product");
+       else
+           SOP("Simplyu packed product");
+     }
+     protected abstract void deliverProduct();
+     public final void processOrder() {
+         selectProduct();
+         makePayment();
+         packProduct();
+         deliverProduct();
+     }
+}
+
+Now we create classes for the implementation of template. So we create StoreOrder class, in case if we goto store and order the product, then how the template look like
+
+public class StoreOrder extends OrderProcessTemplate {
+      protected void selectProduct() {
+          sop("Selecting product on store");
+      }
+      protected void makePayment() {
+          sop("Making cash/card payment at store");
+      }
+      protected void deliverProduct() {
+          sop("Product delivered to customer");
+      }
+}
+
+Now if we do online order then we create OnlineStore
+ 
+public class OnlineOrder extends OrderProcessTemplate {
+      protected void selectProduct() {
+          sop("Selecting product and adding to cart");
+      }
+      protected void makePayment() {
+          sop("Making COD or online payment at website/app");
+      }
+      protected void deliverProduct() {
+          sop("Product dispatched");
+      }
+}
+
+Now we want to use customer to invoke so we create main class and call the processOrder() from template which provide the order of invocation of methods 
+
+public class Customer { PSVM {
+     StoreOrder so=new StoreOrder();
+     so.processOrder();
+     OnlineOrder oo=new OnlineOrder();
+     oo.isGiftWrap=true;
+     oo.processOrder();
+ }
+}
+
+So template design pattern define the skeleton of an algorithm in the superclass but lets subclassess override specific steps of the algorithm without changing its structure 
+ 
+Class Diagram
+     First thing is the abstract class which is OrderProcessTemplate in our case which declares the methods that act as steps of an algorithm as well as actual template method which calls these methods in a specific order, the steps may either be declared as abstract or have some default implementation 
+   The second part are concrete classes which are StoreOrder and OnlineOrder classes, these classes can override all of the steps provided by their parents class or only abstract ones except for the template method itself 
+    To sumup template method pattern will allows us to turn an algorithm into a series of individual methods that can be easily extended and overridden by subclasses, this is done by keeping the structure of ur base algorithm defined in the superclass. When u turn such an algorithm into a template method, we will able to pull up the steps with similar implementations into the superclass, hence eliminating code duplication
