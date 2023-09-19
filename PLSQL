@@ -2528,6 +2528,7 @@ CREATE OR REPLACE PROCEDURE increase_salary (
    department_id_in   IN empl.deptno%TYPE,
    increase_pct_in    IN NUMBER)
 IS
+--cursor for loop which by default create loop index as record variable of %rowtype
 BEGIN
    FOR employee_rec
       IN (SELECT empid
