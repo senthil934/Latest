@@ -2516,3 +2516,88 @@ BEGIN
  
    DBMS_OUTPUT.put_line (l_total); 
 END;
+
+
+Almost every program Oracle Database developers write includes both PL/SQL and SQL statements. PL/SQL statements are run by the PL/SQL statement executor; SQL statements are run by the SQL statement executor. When the PL/SQL runtime engine encounters a SQL statement, it stops and passes the SQL statement over to the SQL engine. The SQL engine executes the SQL statement and returns information back to the PL/SQL engine. This transfer of control is called a context switch, and each one of these switches incurs overhead that slows down the overall performance of your programs.
+
+Let’s look at a concrete example to explore context switches more thoroughly and identify the reason that FORALL and BULK COLLECT can have such a dramatic impact on performance.
+
+Suppose my manager asked me to write a procedure that accepts a department ID and a salary percentage increase and gives everyone in that department a raise by the specified percentage. Taking advantage of PL/SQL’s elegant cursor FOR loop and the ability to call SQL statements natively in PL/SQL, I can implement this requirement easily:
+
+CREATE OR REPLACE PROCEDURE increase_salary (
+   department_id_in   IN empl.deptno%TYPE,
+   increase_pct_in    IN NUMBER)
+IS
+BEGIN
+   FOR employee_rec
+      IN (SELECT empid
+            FROM empl
+           WHERE deptno =
+                    increase_salary.department_id_in)
+   LOOP
+      UPDATE empl emp
+         SET emp.salary = emp.salary + 
+             emp.salary * increase_salary.increase_pct_in
+       WHERE emp.empid = employee_rec.empid;
+      DBMS_OUTPUT.PUT_LINE ('Updated ' || SQL%ROWCOUNT);
+   END LOOP;
+END increase_salary;
+
+Suppose there are 10000 employees in department 15. When I execute this block....
+
+BEGIN
+   increase_salary (50, .10);
+   ROLLBACK; -- to leave the table in its original state
+END;
+....the PL/SQL engine will “switch” over to the SQL engine 10000 times, once for each row being updated. 
+
+Generally, the way to improve performance over row-by-row context switching is to not perform row-by-row DML operations. This can be accomplished in one of two ways:
+
+Implement the functionality in "pure" SQL - no PL/SQL loop.
+Use the bulk processing features of PL/SQL.
+If you can change your implementation to avoid a loop and instead simply execute a single DML statement, that should be done. For example, we can do this with the increase_salary procedure:
+
+CREATE OR REPLACE PROCEDURE increase_salary (
+   department_id_in   IN employees.department_id%TYPE,
+   increase_pct_in    IN NUMBER)
+IS
+BEGIN
+   UPDATE employees emp
+      SET emp.salary =
+               emp.salary
+             + emp.salary * increase_salary.increase_pct_in
+    WHERE emp.department_id = 
+             increase_salary.department_id_in;
+END increase_salary;
+
+Of course, it is not always this easy. You might be doing some very complex processing of each row before doing the insert, update or delete that would be hard to do in SQL.
+
+Whatever your situation, the bulk processing features of PL/SQL offer a straightforward solution - though there will be a lot to consider as you implement your conversion to BULK COLLECT and FORALL.
+
+o take advantage of bulk processing for queries, you simply put BULK COLLECT before the INTO keyword of your fetch operation, and then provide one or more collections after the INTO keyword.
+
+Here are some things to know about how BULK COLLECT works:
+
+It can be used with all three types of collections: associative arrays, nested tables, and VARRAYs.
+You can fetch into individual collections (one for each expression in the SELECT list) or a single collection of records.
+The collection is always populated densely, starting from index value 1.
+If no rows are fetched, then the collection is emptied of all elements.
+
+
+Managing PGA Memory with the LIMIT Clause
+As with almost all other types of variables and constants you use in your code, collections consume PGA (process global area) memory. If your collection gets too large, your users might encounter an error. To see this happen, run the code below (note: varchar2a is a collection type of strings defined in the DBMS_SQL package).
+
+DECLARE
+   l_strings   DBMS_SQL.varchar2a;
+BEGIN
+   FOR indx IN 1 .. 2 ** 31 - 1
+   LOOP
+      l_strings (indx) := RPAD ('abc', 32767, 'def');
+   END LOOP;
+END;
+
+When using BULK COLLECT, you could attempt to retrieve too many rows in one context switch and run out of PGA memory. To help you avoid such errors, Oracle Database offers a LIMIT clause for BULK COLLECT. Indeed, when using BULK COLLECT we recommend that you never or at least rarely use an "unlimited" BULK COLLECT which is what you get with a SELECT BULK COLLECT INTO (an implicit query)
+
+Instead, declare a cursor (or a cursor variable), open that cursor, and then in a loop, retrieve N number of rows with each fetch.
+
+
