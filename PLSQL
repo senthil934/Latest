@@ -2434,3 +2434,85 @@ CUSTOMER_ID
 
        102 Sales appl                                         14-SEP-23
           2
+
+
+BULK COLLECT RETURNING INTO 
+
+The RETURNING clause allows you to retrieve values of columns (and expressions based on columns) that were modified by an insert, delete or update. Without RETURNING you would have to run a SELECT statement after the DML statement is completed to obtain the values of the changed columns. The RETURNING clause can return multiple rows of data, in which case you will use the RETURNING BULK COLLECT INTO form. You can also call aggregate functions in the RETURNING clause to obtain sums, counts and so on of columns in multiple rows changed by the DML statement.
+
+CREATE TABLE parts ( part_number    INTEGER , part_name   VARCHAR2 (100) )
+
+INSERT INTO parts VALUES (1, 'Mouse');
+INSERT INTO parts VALUES (100, 'Keyboard');
+INSERT INTO parts VALUES (500, 'Monitor');
+
+
+>DECLARE 
+   l_num   PLS_INTEGER; 
+BEGIN 
+   UPDATE parts SET part_name = UPPER (part_name) WHERE part_name LIKE 'K%'; 
+ 
+   SELECT part_number INTO l_num FROM parts WHERE part_name = UPPER (part_name); 
+ 
+   DBMS_OUTPUT.put_line (l_num); 
+END;
+
+(the wrong way) This solution issues the update and then in a separate SQL statement retrieves the part number of the row that was just modified - but only by reproducing the logic ("partname = UPPER (partname)") in the WHERE clause. This means that I have introduced repetition in my code, and also inefficiency (an extra context switch). This is logically equivalent to using the RETURNING clause, but definitely inferior to RETURNING. 
+
+DECLARE 
+   l_num   PLS_INTEGER; 
+BEGIN 
+      UPDATE parts 
+         SET part_name = UPPER (part_name) 
+       WHERE part_name LIKE 'K%' 
+   RETURNING part_number 
+        INTO l_num; 
+ 
+   DBMS_OUTPUT.put_line (l_num); 
+END;
+
+Don't do an unnecessary SELECT simply to see/verify the impact of a non-query DML statement! Just add RETURNING to the statement and get information back from that single context switch between PL/SQL and SQL. Note that this RETURNING INTO only works because the WHERE clause identifies a single row for changing.
+
+Use RETURNING with BULK COLLECT INTO when changing multiple rows
+
+DECLARE 
+   l_part_numbers   DBMS_SQL.number_table; 
+BEGIN 
+      UPDATE parts 
+         SET part_name = part_name || '1' 
+   RETURNING part_number 
+        BULK COLLECT INTO l_part_numbers; 
+ 
+   FOR indx IN 1 .. l_part_numbers.COUNT 
+   LOOP 
+      DBMS_OUTPUT.put_line (l_part_numbers (indx)); 
+   END LOOP; 
+END;
+
+Populate record in RETURNING with list of columns
+
+DECLARE 
+   l_part   parts%ROWTYPE; 
+BEGIN 
+      UPDATE parts 
+         SET part_number = -1 * part_number, part_name = UPPER (part_name) 
+       WHERE part_number = 1 
+   RETURNING part_number, part_name 
+        INTO l_part; 
+ 
+   DBMS_OUTPUT.put_line (l_part.part_name); 
+END;
+
+Call aggregate function in RETURNING clause!
+
+DECLARE 
+   l_total   INTEGER; 
+BEGIN 
+      UPDATE employees 
+         SET salary = salary * 2 
+       WHERE INSTR (last_name, 'e') > 0 
+   RETURNING SUM (salary) 
+        INTO l_total; 
+ 
+   DBMS_OUTPUT.put_line (l_total); 
+END;
