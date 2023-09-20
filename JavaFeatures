@@ -7701,3 +7701,106 @@ String literals object are always created in the String pool. String objects cre
 then string object will be created in heap itself.
    If we create String s4=new String("hello");, then another object will be created in heap 
    If we create String with new operator, then if we call s3.intern() then the value will be added into string pool and that reference will be returned 
+
+
+Why string is immutable?  https://www.youtube.com/watch?v=5OXc-TsM3bg
+
+     Immutable objects are those objects whose value cannot be modified after creation. For eg: String, all wrapper class
+     - Here we are changing only the address but not the value 
+
+String s1="Hello";
+s1="world";
+sop(s1);  //world
+
+So value of s1 is overridden, then what is immutability the value is changed.
+    To store any String value inside Java memory, there is separate area which is known as String pool in heap memory. So when we create any String literal then it will store in string pool, assume address as 001 and value as Hello
+     001     Hello      String pool
+and their reference will be stored in stack memory
+     001      s1        Stack 
+
+So when we assign s1 to different value, then in string pool
+     001     Hello
+     002     world
+and in stack memory it will point to 002
+     002     s1
+
+So value of s1 is changed, but earlier value hello is still present in String pool. If some other variable comes with same value then JVM will first check this value is available in String pool or not, if it there it will point to that address 
+
+String s1="Hello";
+s1="world";
+String s2="Hello";
+sop(s1);  //world
+
+     001     Hello
+     002     world
+and in stack memory, it will point s2 to
+     002     s1
+     001     s2
+In case if we comment s1="world", then s1 also points to same address
+
+in stack memory, it will point s1 to 001
+     001     s1
+     001     s2
+
+sop(s1==s2);  //true
+sop(s1.equals(s2)); //true
+
+Because s1 and s2 having same value and pointing to same address
+
+- Now we create another string in different way
+   String s3=new String("Hello");
+   sop(s1==s3); //false
+   sop(s1.equals(s3)); //true
+
+Because when we create String with new operator and that object will be stored in heap memory outside string pool area
+       004   Java    - Heap memory
+since address is not matching, so s1==s3 returns false 
+
+- If we want to put s3 also in string pool, then we can use intern() on s3
+
+   String s3=new String("Hello").intern();
+   sop(s1==s3); //true
+   sop(s1.equals(s3)); //true
+
+   Then s3 also will be the part of string pool which already has "hello", so s3 also  points to 001 address
+
+in stack memory, it will point s3 to 001
+     001     s1
+     001     s2
+     001     s3
+
+- Now we update s1 as
+     s1=s1+" Ram";
+     sop(s1);  //hello Ram
+
+So whenever we are appending any value to earlier string, it will create one new entry in String pool with new memory address, if it is not there is String pool
+
+in string pool
+     001     Hello
+     002     world
+     003     Hello Ram
+
+and s1 will point to new address in stack memory and not override the earlier value
+     003     s1
+     001     s2
+     001     s3
+
+So immutability means once any value is created it will be there is string pool and not overridden by anyother value
+    So because of String pool concept JVM saves lot of heap space, where string variable with same value can point same memory address in string pool. Since string in immutable changing any string will be stored as new entry and earlier value will be remain unmodified
+
+public class Main { PSVM {
+    String s1="hello";
+    //s1="world";
+
+    String s2="Hello";
+    sop(s1);
+    sop(s1==s2);
+    sop(s1.equals(s2));
+     
+    String s3=new String("hello");
+    s3.intern();
+    sop(s1==s3);
+    sop(s1.equals(s3));
+    s1=s1+" Ram";
+    sop(s1);
+}}
