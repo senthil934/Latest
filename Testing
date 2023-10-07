@@ -1,0 +1,871 @@
+Docker hub: username - senthil1418@gmail.com, password - senthil1418
+
+
+What is Software testing ?
+      Before we understand software testing, let's first understand what is testing in general sense say for example you go into the market you buy
+any product you take it back home say for example it is an electronic appliance or any kitchen appliance, you plug it in and you know it doesn't work it doesn't turn on it or if it turns on it it doesn't function properly 
+     we question the quality assurance or the quality criteria that company has for their product line right now how do the companies ensure that they are
+delivering the quality product it is through the testing, so it doesn't matter
+whether you are buying a car you are buying any electronic appliances or anything else there is always a level of testing involved in any of the product that goes into the market that you buy  
+     So even if you are taking any of the services say for example you are 
+opting for any services you also consider the quality of the service. So quality is everywhere whether it's a service or product. When it comes to products it is basically ensured through a predefined process of testing 
+    So what testing is, if we talk about the product or any other you know like industries car manufacturing, electronic manufacturing etc so they have their own defined processes and tools to ensure that the products that are coming out of the assembly line are being tested properly and work properly before they are brought into the market and being sold to the consumers
+    When we correlate that to software when you test the software it becomes a
+software testing so what exactly software, software is any application say for example any website or any application which has complex functionality
+around  front and back, so any application which fulfills the business logic is sort of software. So softwares are built into using many different
+programming languages for example like C++, java, there are n number of programming languages that can be used
+          Now software testing is not a standalone activity it's a predefined process that you need to follow from step by step and ensure that the
+particular product that you are trying to put it to the market or say for example an app you want to install or you want to launch it into the app store
+prior to launching the app you want to ensure that whatever functionality that particular app needs to provide to the customers it works as expected 
+        For example say you want to test an e-commerce website, so what
+functionalities that e-commerce website will have, for example 
+functionality 1 is to add items to cart then functionality 2 remove items 
+from cart etc then as a tester will follow a defined process that this
+requirement will come as a user story if you are following scrum
+methodology or agile agile approaches then you will basically go through those user stories and analyze the user stories write the test cases to
+ensure that these requirements that are mentioned are
+work as expected
+     So you run the website or launch the website that is being built and then you will run those test cases and we will add the items into the cart and  remove the items from the cart and then say that these test cases have passed or these test cases have failed 
+    To explain you what exactly is software testing it is not a standalone activity it is  a life cycle and it basically consists of all the static approaches and the dynamic approaches so there are a lot of activities that need to be involved. For example once you get the requirement you analyze
+those requirement as the testing team or tester and see whether there are any gaps into those requirement so that analysis is the static part 
+   when you design your test cases you ensure that all the coverage
+for that particular requirement is there for that particular user story,  
+so that analysis part is the static part. When you execute the code and
+actually launch the website  and then click on it or test or
+follow different steps that's the dynamic part of the software testing
+
+
+What is manual testing?
+    Manual testing is the testing that is done manually so if you are working in a software testing team and you are trying to test any software
+with the manual efforts without the help of any scripts automation tools etc then that sort of testing is known as manual testing
+   when you are starting any application testing or any software that you are trying to test the first and foremost type of testing that you will do
+is the manual test. Testing is categorized into manual testing and 
+automation. Manual testing is the first category that we will target, so any application that we test we do the manual testing first and ensure
+that manual test cases or the test cases that you try to run manually pass properly and there are no outstanding defect then you go to that second category and use the tools and scripts or programming language to
+automate those test cases 
+   So it doesn't matter basically which software development approach you are
+following the steps that we are performing in the manual testing will still
+remain same so whether it's waterfall whether it's v model or whether it's scrum or a agile scrum it will still be same
+   So the first phase in the manual testing is basically to
+analyze the requirement or whatever requirement a customer will provide, you
+basically as a tester will analyze those requirement and try to
+find out any gaps, so the first step is to analyze requirements
+   For example we take an example of an e-commerce application, so e-commerce
+application will have requirement like add item to cart, remove item from cart, now as a tester you go through these documentation that
+what all functionalities will be there then you analyze those requirement and
+understand that what testing you will do with those requirements and check if
+there are any gaps in the requirement provide your feedback to the team
+    Next come is planning phase, so once you understand the requirement the next phase is basically to plan how you are going to test all
+the requirements, so in the test plan phase we write the test plan, now if we are following waterfall or v-model those models will run for quite a long period of time then in that case we write a detailed test plan, but most of the organizations nowadays follow scrum which is agile methodology then
+in that case you have shorter iterations so two to four week cycle
+in which you write a very simple crisp plan that how you are going to target
+the set of requirements that you have got for that particular sprint 
+    Then comes the test design where we write the test
+cases by using two tools say for example if you are using jira with some test management add-on we create the test cases within jira or if we are using any other test management tool we create the test cases for the requirements that
+you have got 
+   Fourth phase is the execution so once we have the requirements and wehave analyzed those, then we write the test cases and we have planned how
+we are going to test, then we execute the test cases so the next phase is execution. So what execution means is once developers have actually
+deployed the code so for example we have  written the code to add the item to cart and remove the item from cart into the e-commerce website, that code will be deployed into the test environment once the code has been deployed
+   So in test execution what we will do is we will launch the application manually because this is manual testing  and then you will try to add items into the cart  and then try to remove the item so we execute the test cases whatever we have written in that particular feature, say for example
+a couple of test cases passed that's fine but say for example couple of test cases failed, so what we do is if the test case get failed then we raise the defect or bug 
+   Once that defect has been logged it is assigned to the developer
+again developer fixes it and then it comes back to testing team, we retest that defect
+   Next is test reports, so this is another phase where we  prepare the report now if we are following scrum because scrum is two to four week cycle very
+short iterations or sprints in that case you don't need to keep preparing these reports or nowadays the tools available for example jira to get
+reports available 
+
+Seven Principles of Software testing
+
+1. Early Testing
+        The first principle of testing says early testing (ie) we start testing early in the cycle, so when we talk about software development life cycle (ie) the traditional approach which is the waterfall approach which has the requirements phase, design, develop, test, deploy and maintenance phase. 
+In this particular approach the problem was we had the requirements frozen and then you start with the next phase so a phase need to be completed before you can start the next phase and you can see the testing came after the development
+      So what this early testing principle suggests is, do not wait for testing in the life cycle to basically come to that particular phase, we actually start your testing right from  requirement or design or develop phase in every phase of the software development life cycle you perform the testing and that's what early testing means
+     Now we would be having a question how can we test when we don't have anything to you know like there is no code being developed, so testing is not just about verifying the working code or the working software it's basically verifying the overall documentation that is being provided so for example
+you go through the requirement you get into those discussions with the team
+and understand what requirements are and how they are being written or if
+there are any gaps that you can determine based on those requirements
+     Similarly when there is a design phase you can  go through the design as as a tester and understand how the design is defined or how  the overall design is and how you are going to basically test it and put the testers you know and understand based on the design how the overall software is going to
+function so early testing says that you do not wait for testing until
+the testing phase
+    Now this was the problem with the waterfall
+approach that testing phase was coming after the development phase
+or multiple phases when they got completed and that is why the
+development approaches have evolved and agile or scrum is the latest one wherein we have shorter iterations so we test almost in every cycle (ie) we test in every cycle or every iteration we test and we test in all the phases
+
+2. Presence of defects
+       Now testing will show that the defects are present in the software
+but it can never show that the product is defect free, for examples of big organizations we know yahoo flipkart where they have huge testing capability still their product or the the softwares that they launched had failed in 
+different circumstances. So when these organizations would have tested
+those software they would have tested it thoroughly, so testing shows the presence of defect but it never shows that the product or the software is defect free
+      So that's the second principle and that is why when the software is deployed into production we will see the production defect coming through
+based on different circumstances,  a software which might be working now
+in your test environment might not work in production environment or
+maybe in production environment there is some difference in the hardware or the software so that we can't exactly replicate in your software or in your
+testing environment so testing shows presence of defect but it never
+ claim for a software that my software is 100 defect free and it
+will never fail
+
+
+3. Exhaustive testing is not possible
+         So exhaustive testing is not possible so say for example we are testing a web page and a web page has particular text field which just accepts one character in it, so just to test this text box hundred percent because it
+accepts one character at a time you need 26 combinations of uppercase and  26 combination of lowercase. So if it just accepts those
+characters and then you have to go through the negative scenarios, we have to basically go through and test with the special characters or any numbers so now we can imagine the amount of combinations that you have to test this particular text box which just accepts one character  in your web page 
+     We have couple of other text boxes like  first name, last name, date of birth which are are very commonly in web page ,so now if we have to test all these text boxes that are present on a particular web page with so many
+different combinations it is nightmare, even though if we are using the automation tool to do all those permutation combination it is not possible 
+    So third principle exhaustive testing is not possible 
+
+4. Defect Clustering
+       If we are finding the defect in one or two particular modules
+and  there is a possibility that there are a lot more defects in those two
+or three modules, so wherever you will find a lot of defects and those defects are related to particular modules then it's highly possible that those
+modules will have a lot more defects and that's what defect clustering is.
+
+5. Pesticide Paradox
+       As the name here pesticide so even in agricultural or farming
+when you use same pesticide again and again in the crop so at some particular time that pesticide stops working, so the pests build the immunity against those pesticides, so same pesticide is not going to work for those pests anymore and similar is the case in the testing so if you are having same set of test cases you are executing for each and every version of the software again and again and try to find  new defects it's not going to help you
+     In order to find new defect you need to have the new set of test cases,
+same test cases won't find you new defect so that's the fifth principle pesticide paradox similar to what pesticide does for the crops,  it is same with the testing
+
+6. Testing is context dependent 
+       For example, i am testing my personal blog and then i'm testing a banking app, to test the banking app, the context or the complexity will be completely different for the banking app as compared to personal dog
+because personal blog is very minimal set of features and even if there is  some features that are not working it doesn't impact much, but in
+terms of banking app there are so many customers for a bank that
+rely on the application so if that application is down, then bank lose the reputation and lose the customers
+    So testing is context dependent means it depending on which sector or which field you are trying to test or which type of software you're trying to
+test. So banking app will have more rigorous testing, if it is safety critical or like airplane software there will be lot of other criteria that you need to fulfill in order to say yes this software is tested successfully
+
+7. Absence of errors policy
+       For example we have a software and we have tested that particular application and that application doesn't have any defect as such, and all the
+test cases that we have written have passed and there are no defects outstanding
+     Another example where customer gave us a requirement that we need a car
+with four wheels, so we have car and we have put four wheels, so it meets the requirement and four wheels are there. So when you try to test that four wheels are there in a car but then we didn't clarify that where these four wheels should be. The  customer wants wheels at particular
+location so that car can move, so we didn't clarify that from the customer and based on what requirements customer has given you have verified and you have said yes that the car is defect free because customer told that just need a card with four wheels and we have put four wheels 
+     So this is not fit for use and this is what absence of error policy
+is, so even though if there are no errors, even though there are four wheels
+and all four wheels are rotating properly and it is what customer requirement has given, so you meet those requirement but if it is not fit for use
+then that is not good even though there are no errors or no defects in the software 
+     So this is absence of error policy basically if your software doesn't have any errors or bugs that doesn't mean that it is still fit for use
+unless and until you question your customer or  your client that whatever
+we have developed is what he needs or is fit for use
+
+Levels of testing
+    It is important to understand the segregation between
+levels of testing and types of testing. When we talk about the levels of
+testing there are mainly four levels of testing in software testing
+    1. The first level of testing is unit testing, so  for example we are building the ecommerce application which will have a lot of functionalities,
+so we'll take a login page example which will have the username and password fields and the login button, so in that case when some developer starts developing that login page functionality if he is a ui developer's he will work login page which will have this login username and password and the login button, so when he works on this username and password field there will be some  restrictions or requirements basically in terms of username and password say username cannot be more than 50 character or 100 characters, password
+should should have a special character and those sort of rules might be there 
+    So when he works on the code and he creates these username and password field you can think of these as a small units or the component so unit testing is also known as component testing so these can be components or the
+units that can be tested separately because there is a underlying code that the developer develops in order to make them visible on the screen as well as if there is any logic that needs to be built for these units he needs to build that as well, then he will be adding that to the overall page so when a
+developer is testing this particular unit that is known as unit testing 
+     2.  Integration Testing, so units are built on the page, so username field is there password field is there and the login button is there, so once all these smaller units have been tested and integrated, so basically they are integrated together into one module and now this page will be visible which will have username and password and login button 
+   So in the integration what developer does is, they  integrate the units that they have developed into one code that will display the entire login page in our example and integration testing will be done by the person who will be launching this particular page and then he'll try to test through various combination of username and password, so valid username valid password, invalid username invalid password so all 
+   This is what integration testing is all about and how  integration testing will be done for the login page, it will be mostly done by the testing team
+most of the time i mean this is the testing team's responsibility,  unit testing could be developer or tester it depends, if you're a white box
+tester you will do it, if you're not a white box tester then development team will do it, but integration testing is the testing team's responsibility 
+     3. System Testing
+           System test we can categorize into two mostly - system test and
+system integrated test
+           So in the system test what happens is, so in the integration testing say for example we just verified the integrated login page which has
+username and password and login button so that's one integrated model that you verified,  now in the system test the overall software or the overall ecommerce website when it is developed, so we have the login page once you log
+in, we add the items to cart, we remove the item from the cart, we go to the checkout page you make the payment and all things work successfully, so
+when all the modules are built and integrated as a system  then that's what
+system testing is all about
+   So once everything in the software is ready and deployed then that's when system testing starts and this is also done by the testing team. Now system testing can have a system test phase, if your software is a standalone
+software or it doesn't integrate with any of the external systems,so say for example you have a software that runs on a standalone machine and doesn't integrate with any other softwares, so that is what will be done as a system tester
+    But say for example you are working in the banking application
+so banking application might have integration with external systems as well so for example when we apply for the card and when card is received which is done by the third party vendor, so when my software here is integrating with some of the external systems as well then i have to do SIT(system integration testing)
+    4. User Acceptance Testing
+           When the software is being built the acceptance testing is mostly done by the customer who will be using the software, so in the acceptance testing it is mostly seen whether the software that has been built is fit for use  or it provides the functionality that the customer is looking for and that is why this is called as UAT(user acceptance testing)
+
+What is unit testing?
+     So in the software world if we are writing any program say a method the smallest method that can be tested independently without interaction with
+any other component or unit is a unit in the software, say for example there is a method which accepts two integers a and b and then it displays the result c or which is the sum of two 
+    Now this is what a unit will be in the software so this is the simplest
+unit, so if you write any java program which accepts two numbers and
+displays the output or sum of those two numbers, and this method can be tested
+independently we can have the unit testing framework and we can write the test cases to test this particular unit or the method which will accept two integers and then display the sum of those two integers
+   
+Types of Testing
+      The types of testing can be categorized either into the functional
+or non-functional category and in the functional category there are
+some testing types like unit, integration, system, acceptance, regression, sanity, smoke and usability testing. Similarly in the non-functional
+category we have performance, load, stress, volume, scalibility, recovery, compatibility and security testing
+     When we say functional testing it is basically the testing of the
+functionality of a particular software, so  whenever a customer provides you the requirement they will basically provide the functional requirements, so for example in the e-commerce website customer will provide the requirements
+to have the registration functionality, so that's a functionality that needs to be built into the e-commerce website, then say for example the
+other functionality is to add items to card, user should be having a
+functionality to cancel the order
+     When we talk about the non-functional requirement which tests the
+non-functional aspect say for example when we launch the
+e-commerce portal and trying to register and once we provide all the details and click on register button if the response or the registration takes
+30 seconds to register and redirect me to the dashboard that's not a good response, so when we provide all the details and click on register button it is taking a lot of time now when you are testing that aspect or basically the time aspect or how the website is performing when a user registers
+that testing is the non-functional testing 
+
+What is Black Box testing?
+      We don't know what exactly is the implementation,  as a tester we are just verifying the output based on different set of inputs that you will provide and this type of testing is known as black box testing 
+     So let me take an example of gmail create account feature, so if you are testing the create account we will follow certain steps which will be a test case, so first we will launch gmail.com in some browser like
+chrome or firefox, if the launch is being successful then we will say output is passed, so input is basically launching gmail in the browser  and after typing gmail.com we hit enter button then it opens the gmail.com,  as a software tester or person launching this application we don't know what all happens behind the scene before we see gmail.com page on my browser, so that is a black box. All the functionality that has happened after we provided gmail.com in the url, then we don't know what has happened what application
+implementation is there or what software has been written to basically fetch the data and show the gmail.com page to us
+      So as a black box tester we not concerned about any of those internal working details
+
+What is white box testing? or box testing or structural testing
+     In the black box testing we didn't had any access to the code or the
+functionality that has been developed, so we are testing any functionality
+we simply will provide the input and based on the input we expect certain output, where we don't have any knowledge of the internal working of that functionality     
+       White box testing is concerned about what happens in the actual code so say for example if we click on register link, we need to have understanding of what all happens within the code which is being written for that
+particular functionality, so before this registration page is being displayed
+what all methods are being called what all classes are being written so depending on which programming language we choose what implementation has been
+done by the developer, so if we concerned about the details of
+those implementation then that is known as white box testing 
+
+Black box                                  white box
+1. Done by testers                       1. Done by developers
+2. Internal code is not known            2. Knowledge on internal code needed
+3. Functional testing                    3. Structural testing
+4. No prg lang need                      4. Prg lang needed
+
+What is regression testing?
+     This testing is mostly done in every release and every new feature being added or defect fix being added.
+     It is the technique or the testing type which is performed to ensure that the existing functionality of the software or application works as expected, if there is any new code introduced or new defect fix has been done or any new
+functionality added in the application
+     For example we take e-commerce website, so e-commerce website
+will have the register functionality, there is a register link and once the user clicks on a register link he has the option to register using
+email using facebook account or using google account and other social media accounts, so in the register module there are many different  implementation
+to register a user on the  e-commerce website. Now when the user
+registers on e-commerce website then in that particular case if there is
+any change say, for example you are testing the registration functionality,
+during the testing of the registration functionality using facebook login id
+the registration fails or registration is not successful so that is the defect that you found during the functional testing
+     Mow when the developer is fixing that particular defect then in that case
+that fix could impact other registration functionality as well in the application. So when the defect of registration got fixed then in that
+case what we need to do is we need to basically verify that other registration
+functionality is also working as expected. Now when you are testing
+the registration functionality using google account as part of the defect fix that was fixed for the facebook account then those test cases that you execute as part of this defect fix are known as regression test cases 
+   Second option is new functionality or feature being added into the application so that could be the second case, third case could be code refactoring , so code refactoring wherein developers refactors the existing code to improve the performance or improve the maintainability of the
+code then in that particular case the overall structure of the code is being refactored in that case you need to pick a set of test cases that are critical for that application and are basic to that particular application and ensure that the application functionality has not been impacted because of code refactoring or because of adding the new functionality or because of you know having the defect fix in the application
+
+Regression testing in Agile methodology
+      If we talk about the agile development approach, we are following
+scrum, so scrum is two to four weeks development cycle, now in the two to four weeks development cycle which are also known as sprints. So say for example our project follows two weeks sprint where we have the sprint backlog which  is nothing but the set of stories or the features that
+you will be  implementing in those two weeks as a team and developing that and basically showcasing the working software after the two weeks or the sprint gets over
+     So say for example if we say sprint one is your first sprint which is basically two weeks cycle, so if your project has chosen two weeks
+sprints then you will be following two weeks sprints until the completion of the project, so in the two weeks, for example we have picked four stories which are nothing but the requirements in the agile project, so these
+stories are basically the functionalities  which is defined in these stories and these will be implemented in the sprint, so developers will start working
+using these requirements which are nothing but the user stories, testers
+will collaborate with developers and writing the test cases and as soon as the functionalities are available, testers will start testing the stories and ensure that the acceptance criteria that is met in these stories is as expected
+     So when we talk about regression testing in agile so say for
+example this is the first sprint and we have four stories and each story
+has different test cases which we have written for these four user stories to verify that the functionality that is defined in these user stories is as
+expected. Now once sprint one got over so there will be
+another sprint which is sprint two and in sprint two which is again
+next two weeks cycle and in sprint two you will get another user requirements, so another user story is based on the priority say for example four stories again or maybe like nine stories depending on capacity of the team and the size of the stories, so in the next print now you have five more user stories to actually test and you are documenting the test cases for these user stories
+     For sprint two so we will be doing the progression testing which is
+functional testing of these user stories in the second sprint as well as 
+first print since there will be new addition to the code that is written in sprint 1 from sprint two as well, then we need to ensure that
+the existing functionality that was working in sprint one hasn't broken  so that is what a regression testing is to ensure that any existing functionality of the application that has already been working prior to the new implementation or if say for example there was a defect
+that you raised in sprint one and that got fixed so you re-executed, so we need to either pick all of these test cases that
+you have picked in sprint 1 and re-execute in sprint 2 to ensure that everything that was passed in sprint 1 is still working, but that is
+really not feasible in agile project if you are doing the manual
+testing or even if you are doing the automation testing
+     So in the agile testing approach now how you can tackle it is basically
+through automation, so the first thing is to basically automate
+the regression test cases that we have identified from this list, so in the sprint one as you do the progression test cases or the test cases
+that have been part of these stories you also keep marking them which
+of them are very important and need to be part of the regression suite, so 
+in the tool itself you mark those test cases as a regression so that your
+regression test suite gets built as you progress with within the sprint
+      you should not try to include all of the test cases that you have
+tested as part of the functional testing, as the regression test suite if you are doing that then you are basically you know not segregating what is really
+important and what is less important in the project, so we basically come up
+with the test cases that will form your regression test suite  and these test suite you try to automate as you progress along in the sprint in the agile project
+     So say for example now we have seven test cases sprint 2, so we will have a team who will automate these test cases so that when we are in the next sprint we can basically rather than executing these test cases manually as part of the regression testing, we will run these test cases
+with the automation tool in sprint 2. Once we are in sprint 2 you have the automated suite ready then when you go to the sprint 3 you identify the regression candidates in sprint 2 automate those and sprint 3 you are
+having that automated test suite built and ready that is automated regression test suite and that will reduce the amount of effort that you need to put
+manually each and every sprint and will help you to achieve the regression target and regression testing in the agile project and scrum 
+
+Retesting and Regression testing
+     So in the e-commerce website we have the registration functionality and this register functionality could be register with the use of email with the
+social media account for example facebook, twitter, google account as well. So
+register functionality is one functionality and then there will be smaller modules within this functionality, for example register has the functionality to register using facebook account or using google account or using twitter
+or using email ,so as a tester we will be basically writing some test cases for each of these scenarios or each of these registration functionalities. 
+Now say for example we have written you 10 test cases for the facebook
+registration functionality, similarly 10 test cases for google and 12 for the twitter and for email we have 15 test cases written  
+     So what re-testing is so when you are basically verifying this register functionality and say for example when you are testing the facebook
+registration and you are executing these 10 test cases and out of these 10 test cases eight of them passed but two of them failed right so two test
+cases failed, now for these two test cases that got failed we will basically raise the defect, so once the defect has been raised for those test cases
+those defects will be assigned to developer or development team and developer will work and fix those defects right 
+   So now when these defect fixes are available to you and deployed then you will be verifying or you will be retesting basically those two test cases, so you will be verifying those two defects and if you are just executing those two failed test cases that failed out of these 10 test cases then that is known as retesting, so we are just executing those two failed test cases
+and verifying whether now those two test cases are getting passed  
+   So re-testing is basically executing the failed test cases or any
+test cases again that is known as retesting.  When we talk about regression testing, say for example in fb registration two of the test cases got failed and we have raised the defect but all the rest registration functionality
+has passed so google registration, twitter registration, email registration
+all of the test cases have passed. Now when we say regression testing
+of this particular feature what you do is we don't not only re-execute the two failed test cases but you also analyze the surrounding features like 
+registration using google, twitter and email, because of these two failed test cases we also want to verify that google registration, twitter registration and email registration hasn't been impacted 
+
+Smoke testing and Sanity testing
+      So if you talk about smoke test or sanity test both of them relate to the software builds. So software build is a package, for example whenever you develop any software you choose any programming language that you will use to
+make an application, so for example if we take an e-commerce website so
+e-commerce website can be built with any programming language or any technology and you utilize the technology to write the code to implement the functionality, the ui, the database etc so when you package all
+of the work that you have done as a development team and that package gets deployed into the test environment with all the configuration. That single package can have thousands and thousands of classes from the programming language that we have chosen  then that package is known as a build
+   In mobile appl, for example android and ios when you install any application we are simply downloading from the app store and then installing it but in the background, when the the companies built these apps they 
+choose a particular programming language and they write the code to implement
+all the functionalities that you see on that particular app 
+       sanity and smoke testing both of them are related to build, 
+basically smoke testing came from the smoke testing done by the plumbers and
+usually the plumbers used to do smoke test whenever they wanted to find
+any leakage into the pipes,  similarly in the circuit board as well the smoke testing term was used, so as soon as you power on the circuit board
+or any appliances if smoke comes out from the circuit board then it ensures that you do not need to perform any more tests on that circuit board 
+       In the software what smoke testing does is now when you are developing a software, basically your development team will be writing the code and they  working on different modules and then integrating together and making it as one package and this will be called as build
+     when the initial development happens and the project or the build is not stable so  as part of the smoke testing what you do is you basically run the key functionalities or run the test cases that are related to the key functionality, say for example whether login is happening or not, whether
+registration is happening or not,items are getting added into the cart or not,
+check out payment,  so just pick the critical test cases of the application and you execute, this type of testing is known as smoke testing   
+  As smoke testing is related to build so when the build is being installed,
+developers also do a bit of smoke testing because they will be ensuring that the build is getting deployed and installed successfully on the test machine, before the testing team can actually start working on the particular test case
+  So smoke testing is shallow approach and can be done by developers
+and testing team as well because  developers will ensure that the build is successfully installed and testing team will ensure that the key functionalities of the application are working as expected and this is most of the time in the initial development phases when the build is relatively unstable
+    If the critical functionality itself is not working, if the build itself is not getting deployed there is no point of starting the detailed testing of that particular build, so that is the whole point of smoke testing 
+    So smoke testing was during the initial phases, if we talk about sanity testing which is again related to the build software. So smoke testing is in in the initial phases of the build when the build are relatively unstable
+and sanity testing is when the builds have become stable and you are
+verifying some of the key functionalities after the defect fix or the new functionality is being added 
+    so for example there is a build one, so during the initial phases you will be mostly doing the smoke test and if the builds get mature and they're stable so say for example you raise a couple of defects in build four, so you will be doing testing in each and every build and any test case fails you
+will be raising defects, for example in Build four we have raised a defects in login module, so developers will fix those defects and they'll provide
+a new build,  so in build 5 when the new build comes in, since there is a change in the login module or there is a update in the overall package
+because of the fix in the login module, so you might be required to do the regression testing of the existing functionalities and we  want to ensure
+that the existing functionalities is working as expected
+    Now before we get into the full regression we do the sanity testing to ensure that the fix that has been done in the module works as expected before you can basically get into the full regression cycle. So what we do in sanity testing is say for example the fix was in the login module so as a tester i'll
+verify all the related details to the login module and i'll do the deep testing for the login module because the fix was done in the login module to ensure that the login module or the build which has the new code works as expected and this module works as as expected before we can enter into the
+full regression
+    So in order to save time we need to do the sanity test and ensure that the module where the fix has gone through is working as expected and the build is working as expected before we can get into the full regression cycle and ensure that everything else is also working as expected so in a way both of these smoke and sanity testing are required and done to save the time. So we do the smoke testing which is mostly in the initial phases of the software development now when the build becomes stable then you do the sanity testing
+
+What is Docker?
+      In simple words Docker is a virtualization software that makes developing and deploying applications very much easier compared to how it was done before Docker was introduced. Docker does that by packaging an application into something called a container, that has everything the application needs to run like the application code, its libraries
+and dependencies but also the runtime and environment configuration, so
+application and its running environment are both packaged in a single Docker
+package which you can easily share and distribute 
+
+What problems Docker solves in development and deployment process ?
+     So how did we develop applications before container, usually when you have a team of developers working on some application they would have to install all the services that application depends on like database Services Etc directly on their operating system
+    for example if we're developing a JavaScript application and we need a postgresql database, maybe we need a redis for caching, mosquito for messaging and we have a microservices application, now we need all these Services locally on your development environment so we can actually develop
+and test the application. Every developer in the team would then have to  install all those Services configure and run them on their local development environment and depending on which operating system they're using the installation process will be different because installing postgresql database
+on Mac OS is different from installing it on a Windows machine. 
+    Another thing with installing Services directly on an operating system following some installation guide, we usually have multiple steps of
+installation and then configuration of the service so with multiple commands used to install and set up the service, the chances of something going wrong and error happening is actually pretty high and this process of setting up a development environment for a developer can actually be pretty tedious depending on how complex your application. For example if we have 10 services that your application is using, then we would have to do that
+installation 10 times for each service and again it will differ within the team based on what operating system each developer is using now 
+     Let's see how containers solve these problems, with containers we actually do not have to install any of the services directly on your operating system, because with Docker we have that service packaged in
+one isolated environment, so we have postgresql with a specific version packaged with its whole configuration inside a container, so as a developer we don't have to go and look for some binaries to download and install on your machine but rather we just go ahead and start that service as a Docker container using a single Docker command which fetches the container package from internet and starts it on your computer and the docker command will be the same regardless of which operating system we're on and it will also be the same regardless of which service you are installing 
+     So if you have 10 services that your JavaScript application depends on, we would just have to run 10 Docker commands for each container, so as you see Docker standardizes the process of running any service on your development environment and makes the whole process much easier, so we can basically focus and work more on development instead of trying to install and configure services on your machine and this obviously makes setting up your local development environment much faster and easier than the option without containers plus with the docker
+      We can even have different versions of the same application running on your local environment without having any conflict which is very difficult to do if we are installing that same application with different versions
+directly on your operating system 
+
+How containers can improve the application deployment process? 
+    Before containers, in a traditional deployment process the development team would produce an application artifact together with a set of instructions of how to actually install and configure that application package on the server, so we would have something like a jar file for Java application and in addition of course we would have some kind of database service or
+some other services that your application needed also with a set of instructions of how to configure and set it up on the server so that application could connect to it and use it.
+    Sso development team would give that application artifact or package over to the operations team and the operations team would handle installing and configuring the application and all its dependent services like database, now the problem with this kind of approach is that first of all we
+need to configure everything and install everything again indirectly on the operating system which we mentioned in the development context that is actually very error prone and you can have various different problems during the setup process, we can also have conflicts with dependency versions where two services are depending on the same library but with different versions and when that happens it's going to make the setup process more difficult and complex, so basically a lot of things that can go wrong when operations team is installing and setting up application on a server
+     Another problem that could arise from this kind of process is when there is a miscommunication between the development team and operations team because since everything is in a textual guide like an instruction list of how to configure and run the application, there could be cases where developers forget to mention some important step about configuration and when that part fails the operations team have to go back to developers and ask for more details and input and this could lead to some back and forth communication until the application is successfully deployed on the server so basically you have this additional communication overhead where developers have to communicate in some kind of format, how the application should run
+which lead to issues and miscommunications 
+     With containers this process is actually simplified because now developers create an application package that doesn't only include the
+code itself but also all the dependencies and the configuration for the application, so instead of having to write that in some textual format, they basically just package all of that inside the application artifact and since it's already encapsulated in one environment, the operations people
+don't have to configure any of this stuff directly on the server so it makes the whole process way easier, so the only thing now that operations team need to do in this case is to run a Docker command that gets the container package that developers created and runs it on the server, the same way operations team will run any services that application needs also as Docker containers and that makes the deployment process way easier on the operation side 
+
+Virtual Machine vs Docker
+       Docker is a virtualization tool just like a virtual machine, we also said that with Docker we don't need to install Services directly on operating
+system but in that case, how does Docker run its containers on an operating
+system, now in order to understand all this, first we look at how an
+operating system is made up 
+      Operating systems have two main layers we have the operating system kernel and the operating system application layer and kernel is the part that communicates with the hardware components like CPU, memory storage Etc, so when we have a physical machine with all these resources and we install operating system on that physical machine, the kernel of the operating system will actually be the one talking to the hardware components to allocate
+resources like CPU, memory, storage Etc to the applications then running on that operating system and those applications are part of the applications layer and they run on top of the kernel layer. So kernel is kind of a middleman between the applications that  interact with your computer and the underlying Hardware of your computer 
+     Now since Docker and virtual machine are both virtualization tools the question is what part of the operating system they actually virtualize and that's where the main difference between Docker and virtual machines actually lie.  
+      So Docker virtualizes the applications layer this means when we run a Docker container it actually contains the applications layer of the operating system and some other applications installed on top of that application
+layer this could be a Java runtime or python or whatever and it uses the
+kernel of the host because it doesn't have its own kernel, the virtual machine
+on the other hand has the applications layer and its own kernel so it
+virtualizes the complete operating system which means that when we download a virtual machine image on your host, it doesn't use the host kernel it actually puts up its own 
+      So the difference between Docker and virtual machine is first of all the size of the docker packages or images are much smaller because they just have to implement one layer of the operating system so Docker images are usually a couple of megabytes large, virtual machine images on the other hand can be
+a couple of gigabytes this means when working with Docker you actually save a lot of disk space
+     We can run and start Docker containers much faster than virtual machines
+because virtual machine has to put up a kernel every time it starts while Docker container just reuses the host kernel and we just start the application layer on top of it, so while virtual machine needs a couple of minutes to start up Docker containers usually start up in a few milliseconds 
+    The third difference is compatibility so we can run virtual image of any operating system on any other operating system host, so on a Windows machine we can run a Linux virtual machine, but we can't do that with Docker because,
+let's say we have a Windows operating system with Windows kernel and its
+application layer and we want to run a Linux based Docker image directly on
+that Windows host, the problem here is that Linux based Docker image cannot use the windows kernel, it need a Linux kernel to run because you cant run a Linux application layer on a Windows kernel so that's kind of an issue with Docker. However when we're developing on Windows or Mac OS we want to run various Services, because most containers for the popular services are actually Linux based 
+    Docker was originally written and built for Linux but later Docker
+actually made an update and developed what's called Docker desktop for Windows
+and Mac which made it possible to run Linux based containers on Windows and
+Mac computers. Docker desktop uses a hypervisor layer with a lightweight Linux Distribution on top of it, to provide the needed Linux kernel and this way make running Linux based containers possible on Windows and Mac operating systems 
+
+
+Docker Images vs Containers
+    Docker allows to package the application with its environment configuration and we can share and distribute easily, so just like an
+application artifact file like when we create a zip or tar file or a jar file which you can upload to a artifact storage and then download on the server or locally whenever we need it, and then package or artifact that we produce with
+Docker is called a Docker image so it's basically an application artifact but
+different from jar file, it not only has the compiled application code inside but additionally has information about the environment configuration, it has the operating system application layer, plus the tools like node npm
+or Java runtime installed on that depending on what programming language your application was written 
+     So when we take that image and download it to server or your local
+computer, so when we run that image on an operating system and the application inside starts in the pre-configured environment that gives us a container so a running instance of an image is a container, so a container is basically a running instance of an image and from one image we can run multiple containers for increased performance
+     we get a command line interface called Docker client that can talk to Docker engine and since we installed Docker desktop we should have that Docker CLI also available locally which means if you open your terminal you should be able to execute Docker commits 
+    >docker images 
+which will give me a list of images that we have locally, and we can also check the containers using a
+    >docker ps 
+
+Docker Registries
+    Now it's clear that we get containers by running images, but how do we get images to run containers, consider we want to run a database container or redis or some log collector service container how do we get their Docker images well that's where Docker Registries come in 
+   So there are ready Docker images available online in image storage or registry so basically this is a storage specifically for Docker image type of artifacts and usually the company is developing those services like redis mongodb Etc as well as Docker Community itself will create what's called official images, so mongodb image was actually created by mongodb itself or the docker community so it's an official verified image from Docker itself and Docker itself offers the biggest Docker registry called Docker Hub where wecan find any of these official images and many other images that different companies or individual developers have created and uploaded there 
+    
+    For our demo we are going to use an nginx image so search for nginx which is basically a simple web server and it has a UI so we will be able to access our container from the browser to validate the container has started successfully and let's say we choose version 1.23 so we're choosing this tag 
+
+Main Docker Commands - Pull and Run Docker containers
+
+1. To download the image, we give
+>docker pull {name}:{tag}
+>docker pull nginx:1.23
+    now the Docker client will contact Docker Hub and it
+will grab the nginx image with this specific tag and download it
+locally, and Docker Hub is actually the default location where Docker will look for any images 
+
+2. >docker images
+       we see one image now locally which is nginx
+with an image tag 1.23 and some other information like the size of the image
+which is usually in megabytes, if we pull an image without any specific tag it is pulling the latest image automatically 
+
+To run this image as a container 
+>Docker run nginx:1.23
+    
+Now we open a new terminal 
+>docker ps
+     we see one container in the running container list and we have some information about the container we have the ID we have the image that the container is based on including the tag when it was created
+and also the name of the container so we have the ID and name of the container
+which Docker actually automatically generates and assigns to a container when it's created so it's a random generated name
+     If we go to the terminal, we can see locks the container logs actually are blocking the terminal, so if we want to get the terminal back and do Ctrl C, the container exits and the process actually dies. So now if we do 
+  >docker ps 
+We see that there is no container running, but we can start a container in the background without it blocking the terminal by adding a flag called -D which stands for detached so it detaches the docker process from terminal 
+  >docker run -d nginx:1.23
+Now it shows the logs from nginx starting up inside the container it just
+logs out the full ID of the container
+  so now if we do Docker PS here in the same terminal 
+  >docker ps
+we should see that container running again. But when we start a container in the background in a detached mode we may still want to see the application logs inside the container, so we want to see how did nginx start up then we give
+   >docker logs "containerid"
+ Which will print out the application logs from the container 
+
+- Now in order to create the nginx container, we first pull the image and then we created a container from that image but we can actually pull command and execute it directly, even if the image is not available locally 
+    >docker run nginx:1.22-alphine
+
+So first it will try to locate that image locally and if it doesn't find, it will go to Docker Hub by default and pull the image from there automatically 
+
+Private Docker Registries
+    Docker Hub which is actually what's called a Public Image registry which means those images that we used are visible and available for public, but when a company creates their own images of their own applications, they don't want it to be available publicly so for that there are what's called private Docker Registries and there are many of them almost all Cloud providers have a service for private Docker registry for example AWS, ECR or elastic container registry service, Google Azure they all have their own Docker Registries.Nexus which is a popular artifact storage service has
+Docker registry
+
+Registry vs Repository
+    AWS ECR is a registry so basically that's a service that provides
+storage for images and inside that registry we can have multiple repositories for all your different application images, so each application gets its own repository and in that repository we can store different image
+versions or tags of that same application 
+   The same way dockerhub is a registry it's a service for storing images and on Docker Hub you can have your public repositories for storing images that will be accessible publicly or you can have private repositories for different applications and again you can have repository dedicated for each application 
+
+
+Iaas vs Paas vs Saas
+   IAS is infrastructure as a service because we are going to provide the  infrastructure in that so the main things come from infrastructure     
+   Pas  means platform as a service so we get a platform  
+and it is provided as a service and in this SAS  software as a service 
+   
+IT Infrastructure On Premises
+    Before we directly jump to understand the different cloud delivery models it will be good to understand how exactly the it infrastructure is built on 
+premises and by on premise mean, IT infrastructure which is located within
+the enterprise, often in the company's data center and running remotely on hosted servers or in the cloud 
+   Consider we are a big construction company and we want to keep up with the modernization, so we want to host our website or application and for that we must build an entire IT infrastructure. So we build an IT infrastructure layer by layer, so the first element in building an IT infrastructure is to purchase some servers with some cpus and some core memory so now we have some core computing strength in terms of these servers in order 
+   To run your application the very next step is to connect all these servers
+to internet and for that we will need networking infrastructure, so networking
+infrastructure includes the interconnection of all these servers along with the internet connectivity
+    Now we have servers and network but there is no server that can come alive without a good storage so here comes the storage. Now storage can come in 
+different flavors it could be HDD or hard disk drive or it could also SSD
+or solid state drive. Now we have all the basic components of our IT
+infrastructure, however in order to ensure the best utilization of hardware
+we must bring in some virtualization software 
+    This virtualization software will enable you to run multiple
+virtual machines on a single hardware piece and have the ability to host
+multiple applications on those virtual machines 
+    Next is operating system there are many operating system available in the market, the two prominent ones are windows and linux 
+    Next is middleware which means all the software additions that needed
+to run the system or the application itself, for example we have our middleware as database or messaging service 
+    Then on the top of middleware we normally have runtime which is
+another layer of software which will host your application, for example if
+this is a web application this could be iis or nginx or apache in case it's a container based application we would need a docker runtime 
+    Next is our data and application itself so basically it's the
+application and the data for which we build the  core IT infrastructure, so now we can host our application or our website for our construction company  
+   So the bottom of this entire IT infrastructure is categorized as infrastructure which includes storage, network, servers and virtualization on
+top of this core infrastructure we have platform so the platform includes
+operating system, middleware and runtimes and last we have our service layer which includes the application and the data that is generated by the application itself 
+    So the first four layers from the bottom that includes storage,network,
+servers and virtualization are directly related to hardware and virtualization and that's why this can be grouped as infrastructure layer, moving on the next
+three layers which includes operating system, middleware, runtime all these
+three can be grouped as platform layer and then the top two layers which
+includes data and application, these two layers are your actual business
+application or website and the data that your application holds and thus these
+two layers can be categorized as service layer 
+     Now we are setting up all this IT infrastructure on premises so the ownership to maintain all these layers lies with you or your company and that's exactly why this is called on premises. So all the components are maintained by you or your company, there is absolutely no ownership of other company to maintain any of these components listed on the left
+hand side 
+     This on premise model be best suitable for when you have old or legacy technologies or we have some operating system or middleware, next reason for on-premise could be the security reason so for example there could be a legal security constraint that we want to store all your data on premises and for these kind of reasons you can go for on-premises 
+
+Benefits and use cases of on-premises it infrastructure 
+1. We can operate the on-premise infrastructure without using internet
+2. Provides you a greater security and also offers a greater control over your
+server hardware 
+
+Even though there are benefits of on-premise IT infrastructure, the problem with on-premise IT infrastructure is its huge capex and its limited ability to scale itself based on the business demands, for example if
+there is a sudden increase in your business like there might be a seasonal sales or offers or discounts and due to that there is a large volume of customers that are coming on website and this can literally down ur website and bring your business down and this will make you lose a lot of
+business, lot of money and all these problems because of the inability
+of on-premise IT infrastructure 
+    To scale quickly and that's exactly where the cloud delivery models come into picture
+
+Cloud providers are the organization which provides the cloud technology features to the people who are using the internet facility like Amazon AWS, Microsoft Azure, GCP etc. All these organization provided their features as a services to the people
+   So cloud computing is divided into 3 important services
+
+1. IAAS
+   The first model that we will understand is IAS or  Infrastructure-as-a-Service (IaaS), the responsibility to maintain platform and
+service layer is with you or the company or the enterprise, on the other hand the responsibility to maintain the infrastructure layer lies with microsoft
+azure. IAS is suitable for  for lift and shift migration, it is also
+suitable for test and development, for storage backup and recovery web apps and high performance computing. Some of the examples of ias are in microsoft azure services like azure virtual machines, azure disk storage, azure networking 
+    Consider I have a software company with 5 computer and 1 server, and I am  developing and selling the software product from the company. But in the future compare to my product, there are so many advanced product have been introduced, so in order to sustain in the market, I also need to develop advance product 
+    But the configuration of 5 computer and 1 server is not sufficient, so I want to upgrade the memory, processor, storage etc which is cost consuming. So instead I will reach some cloud providers and ask for powerful virtual computers. Now cloud providers will be asking for configuration and I will be provide the configuration for RAM, processor and storage and based on that, they will provide virtual computers based on the configuraton we provided, they will provide only virtual computers not physical computers. Now using internet I will login into virtual computer and start coding which is of high configuration compared to physical computer
+    I have also provided additional info to cloud providers, that they should just create a virtual machine (ie) only infrastructure but no need to install any softwares, which software is needed I will login into virtual computer and I will install and with that I will code and develop advance product
+   So instead of buying physical computers, if we try to use infrasturture (ie) virtual machine from some cloud provider then that is called IAAS 
+eg: Amazon Elastic Compute Cloud(EC2), Apache CloudStalk, Google Compute Engine
+
+Platform-as-a-Service (PaaS)
+    Platform as a service it's only the service layer that you or your company
+have to maintain so you or your company only take care about the application and the data, while microsoft take care of platform and infrastructure layer. So basically microsoft will now be responsible for the runtime, middleware,
+operating system, virtualization, servers, network and storage 
+   Paas is best suitable solution where we want to host your application on a
+certain platform, for example, if we have a website we do the coding and then we need a runtime to host your web application, it could be nginx or apache
+or docker, some examples of paas offering in microsoft azure like data lake, app services, api management,document db, service fabric, azure sql,azure active directory etc
+     It is an intermediate service between SAAS and IAAS (ie) In previous case we got the virtual machine from cloud providers and we are developing advanced product. After sometime now we want to upgrade the softwares or we want to buy some new software or we have to maintain some security patches in virtual machine or we want to upgrade OS, so these type of admin work has to be done. But as a developer we dont want to do any admin work like updating the software patches or upgrade OS, so we have to just login into virtual machine and do the coding 
+    Now cloud providers will create a platform which contains all the required software in virtual machine, and as a developer we will login into virtual machine and start do the coding. So in the future, updating the software or security patches or OS upgrade will be taken care by the providers itself
+    So instead of giving only virtual machines,they also provide a platform for installing and maintaining of all required software and that is called PAAS
+eg: Google App Engine,AWS Elastic beanstalk,Microsoft Azure, Oracle cloud platform
+
+Software-as-a-Service (SaaS)
+   Now in software as a service, the responsibility to manage
+all the layers lies with microsoft, so in SAAS you or your company need not to maintain any layer of the IT infrastructure, the complete responsibility to maintain all the layers lies with microsoft azure 
+      sas is suitable for application development and artificial intelligence then it is also suitable for cloud migration and modernization, it's also best suited for data and analytics hybrid cloud and infrastructure internet of things, some examples are  like outlook, skype, onedrive or office
+365, netflix, youtube
+     Nowadays which are most frequently used Youtube, Netflix, gmail, google drive, prime video appl can be taken as a example for SAAS. So if we want to use that appl then we login into the website or download the appl from playstore and use it, once u login into the appl we can see all the features provided by the appl, so as a user we should have one account and good internet connectivity 
+     So if any cloud provider provides a software with many features, then that service is called SAAS, compare to IAAS and PAAS, SAAS is most used by everyone in the world
+
+
+Compare Iaas vs Paas vs SaaS
+   We saw in case of on premises the responsibility to maintain all the layers of the IT infrastructure is lying with you or your company or the enterprise but the biggest problem with onpremises is its huge capital expenditure and inability to expand or scale with the business needs 
+   So exactly where cloud delivery models come into picture starting with ias or infrastructure as a service here you can see that microsoft maintains storage, network, servers and virtualization for you, however you are
+still responsible for operating system, middleware, runtime,  data and application and as we move from ias to pass or platform as a service the scope of responsibility changes, so now you can see that microsoft is responsible for storage network servers virtualization operating system and now it's also
+responsible for middleware and runtime so you or your company is now only
+responsible for data and application moving on from pass to sas here you can
+see that microsoft is now responsible for all the layers of id infrastructure
+
+
+Virtualization
+    Virtual machines running on a cloud server is one of the most widely used way of hosting applications online and day by day the number of virtual machines are increasing because a lot of IT workload is being shifted from on-premise to cloud so this shows the importance of virtualization on the current IT scenario and on current cloud scenario 
+
+What is cloud computing?
+    Before giving away the definition of cloud computing we divide into two underlying features, one portion is cloud and the other portion
+is computing 
+     Cloud is actually internet or Intranet and when you say computing a picture of computer comes in, computer contains CPU, Ram, hard disk, operating
+system maybe Windows< Mac or Linux but computer actually means CPU and RAM and
+the other components in a computer's motherboard. In enterprise or corporate
+environment when you say like server it is both computer and storage but
+actually a server contains only the computer environment
+CPU and RAM 
+     Now we define virtualization, suppose we have a Mac OS and we need Windows operating system to do some of your work, we have two options first is to buy a Windows laptop but think for a moment we will not use either of the machines all the time, some of the times we use your Mac laptop and Windows laptop in other times then what is the point of spending so much money in buying a new system 
+    What is the second option (ie) virtualization, now what we can do is install something called VMware in your Mac OS and then install windows on top of VM, if we log into Windows we will feel like we are using a separate machine, but actually we are not, the Windows OS will get its own RAM and CPU that will be borrowed from the virtual Mac machine. Now we say that this Windows OS has been installed as a virtual machine the reason it is virtual since it uses virtual CPU and RAM and borrowed from the host OS in this case Mac OS. VMware which is used to install windows on top of it is
+also called hypervisor 
+    Hypervisor is a technology that is used to create virtualized environment in our case we have virtualized CPU,RAM and storage because this Windows OS we need to store the operating system itself along with data. So virtualization is the creation of a virtual version of something such as operating system, server, storage device, or network resources. Now we saved from buying a new computer or laptop by just creating this virtual environment
+     So cloud computing uses virtualized technologies so that enormous amount of computer environment can be created with lesser cost, so the compute portion of the cloud computing is actually virtualized computer environment however it goes beyond only computer 
+    Now we define cloud computing now if we take the virtualization
+environment which we created with Windows OS on Mac operating system using VMware and put it over internet and allow users to access the Windows OS remotely from their machine, which is cloud computing environment 
+   So cloud computing is virtualized compute environment over internet or Intranet, so cloud computing is equals to virtualization plus Internet, it's a combination of both 
+
+Virtualization in AWS 
+   When virtualization was discussed in cloud computing we had given an example of VM which is also called a type 2 hypervisor, well there are multiple types of hypervisors, first one is type 2 or hosted hypervisor 
+it is called hosted because the hypervisor is installed on top of
+operating system, how does it work is, they have a hardware
+basically your machine, install operating system on top of it, then we
+install the hypervisor on top of the operating system, and virtual machines
+are in turn installing the hypervisor so this is type 2 or hosted hypervisor 
+   We have type 1 which is also called native hypervisor or bare-metal
+hypervisor, the reason it is bare-metal hypervisor because you install the
+hypervisor on top of hardware directly, we do not have any operating system in
+between and as usual we install the virtual machines using the hypervisor.
+All cloud providers like AWS, use type 1 hypervisor, so hypervisor used by AWS is called Zen which is an open source 
+
+
+Hypervisor
+  A hypervisor is a crucial piece of software that makes
+virtualization possible, it abstracts guest machines and the operating system they run on from the actual hardware.  It create a virtualization
+layer that separates cpu or processors, ram and other physical resources from
+the virtual machines you create 
+
+History
+   In 1965, hypervisors were developed to interact with the IBM RPQ(request price quotation) so this was done on the IBM 360/65, and this computer was a member of the IBM system 360 family, so they were created with
+the intention of testing, sharing across virtual computers and investigating novel hardware concepts without affecting the primary production system, hypervisors are increasingly used to allocate physical hardware resources
+to virtual machines on the host machine and this virtual machines are also
+referred to as guests
+
+Introduction 
+    A hypervisor is a piece of hardware, software or firmware that can create
+virtual computers and manage them and allocate resources to them as well.
+Virtual machines are machines that run on the hosts machines and resources,
+these resources can be a ram, processor etc to accommodate the necessary virtuaL machine guests, we can divide these resources as many times as we wish, we can literally create n number of virtual machines on a single server or a host 
+    - Hypervisor also known as a virtual machine monitor(VMM), it is a software that creates and runs virtual machines and there are two types of hypervisor 
+1. Type 1 or bare metal hypervisors 
+2. Type 2 hypervisors or hosted hypervisors
+   - Virtualbox is widely used hypervisors, so virtualbox is a type of
+hypervisor and it is provided by oracle and it is one of the major examples of
+hypervisor, it belongs to type 2 hypervisors and the task of spinning up
+a new virtual machine is very difficult, so we need to automate this using another software like vagrant,  vagrant is written in ruby language and
+we can create script in the ruby language to automate the creation of virtual machines, so on top of the hypervisors we can add additional software like vagrant which basically automates the creation of virtual machines 
+
+How does hypervisors work ?
+    We have a PC with 8gb of ram with windows operating system, so now we establish a virtual machine running linux and then use a hypervisor to manage its resources such as allocating 2gb of ram to the virtual machine and if we wish to run programs that require linux which would be allocated to the virtual machine with  the linux instance, while some would be allocated to the original windows operating system and the same logic goes on for processors and for storage also 
+
+Types of hypervisors
+     There are two main types of hypervisors referred to as type 1 or bare metal and a type 2 or hosted 
+    Type 1 hypervisor acts as a lightweight operating system
+and runs it directly on the host's hardware, while a type 2 hypervisor runs as
+a software layer on an operating system like other computer programs, so type 2 is a software and it does not work on your systems hardware, so we will be
+having a kernel where your original operating system lies (ie) the host operating system lies and on top of the host operating system we will have a hypervisor which acts as an application or a software, so within that
+software we can create as many virtual machines as we like 
+   Type 1  hypervisors are typically faster and more efficient because they have direct access to the underlying hardware and do not need to go through the operating system layer,  this basically says that type 1 hypervisors are faster than type 2 hypervisors and hosted hypervisors or
+type 2 hypervisors are significantly easier to set up and get running 
+
+Different vendors in the industry
+    First we have vmware esxi or it is also called as vsphere. vmware was the pioneer of the virtualization industry they started with the concept of virtualization and with its hypervisor being one of the leading products in the market, so in the market vsphere is the leading hypervisor 
+    Next we have microsoft's hyper-v as a recent entrant into the virtualization market, which is made for the security companies 
+    Next we have citrix zen server, it is based on the open source project called as zen. 
+    Next we have oracle's virtualbox and it goes one step further than its
+competitors in pursuing an open source policy oracle has made its virtual box
+software freely available under thegeneral public license, so virtualbox is
+free to use for every users so you can just install virtualbox, it is a type 2 hypervisor so it acts as an application or a software 
+    Next we have a parallels hypervisor, it is also known as hypervisor
+for mac operating systems it is also works on windows but it caters to mac
+operating system and it works well on mac operating systems and it is a type 1 hypervisor
+    Next is red hat enterprise virtualization, it is best known for its
+enterprise version of linux red hat, also has a virtualization based on
+the kernel based virtual machine and it is also an open source hypervisor 
+
+Difference between cloud computing and virtualization 
+   We see virtualization is a part of cloud computing but what makes
+cloud computing different than virtualization, we see with virtualization we have a human being that needs to interact with a hypervisor to create virtual machines, we actually need one of your admins to manually go in there and spin up the virtual machines and to create whatever resources and networking properties that we need to have available in order to make  virtual environment function as needed 
+   Whereas in a cloud computing environment, we don't need that admin, we 
+built an API automation for communicating with a hypervisor so that
+customers can actually self consume cloud products via API calls or control
+panels or other types of interfaces that are available to them, so the real difference between cloud computing and virtualization is the fact that all of the control plane activities like creation, management and maintaining of the virtual environment all of those activities have been outsourced to an automated layer by calling an API and other management servers for our cloud environment 
+
+Active MQ
+   It is a message brokers  including the open source ones like
+rabbitmq and apache kafka or the more enterprising ones like
+ibm mq and tibco. Message broker is it is an intermediary platform or a
+middleware that handles exchange of formally defined messages between two or more systems 
+   So activemq is open source it is based in java, it is an implementation of the java messaging service or jms and it supports a variety of transport
+protocols like rest, amqp, websockets etc
+
+Use cases 
+   1. If you need transactional messaging it is probably one of your best options , it has a built-in transaction manager or transaction store used to handle the messages and cache them until they are committed or rolled back.
+Active mq also maintains the delivery state of every message resulting in lower throughput
+   2. If you need clustering and asynchronous messaging for low latency and speed, active mq is also the solution for you
+   3. when we want to stream data preferably in real time, for example when purchasing tickets, chat conversations, news, stock prices
+
+Now we will build a springboot app with a publisher that publishes messages to the queue by making a post request with the message being in json, and a consumer that will listen to the queue in the message broker which is activemq
+and receive the published messages
+
+INSTALLATION
+1.	Download ActiveMQ from https://activemq.apache.org/components/classic/download/  and extract it
+2.	Go to bin folder and start 
+              >activemq start
+3. Open ActiveMQ page, http://localhost:8161
+4. Click Manage ActiveMQ broker, give both username and password as admin where we can see ActiveMQ console
+ 
+1. Create Queue in ActiveMQ
+       create a new queue where we will publish our messages
+and listen to it for any new published message
+  Click Queues 
+  Queue Name: activemq-queue 
+  Click create
+
+once your view is created we should be able to see it in this table with the number of pending  messages which are the messages that have not yet been
+consumed or acknowledged, the number of consumers which is obviously still zero since we haven't created the app to listen to this queue yet, the enqueued messages which is the number of messages that have been published through the queue since the server started and the the dequeued messages which is the number of messages that were acknowledged and or deleted from the queue since the server started
+
+2. Create Springboot-JMS project with web, activemq dependency
+
+3. Create JMSConfig class with  @Configuration to let spring know that this is a configuration class and add @EnableJms to enable jms features and configurations like creating the message listener container
+   Next we will define DefaultJmsListenerContainerFactory bean, to create a default message listener container
+
+    @Bean
+    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
+            ConnectionFactory connectionFactory) {
+
+        DefaultJmsListenerContainerFactory factory
+                = new DefaultJmsListenerContainerFactory();
+
+        factory.setConnectionFactory(connectionFactory);
+        factory.setConcurrency("5-10");
+
+        return factory;
+    }
+
+so what we did here is to create an instance of the DefaultJmsListenerContainerFactory where we set the connection factory
+to the auto configured ConnectionFactory which uses CachingConnectionFactory by default to cache your connection with the message broker which is our active mq
+   We also set the concurrency to a minimum of five consumers meaning it will initially create five consumers and automatically scale out to a maximum
+of 10 consumers as necessary for a concurrent and asynchronous receiving of messages 
+
+4. Now as part of the configurations we will set the broker url in the application.properties file
+
+spring.activemq.broker-url=tcp://localhost:61616
+spring.activemq.user=admin
+spring.activemq.password=admin
+spring.activemq.packages.trust-all=true
+
+Now we set the packages.trust-all=true, so that the message converter that spring auto configured by default would convert and serialize, the SystemMessage class that we created and it will not give me an exception later
+saying that it doesn't trust this type
+
+5. Create SystemMessage class
+
+public class SystemMessage implements Serializable {
+    private String source;
+    private String message;
+    //getter and setters, toString()  
+}
+
+6. We create consumerc class annotate with @Component, we will also define a logger to log the message we received from the queue. Next it implement a listener method to listen to the queue for any messages and log that message. The method is annotated with @JmsListener which tell spring jms that
+this is a listener method and set the destination queue to the one we created earlier which is activemq-queue, so this consumer will listen to this queue
+
+@Component
+public class MessageConsumer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageConsumer.class);
+
+    @JmsListener(destination = "bridgingcode-queue")
+    public void messageListener(SystemMessage systemMessage) {
+        LOGGER.info("Message received! {}", systemMessage);
+    }
+}
+
+7. Now we create controller and annotate with @RestController, inject the
+JmsTemplate  which is a helper class for sending and receiving messages. Now we define a post method that will trigger publishing of messages to our queue
+
+@RestController
+public class PublishController {
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
+
+    @PostMapping("/publishMessage")
+    public ResponseEntity<String> publishMessage(@RequestBody SystemMessage systemMessage) {
+        try {
+            jmsTemplate.convertAndSend("bridgingcode-queue", systemMessage);
+
+            return new ResponseEntity<>("Sent.", HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}
+
+So basically we just convert the message depending on how we defined your own
+message converter like json string or xml string, but here we just relied on the message converter configured by spring by default which is a SimpleMessageConverter that converts message into an object message and then
+send it over to the queue in our message broker which is activemq-queue
+
+8. Start the appl
+
+9. Goto Postman, with POST request - http://localhost:8080/publishMessage - with Body - raw - JSON
+{
+   "source":"Another external system",
+   "message":"Transaction started"
+}
+Click Send
+
+In the spring boot console, we can see message received that we published 
+
+- Run the Post request multiple times, so that we can see different message received
+
+In the activemq user interface, the number of messages that we published over to our queue is also reflected and the number of consumers we have five consumers because we set the minimum number  to five consumers and this will
+automatically scale out to a maximum of 10 consumers 
+
+ActiveMQ Example 2 https://www.youtube.com/watch?v=c-Bfp3Zo2u0&list=PLThgnnKiYQArpwAvoA6bWljC0lE77biVH&index=1
+
+   We create two applications application1 and application2, so application1 will send a name through activemq server, then send that name to the second
+application and just display through the console
+
+1. Create application1 with spring web and activemq dependency
+
+2. Create Service class
+
+@Component 
+public class SendService {
+  
+     @Autowired
+     public JmsTemplate jmsTemplate;
+
+     public void sendName(String name) {
+        jmsTemplate.convertAndSend("mq-queue",name);
+     }
+}
+
+3. Create controller class
+
+@RestController
+public class SendController {
+
+     @Autowired
+     private SendService sendService;
+
+     @GetMapping("/send/{name}")
+     public String sendName(@PathVariable("name")String name) {
+           sendService.sendName(name);
+           return name;
+     }
+}
+
+4. Configure broker url in application.properties file
+
+spring.activemq.broker-url=tcp://localhost:61616?wireFormat.maxInactivityDurationInitialDelay=30000
+spring.activemq.user=admin
+spring.activemq.password=admin
+
+5. Start the appl, run http://localhost:8080/send/Ram
+
+It will display Ram
+
+6. Goto ActiveMQ user interface
+
+We can see the number of pending messages is one, number of consumers is zero
+because we don't have a consumer application and messages enqueued is one, message dequeued is zero because we don't have any consumer defined that will be able to consume this message pending 
+
+7. Create second spring boot appl called application2 with web and active mq dependency 
+
+8. Create MessageConsumerService class
+
+@Component
+public class MessageConsumerService {
+
+    @JmsListener(destination="mq-queue")
+    public void listen(String name) {
+       System.out.println("The name sent from queue is "+name);
+    }
+}
+
+9. Configure broker url in application.properties file
+spring.activemq.broker-url=tcp://localhost:61616?wireFormat.maxInactivityDurationInitialDelay=30000
+spring.activemq.user=admin
+spring.activemq.password=admin
+server.port=2000
+
+10. Start both the appl, run http://localhost:8080/send/Ram
+
+On the application2 we can see the message in the console 
+
+Goto ActiveMQ user interface
+
+We can see the number of pending messages is 0, number of consumers is 1,
+messages enqueued is one, message dequeued is 1 
