@@ -1,0 +1,316 @@
+https://hclo365-my.sharepoint.com/:v:/g/personal/karthik_g_hcl_com/EWxtUk7ghrlFuPdunOhBcDQBrmvTLqSZUqPAnrLKm3l67g
+
+
+https://hclo365-my.sharepoint.com/:v:/g/personal/karthik_g_hcl_com/ESKUVm6AoQ1JncrbofNg69gBDCft7oby9fzUIJHJXE41xw
+
+https://hclo365-my.sharepoint.com/:v:/g/personal/karthik_g_hcl_com/EddSgCzHSjlOkJHJCgvLXzgBAkkYFGZJ_jUsgrLI5MOekA
+
+Why Agile?
+      Most of them have worked on traditional lifecycle model like waterfall, so when the software industry started we all worked in teams, we had individual teams carrying out thier responsibilities and those individual teams have experts in them. For example we have analyst who are facing the enduser, they used to give us requirements and create a document called BRD and then pass on to the development or technical team 
+     The technical team inturn have many teams like business analyst team, design team where we have HLD and LLD, then we have development team responsible only for coding and unit testing, we have separate testing team which performs various types of testing like performance testing, integration testing, UAT etc
+     After all this we have separate team called Operations team which was mainly responsible for deploying the version on to enduser environment. All of them works in team and each one is responsible for creating detailed document which was reviewed and signed off in that particular phase and then document was passed on to the next team. So most of the communication are happened through documentation and all of them are working as teams 
+     Initially this model works very well when the software industry started, where we dont have many changes in the requirement, the requirements used to be stable. We use to get longer requirment and we used to take long time to implement, so all releases from our end would be in fixed time 
+    But when the software industry changed, there where lot of challenges with this model like
+  1. We used to produce working software very late in the cycle, we used to finish of with the design, then goto coding, then testing and probably invite customer only during UAT or just before handing over to UAT where customer would see a glimpse of the product that we have developed 
+    Sometime it happened that the requirement that customer wanted was something else, but what we implemented was something else. But this detected very late in the cycle because we are not involving the customer from initial stage, this also returns in very late return of investment(ROI)
+    2. Poor model for long and ongoing project where changes are there 
+    3. we are not accommodate the changes, we are resisting the changes. So in waterfall model we use to get change request from the customer, we use to analyse the requirement and we say this the amount of time we need, this is the money we need and then finance dept used to take care of this change request, only after all the approvals are done, then we finish the current set of work done that we have agreed and then only implement the change request which was not helping the customer 
+    4. Integration is done as a big-bang at the very end, which dosent allow identifying any technological or business bottleneck or challenges early. 
+    Although individually everything is working properly but when we integrate all the implementation we use to find lot of defects which increase the cost, because any defect if we have to fix, we have to find the root cause, where is actual rootcause, which phase cause this defect, go back and update all those documents, finish all those phases and then only the defect use to get fixed 
+   4. Communication happened through documentation
+     
+So even when this waterfall model is being used by many companies, there where several practioner who used alternative ways of methodlogies since traditional lifecycle have all above challenges 
+    For example peer programming (ie) two people will do piece of code, the idea wan when 2 people put in peer prg, one person will do the coding and other person will only observe what the coder is actually doing, how they are developing, is their logic is correct, is he introducing any defect so that review happens as when the code in written, so this helps the teams to ensure that the defect is not even injected, so they were detecting the defect on time. Although the cost was more for one piece of work where one developer can implement the code, 2 people are involved but the ultimate cost and time in removing the defect that is lesser
+     Similarly many other practioner where they, who were practicting alternate ways because they find traditional lifecycle very challenge
+     
+Agile Manifesto
+    So 18 of such people met in 2001, because they want to discuss how we can come out of these challenges and uncover the better ways of developing software and came up with "Agile Manifesto"
+    So we have heard that "Agile is called as mindset", so we all have a value system with which we are brought up by our parents and to follow that value system, we follow a set of principles to ensure that my value system is met
+    In a similar way, the peoples met in 2001 they came with set of values and principles, so when we working in agile all of them should have same values and principles that we will follow throughout the project lifecycle. Any methodlogies that follow agilee should follow these values and principles 
+    There are 4 values
+1. Individuals and interactions over processes and tools
+2. Working software over comprehensive documentation
+3. Customer collaboration over contarct negotiation
+4. Responding to change over following a plan
+     All this 4 stmt have a common word called "over", so what agile team met in 2001 told was, we will give u 4 value stmt which we feel are adding more value than what we are doing now. So we can see to left of over we can see something and right of over we have something, so what the team told was that while we value things that written to the write of "over", we value things that are written to left more. So they are not saying that you should not any of things in right still we need to continue to do it, but give more priority to things that on left and do right things how much is required 
+    
+1. Individuals and interactions over processes and tools
+      In traditional lifecycle we gave too much importance to all our process and we spend lot of time on this process and tools and we followed all of them properly, but what we lacked was giving importance to individuals and interactions 
+     Even in our personal life, many times when we have conflict, what will our parents say is to talk, so when we talk all the problems would be solved, that is when we can understand what is going on in other persons mind 
+      Here also the major problem is we are not focussing on individuals and interactions rather than focussing on processes and tools, so the team said to value individuals and interactions more than processes and tools 
+
+2. Working software over comprehensive documentation
+       In a similar way we are giving too much importance to documentation, documents used to run pages, if any new team members is joining it is difficult to go through so many documents and understand, it was too complex. And also when defects is detected at later stage, we dont have time to go back and update the relavent HLD, LLD or any review checklist etc. And we realized that this documentation is not going to help 
+     So more than focussing on only documentation instead focus on working software because that is what delivered to the market 
+3. Customer collaboration over contarct negotiation
+      Similarly all our talking is used to happen through contract, so all negatiation is happened through the document. Contract is a legal document but we give too much importance to only what is documented in the contract and we use to follow that.       Rather than doing that, agile team set to work with customer collaborately, understand what his needs properly, involve him throughout the journey so that he gets to see what he wants and we can make change immediately  
+4. Responding to change over following a plan
+     We will follow a plan and not flexible in changing that, so more than value only following a plan, respond to change so welcome the change that are coming in 
+
+Agile Principles
+    To achieve these 4 values, these are 12 principle which agile team gave
+1. Customer Satisfaction - Higher priority 
+      So whatever we do, it is based on customer satisfaction, so whatever we deliver is based on what he needs
+2. Welcome change requirements
+       We always welcome changing requirement, if the customer comes for a change it means that there is a need for it
+3. Deliver frequently  
+       We have to deliver frequently, when we do this we understand whether the market is accepting our product or not 
+4. One team - we have to work as one team, so there is no "I" or "U", so it is always "V" in agile
+5. Motivated Individuals 
+       Agile is simple to understand but hard to implement, because sprint after sprint we have to continuously keep delivering, there is no break if we complete ur sprint 1, the next day we have to start with next sprint. Whereas we have little free time in traditional approach (ie) when developers pass on our work to testing team we do have some free time. But in agile it is continuous work we keep doing, for doing that we should have a discipline to do work continuously and we should have motivation 
+    So all this are talking about the way we have to change our thinking, so we have to motivated, so it is responsible of development team to keep each others motivated so that we all reach the goal successfully 
+6. Face to Face conversation
+       So when agile started they set it has to be a face-to-face conversation where they encourage all employees. All team members who are their as part of team where supposed to be in same working location which was initial requirement of agile 
+       But later they developed as distributed agile where physical face-to-face conversation may not be possible but with other digital methods we should have face-to-face conversation
+7. Working software
+        It is the most important deliverable from the team, so focus on working software
+8. Sustainable Development
+        We have repeat success in a sustainable way (ie) we cant say that we will deliver sprint1 in 2 weeks, next sprint in 3weeks and next sprint in 4weeks. So when we agree for a duration, so for every 2 weeks we have to deliver mandatorly, so we have to sustain the process and timeline then only the customer will be able to comeup with the roadmap properly. They know that every 2 weeks we are delivering and they start prioritize which requirement should go first, so they also create a roadmap for the product that we are developed 
+9. Maintain Technical Excellence  
+          With all above it is difficult to maintain technical excellence, but what agile expects is 
+         Consider if we are in sprint5, so when we are delivering 5th sprint deliverable, all the requirements that working well in last 4 sprints should continued to work, there should not be any regression defects 
+       It is not possible manually to test all the requirements which we have done in past sprints, but still as agile principle we have to maintain technical excellence, this is reason why more and more of automation has come into agile. So when we start writing automated unit test, the system will do the testing for us, if we run those scripts we know any regression defect has been introduced or not, this let to more and more automation because technical excellence is mandatory 
+10. Simplicity
+      We have to make it simple, dont complicate things. Many times we feel that if we add this particular feature, the customer may become happy which is called as gold plating (ie) adding something which is not expected by the customer, so dont over complicate things, make it as simple as possible and deliver what is expected from customer 
+11. Emerging Architecture and Design
+        In waterfall we knew the requirements upfront so we use to put specific time for creating and design the architecture properly
+        But now with changing requirement we dont know what will be expected out of us after 5 or 6 sprints, so how we will keep the architecture ready in the first itself which is not possible 
+        So what agile says is, u just create the architecture and design that is required for u to do, when u initially know the set of requirements. Later based on the change, ur architecture and design will also emerge. So we should be flexible to accept the changes in architecture and design based on change requirements we get.
+
+How do project do this?
+       Many projects do something called sprint0, before they start the sprint1, they start sprint0 where they focus completely on architecture and design atleast for the requirement that are visible in the current situation. So any change in future our architecture and design also will change 
+12. Reflect and Improve 
+        Periodically we have to stop and see how the things are going, what things went well, what things are not doing well and comeup with actions, so that we can improve ur process and output which is called as Retrospection
+
+
+Two things we need to understand that agile is on 
+Incremental and Iterative Development
+
+What is Incremental Development ?
+       Assume that we got a requirment to paint monolisha picture, so in the incremental model we start implementing feature by feature, but whatever we are implemented first that will be implemented completely and progress to the next feature 
+
+What is iterative development?
+       Here also the product is same, but the way we developed is different. First we have a vague understanding of picture, so we start with the framework, when we start with framework we are creating entriely and then start improvize the feature and repeat that improvization 
+
+So Agile supports both incremental and iterative (ie) we can implement a feature first, but if at all a change is required in this feature later we will do that also, we will accept that change and do it. Similarly we may not go feature by feature, we may implement 70% feature, along with 10% of another requirement in sprint 1 and realease to the market, because product owner knows that it return value to me immediately 
+    For example we are working on e-bank appl, we start with savings account first, so our first priority is that enduser should able to transfer and receive money from other account, that will be the highest priority and for that whatever is required that will be implemented first which is called MVP(Minimum Viable Product) and later we keep on improvizie it 
+       So agile encourages both incremental and iterative way of development, where we can develop complete features or add new features and keep on improvize it, but all this will be decided by someone called Product Owner. Product Owner knows, what is the value we get, if we implement which requirement and get how much value, purely based on that value, he will prioritize the requirement and give to the development team 
+
+What Agile is not?
+     So some key things or misconceptations we have on agile
+1. Agile is not just about writing code, we all think that they have told very less documentation is required so we can directly startaway with coding. That  is not the case, we cannot directly start with coding, there are lot of process we do before starting the coding. So Agile is not just about writing code, it is more on how people actually work together and give a good work product 
+
+2. Agile is not undisciplined - It needs a lot of discipline to deliver the work quickly and consistently. As we saw sprint after sprint we have to continously keep delivering with high technical excellence, it needs a lot of discipline from our side, if we dont do that we will not able to achieve success 
+
+3. Agile is not unstructured - Most of the methodlogies used in agile are frameworks, where they just say what we have to do, so it is always structured
+
+4. Not a silver bullet - we wont get success just by following agile 
+   Consider we have a project running in waterfall model and somebody giving suggestion to move to agile, we will get success, it is not possible. Just by moving to agile we wont get success, if we follow all things present in agile properly  then only we see success 
+
+5. Not Anti-documentation - Agile does not say there is no documentation we still have to document but dont have to produce detailed document, but whatever required to documented is still need to be documented 
+
+SCRUM 
+    There are many methodlogies are there in agile like Lean development, Spotify, Kanban, Disciplined Agile Delivery(DAD) ect, but Scrum is one of most promient framework that is used. So framework gives only the frame what has to be do and dosent say how have to do, methodology is something that where everything is defined, for example if we take waterfall model, so in code review we can have these methods of code review, we can either do a offline review or walkthrough or inspection, so there is clear cut defination of what we have to do and how we have to do in each and every phase 
+      But Scrum is only framework, they have told what we have to do, the basic necessity that are required for executing in scrum way is defined, but how we have to do is completely left to us, so many projects will learn from other projects, so new projects when they are implementing we have list of best practises available and we can follow those best practises and later change it 
+    One good example is Spotify, which is a music company, which is 100% scrum based, after it mature it realize that so many practises which is not yielding the result, so they came up with new model. So spotify is completely based on scrum and they have changed only people organization (ie) how people are working, but they retain all the practises used in scrum and called with new framework called Spotify 
+
+There are 3 roles here, product owner, development team and scrum master 
+    Product owner is the person who interact with endusers, customers and other stakeholders. He knows how the product has to actually shaped and delivered to the endusers. He actually gets the requirement and maintains all requirement in a document called product backlog, most of the project are using jira tool for this 
+    We can assume as a excel sheet where all the requirment are listed, when he is listing he will list with the priority so the requirement in the top most row will have highest priority requirement which we have to implement 
+    So for development team, product backlog is bible and we take the top level requirement in the same order and we implement that. Now the development team will take the subset of features from product backlog in a sprint
+    So sprint is a heartbeat of scrum, so when we say it is heartbeat (ie) our heart beats in a specific frequency, so that frequency will setup initially itself. As per latest Scrum guide every sprint should be 1 month or less and we can decide the frequency. So as a team if we have decided that every 2 weeks we will deliver one sprints, we have to stick to that, one sprint cannot be 2 weeks another sprint cannot be 3 weeks and we cannot change that, so once we fix the duration we have to deliver in that frequency only 
+    So for a particular sprint, the development team will see how many of top features it can actually implement in the duration of 1 sprint, they will take it and create those features into tasks, they will break down into smaller tasks for those features they have agreed to implement in the sprint. They break down into task and create something called sprint backlog 
+    If u see agile ODC, we have big white board, that it is where they create sprint backlogs. It is not maintained as a excel sheets or document, so we create these tasks into sticky notes and stick on whiteboard. So everyday the developers will start working on the tasks in the priority, whatever they have put in the same priority, the people will pick the task and start implementing the task 
+    So when they implement, they move these sticky notes into different columns, so initially everything will be in open column, when they pick it up they move to in-progress, when they complete they will move to "done" column in the whiteboard. So if we go to any agile ODC which is following scrum, we will know that this is the progress the team has made in sprint, nobody has to go and question the developer, if we just goto the whiteboard we will understand what is the goal for that sprint, what is the current progress and what are the blockers they have 
+    So everyday they all meet for 15min meeting called daily standup, where every developer is supposed to tell what they have done since yesterday, what they are doing today and are their any blocker that is stopping their work. They will discuss that in 15min meeting and finish all their discussion, they have to discuss the progress of sprint in that small discussion 
+    One of the anti pattern that we see in projects is many teams are spending 2 hrs or 3 hrs in daily standup calls, many times customers participating in that and becomes very in-depth status reporting, so many projects are complaining that they are not able to follow agile properly because daily standup itself is going for 2 to 3 hrs. Imagine 2 weeks is what we have agreed, in that 2 weeks everyday 2hrs is going in meeting, so there is loss of productivity, so this is where scrum master plays the role 
+    When product owner gives the technical and functional requirements to the team, scrum master ensures that all that practises have to be followed properly. Scrum master coaches the team members on agile and scrum, so they are responsible for it, to ensure that in 15min daily standup gets over 
+    So two days before the sprint gets over, we have a formal inspection called Sprint review, wherein the development team has to give a demo of the implemented features to product owner. When we say demo, it is not ppt demo, they have to give a demo of working software itself. So for this meeting, the product owner can bring in any critical enduser as well, if the enduser is eagerly waiting for some requirement and product owner wants to show them that we are implementing it. So sprint review is one forum where everybody gets an understanding of how the product has been developed till now and what are the new things we can develop. So this is one forum from where apart from showing what work we have done, we also get new ideas and there could be changes to product backlog. 
+    Once the review is done, product owner will either accept the product or reject the product, then it become a fail sprint, and then negotiation happens. Let us say we have taken 3 requirements at which 2 are accepted and 1 is not accepted, then the development team will start negotating with Product owner, atleast to consider with this 2 requirement can we go with deployment, and for 3rd requirement again we negotate in next sprint as how we have to develop and what we have to develop based on priority of that 
+     After the sprint review is done, there is reflect and introspection called Retrospective, wherein the team members will meet and they discuss what went well and what did not go well and what things we can do to improve our deliverables in the next sprint 
+
+So this is at high level the scrum runs. so we have 3 accountabilites or roles like Product owner, Development team and Scrum master.
+   3 artifacts like Product backlog, sprint backlog and working software itself which is called increment because it does not expect any regression defect in the deliverable that we provide sprint after sprint, so we expect that we adding value to it, thats why it is called increment. Why it is called potentially shippable product because whether product owner decides to release it to product owner or not, development team should take responsibility to deliver the sprint as a potentially shippable product 
+    5 ceremonies like sprint planning meeting, daily standup call, sprint review and sprint retrospective, product backlog refinement 
+    5 values like what mindset and what should be our interpersonal skills, that is described in 5 values 
+
+Scrum team
+    All the 3 roles are called as scrum team like product owner, scrum master and developers. These are the only 3 people working in the scrum, all others are outside the scrum. We can see there is no manager role or any leader role or any architect role, we have only the people who are responsible for creating the output will only be there in scrum team 
+    There is nobody to dicdate what u have to do, this is what they plan to bring in agile. It consists of only 1 product owner, 1 scrum master and set of developers, so totally it should be 10 or less  
+
+3 Accountabilities
+1. Product Owner
+      - He is the one who gives the requirements to us, so when we say product owner it will be played by only one person, they cannot be group of people and each one cannot come and provide some requirement daily, so it has to be one person for one project 
+      - He is customer advocate, generally for all projects that we have seen in HCL, product owners is from the customers, we choose customer representative as product owners because they have the chance to interact with enduser directly, they know the market scenario very well so they understand what is required to be implemented 
+    In ING account alone, we have roles called Proxy product owners, they have given responsibility similar way as product owner, only thing is that they have to interact with product owner on daily basis and tell what they have communicated with the developers. This is been introduced only because of timezone difference between india and ING team and product owners are busy on other things, so they agreed to give extra money to HCL and create roles called proxy owner 
+   - Product owner is responsible for creating the product vision, he should say what is the actual product. 
+   - He is accountable for maximizing the value of product (ie) feature by feature he should understand, if i release this feature before the next feature, will i get more return on investment that i have made, what will be the impact on market, is there any competitor who is going to release someother feature which I have not even planned on. So he has to do this market analysis continuously, he has to interact with enduser what they expecting from the product and based on all this interaction and decision he comes with the value for each of requirement 
+    - He is responsible to work with team to get user stories ready for next sprint 
+           Requirements in scrum are written in the form of user stories, but he is responsible for explaining the requirements in a proper way to developers, answer all their questions and also tell them the set of validation that he will be doing to accept the product. We saw that in sprint review, the product owner accepts or rejects the product so for accepting or rejecting the product he will be doing the set of steps, that validation criteria is called acceptance criteria. So he is responsible to give this acceptance criteria to the developers, so any doubt they have on the requirement, he should be available to clarify those doubts immediately to development team 
+    - He is final decision maker on product backlog starting from the prioritization, in which order it will be developed, anything related to the requirement and release of product to the market is decided by product owner 
+    - Finally he accepts or rejects the work developed by the developer 
+    - He is accountable for effective backlog management (ie) he has to ensure that he communicates the requirements properly, not only through the product backlog but also through direct communication with the developers 
+    - He has to explicitly communicating product goals, why are we creating this product that vision develop may not have, they dont have the view of how market scenario is in that particular country. So he is responsible for explicitly communicating the goals
+     - Ordering backlog items - he has to ensure that the product backlog items is transparent visible and understood (ie) any stakeholders who want to see the backlog, even it can be the enduser. So if the enduser wants to see when the requirements are coming in, when the features are being developed and in what order. Enduser also will come and add requirments into product backlog, anybody can add requirements in product backlog even the developers, but the final word is with product owner 
+     So generally projects use Jira tool to document these product backlog items.
+
+Scrum Master 
+     While product owner is the keeper of requirement, scrum master is the keeper of process. In previous version scrum master is called Servant leaders that means, although he is a leader he will serve the team in different ways, not only the team he also serves organiztion in different ways
+    Scrum master should be more collorabative, they should get the work done in collorabative way, so only they called servant leaders. The interpersonal skill that product owner shows and scrum master shows are completely different. Product owner is very dominant, he will always expect developers to take more work, but scrum master should negotate with product owner and explains scrum to him and say we cannot force developers to take more work than what they can take. So the way he explains to product owner will completely different from the way product owner demands works from us, so interpersonal skils are different
+      1. Scrum master to team
+           -  He/she will coach scrum to the team, especially to the team members who do not know agile and not worked in scrum earlier, then scrum master is the person who coaches scrum to the team completely 
+           - Next scrum master hepls to get back the focus to all developers to create high value increments
+            - Removal of impediments - so any blockers that are there, the scrum master ensures that these blockers are removed. So does it means that any code defect then scrum master will sit and fix the defect, no 
+    Scrum master is not a technical person, he may neither understand domain or technology then how he will remove the impediments 
+    Lets say there is standup call going, the developers are discussing the progress, one person says that he has a doubt that while doing the coding he got the doubt and whether to proceed in this way or by another way, for which product owner has to answer and product owner is not part of standup call. So we have to wait until the product owner comes back, so there is a impediment that I cannot progress with my coding unless this question is answered which is a impediment for me
+    Now scrum master will understand there is a impediment and product owner is required, so he/she will ensure that the query is clarified immediately, so he talks to product owner or whatever the way he gets clarification from product owner and impediments should be removed 
+     Similarly certain website is very important for us for developing and IT team has blocked that, so scrum master takes the responsibility to interact with that stakeholder and request to remove the firewall for our team 
+       - Ensuring that all scrum events takes place and are positive, productive and within timebox
+      So scrum has given 5 events that we have to do, scrum master ensures that all  5 events takes place properly and efficiently within the timebox given. Scrum is timebox framework (ie) for every event they have told the maximum time u have to take, so scrum master will help all to stick to those timeline 
+      2. Scrum master to product owner 
+1. Helping find techniques for effective product goal defination 
+            So product owner have to maximize the value of product (ie) he has to come with value of each of product items that are in backlog. Sometimes product owner might get confused how to actually comeup with value or how do i prioritize, so there are several techniques for this to prioritize the items
+     One of most commonly used is 100 dollor test, if we give 100 dollors to endusers and ask them to allocate money for each of the requirement that are there, how much money they allocate that is one way of identifying the value which shows how much value enduser is giving to requirements. Next we have MoSCoW model, we will categorize the requirement as M=Must have, S=Should have, C=could have and W=Would or wont have (ie) Must is highest priority and Would is last priority 
+    So these techniques scrum master will explain to product owners to prirotize the requirements 
+
+2. Facilitating stakeholder collaboration as requested or needed 
+      Product owner is free to bring anyother enduser for sprint review, so such collaboration is required then scrum master will facilitate that 
+
+3. Helping the scrum team to understand the need for clear and concise product backlog items
+     Product owner also should understand that his work is important, he has to give a clear requirement. Scrum master is the one who will coach the product owner how to write clear requirement so that everybody will have same understanding on product backlog item 
+
+    3. Scrum master serves the organization
+1. Leading, training and coaching scrum 
+      Scrum master will have a network with all scrum master in our company or other company. So when they interact with each other they know what is the best practise is used by another team which helps them. Not only in our company, what is happening in industry level, are there any new tools that have been introduced which will reduce manual work or any tool that can use for communication in virtual times so that communication becomes more easier 
+      So scrum master will have an eye on all these things and they will suggest these changes to the organization, so they lead, train and coach scrum to all employees within organization. So they are called change agents because they know what is happening at industry level in terms of agile and train on agile for all employees in the organization
+
+They are accountable for establishing scrum in the project as defined in scrum guide, whatever ceremonies are required, what artifacts are required and what accountabilities are required for each role they ensure that it is established. They also accountable for scrum team effectiveness, for example he make sure standup meeting goes only for 15mins 
+    So scrum master use different techniques to coach like they reward people when they consistently performing in a good way, they also punish people if they see that consistently not doing something. For example, stand up meeting everyday starts at 10'o clock, if the scrum master sees that a person is coming consistently late everyday, even after warning he/she does not follow, scrum master have rights to punish them. Punishment is also usually through games, everything is gamified in agile 
+    They ensure either in rewarding way or in punishing way, how effectively the team has to practise scrum. So it is very difficult role, scrum master is not a reporting manager for any of the developers, so not being a reporting manager how he/she still brings the team 
+inline to implement scrum
+
+Developers
+1. Committed to creating any aspect of a usable increment each sprint 
+     So when we are delivering that increment it should add value, it has to be usuable and technically very good
+2. Cross functional people
+       Whatever role is required for that team to implement this particular product goal, whatever roles are required those roles are to be there in the set of 10 or lesser number of people like analyst, designer, developer, tester etc
+3. T shaped people
+       Previously software industry needs "I" shaped people (ie) only one vertical line wherein we where experts in one technology alone, but now the expectation has changed we need T shaped or pi shaped or  M shaped people
+     T shaped means having indepth knowledge in one skill and broader knowledge on the various technology that are used in the project. Pi shaped means 2 vertical lines (ie) indepth knowledge on 2 technologies atleast and broader knowledge on remaining technology and M-shaped people have multiple specialties. So any person in the team can take anything that is required in the project 
+4. Self management team
+       There is no title, they all called as developers not as analyst, developer, designer or tester etc irrespective of their expertise, because there is no reporting manager within scrum 
+5. Learning mindset as opposed to fixed mindset 
+      As a fullstack developer knows complete backend, little bit of frontend and little devops. But i should have a learning mindset so that i learn continously and get expertize from other technology as well, since small team has to do all type of work 
+6. Collectively responsible for reaching sprint goals  
+      So when it is self managed, look at the discipline we all should have. We all responsible collectively for work that we have committed. So I as a member in scrum team, one day if i dont do my work then collectively my team may fail if we are not managing the work properly, so that is the discipline that has to come in. So together as a team we succeed or together as team we fail 
+7. Manages sprint backlog & tracks progress
+         While product owner is responsible for managing the product backlog, developers are responsible for sprint backlog. This is usually done on whiteboards where we have sticky notes, imagine in sticky notes the status is not updated properly, consider I have picked up one task and I forgot to move that task to in-progress column, then another developer think that no one have picked this task so he also take same one, so loss of productive there when 2 people take the same task
+    So we have to manage the sprint backlog properly which is usually in the form of whiteboard, in virtual world people are using digital whiteboard, but status has to maintain appropriately on sprint backlog. Any change in sprint backlog or any new task that has added should be appropriately updated in sprint backlog and we are responsible for tracking progress and making changes
+       If at all we realize that we will not reach the goal, then have a discussion immediately, take an action and implement that action and ensure that together we will reach sprint goal. If at all a situation comes where we assure that we are not able to reach sprint goal. Let us assume there was a requirement, we all break down into task but we did not understand it properly, the complexity is not understood. As we started coding we realize that it requires more work, but we have only 2 weeks for sprint and 1 week is already gone, even if we work 12hrs or 15hrs a day we cant complete the work. Now we call the product owner, explain to him about the problem and try to negotating with him and ask him to decode this item, so that we can take it in high priority in next sprint, that was happened actually in the project 
+    The outcome might be varying, product owner may say no and consider as fail sprint since not done properly and cancelled the sprint and start a new sprint, depending on the priority of requirment. He may say that we have implement other 2 requirement properly, 3 requirements supposed to be done, atleast u have done 2 and consider it as a successful sprint, and move this items from current sprint and do proper analysis and  take it up with high priority on next sprint
+     Decision might be vary but this is what developers will do, they will go and explain to product owners when they realize that they cannot reach the goal because of some reasons which was not thought at earlier, but u have to transparent. If we are not transparent then we will fail this also one of important interpersonal skill the developer should have 
+8. Makes continuous self improvement - During reflect and improve we will identify the things that are not working, what are the things that are working 
+
+As developers, we are accountable for creating sprint backlog and ensuring the quality of product is good. We may have to adapt plan every day based on how the progress is and reach the sprint goal properly 
+
+User Story
+    How do we write requirements in agile. Again scrum has not told how to do anything.Scrum is not telling that u have to maintain requirements in the form of user story, but scrum mention about user story in scrum guide 
+     They have taken idea from Extreme programming to write requirements in user story  because it is very simple 
+     - Here we are shifting the focus from writing the requirement to talking about them, that is what user story achieves. First we have to talk about requirement, we have to discuss it and we have to ask more questions to product owner so that we all clear about the requirement, so user story helps in getting that 
+     User story has 3 parts to it 
+1. who will be using this requirement 
+2. what is the requirement all about 
+3. why it is require 
+
+So the format is As a who, I want to do what so that I can achieve what 
+
+As a rule for creating user story we follow the model called INVEST
+1. Independent - no two user story can be dependent, we should implement independently so that one person can take and do it 
+2. Negotiable - which means decision should not be final, if at all the requirement to change little bit, we should be able to change it 
+3. Valuable - It should add value, there should be a value we are not just creating a task just for breaking it down, it should add a value 
+4. Estimate - we should be able to estimate that, it should be neither too small that we cannot estimate or too big that it runs into sprints. We should able to complete that within the given sprint 
+5. Sized Appropriately - Estimation in agile is done through sizing where we give size like simple, medium, complex 
+6. Testable - It should be testable,if we are not able to test it we dosent know whether we implemented correct or not  
+
+3 Artifacts
+1. Product backlog
+       This is the bible for the developers, wherein we have list of all requirements that have to be implemented. It also have few requirement which never get implemented. So as a developer I feel that if we implement a feature it will be a value add to the customer, so as a developer i can go and add a requirement in product backlog, but then product owner will decide whether this really has to be implemented, whether there is value for this requirement or not and if there is a value he will prioritize accordingly. So the decision maker on the items in product backlog is product owner 
+    We can assume as a excel sheet wherein every product item will have one unique id to identify the product backlog item, then we have clear description. Generally in product backlog the requirements will be at high level or it could be one line requirements. Along with this there will be high level estimation which is given by developers and done in terms of size, where we use T shirt size estimate in agile like extra small, large, medium, small, xl etc so the same parameters we take to size the requirement 
+    So at high level whenever a product owner says when we get this requirement in the next sprint, then he ask the developer at high level can u give the estimation, so by reading the requirement and asking few questions to the product owner, they will give a high level estimate. This is not at all detail estimate, it can undergo change, when the developers take the requirements for implementation they will do a detailed estimation to see how much time they need 
+    This gives only rough idea for product owner about how much time the development team might take to implement this,so product owner gets visualization of product roadmap like how many sprints more need to implement all the requirement which are at high priority. So with that size he gets a rough idea about how many sprints does the development team may deliver this. Based on that roadmap he will discuss with stakeholders or endusers that this requirement u will get in such sprint. So By column says in which sprint he is planning to deliver it 
+     It is an ordered list of requirement, the item in the top is highest priority which we have to take as highest priority, so whenever we start a new sprint we start with next highlevel item that has to be implemented. The product back log never ends, as long as the product is there and development team is there, we are getting budget for making improvements in the product, the list keeps growing 
+   So any new requirement that comes, initially it will go to the end of product backlog, as in when the requirements becomes clear, as in when product owner realizes the value is more he moves moving in top, that how we take changes in requirements
+      So entire product backlog is managed by product owner and he is final decision maker 
+
+2. Sprint backlog  
+        Sprint backlog we can assume it on the whileboard, if we see agile ODC we can see lots of whiteboards, so what we do on that whiteboard and how do we actually start 
+       Consider we have high priority product backlog item, so in sprint planning the development team take this requirement for current sprint and start breaking into task. So scrum say, each task that u have broken, it should not take more than one day, so try to break into tasks such that every task take one day or less to implement it
+     There could be cases where we cannot break down the task with higher complexity into subtasks and cannot be finished within one day, such cases are ok but generally try and break down the task such that every task can be finished within a day
+     So developers will take product backlog item and start breaking down into task, each task they will estimate that how many hours do I need to complete it. This is where detailed estimation happens and all this happens during sprint planning
+     So sprint backlog is a whiteboard which is there in agile ODC, there is a product backlog item, then we break down into task, we will write description of task on sticky notes. So these are the user stories, what is that we want to achieve, we will write them as user story and put them on sticky notes and on the whiteboard we have column called "open" (ie) all tasks are yet to taken up
+    As in when the developer start picking up the task, they move into "in-progress" column, when they finish it they will move it to "done" column. So for any stakeholder who walks into agile ODC, the whiteboard shows where the development team is currently with respect to the progress of the current sprint or there any impediments, is there any risk in completing the sprint goal successfully
+     So sprint backlog is created by the developers, and for every sprint we erase the whiteboard and we start picking the new items and implement, however to maintain the records all these are still available in Jira tool so we have the traceability 
+
+3. Working software/Increment 
+1. The increment is sum of all items completed during a sprint and all previous sprint
+         Why Increment, because all features that are implement in previous sprint are still working and we are giving an increment now, that means we are adding new features. So we maintain technical excellence in such a way that, we ensure there is no defect and that is why it is called increment, so it is sum of all items which is present earlier + new items 
+     
+2. At end of a sprint, increment must be done according to Defination of Done(DOD)
+     As per english terminology it is a defination which tells that i am done with this requirement, i have complete this requirement with best of my understanding.But how do we really say that our work is done, there are several metrics which are introduced 
+    For developers we say 90% code coverage is mandatory, if there is no 90% code coverage the build itself fails which means we have not done the work completely. If there are open review defects then I am not done with my work, if all test cases are not executed by the tester then work is not done, if there are still open testing defects then work is not done. So these are some of checkpoints that the developers keep to ensure that quality of work is good and that is called Defination of Done(DOD)
+       To start with the project team will take either the defination that is given by the customers or the one given by the organization. Every retrospection we do, we realize if at all a defect is leaked we do a root cause analysis and check why we did not find the defect earlier, was there any process we have missed, can we add a new checklist into this defination of done which will ensure that we wont repeat this mistake once again, so they keep enhancing the DOD, but basically it is set of metrics that are there to ensure that work is done completely 
+     Most of them are automated now because of introduction of DevOps but wherever things cannot be automated, for example logical defects might not be captured by a automated tool, we need manual review to ensure that the logical part of code is working properly or not, so we capture a manual defect, is that closed or not. If we are making a change in one place, we should remember that someother place it is getting impacted, should I make it as generic checklist so that  we will not miss this checkpoint everytime, so when developers realize they go and update the DOD 
+           So when we start with new project, have all this tools in place so that we can really ensure that increment and no defect is included, one of things that helps us to do is DOD 
+           Just to say whether the work has been really done completely or not, these are the checkpoints that are defined which is called DOD which is very important for developers. Based on ur role in development team each one of u will have separate DOD 
+      Similar to DOD for developers, we have Defination of Ready(DOR) for product owners, what are the checkpoints to ensure that his requirements are really ready. For example, has he answered all queries, does he really know the value of requirements etc
+
+5 Ceremonies
+1. Sprint Planning
+        So whenever a sprint starts, this is the first activity that we will do. As we saw scrum is timebox way of working, so scrum has told how many hours we have to spend for every activity. Now it is scrum master responsibility to ensure that within this time frame the event is handled effectively. So for 4weeks sprint 8hrs is what given for sprint planning, so first day will goes in planning 
+
+What we do in planning?  - 3 parts
+   1. First product owner explains the developer, what is the sprint goal that he wants to achieve, according to his analysis of historical data he will say that I have top 3 requirements for that I want u to implement in this sprint and explain those 3 requirement again very clearly, so that all developers will have common understanding on the goal that we are trying to achieve in the sprint
+    2. We ask questions if we are not clear anything in product backlog and make our understanding very clear on the requirements 
+    3. Then we start planning how to implement these requirements, so we start breaking them into smaller user stories and every task should be less than 1 day
+      Consider we have login screen to implement, we start breaking into tasks, one is to create a screen and have a encryption methodlogy that we will use because we cant save the password or read the password as it from database, so we should have a function to decrypt, if the credentials are not valid whst should we do and if it is valid what should we do, like this we divide into small tasks
+    Let us say we have first requirement and break it into 20 tasks, we have taken 2 weeks sprint so we have 10 days time to implement. If there are 5 developers so totally we have 50 days with me, assume that we have 30 tasks and each task takes 1 day, so 30 days are gone out of 50 days and still have 20days time to implement, so developer can comfortably complete the first requirement and analysis the second requirement because we still have 20 days. Now they take up second requirement, they break down into tasks, assume that second requirement takes 18 tasks to complete.  Now we can take only 2 more task not more than that, and if the 3rd requirement has only 2 tasks, then developer can take. If the 3rd requirement has more tasks than 2 tasks then development team will say no since they can only do 2 requirement 
+        For doing this activity we should know is ,during this sprint how many days of holidays we have which are mandatory holidays from company, how many people are on leave, so that i will know what is the available capacity with me and plan according to that and give the committment at the end of the sprint that this is the number of requirement which can actually implement in this sprint. We call the product owner and tell we can implement only 2 requirements 
+    The product owner was expecting us to implement 3 requirements, so he will start forcing u to take 3rd requirement also, then we have to explain to him that earlier we thought that complexity was not so high, but now we understand and show the breakdown to him. In this discussion probably we have complicated something which was not required, so when we are explaining to product owner he realizes that we have complicated something which is not what he is expecting, so he will stop u and say this is not what i need and u have complicated too much and in this way only i need, if whatever he says is correct then we do reestimation and if we have more bandwidth then we take 3rd requirement. But whatever approach we have taken is clear and know that these are only 2 requirements we can implement then we have to stop at 2 requirements, we should not ideally commit for 3rd requirement
+    This is where scrum master place an important role, he comes coach agile and scrum to product owner, and make him understand the impact of taking more work when we really dont have the bandwidth
+    So while doing the sprint planning automatically sprint backlog is created, we took one requirement, we broke down into tasks, we estimated how much time takes for each of the task, so we have complete plan with us how we have to implement the requirement 
+     The difference between traditional and agile is nobody forces to take more requirement, we on our own committed to 2 requirement that is how it becomes from pull method from push method. Nobody plan for us and told that we mandatory do this many requirements, we did the planning for ourselves, we pull the task from product backlog and we planned for it, so this major difference between traditional and agile based of working 
+
+2. Daily Scrum (Standup meeting)
+         It is only 15min per day and check whether ur progress towards the goal is proper or not, if it is not going in right direction we adapt quickly so that we reacur sprint goal without any issue and we repeat this daily. One of the best practises the teams has found to be successful is that every developer answers 3 questions
+   1. What did I do since yesterday (ie) which task i have work on yesterday
+   2. What I am planning to do today
+   3. Are there any impediments that is blocking my work 
+
+We have to pay attention what others are talking. This is where scrum master helps us to conduct efficient daily standup, they may also do it in a gamified way. For example in some team they will pass on the ball from one person to another and whomever got the ball has to talk so they are not lossing time, since we have only 15min time and we have to cover all people.      Assume that one developer has a issue and discuss about the impediment, do u think solution for impediment should be discussed in daily standup ?
+     No, the reason is because,consider the issue is in Java and might be all people are not in Java and we are wasting everybody time by discussing a solution which they might not be even aware of. If another person knows the solution they can arrange a separate meeting and solve it, if it is a technical issue. If it is non-technical issue, scrum master knows the impediments that are there and try to resolve it. As we find impediment and not able to resolve in half an hour then we have to seek help from others and we have to highlight the impediment at anytime when we got it, dont wait for next standup call.
+
+3. Sprint Review (Show N tell)
+        Generally on last day or previous day of sprint we do a review with product owner called Sprint review, we have to show the live demo of the application that we have worked on and demonstrate the increment that we have actually implement. So for 4 weeks sprint we can spend 4 hrs for this event 
+    Here we demonstrate the changes that we have done, product owner will accept or reject the work that we have done, so he will check whether we have implemented the requirement in the way he wanted us to do it or not, along with that he may call some endusers to whom he want to show that we started doing this requirement and coming up in good shape 
+      Sprint review is also a place where we get new ideas because we seeing something in live, by seeing we get many new ideas and added into the product backlog, our product backlog may get updated during sprint review 
+       One of the common issue that may  happen if we follow sprint review on last day of sprint is, we dont have time to fix the defect if anything that gets identified during sprint review. So what project started doing is, they are doing multiple sprint review, if it is 2 weeks sprint they do one sprint review at the end of first week and show all completed requirement and show remaining requirement in the end of second week, so that we get some time if at all any defect is identified by product owner  
+
+4. Sprint retrospective 
+         It is 3hrs for 4 weeks where we have to introspect and check, what really went well in last sprint and what did not go well, how can i improve things in next sprint and any wish want to see in the team, so we can discuss all this in this meeting 
+       This is important because whatever things went well we have to increase the occurence of that in next sprint, scrum master will keep a note on that, it need not be only technical things. This also a place where we come up with new ideas, what changes we wish to see in next sprint. Probably scrum master have seen someother team using a tool which helps them in achieving something very efficiently 
+
+5. Product backlog refinement
+         It is not considered as a ceremony as per scrum guide, but mentioned about backlog refinement but not considered as a ceremony, but it is also an important activity. Scrum not told how much time it has to take, because it is important activity so we can take 10% of sprint time 
+         It is the role of product owner, he keeps check the product backlog whether he have to make any changes to the priority, whether any new requirement has come which is not added to the product backlog, some requirement might became obselete so he should move it down the line, so this is the refinement activity that  happens 
+       So whenever it becomes clear for him that in next 3 or 4 sprint that we have to implement a requirement, that is when he call the development team and explain that in next 3 sprint we are expecting to work on this. So why will this help development team, imagine that some R&D required (ie) for doing one work we need to do some R&d, its a new type of work that we are going to do 
+    For example, if we worked on e-bank how we used to authorize the payment, we use to have floppy disc where the signatures are stored on floppy disc. We will insert the floppy card and used to read the content in card and check whether the signature is matching and then we use to approve. How did it evolve from that  stage to current stage, we have different types of readers, so whenever any new card reader came into market we have to check whether 3rd party library that they are giving to read the content in the card, whether it really supported by our technology or not, is our code is able to ready that library or not, so some R&d is required
+    So what technical team will do is, they introduce something called as spike stories, these stories can be technical or functional. For example a new version of software has come and we have to upgrade to newer version, we dont know how many of current function we are using have become obselete in new version, so we have to make code changes there 
+    So to make the development team ready for their future work, product owner will start explaining and also gets high level estimate at that point of time 
+
+5 Values
+    These are the interpersonal skill that we should have in agile 
+1. Focus - All of us should have focus on sprint goal 
+2. Openness - we should open about all the work we are doing, if we are facing any challenge we should open about that 
+3. Respect - we have to respect each other and encourage them to be independent, somebody may be good in something and somebody may not be good, it dosent mean we should not show respect to them 
+4. Courage - I should have that courage to start taking more complex work and also have courage to ask right question at right time and courage to tell that i am facing the problem 
+5. Commitment - Sprint goal is very important, nobody push us to take commitment, we have commited ourself to this so we should ensure that we are still committed to achieve this scrum goals
