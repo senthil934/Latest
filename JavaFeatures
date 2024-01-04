@@ -314,7 +314,7 @@ Example e=(var a,var b) -> a+b;
 (var a,String b)-> a+b; //wrong
 var a -> a; //wrong,we have to use the parenthesis
 
-5. String API changes
+5. String API changes - https://javaconceptoftheday.com/java-new-string-methods-with-examples/
       - certain enhancement in String API
 isBlank() - check whether string is blank or not
 lines() - based on \n extract list of strings. From multi line string if we want to extract substring of each line
@@ -4725,7 +4725,8 @@ Problem with JDK7:
     1. The resource reference variables which are created outside of try block cannot be used directly in try with resources 
 
 
-8. Factory method to create unmodifiable collection
+8. Factory method to create unmodifiable collection - https://javaconceptoftheday.com/java-9-immutable-collections/
+
         Until JDK1.8, we create an unmodifiable collection using 
     List<String> l=new ArrayList<>();
         l.add("one");
@@ -4776,6 +4777,15 @@ eg: Map<Integer, String> map = Map.ofEntries(
 2. In all factory methods we are not allowed to use null, then we get NullPointerException
 3. If we use duplicate objects in Set and duplicate keys in Map, then we get IllegalArgumentException
 
+Immutable Vs Unmodifiable :
+Java 9 Immutable collections and unmodifiable collections returned by the Collections.unmodifiableXXX() wrapper methods are not the same. Unmodifiable collections are just the read-only views of the original collection. You can perform modifying operations on the original collection and those modifications will be reflected in the collections returned by these methods. But, immutable collections returned by Java 9 static factory methods are 100% immutable. You can’t modify them once they are created.
+
+Characteristics Of Java 9 Immutable Collections :
+Modifying operations on immutable collections are not allowed. If you try to modify them, UnsupportedOperationException will be thrown.
+Null elements are not allowed. They will give NullPointerException at run time.
+Java 9 immutable collections are thread safe. You can use them in a multi threaded environment without synchronization.
+Immutable collections returned by Java 9 static factory methods are space efficient. They consume less memory than the mutable collections.
+
 9. Stream API enhancement
        - default methods like takeWhile() and dropWhile()
        - static method called Stream.iterate() with 3 args with conditional check 
@@ -4816,7 +4826,55 @@ Iterator<String> itr=new Iterator<>(){
   ---
 }
 
-11. safevarargs annotation
+
+11. Optional class improvements
+
+https://javaconceptoftheday.com/java-9-optional-class-improvements/
+
+1. ifPresentOrElse() Method :
+This method performs the given action if the value is present in the Optional object. If the value is absent, performs the given empty-based action.
+
+You can use this method when you want to perform different actions depending upon the presence and absence of a value.
+
+import java.util.Optional;
+ 
+public class Java9OptionalImprovements 
+{
+    public static void main(String[] args) 
+    {
+        //Optional object with a value
+         
+        Optional<String> optionalAddress_1 = Optional.of("Address_1");
+         
+        optionalAddress_1.ifPresentOrElse(address -> System.out.println("Address : "+address), () -> System.out.println("No Address"));
+         
+        //Optional object without a value
+         
+        Optional<String> optionalAddress_2 = Optional.empty();
+         
+        optionalAddress_2.ifPresentOrElse(address -> System.out.println("Address : "+address), () -> System.out.println("No Address"));
+    }
+}
+
+2. stream() - to convert optional to stream
+
+List<Optional<String>> list=Arrays.asList(Optional.of("Chennai"),Optional.of("Nodia"), Optional.of("Hyderabad"));
+list.stream().filter((o)->o.get().contains("d")).forEach(System.out::println); //Optional[Nodia], Optional[Hyderabad]
+
+We dont want optional, we need to get direct values
+
+List<String> cityList=list.stream().filter((o)->o.get().contains("d")).flatMap(Optional::stream).toList();
+cityList.forEach(System.out::println); //Nodia, Hyderabad
+
+In case if it contains any empty value, then 
+List<Optional<String>> list=Arrays.asList(Optional.of("Chennai"),Optional.of("Nodia"), Optional.of("Hyderabad"),Optional.empty());
+List<String> cityList=list.stream()
+         .flatMap(o->o.isPresent()?Stream.of(o.get()):Stream.empty()).toList().stream().
+.filter((o)->o.contains("i")).toList();
+cityList.forEach(System.out::println); //Chennai,Nodia
+
+
+12. safevarargs annotation
        If one type of object(like String) pointing to another type of object(like Integer) at runtime, then it throws ClassCastException, this typeof scenario is called Heap Pollution problem 
      eg: Student s1=customerObject;
        This annotation introduce in Java7. To suppress warning related to heap pollution problem we use SafeVarargs.
@@ -6813,6 +6871,8 @@ Internally it creates a bucket from 0 to 15, since initial capacity of map is 16
      Consider we insert value into map as 
 hm.put(e1,"Ram"), now how hashmap identify this entry and keep it between 0 to 15. So when we call this put(). First it will calculate the hashcode for key using hashCode(key). Next it will identify the index based on 
    index= hashcode(key) & (n-1) = hashcode(e1) & (16-1)
+
+
    Now it will store that entry in the bucket based on index value as key,value,hashcode, next (ie) e1, Ram, 1000, null, last elt is null since no more elt in bucket
    Now we add second object, hm.put(e2,"Sam"), first calculate hashcode(e2), next calculate index, then it will store that value in bucket based on index as e2,Sam,1001,null 
    Now we add third object, hm.put(e3,"Tam"), first calculate hashcode(e2), next calculate index, and coincidently it returns same index. First it will go and check in that index, there is already one node. If in same bucket if we find multiple node then that is called Hashing Collison, so map will not directly add the entry into the bucket. Since both have same index, map internally calls equals() and check whether the content is same or different, if it is different it immediately it will store entry to the same bucket and last elt of e1 will be having next reference and not null which points to next node, if it is same then it will replace the entry 
@@ -7158,20 +7218,21 @@ finalize() method in Java is a method of the Object class that is used to perfor
 
 Unrefrencing of objects is done in multiple ways as follows:
 
-By anonymous object: Anonymous objects are those objects in Java which are created without any reference variable. As a result, after creation, we have no way to access the anonymous object.
+1. By anonymous object: Anonymous objects are those objects in Java which are created without any reference variable. As a result, after creation, we have no way to access the anonymous object.
 
  new Student();
 
+
 In the above code, even though an object of Student class is created, it has no reference variable and cannot be used after creation, but it acquires memory.
 
-By nulling reference: When an object is referenced to null value, it is considered an unreferenced object as it holds only null value.
+2. By nulling reference: When an object is referenced to null value, it is considered an unreferenced object as it holds only null value.
 
 Student s = new Student();
 s = null;
 
 Here, s is an unreferenced object that holds null value. It is considered garbage by JVM.
 
-By assigning a reference to another object: When one object is assigned to another, first object is of no use and can be considered as garbage.
+3. By assigning a reference to another object: When one object is assigned to another, first object is of no use and can be considered as garbage.
 
 Student s1 = new Student();
 Student s2 = new Student();
@@ -7257,7 +7318,7 @@ public class Demo
         Demo demo1 = new Demo();
         Demo demo2 = new Demo();
         demo1 = demo2;
-        demo1.finalize(); // Explicit call to finalize method
+        demo1.finalize(); // Explicit call to finalize method, not going to destroy the object 
         System.out.println("Garbage collector is called");
         System.gc(); // Implicit call to finalize() method
     }
@@ -7615,7 +7676,7 @@ class C extends A{}
 class D{}
 class Main{PSVM{}}
 
-We make the class A to be sealed which is new keyword in Java, so when u give sealed it normally permits some of the class to  inheri, so we want to allow B and C classes and not D class using "permit" keyword
+We make the class A to be sealed which is new keyword in Java, so when u give sealed it normally permits some of the class to  inherit, so we want to allow B and C classes and not D class using "permit" keyword
 
 sealed class A permits B,C{ }
 class B extends A{}
@@ -7702,9 +7763,7 @@ then string object will be created in heap itself.
    If we create String s4=new String("hello");, then another object will be created in heap 
    If we create String with new operator, then if we call s3.intern() then the value will be added into string pool and that reference will be returned 
 
-
 Why string is immutable?  https://www.youtube.com/watch?v=5OXc-TsM3bg
-
      Immutable objects are those objects whose value cannot be modified after creation. For eg: String, all wrapper class
      - Here we are changing only the address but not the value 
 
@@ -7804,3 +7863,572 @@ public class Main { PSVM {
     s1=s1+" Ram";
     sop(s1);
 }}
+
+
+Splitertor
+
+https://javaconceptoftheday.com/java-8-spliterator/
+
+Java 9 features
+1. Modular system - Jigsaw project
+       - Maven, spring framework is good example of modular system 
+       - It is a collection of code or resources which are closely related to logical group 
+
+Why module?
+    We dont want to import everything in project, so whichever is required we want only those things, so we can create modules which are logically grouped
+    For example, myhcl it is not one single portal, we have LMS as different portal, itime as different portal, so it is group of different modules 
+
+Types of Modules
+1. System modules - given by javase and JDK. To view all modules 
+  >java --list-modules
+2. Application modules - we write these modules 
+3. Automatic modules - when we run 
+   >javac classname
+it loads some default modules automatically
+4. Unnamed modules - used for backward compatability, so if we use older version of Java other than java17, these unnamed modules will be helpful. Because there are few JDK stuff which is exposed to every JDK version, so there is some backward compatibility, those will be available as unnamed modules 
+
+Rules
+1. We have to follow pkg convention  
+2. We have to provide a name for a module, which will be exposed to other projects
+3. During export we provide the package name which we export to outside appl
+   require - who is going to invoke our module, so they use require keyword stating  that i am going to use this package in my project  
+      
+
+JPMS
+   A module is a set of packages designed for use, not all the packages in a module can be reused, this is where the control happens, when creating a module you can set what packages can be reused and which can't. From jdk9 the Java API packages have been split into modules, you have modules like java.base, java.desktop, java.sql
+   So in summary the Java platform model system allows you to create more lightweight applications by only including the modules and classes that are actually needed. Before jpms you will typically include entire libraries
+in the application, even if you only needed a small portion of their
+functionality this will result in larger applications with potential unnecessary code and classes
+   In the JPMS, the most important module is java.base, it includes fundamental Java packages such as java.lang, java.io,java.util and the others. So since java.base module contains the core Java classes all other modules implicitly depend on it. This means that when you create your own module or use any other Java module, we don't need to explicitly specify a dependency on java.base, as it is automatically included just like java.lang is automatically available to all programs without having to import it, the java.base module is automatically accessible to all modules without explicitly requiring it. The java.base module itself does not depend on any other module
+now this ensures that the core Java functionality is self-contained and free of external dependencies
+  If we check out Jshell we can see that the package of a string is java.lang
+java.lang is automatically imported and during coding, from jdk 9 and above we can check the module of a class string is java.base and this is because
+java.lang package is located in the java.base module
+
+C:\Users\senthil.kumart>jshell
+|  Welcome to JShell -- Version 17.0.1
+|  For an introduction type: /help intro
+
+jshell> var x="hello";
+x ==> "hello"
+
+jshell> x.getClass().getPackage();
+$2 ==> package java.lang
+
+jshell> x.getClass().getModule();
+$3 ==> module java.base
+
+jshell>
+
+We can use --list-modules command in my terminal to check out the available
+models
+>java --list-modules
+
+
+Module-info file
+    In jDk 9 and above when you create a new program, it will be part of a module, if we don't specify the module details in the Module-info file
+it will be classified as an unnamed module. 
+   create a file called Module-info.java, each module has its module-info.java file, in this file we will specify which package you export and which order your module requires
+     module com.pack {
+         exports com.myPack;
+     }
+
+Now the file can be empty that is we could decide not to export any package, that means no other module can access any package in your module. Packages we exports can be used by other modules, what packages we do not export cannot be used. 
+
+In the Java Platform Module System (JPMS), an  unnamed module refers to a module that does not have a module-info.java file. Unnamed modules can  access all exported packages from named modules.  Unnamed modules can  access all exported packages from named modules.  
+       If we expand the JDK library, we can see it is now divided into modules. At the top, we can see java.base module and others continue  after it. 
+     Consider  DESCipher class, this could be accessed in our pre-JDK 9  project (ie) before we used JDK 9. Now, we can't access it because we are in JDK 9  and above. Let's look at the error message.  
+
+import com.sun.crypto.provider.DESCipher;
+public class Main {
+	public static void main(String[] args) {
+		var d=new DESCipher();
+	}
+}
+
+It says that the package is declared in java.base but it is not exported.  So, while unnamed modules  (our project at the moment is an unnamed module  
+because we are not using modules in this project  but we are using JDK 9 which has  modules) and we're trying to access a  package that is already organized into a module.  
+
+    So, unnamed modules can access exported packages in modules, but it can only do that if the package was exported. So in java.base,  it does not export the Cipher class's package, so we can't access it. Any package a module doesn't export,  you can't access it, even though  the class in that package is public. One thing to note is that the java.base module  is implicitly required by all other modules, so we don't need to declare a dependency  on it in your module-info.java file.   
+    Even though we implicitly depend on java.base, you  can only access exported packages like java.lang and others. Let's demonstrate this with another  example.
+
+import java.awt.image.BufferedImage;
+
+public class Main {
+	public static void main(String[] args) {
+		var bufferedImage=new BufferedImage(2,1,1);
+		System.out.println(bufferedImage.getClass().getModule());
+	}
+}
+
+ The BufferedImage class belongs to the java.desktop module. It is not implicitly  required like java.base.  We have to require the module to access  the package that this class belongs to.  
+  But how am I able to still access it? eventhough, I  am using a JDK 9 and above project, And I am accessing BufferedImage class which belongs to java.desktop module. How am I able to access it even  though I haven't said I require its module?  
+   That is because my project is  functioning like an unnamed module  
+and  in an unnamed  module,we can access any exported  package from named modules without having  to require it. So all the exported packages  
+in Java, it can access it. So this  helps with backward compatibility.  
+So, unnamed modules have implied readability  to all named modules, meaning that they can  read all named modules without needing  to declare dependencies explicitly.
+   However, if you decide to introduce a  module-info.java file to your project,  then we will need  to explicitly require java.desktop module to  continue accessing the BufferedImage class.
+
+Right click project - configure - create module-info.java file - give LearnModules
+
+Introducing a module-info file in your  project makes it a modular project.  
+So, when we add a module-info file, your project  starts adhering to the rules of the Java Platform Module System. Our module is named and now we can see our code has an error.
+  
+This is because the java.awt.image  package belongs to the java.desktop module , the java.desktop module exports it,  but we can't access it at the moment,
+to access it, we need to explicitly  require it in our module-info file.  
+
+module LearnModules {
+	requires java.desktop;
+}
+
+Now, let's say we want other modules to access  your own package. You can enable that by using  the export statements. Without using an export statement, no other  module can access any of the packages. 
+
+module LearnModules {
+	requires java.desktop;
+        export com.pack;
+}
+
+Custom Modules
+    Here we will create three packages, com.pack package has a class
+called Nice, 
+
+package com.pack;
+
+public class Nice {
+	public Nice() {
+		System.out.println("Nice created");
+	}
+}
+
+we also have a package com.pack1 and then a third package com.pack2 with a class named Example which have talk() which accepts a string name and 
+it print some text.
+
+package com.pack2;
+
+public class Example {
+	public Example() {
+		System.out.println("Example created");
+	}
+	public void talk(String name) {
+		System.out.printf("Hello %s, Welcome to Java",name);
+	}
+}
+
+In com.pack1, we have Example1 class will have a method called talkExample() where we create an object of Example and then call the talk() method of the Example class. Since Example is declared public so even though we are in different packages the access modifier enables that, however I wanted Example class only be an internal utility package within this module and not accessible to developers as a public API.
+
+package com.pack1;
+
+import com.pack2.Example;
+
+public class Example1 {
+
+	public Example1() {
+		System.out.println("Example1 created");
+	}
+	
+	public void talk(String name) {
+		System.out.printf("Hello %s, Welcome to Example1",name);
+	}
+
+	public void talkExample(String name) {
+		var e=new Example();
+		e.talk(name);
+	}
+}
+
+    Now at the moment anyone can access the functionality of Example class directly because it's public, however we don't want developers to access it directly. If they are to use the functionality we want them to use the Example1 class which also uses Example internally, we can achieve this with modular design
+   In our module-info, we export com.pack and com.pack1, we do not export the
+com.pack2 package this means that even though the classes in the package such as Example  are declared as public, they will not be accessible outside
+this module
+
+module LearnModules {
+	requires java.desktop;
+	
+	exports com.pack;
+	exports com.pack1;
+}
+
+We are going to create a modular jar which is a jar file that contains a module descriptor, in this situation a module info.java in addition to its usual classes and resource. The module descriptor provides information about the module, its dependencies and packages it exports
+   To create jar file 
+
+Right click project - Export - jar file - choose destination - choose main class - click finish 
+
+Now we can run the jar using the Java command
+
+C:\Microservice>java -jar JPMS.jar
+Learn Modules
+
+It knows the main class to run because we told it during the setup
+
+Now we are am going to create another project called UseModules that will use the generated jar file. We will include the jar files in my libraries, so we can access the classes and packages in the jar
+
+Build path - Add Libraries - Under modulepath - Add external jar - select jar file
+
+when you add a jar file as a library, it is added to the Project's class path
+by default and not as a module on the module path so this means the jar file is treated as part of unnamed module, the unnamed module in this situation can
+access even unexported packages in the jar file
+
+package com.example;
+
+import com.pack.Nice;
+import com.pack1.Example1;
+import com.pack2.Example;
+
+public class Main {
+	public static void main(String[] args) {
+		System.out.println("Hello world");
+		var e1=new Example();
+		var e2=new Example1();
+		var n=new Nice();
+	}
+}
+
+
+Now we create module-info file in UseModules project,so we get error in Main class , so to fix this error we need to require the module of this package, and for Example the package wasn't exported and the error. Here LearnModules do not export this package to useModules, to fix the error we use the required statements to require learnmodules module
+
+module UseModules {
+	exports com.example;
+
+	requires LearnModules;
+}
+
+Now we can call the talkExample() on the e2 object, so internally public classes can be accessed that is between packages in the module, however if the module does not export a package then even the public classes in
+that package cannot be accessed outside the module
+
+package com.example;
+
+import com.pack.Nice;
+import com.pack1.Example1;
+
+
+public class Main {
+	public static void main(String[] args) {
+		System.out.println("Hello world");
+		
+		var e2=new Example1();
+		var n=new Nice();
+		e2.talkExample("Java");
+	}
+}
+
+
+Module Path
+  Module path is a concept introduced with the jpms in Java 9. It's an alternative to the class path which was the traditional way of organizing and loading Java libraries and dependencies before Java9. The module path is a list of directories or class files that contain Java modules.
+  When we compile or run the Java application in the terminal, we will
+specify the module Paths using the --module-path or -p follow this by a list
+of directories or Java files separated by the system path separator. Since we are using an IDE it manages all this based on your project settings and
+dependencies, so we don't need to set the module paths manually
+  For example to compile a modular Java application, we will use a command like
+
+>javac --module-path mods -d mods/com.example.app src/com.example.app/module-info.java src/com.example.app/com/example/app/MyApp.java
+
+javac is the Java compiler command line tool used for compiling Java source code files into Java byte code, mods tells the compiler we are able to find the required modules, in this example mods is the directory containing the compiled Java modules
+ -d  mods/com.example.app specifies the output directory where the compiled Java byte code files will be placed, in this example output directory is
+mods/com.example.app, the Java compiler will create this directory if it does not exist and puts the compiled class files and the module-info.class file in it
+  src/com.example.app/module-info.java is the path to the module-info.java file, this contains the modules metadata dependencies and exported packages
+ src/com.example.app/com/example/app/MyApp.java is just like any other part to the Java source file
+
+Unnamed module vs Automatic module
+   As we have seen unnamed models are created by the JPMS when a Java application is run using the class path instead of the module path, each jar file or directory of class files on the class path becomes an unnamed model at runtime
+   unnamed models do not have a name and are not part of the module paths
+they export all their packages so that other modules can access them, they require all other modules including automatic modules , they cannot be used as dependencies however in module descriptors that is in module info.java files of named modules
+  Automatic modules are a way to add jar files that do not have module-info.java file into a modular application, so when a jar file without module- info file is placed on the module path, the jpms automatically creates an
+automatic module for that jar file, then the name of the automatic module is derived from the jar file name.
+  Now automatic modules export other packages so that all other modules
+can access them, they can be used as dependencies of named modules unlike
+unnamed modules that cannot be used as dependencies. Automatic modules are
+created when a jar file without module-info is placed on the module path
+while all named modules are created for jar files or directory of class files on the classpath
+
+Java Modules Qualified Exports
+   Previously we exported packages in the LearnModules except for one package called com.pack2, so generally when you export a package, the package is
+accessible to all modules that require it.
+   Now for example LearnModules exports com.pack1, so any module that requires com.pack1 module has access to the com.pack2 package. What if we want to export a particular package, for example com.pack2 and we wanted only some specific module to access it and not every other module
+   Java provides a way to handle this situation when you export a package to only a specific module it is called a qualified exports which provide a way to limit the feasibility of your exported packages to certain modules, by using the "to" keyword followed by the target Module name
+
+module LearnModules {
+	requires java.base;
+	requires java.desktop;
+	
+	exports com.pack;
+	exports com.pack1;
+	exports com.pack2 to UseModules;
+}
+
+
+- Now in UseModules, Main.java we get error as we are not exported this package
+
+public class Main {
+	public static void main(String[] args) {
+		System.out.println("Hello world");
+		
+		var e2=new Example1();
+		var n=new Nice();
+		e2.talkExample("Java");
+		
+		var e3=new Example2();  //error
+	}
+}
+
+- Now we export the jar file and use it in UseModules
+
+import com.pack.Nice;
+import com.pack1.Example1;
+import com.pack2.Example;
+
+
+public class Main {
+	public static void main(String[] args) {
+		System.out.println("Hello world");
+		
+		var e2=new Example1();
+		var n=new Nice();
+		e2.talkExample("Java");
+		
+		var e3=new Example();
+		e3.talk("Ram");
+	}
+}
+
+Now we can see import Example class directly in UseModules since we have exported that package only to UseModules
+
+Transitive keyword
+   In the module-info file we can use the exports directive to specify which
+packages within a module should be accessible to other modules, by default no packages are accessible unless you explicitly export them
+   For example let's say we have a moduleA and it requires moduleB, moduleB also requires moduleC.  A depends on B and B depends on C, so A has an indirect dependency on C
+
+module moduleA {
+     requies moduleB;
+}
+module moduleB {
+     requires moduleC;
+}
+
+Generally if A does not directly need any packages in C, then just having a require moduleB in its module-info file is fine, but what if moduleA also needed to access features in moduleC then we have to add requires moduleC to  moduleA
+
+module moduleA {
+     requires moduleB;
+     requires moduleC;
+}
+module moduleB {
+     requires moduleC;
+}
+
+Now this can be redundant because after all A requires B, so what if we made it in such a way that as A requires B and B requires C, A should have access to C, we can achieve this by using the transitive keyword. The transitive keyword is used with the exports directive to ensure that any module requiring the current module, also implicitly requires the modules specified in the transitive relationship
+    For example moduleB will now include the transitive keyword, so it requires transitive moduleC
+
+module moduleA {
+     requies moduleB;
+}
+module moduleB {
+     requires transitive moduleC;
+}
+
+so any module that directly requires B will automatically depend on C, since moduleA requires moduleB, it will now have access to moduleC because of the transitive views, this saves developers the stress of having to list all the required dependencies for each module and it reduces the complexity of module
+descriptors
+  when a moduleA requires another moduleB transitively, any module that directly depends on moduleA will also implicitly depend on moduleB, however transitive dependencies do not extend beyond that level meaning that it will not propagate further down the chain. Let's say moduleA requires transitive B, moduleB requires transitive C and module C you have some code and dependencies. 
+
+module moduleA {
+     requies transitive moduleB;
+}
+module moduleB {
+     requires transitive moduleC;
+}
+module moduleC {
+     //some code
+}
+
+Let's create two more modules D and E, where D requires A and E requires D, in this scenario module D implicitly depends on module B because module A requires module B transitively, however module A will not implicitly depend on module B or C since the transitive dependencies do not propagate beyond direct
+dependencies 
+
+module D {
+   requires A;
+}
+module E {
+   requires D;
+}
+
+If we want module E to implicitly depend on module B and module C you will need to explicitly use the transitive keyword in the module D. When module E depends on module D it will also implicitly depend on module a b and c
+
+module D {
+   requires transitive A;
+}
+module E {
+   requires D;
+}
+
+
+Circular (cyclic) dependency
+
+myModuleA                                  myModuleB
+
+module-info.java                           module-info.java
+    requires myModuleB;                         requires myModuleA;
+    exports myPack1;                            exports myPack2;
+
+myPack1                                    myPack2
+   M1.class                                     M2.class
+
+     Consider we have 2 modules myModuleA and myModuleB, myModuleA requires myModuleB and myModuleB requires myModuleA, so myModuleA reads myModuleB and myModuleB reads myModuleA, these 2 modules requires each other and read each other in cyclic way. The cyclic dependency between 2 modules is not allowed in Java modular programming
+
+1. Create maven project JPMS-Cyclic with pom packaging
+
+2. Right click JPMS-Cyclic project - Create maven module myModuleA
+- Create M1.java inside myPack1 package
+- Right click project - configure - create module-info.java as myModuleA
+module myModuleA {
+	requires myModuleB;
+	exports myPack1;
+}
+
+3. Create maven module myModuleB
+- Create M2.java inside myPack2 package
+- Right click project - configure - create module-info.java as myModuleB
+module myModuleB {
+	requires myModuleA;
+	exports myPack2;
+}
+
+Now we can see error as cyclic dependency is not possible in modular programming in case of 2 modules (ie) if myModuleA requires myModuleB then myModuleB cannot requires myModuleA
+
+Now we will see cyclic dependency between 3 modules. Here myModuleA requires myModuleB, myModuleB requires myModuleC and myModuleC requires myModuleA. 
+
+myModuleA                                  myModuleB
+
+module-info.java                           module-info.java
+    requires myModuleB;                         requires myModuleC;
+    exports myPack1;                            exports myPack2;
+
+myPack1                                    myPack2
+   M1.class                                     M2.class
+
+
+
+myModuleC                                
+
+module-info.java                           
+    requires myModuleA;                        
+    exports myPack3;                           
+
+myPack3                                    
+   M3.class      
+
+So their require operation actually forms a cycle and this type of cycle is not allowed in modular programming 
+
+4. Right click JPMS-Cyclic project - Create maven module myModuleC
+- Create M3.java inside myPack1 package
+- Right click project - configure - create module-info.java as myModuleC
+module myModuleC {
+	requires myModuleA;
+	exports myPack3;
+}
+
+Now we can see error as cyclic dependency is not possible. So remove "requires myModuleA" in myModuleC, now we can see there are no errors because we dont have any circular dependency amoung 3 modules (ie) myModuleA depends on myModuleB, myModuleB depends on myModuleC and myModuleC does not depend on any module
+   So Java modules doesnt support cyclic dependencies, it will have dependency in one direction 
+
+Transitive dependency    
+
+myModuleA                                  myModuleB
+
+module-info.java                           module-info.java
+    requires myModuleB;                         requires myModuleC;
+                                                exports myPack2;
+
+myPack1                                    myPack2
+   M1.class                                     M2.class
+
+
+
+myModuleC                                
+
+module-info.java                                                  
+    exports myPack3;                           
+
+myPack3                                    
+   M3.class      
+ 
+Here myModuleA requires myModuleB, myModuleB requires myModuleC. Suppose M2 class in myPack2 of myModuleB contains a method and that method returns the reference of type M3. The method in the class M2 which returning reference of type M3 is called by M1 class of myModuleA     
+
+1. Right click JPMS-Cyclic project - Create maven module myModuleC
+- Create M3.java inside myPack3 package
+
+package myPack3;
+public class M3 {
+    public void m3() {
+          System.out.println("M3 method");
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleC
+module myModuleC {
+	exports myPack3;
+}
+
+2. Right click JPMS-Cyclic project - Create maven module myModuleB
+- Create M2.java inside myPack2 package
+
+package myPack2;
+public class M2 {
+    public M3 m2() {
+          System.out.println("M2 method");
+          M3 m=new M3();
+          return m;
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleB
+module myModuleB {
+        requires myModuleC;
+	exports myPack2;
+}
+
+3. Right click JPMS-Cyclic project - Create maven module myModuleA
+- Create M1.java inside myPack1 package
+
+package myPack1;
+import myPack2.M2;
+import myPack3.m3;
+public class M1 {
+    public static void main(String[] args) {
+          M2 a=new M2();
+          M3 b=m2.m2();
+          b.m3();
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleA
+module myModuleA {
+	requires myModuleB;
+}
+
+Here M1 class needs M3 class for execution which is stored in myPack3 and belongs to different module (ie) myModuleC. Actually myModuleA requires myModuleB, since myModuleA does not require myModuleC, so myModuleA is not aware of myModuleC
+
+- Now we can see an error myPack3 is not visible in myModuleA. So dependency of myModuleA on myModuleC is called transitive dependency (ie) to use the module myModuleB, myModuleA also need to require to use myModuleC. Even if myModuleA intended to use only myModuleB but for using myModuleB, myModuleA requires myModuleC, this is called transitive dependency on myModuleA on myModuleC 
+
+- Now in module-info of myModuleA, we give as
+
+module myModuleA {
+	requires myModuleB;
+        requires myModuleC;
+}
+
+Now we wont get any error, but it is not a good idea of requires myModuleC, because we are using only myModuleB 
+
+1. If using a module explicitly requires to use some other module too, then this is not convenient
+2. It is possible that user of myModuleB is completely unaware of myModuleC
+3. But we can make myModuleC by default available to users of myModuleB by using transitive keyword
+
+- Now in module-info of myModuleB, we change as 
+
+module myModuleB {
+        requires transitive myModuleC;
+	exports myPack2;
+}
+
+module myModuleA {
+	requires myModuleB;
+}
+
+After writing this stmt, whoever requires myModuleB will automatically use myModuleC.
+
+Now when we run M1.java we wont get any error and output will be printed 
