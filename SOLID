@@ -1589,7 +1589,7 @@ public abstract class Company {
      public abstract Gpu createGpu();
 }
 
-Now the concrete creators with be MsiManufacture and AsusManufacture classes which implement createGpu() method which is a factory method. MsiManufacture class will return MSI brand GPU and AsusManufacture class will return ASUS brand GPU 
+Now the concrete creators will be MsiManufacture and AsusManufacture classes which implement createGpu() method which is a factory method. MsiManufacture class will return MSI brand GPU and AsusManufacture class will return ASUS brand GPU 
 
 public class MsiManufacture extends Company {
     public Gpu createGpu() {
@@ -2190,3 +2190,155 @@ Class Diagram
      First thing is the abstract class which is OrderProcessTemplate in our case which declares the methods that act as steps of an algorithm as well as actual template method which calls these methods in a specific order, the steps may either be declared as abstract or have some default implementation 
    The second part are concrete classes which are StoreOrder and OnlineOrder classes, these classes can override all of the steps provided by their parents class or only abstract ones except for the template method itself 
     To sumup template method pattern will allows us to turn an algorithm into a series of individual methods that can be easily extended and overridden by subclasses, this is done by keeping the structure of ur base algorithm defined in the superclass. When u turn such an algorithm into a template method, we will able to pull up the steps with similar implementations into the superclass, hence eliminating code duplication
+
+
+Chain of responsibility 
+  Imagine you are watching Netflix, when suddenly you receive a text  
+message saying that your credit card was suspended, now we call the bank in attempt to fix this  and the first thing we hear is a robotic voice asking if English is your preferred language, then after wasting several minutes of time you get to speak with a live operator, who has no idea what you are talking about eventually, after a while they connect you with the right person and your issue is resolved  
+  So here ur request moved from one operator to another, at any point in time the  operator you are speaking to  does not know how to address your problem he or she will transfer you to the next one, because it isn't their responsibility  to handle the issue you are encountering. 
+   So here operators you are  talking to constitute a chain of handlers, 
+where each handler is  responsible for one single task ,therefore the problem encountered  will be initially checked by the first handler or operator and as long as the operators thinks that there is still hope in solving your issue they will keep transferring you to another  operator until you reach the last one, additionally any handler can decide not to pass the request further down the chain and effectively stop any further processing 
+   This pattern is a behavioral design pattern  that lets you transform particular behaviors  into standalone objects called handlers then upon receiving a request, this request  will pass along the chain of handlers 
+where each one can decide either to process the request 
+or pass it to the next handler in the chain. 
+
+Class diagram 
+   Let's start with the concrete handlers which are the operators in the previous example, these classes contain the actual  code for processing requests they are usually self-contained and immutable accepting all necessary data just once via the constructor 
+   These concrete handlers implement a  common interface the Handler interface,  it usually contains just a single  method for handling requests 
+but sometimes it may also have another  method for assigning the next handler  
+in the chain just like a linked list. 
+   The BaseHandler is an optional class   where you can put the boilerplate code  that's common to all handler classes  usually this class defines a field that  stores a reference to the next handler 
+   Finally the Client composes the chain of handlers this can be done once or dynamically depending   on the application's logic, 
+
+Chain of Responsibility Implementation
+    Suppose you are  working on an authentication app and for a user to log in into our platform  he or she must pass several checks, first we need to make sure that the username  entered indeed exists in our server databases 
+and if not we have to prompt the user  and suggest him or her to sign up. 
+Next if the username exists we need to  verify that the password entered by the user matches the corresponding  password tied to this username 
+and if not we must alert the user  that the password entered as incorrect. 
+Finally if both these checks are validated we  need to go over the admin users of our application because if the user that is trying to  log in is an administrator we perhaps  may have to enable additional admin pages  for him or grant him specific rights etc. 
+
+1. First we start the implementation with the database class, this one will simulate the database storing  the usernames and passwords of our users  
+with the help of a HashMap. You could have established a connection with a real database but we are not going to waste time doing it, so in the constructor we are going to insert a couple entries inside the map. Now we add two helper methods, one will check if the user exists in our records and the second method  will make sure that the password provided  corresponds to the username the user has entered 
+
+public class Database  {
+    private final Map<String,String> users;
+
+    public Database() {
+       users=new HashMap<>();
+       users.put("admin_username","admin_password");
+       users.put("user_username","user_password");
+    }
+
+    public boolean isValidUser(String username) {
+    return users.containsKey(username);
+    }
+
+    public boolean isValidPassword(String username,String password) {
+       return users.get(username).equals(password);
+    }
+}
+
+2. Create the Handler abstract class used to store a reference to the next handler in the chain, it will also define a method that allows us to assign this reference like a setter for the next handler, moreover this class will contain an abstract method the handle() method, this method will be implemented  by the concrete handlers where each one will define  
+the condition based on which the user  is eligible to access our application, next method is handleNext() which is to forward the request to the  next object 
+
+public abstract class Handler  {
+    private Handler next;
+
+    public Handler setNextHandler(Hander next){
+        this.next=next;
+        return next;
+     }
+
+     public abstract boolean handle(String username, String password);
+
+     protected boolean handleNext(String username, String password) {
+      if(next==null) {
+         return true;
+      }
+      return next.handle(username,password);
+     }
+}
+
+3. We have three concrete handler like the UserExistsHandler, the ValidPasswordHandler, and the RoleCheckHandler each one of these handlers must implement or override the handle abstract method. Inside this method you will have a condition  that calls the corresponding helper method defined at the level of the database class  passed to the constructor or in case of the role check handler the condition  will be defined directly inside the handler itself and based on this condition we need to verify  whether to forward the user to  the next handler in the chain by calling the handleNext method implemented  at the level of their parent class or execute some other logic specific to the  handler currently processing the user's request 
+
+public class UserExistsHandler extends Handler {
+      private Database database;
+
+      public UserExistsHandler(Database database){
+          this.database=database;
+      }
+
+      public boolean handle(String username, String password) {
+        if(!database.isValidUser(username)) {
+       SOP("This username is not registered");
+       SOP("Sign up to our app now");
+       return false;
+     }
+     return handleNext(username, password);
+   }
+}
+
+public class RoleCheckHandler extends Handler {
+
+    public boolean handle(String username, String password) {
+       if("admin_username".equals(username)) {
+        SOP("loading admin page");
+        return true;
+      }
+      SOP("Loading default page");
+      return handleNext(username, password);
+    }
+}
+
+public class ValidPasswordHandler extends Handler  {
+      private Database database;
+
+      public ValidPasswordHandler(Database database) {
+          this.database=database;
+      }
+
+      public boolean handle(String username, String password) {
+           if(!database.isValidPassword(username)) {
+          SOP("Wrong password");
+          return false;
+         }
+         return handleNext(username, password);
+      }
+}
+
+
+4. Now if our application held an  authentication service class 
+ideally this class will have a handler as  field and as parameter to its constructor ,this handler should be used inside a login  like function that invokes the handle method  on the root handler of the chain, if this method returns true then the user passed all the checks in the chain  and was authorized inside our application 
+
+public class AuthService {
+     private Handler handler;
+
+     public AuthService(Handler handler) {
+      this.handler=handler;
+     }
+
+     public boolean logIn(String email, String password) {
+       if(handler.handle(email, password)) {
+      SOP("Authorization was success");
+      //do some for authorized user
+      return true;
+     }
+    return false;
+   }
+}
+
+5. This authentication service along with the chain  of concrete handlers should  be initialized by the client 
+where the whole logic we  implemented will be set to motion. 
+
+public class Main { PSVM {
+      Database db=new Database();
+      Handler h=new UserExistsHandler(db)
+              .setNextHandler(new ValidPasswordHandler(db))
+              .setNextHandler(new RoleCheckHandler());
+       AuthService s=new AuthService(h);
+       s.logIn("username","password");
+     }
+}
+
+you should use the  chain of responsibility pattern, when you encounter the need to execute  several handlers in a particular order as provided requests will get  through the chain exactly as planned, additionally this pattern is useful when the  handlers and their order might change at runtime 
+because you have the ability to insert, remove or reorder handlers dynamically 
