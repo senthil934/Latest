@@ -3029,3 +3029,1476 @@ type Actor {
 
 The actor basically works in a films, so basically actor have an actorId which is primary key for ur resource and specified as ID, first_name, last_name, address as String, dateOfBirth is again a String there is no date as scalar type in case of GraphQL so date will be represented into String format. Next films basically a complex object because films internally will have filmId, name and dateOfLaunch etc 
     So the difference between REST based endpoint and GraphQL based endpoint is suppose we fetch actor information using actorId, then we will create an endpoint like "/actor?actorId=123" and in case if we want the films in which that actor has been worked on "/films?filmId=456". But in case of GraphQL there will be only one endpoint called "/graphql" and the query will be changing so if you just want actor we will send query for the actors, if we want films we will send query for the films 
+
+GraphQL Scalars
+  The graphql specification defines five scalar types, they are int, float, string, Boolean, and ID and we also see how to define custom scalar types
+
+1. Create spring boot project with web,spring data jpa, h2, lombok, graphql dependency 
+
+2. Create entity class
+
+@Entity
+@Data
+@Noargsconstructor
+@Allargsconstructor
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private Integer id;
+    private String title;
+}
+
+3. Create repository interface
+
+public interface ProductRepository extends ListCrudRepository<Product, Integer> {
+}
+
+4. Next we use CommandLineRunner to load the products before appl starts up
+
+@Bean
+	CommandLineRunner commandLineRunner(ProductRepository repository) {
+		return args -> {
+			List<Product> products = List.of(
+                                        new Product("Product 1"),
+					new Product("Product 2"),
+					new Product("Product 3");
+
+			repository.saveAll(products);
+
+			repository.findAll().forEach(System.out::println);
+		};
+	}
+
+5. Start the appl and we persist the product into database
+
+6. Create graphql folder inside resources and create schema.graphqls
+
+type Product {
+    id: ID!
+    title: String
+}
+
+so we have an object type of product with id as ID, exclamation point says don't ever have to worry about this being null, title as String, we've defined our types using the built-in scalars 
+
+- create a type called query to get all products and this is going to
+return a collection of products
+
+type Query {
+    allProducts: [Product]!
+}
+
+7. Create controller
+
+@Controller
+public class ProductController {
+
+    private final ProductRepository repository;
+
+    public ProductController(ProductRepository repository) {
+        this.repository = repository;
+    }
+
+    @QueryMapping
+    public List<Product> allProducts() {
+        return repository.findAll();
+    }
+}
+
+8. In application.properties we want to enable that graphql UI 
+
+spring.graphql.graphiql.enabled=true
+
+9. Start the application and run http://localhost:8000/graphiql
+
+query {
+   allProducts {
+      id
+      title
+   }
+}
+
+Now it will display all products 
+
+10. Now we introduce a few more properties in model class which is built-in scalars 
+
+@Entity
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private Integer id;
+    private String title;
+    private Boolean isOnSale;
+    private Float weight;
+}
+
+11. Now we change values in commandLinerunner
+
+@Bean
+	CommandLineRunner commandLineRunner(ProductRepository repository) {
+		return args -> {
+			List<Product> products = List.of(
+                                        new Product("Product 1",true,1.99F),
+					new Product("Product 2",false, 3.99F),
+				new Product("Product 3", true, 19.99F);
+
+			repository.saveAll(products);
+
+			repository.findAll().forEach(System.out::println);
+		};
+	}
+
+12. Now we change the schema in schema.graphqls
+
+type Product {
+    id: ID!
+    title: String
+    isOnSale: Boolean
+    weight: Float
+}
+
+13. Start the application and run http://localhost:8000/graphiql
+
+query {
+   allProducts {
+      id
+      title
+      isOnSale
+      weight
+   }
+}
+
+14. Now we add some custom scalars called BigDecimal and LocalDateTime in entity class as well as in schema 
+
+@Entity
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private Integer id;
+    private String title;
+    private Boolean isOnSale;
+    private Float weight;
+    private BigDecimal price;
+    private LocalDateTime dateCreated;
+}
+
+15. Now refer graphql-java.com/documentation/scalars which defines these
+built in we also get these extended scalars like long,
+shorts, bytes, big decimals or bigintegers but we need to pull in a
+separate library called graphql Java extended scalars Library which is to be added in pom.xml
+
+<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java-extended-scalars</artifactId>
+			<version>20.0</version>
+		</dependency>
+
+Next we need to create a bean RuntimeWiringConfigurer to use 
+ExtendedScalars 
+
+@Configuration
+public class GraphQlConfig {
+
+    @Bean
+    public RuntimeWiringConfigurer runtimeWiringConfigurer() {
+        return wiringBuilder -> wiringBuilder
+                .scalar(ExtendedScalars.GraphQLBigDecimal);
+               
+    }
+
+}
+
+16. In order to use LocalDateTime we have another project called graphql Java date time  and declare in schema file 
+
+<dependency>
+			<groupId>com.tailrocks.graphql</groupId>
+			<artifactId>graphql-datetime-spring-boot-starter</artifactId>
+			<version>6.0.0</version>
+		</dependency>
+
+17. Configure in schema file
+
+scalar BigDecimal
+scalar LocalDateTime
+
+type Product {
+    id: ID!
+    title: String
+    isOnSale: Boolean
+    weight: Float
+    price: BigDecimal
+    dateCreated: LocalDateTime
+}
+
+18. Change values in command line runner
+
+@Bean
+	CommandLineRunner commandLineRunner(ProductRepository repository) {
+		return args -> {
+			List<Product> products = List.of(new Product("Product 1",true,1.99F,new BigDecimal(9.99),LocalDateTime.now()),
+					new Product("Product 2",false, 3.99F,new BigDecimal(9.99),LocalDateTime.now()),
+					new Product("Product 3", true, 19.99F,new BigDecimal(9.99),LocalDateTime.now()));
+
+			repository.saveAll(products);
+
+			repository.findAll().forEach(System.out::println);
+		};
+	}
+
+19. Start the application and run http://localhost:8000/graphiql
+
+query {
+   allProducts {
+      id
+      title
+      isOnSale
+      weight
+      price
+      dateCreated
+   }
+}
+
+Now it will display all products 
+
+
+GraphQL Security  https://github.com/danvega/javabacks-secure/tree/master
+
+1. Create spring boot project with web, graphql, spring security dependency
+
+2. We have  CoffeeController to find all the coffee order and a way to create a new coffee product, we also have an OrderController to find all the orders
+in the system 
+
+3. Next we have model classes
+
+4. we have some services 
+
+5. we have our graphql schema 
+
+6. start the application, since we add security we get  generated security password so spring security takes a secure by default approach and this means that all of your routes are going to be locked
+down by default, so there is a default username that gets created
+when you don't create any configuration and the username is user and the password is this generated password 
+
+7. We we run http://localhost:8000/graphiql, we get this login page with username as "user" and paste the password which will taking to
+the graphical playground 
+    So we are able to log in again, spring security is securing everything by default and we get that default user so what we're going to do now is kind of
+override that default configuration and go ahead and create our own configuration 
+
+8. Create a new java class in the config package called SecurityConfig.java
+with @EnableWebSecurity annotation
+- creatE a bean of type SecurityFilterChain which take HttpSecurity, we need to configure csrf and going to disable that, next we're going to set up authorizedRequests and say anyRequest we want to be authenticated, and set up some session management , we're going to create a stateless policy, we don't need session management in this case and finally we want to set up httpBasics
+and we're going to use the defaults provided 
+
+ @Bean
+    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        return http
+                .csrf(csrf -> csrf.disable())
+                .authorizeRequests( auth -> {
+                    auth.anyRequest().authenticated();
+                })
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(withDefaults())
+                .build();
+    }
+
+
+
+9. create a couple users so we going to create another bean here
+called InMemoryUserDetailsManager 
+
+@Bean
+    public InMemoryUserDetailsManager userDetailsManager() {
+
+        UserDetails user = User.withDefaultPasswordEncoder()
+                .username("user")
+                .password("password")
+                .roles("USER")
+                .build();
+
+        UserDetails admin = User.withDefaultPasswordEncoder()
+                .username("admin")
+                .password("password")
+                .roles("USER","ADMIN")
+                .build();
+
+        return new InMemoryUserDetailsManager(user, admin);
+    }
+
+
+10. Restart the application and run http://localhost:8000/graphiql
+we no longer see that generated password in there that's because once we
+overload the configuration for user, we now have our own users springboot is not going to create that default one for us
+    So now we should be able to go over and log in with user and password as 
+    username: user
+    password: password
+
+11. Now we secure our controller here, so we have this CoffeeController
+which have two methods findAll which returns a list of all the coffee products in the system and then we have creating a new coffee product
+    so we should have a role of user to list out all of the coffees in the system, now to do we are controlling security at a method level by using @EnableMethodSecurity(securedEnabled=true) in SecurityConfig.java 
+
+12. In CoffeeController we say anybody with the user role should be able to find all the coffeesc
+
+ @Secured("ROLE_USER")
+    @QueryMapping(value = "allCoffee")
+    public List<Coffee> findAll() {
+        return coffeeService.findAll();
+    }
+
+13. Start the appl, refresh http://localhost:8000/graphiql, then
+
+query findAllCoffee {
+    allCoffee {
+       id
+       name
+       size
+    }
+}
+
+Now we get our three coffees 
+
+14. Now we don't want any user to  create a new coffee, we want to kind of lock that down to the admin role by @PreAuthorize
+
+ @PreAuthorize("hasRole('ADMIN')")
+    @MutationMapping(value = "createCoffee")
+    public Coffee create(@Argument String name, @Argument Size size) {
+        return coffeeService.create(name,size);
+    }
+
+15. Start the appl, refresh http://localhost:8000/graphiql, then we run
+
+mutation createCoffee {
+    createCoffee(name:"TEST",size:SHORT){
+       id
+       name
+       size
+    }
+}
+
+When we execute this and it is forbidden so we are getting a
+forbidden 403, so as a user we can run findAll coffees but we cannot create a coffee
+
+16. Now we need to login as an admin by giving "chrome://restart" now it will ask for user name and password
+      username: admin
+      password: password
+
+Now we run to create new coffee
+
+mutation createCoffee {
+    createCoffee(name:"TEST",size:SHORT){
+       id
+       name
+       size
+    }
+}
+
+and run to find all coffees
+
+query findAllCoffee {
+    allCoffee {
+       id
+       name
+       size
+    }
+}
+
+
+17. Now we talk about the authenticated principle or who is the
+current logged in user
+   So in our OrderController we have a method called findAllOrders() which returns all the orders, but we want to find all the orders for a given user
+
+ @QueryMapping
+    public List<Order> findAllOrders(Principal principal) {
+        return orderService.findAllByUsername(principal.getName());
+    }
+
+18. Restart the appl, run http://localhost:8000/graphiql, login as user and run
+
+query findAllOrders {
+     findAllOrders {
+         orderId
+         orderedOn
+         coffee {
+            id
+            name
+            size
+         }
+     }
+}
+
+Now we can see one order back 
+
+19. Now again "chrome://restart", login as admin, now we run findAllOrders, now we get the other two
+
+
+GraphQL Pagination
+    Graphql uses Cursor based pagination, this is a specification used to provide pagination support in your graphql, we use pagination and edges. Now we can see the total schema for this appl
+
+Event                  Session            Tag          Speaker
+  - id                    - id              - id          - id
+  - name                  - title           - name        - name
+  - description           - description                   - title
+  - startDate             - level                         - company
+  - endDate               - tags                          - gender
+  - location              - event                         - country
+  - website               - speaker                       - email
+  - cfpOpen                                               - phoneNumber
+  - cfpClosed                                             - twitter
+  - sessions
+
+1. Create spring boot project with web, graphql, spring data jpa, mysql, lombok dependency
+
+2. We create schema.graphqls in graphql folder
+
+scalar Date @specifiedBy(url:"https://tools.ietf.org/html/rfc3339")
+scalar Url @specifiedBy(url:"https://www.w3.org/Addressing/URL/url-spec.txt")
+
+type Query {
+    events: [Event]
+    event(id: ID!): Event
+    speakers: [Speaker]
+    speaker(id: ID!): Speaker
+    sessions: [Session]!
+    session(id: ID!): Session
+}
+
+type Event {
+    id: ID!
+    name: String!
+    description: String!
+    startDate: Date!
+    endDate: Date!
+    cfpStartDate: Date!
+    cfpEndDate: Date!
+    location: String
+    website: Url
+}
+
+type Session {
+    id: ID!
+    title: String!
+    description: String!
+    tags: [Tag]
+    level: String!
+}
+
+type Tag {
+    id: ID!
+    name: String!
+}
+
+type Speaker {
+    id: ID!
+    name: String!
+    title: String!
+    company: String!
+    gender: Gender!
+    country: String!
+    email: String!
+    phoneNumber: String!
+    twitter: String!
+}
+
+enum Gender {
+    MALE,
+    FEMALE,
+    NON_BINARY
+}
+
+First we want to get all the events, next we want to get one events, next we want to get all the speakers and we want to get one speaker. Next we have the event, the session, tag, speaker and then we have an enum for gender 
+
+3. Since we use custom scalar types like Date, so we configure dependency in pom.xml and add separate class for configuration 
+
+<dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java-extended-scalars</artifactId>
+			<version>20.0</version>
+		</dependency>
+
+
+@Configuration
+public class GraphQlConfiguration {
+
+    @Bean
+    public RuntimeWiringConfigurer runtimeWiringConfigurer() {
+        return wiringBuilder -> wiringBuilder
+                .scalar(ExtendedScalars.Date)
+                .scalar(ExtendedScalars.Url);
+    }
+
+}
+
+4. Create Event entity classes
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Event {
+
+        @Id
+        private Integer id;
+        private String name;
+        @Column(columnDefinition = "TEXT")
+        private String description;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private LocalDate cfpStartDate;
+        private LocalDate cfpEndDate;
+        private String location;
+        private String website;
+}
+
+5. Create EventRepository interface
+
+public interface EventRepository extends ListCrudRepository<Event,Integer> {
+
+}
+
+6. Create EventController 
+
+First we return a list of events and we're going to call this events because that's what we called it in our schema 
+
+   @QueryMapping
+    List<Event> events() {
+        return eventRepository.findAll();
+    }
+
+Next return an optional event which take an argument as integer ID and based on that ID we can now use the repository 
+
+    @QueryMapping
+    Optional<Event> event(@Argument Integer id) {
+        return eventRepository.findById(id);
+    }
+
+
+@Controller
+public class EventController {
+	
+	  @Autowired
+	  EventRepository eventRepository;
+	
+	  @QueryMapping
+	    List<Event> events() {
+	        return eventRepository.findAll();
+	    }
+
+	    @QueryMapping
+	    Optional<Event> event(@Argument Integer id) {
+	        return eventRepository.findById(id);
+	    }
+
+}
+
+7. Create enum called Level
+
+public enum Level {
+    BEGINNER, INTERMEDIATE, ADVANCED
+}
+
+8. Next we create session as an event containing session 
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public final class Session {
+
+        @Id
+        private Integer id;
+        private String title;
+        @Column(columnDefinition = "TEXT")
+        private String description;
+        @Enumerated(EnumType.STRING)
+        private Level level;
+}
+
+9. Create SessionRepository
+
+public interface SessionRepository extends ListCrudRepository<Session,Integer> {
+}
+
+10. Create SessionController to get all session and one session based on id
+
+@Controller
+public class SessionController {
+
+	@Autowired
+    SessionRepository sessionRepository;
+
+    @QueryMapping
+    List<Session> sessions() {
+        return sessionRepository.findAll();
+    }
+
+    @QueryMapping
+    Optional<Session> session(@Argument Integer id) {
+        return sessionRepository.findById(id);
+    }
+
+}
+
+11. Create tag entity class
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Tag {
+
+    @Id
+    private Integer id;
+    private String name;
+}
+
+12. Create Tag repository 
+
+public interface TagRepository extends ListCrudRepository<Tag,Integer> {
+}
+
+13. Create Gender enum
+
+public enum Gender {
+    MALE,
+    FEMALE,
+    NON_BINARY
+}
+
+14. Create Speaker entity class
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public final class Speaker {
+
+        @Id
+        private Integer id;
+        private String name;
+        private String title;
+        private String company;
+        @Enumerated(EnumType.STRING)
+        @Column(length = 10)
+        private Gender gender;
+        private String country;
+        private String email;
+        private String phoneNumber;
+        private String twitter;
+}
+
+15. Create Speaker repo intf
+
+public interface SpeakerRepository extends ListCrudRepository<Speaker,Integer> {
+}
+
+16. Create Speaker controller to return all speakers and return one speaker
+
+@Controller
+public class SpeakerController {
+
+	@Autowired
+    SpeakerRepository speakerRepository;
+
+
+    @QueryMapping
+    List<Speaker> speakers() {
+        return speakerRepository.findAll();
+    }
+
+    @QueryMapping
+    Speaker speaker(@Argument Integer id) {
+        return speakerRepository.findById(id).orElseThrow();
+    }
+
+}
+
+17. Next we set association, actually event needs list of sessions, so in Event.java
+
+ @OneToMany(cascade = CascadeType.ALL, mappedBy = "event")
+        //@JoinColumn(name = "event_id"),
+        private Set<Session> sessions = new HashSet<>();
+
+18. Now Session need a Event and a tag, so in Session.java
+    
+        @ManyToMany
+        @JoinTable(
+                name = "session_tags",
+                joinColumns = @JoinColumn(name = "tag_id"),
+                inverseJoinColumns = @JoinColumn(name = "session_id"))
+        private Set<Tag> tag;
+
+       @ManyToOne
+        private Event event;
+
+19. Configure db info in application.properties and enable graphql
+
+server.port=8000
+spring.datasource.url=jdbc:mysql://localhost:3306/jpa
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.jpa.show-sql = true
+spring.jpa.hibernate.ddl-auto = update
+#dialect will generate the query based on particular db
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+
+spring.graphql.graphiql.enabled=true
+
+20. We need some data and we don't want to just hand write all this data so we use DataFaker dependency and create a bunch of fake data 
+
+<dependency>
+			<groupId>net.datafaker</groupId>
+			<artifactId>datafaker</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+
+Create DataLoader class to add fake data 
+    In DataLoader we are implementing the CommandLineRunner so which will be inserted before the appl startup and wire the event repository, the speaker repository, the session repository, and Faker class which fake a bunch of data. First we add tag into db, next we need to create a new event and save that event, next we want to create a list of speakers from 1 to 20 and create a new speaker which have some fake name, title, company,gender, country email, address, phone number, and username and save all of our speakers. Similarly we created some sessions
+
+21. Restart the appl, we can see the data are inserted 
+
+22. Goto browser and run http://localhost:8000/graphiql and run
+
+query {
+  events {
+    id
+    name
+    description
+    startDate
+    endDate
+    cfpStartDate
+    cfpEndDate
+    location
+    website
+  }
+}
+
+which displays 1 event which we inserted 
+
+23. Now for an event we just want to get all the sessions, so we change in schema file as
+
+type Event {
+    id: ID!
+    name: String!
+    description: String!
+    startDate: Date!
+    endDate: Date!
+    cfpStartDate: Date!
+    cfpEndDate: Date!
+    location: String
+    website: Url
+    sessions: [Session] 
+}
+
+Now we can get all 100 sessions for that event, so in graphql browser we provide
+
+query {
+  events {
+    id
+    name
+    description
+    startDate
+    endDate
+    cfpStartDate
+    cfpEndDate
+    location
+    website
+    sessions {
+       id
+       title
+       description
+    }
+  }
+}
+
+24. Now we don't want to get all the sessions what if we want to get 5 or 10 at a time on a client this is where pagination comes. We use
+the cursor connection specification comes in, the idea here is that we pass a arguments first or after, so we want the first 10 or after 10 some type of cursor, from there you're going to get edges that will give you the cursor every time and then the node is the actual data that you want, then you also have page info 
+   spring for graphql provides a connection type definition configure to add these types on Startup, if they're not already present in the parsed schema files. So in our schema instead of getting a list of sessions maybe we want to get paginated sessions where we provide the first, after,last and before and creates a SessionConnection 
+
+ sessions(first: Int,last: Int,before: String,after: String): SessionConnection
+
+25. In the sessionrepository we need to create a method where we can
+get all the sessions by an event ID
+
+ Window<Session> findByEventId(Integer eventId, ScrollPosition position, Limit limit, Sort sort);
+
+26. In EventController we need to declare a data fetcher for sessions 
+
+ @SchemaMapping
+	    Window<Session> sessions(Event event, ScrollSubrange subrange) {
+	        ScrollPosition scrollPosition = subrange.position().orElse(ScrollPosition.offset());
+	        Limit limit = Limit.of(subrange.count().orElse(10));
+	        Sort sort = Sort.by("title").ascending();
+	        return sessionRepository.findByEventId(event.getId(), scrollPosition, limit, sort);
+	    }
+
+so we get the scroll position which uses subrange give me the position or set
+it to the scrollposition.offset(), we need a limit so get the count whatever
+is passed like first or last so give me the first 10 or first 100 or
+else just default to 10, next we sort by title and ascending and
+then from the sessionrepository we call findbyEventID 
+
+27. Restart application, Goto browser and run http://localhost:8000/graphiql and run
+
+query {
+  events {
+    id
+    name
+    description
+    startDate
+    endDate
+    sessions(first: 3){
+      edges{
+        node {
+          id
+          title
+          description
+        }
+      }
+      pageInfo{
+        hasNextPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+}
+
+which will display 3 records with start cursor and end cursor
+
+Now if we want to display first 3 records after cursor "T18z"
+
+query {
+  events {
+    id
+    name
+    description
+    startDate
+    endDate
+    sessions(first: 3, after: "T18z"){
+      edges{
+        node {
+          id
+          title
+          description
+        }
+      }
+      pageInfo{
+        hasNextPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+}
+
+GraphQL Concepts   https://github.com/graphql-java-kickstart
+
+   graphql-java-kickstart is a repository on github which contains the core repositories like graphql-spring-boot which essentially transform your
+application into a graphql server. Graphql tools by default will look for all **/*.graphqls files on the classpath and it will automatically combine and compile them into one graphql schema at application runtime.  
+
+1. Create GraphQLConcepts project with graphql-spring-boot, lombok and playground-graphql-spring-boot(it is tool to run graphql) dependency
+
+<properties>
+		<java.version>11</java.version>
+		<graphql.version>7.1.0</graphql.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.graphql-java-kickstart</groupId>
+			<artifactId>graphql-spring-boot-starter</artifactId>
+			<version>${graphql.version}</version>
+		</dependency>
+
+		<!--Playground Extension -->
+		<dependency>
+			<groupId>com.graphql-java-kickstart</groupId>
+			<artifactId>playground-spring-boot-starter</artifactId>
+			<version>${graphql.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+	</dependencies>
+
+2. Configure playground info in application.properties
+
+graphql.playground.enabled=true
+graphql.playground.mapping=/playground
+graphql.playground.endpoint=/graphql
+
+
+3. Create query.graphqls inside schema folder 
+
+- create a query bankAccount which we want to retrieve bank account based on an id
+
+type Query {
+    bankAccount(id: ID) : BankAccount
+}
+
+- Inside schema folder - create bank folder - create bankAccount.graphqls
+
+type BankAccount {
+   id: ID!
+   client: Client!
+   currency: Currency!
+}
+
+- Create currency.graphqls
+
+enum Currency {
+    CHF,
+    USD
+}
+
+- Create client.graphqls
+
+type Client {
+   id: ID!
+   firstName: String!
+   middleNames: [String!]
+   lastName: String!
+}
+
+4. Create BankAccount, Currency, Client model class
+
+@Value
+@Builder
+public class BankAccount {
+    UUID id;
+    Client client;
+    Currency currency;
+}
+
+public enum Currency {
+   CHF,
+   USD
+}
+
+@Data
+@Builder
+public class Client {
+   UUID id;
+   String firstName;
+   List<String> middleNames;
+   String lastName;
+   Client client;
+}
+
+5. Next we create Resolver which will serve the request from bank account 
+
+@Component
+@Slf4j
+public class BankAccountResolver implements GraphQLQueryResolver {
+
+	public BankAccount bankAccount(UUID id) {
+		log.info("Retrieving bank account id: {}",id);
+		//return BankAccount.builder().id(id).name("Sam").currency(Currency.USD).build();
+		
+		var clientA = Client.builder().id(UUID.randomUUID()).firstName("Ram").lastName("Kumar").build();
+		var clientB = Client.builder().id(UUID.randomUUID()).firstName("Sam").lastName("Kumar").build();
+		
+		clientA.setClient(clientB);  //clientA refers clientB
+		clientB.setClient(clientA);  //clientB refers clientA
+		
+		return BankAccount.builder().id(id).currency(Currency.USD).client(clientA).build();
+	}
+}
+
+
+5. Start the appl, run http://localhost:8080/playground, u can generate uuid online 
+
+{
+   bankAccount(id: "88496031-a2a5-4639-8da2-be0e9feee267") {
+    client {
+      id
+      firstName
+      lastName
+    }
+    currency
+  }
+}
+
+or even can run as
+
+query GET_BANK_ACCOUNT($id:ID){
+   bankAccount(id: $id) {
+    currency
+    client {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+
+GraphQL Resolver
+   Previously we had one query defined which return a bank account linked to a bank account id and how we actually match that in code using an interface and it's called GraphqlQueryResolver and this acts as a marker interface. So the framework will pick up all the classes in this BankAccountResolver that implements the GraphqlQueryResolver marker interface, it then looks for a matching signature of a method to the graphql defined query, and we have a matching query name with the method name and it will directly execute this method whenever we call this query 
+   Whenever we request this query, the BankAccountQueryResolver is
+executed, consider now we no longer have the client information within the bank accounts database and we now have to retrieve this from an external service, so instead of grabbing everything up front like we had before
+    Now we create another resolver which is going to be a ClientResolver which implements GraphQLResolver of type bank account which actually retrieve the client information from an external web service or database or another database or somewhere else not linked to the bank accounts
+
+@Component
+@Slf4j
+public class ClientResolver implements GraphQLResolver<BankAccount> {
+	
+	public Client client(BankAccount bankAccount) {
+		log.info("Retrieving client info for back account id: {}",bankAccount.getId());
+		return Client.builder().id(UUID.randomUUID()).firstName("Ram").lastName("Kumar").build();
+	}
+
+}
+
+@Component
+@Slf4j
+public class BankAccountResolver implements GraphQLQueryResolver {
+
+	public BankAccount bankAccount(UUID id) {
+		log.info("Retrieving bank account id: {}",id);	
+		return BankAccount.builder().id(id).currency(Currency.USD).build();
+	}
+}
+
+
+Now no longer return the client within the BankAccountResolver, but now we return it within the ClientResolver
+
+- Start the appl, run http://localhost:8080/playground,
+
+{
+   bankAccount(id: "88496031-a2a5-4639-8da2-be0e9feee267") {
+    currency
+  }
+}
+
+GraphQL Exception
+     Now we see how we can enable exception handling within spring boot
+graphql and how we can use the spring web exception handler annotations to handle your exception types. So by default in graphql it actually
+hides all of the exception messages by default
+
+1. In ClientResolver.java we throw an exception 
+
+@Component
+@Slf4j
+public class ClientResolver implements GraphQLResolver<BankAccount> {
+	
+	public Client client(BankAccount bankAccount) {
+		log.info("Retrieving client info for back account id: {}",bankAccount.getId());
+		//return Client.builder().id(UUID.randomUUID()).firstName("Ram").lastName("Kumar").build();
+               throw new GraphQLException("Client Unavailable");
+	}
+
+}
+
+2. Start the appl, and run http://localhost:8080/playground,
+
+query GET_BANK_ACCOUNT($id:ID){
+   bankAccount(id: $id) {
+    currency
+    client {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+
+Now it hides the message and replaces it with internal server while executing the query, so the graphql server will hide internal messages by default, but how can we override that and actually show the client a meaningful exception
+
+3. One way to enable Exception Handler, so enable the property in application.properties file as 
+
+graphql.servlet.exception-handlers-enabled=true
+
+4. Create GraphQLExceptionHandler class which handles GraphQLException and other exception using RuntimeException 
+
+@Component
+public class GraphqlExceptionHandler {
+
+	@ExceptionHandler(GraphQLException.class)
+	public ThrowableGraphQLError handle(GraphQLException e) {
+		return new ThrowableGraphQLError(e);
+	}
+
+        @ExceptionHandler(RuntimeException.class)
+	public ThrowableGraphQLError handle(RuntimeException e) {
+		return new ThrowableGraphQLError(e, "Internal Server Error");
+	}
+}
+
+5.  Start the appl, and run http://localhost:8080/playground,
+
+query GET_BANK_ACCOUNT($id:ID){
+   bankAccount(id: $id) {
+    currency
+    client {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+
+Now it will display Client Unavailable
+
+Internally DefaultGraphqlErrorHandler will be invoked with all of the errors from the resolvers and then whenever it filters them this process is actually going to go ahead and invoke the exception handlers 
+
+6. Next way to define your own bean that will implement the GraphqlErrorHandler interface 
+   Create CustomGraphqlErrorHandler which implement GraphqlErrorHandler and override processErrors() method where we can actually customize
+the errors 
+
+@Component
+public class CustomGraphQLErrorHandler implements GraphQLErrorHandler {
+
+	@Override
+	public List<GraphQLError> processErrors(List<GraphQLError> errors) {
+		return errors;
+	}
+
+}
+
+7. Now in application.properties make 
+        graphql.servlet.exception-handlers-enabled=false
+so it dosent invoke default one
+
+8. Start the appl, and run http://localhost:8080/playground,
+
+query GET_BANK_ACCOUNT($id:ID){
+   bankAccount(id: $id) {
+    currency
+    client {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+so we see some message in our playground which have the exception message and by default we also have the path, so the path from data to where the exception went, so bankAccount, client this is where we have the problem
+
+
+DataFetcherResult
+  In graphql we might have a resolver that may return a partial object (ie)
+an object that isn't completely filled and that can happen with multiple reasons, for example if we call multiple web services or multiple resources
+within one resolver, say we need to get two pieces of information from two
+different services and combine them into one or if we call a normal rest
+service and it returns a partial response, we may want to indicate that to
+the client that something went wrong and we couldn't get these two fields  by using DataFetcherResult which allow us to actually return an error with the the data in the client
+
+1. In ClientResolver.java, we update
+
+@Component
+@Slf4j
+public class ClientResolver implements GraphQLResolver<BankAccount> {
+	
+	public DataFetcherResult<Client> client(BankAccount bankAccount) {
+		log.info("Retrieving client info for back account id: {}",bankAccount.getId());
+		return DataFetcherResult.<Client>newResult()
+			  .data(Client.builder().id(UUID.randomUUID()).firstName("Ram").lastName("Kumar").build())
+			  .error(new GenericGraphQLError("Could not get sub-client id"))
+			  .build();
+		
+	}
+
+}
+
+2. Start the appl, and run http://localhost:8080/playground,
+
+query GET_BANK_ACCOUNT($id:ID){
+   bankAccount(id: $id) {
+    currency
+    client {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+ 
+We can see the data but also tell the client that there is one error occurred while we were resolving all this information
+
+{
+  "errors": [
+    {
+      "message": "Could not get sub-client id"
+    }
+  ],
+  "data": {
+    "bankAccount": {
+      "currency": "USD",
+      "client": {
+        "id": "372e5143-228c-4a2e-9c6b-04c63dd27f9f",
+        "firstName": "Ram",
+        "lastName": "Kumar"
+      }
+    }
+  }
+}
+
+GraphQL Mutations
+    In graphql we have the concept of a mutation which is any write
+operations or any operations where you change the state of an object.  And changing things within a query, it's really bad practice and we should not do that, if we want to change it or we want to modify anything server-side it has to go through mutation
+
+1. Inside graphql folder, we create mutation.graphqls file
+
+type Mutation {
+   createBankAccount(input: CreateBankAccountInput!): BankAccount!
+}
+
+2. Now we want to create an input with firstName as String and age as NonNegativeInt and also some date fields which is scalar datatype so we have to provide extended-scalar dependency in pom.xml
+
+                 <dependency>
+			<groupId>com.graphql-java</groupId>
+			<artifactId>graphql-java-extended-scalars</artifactId>
+			<version>1.0.1</version>
+			<exclusions>
+			    <exclusion>
+			        <groupId>com.graphql-java</groupId>
+			        <artifactId>graphql-java</artifactId>
+			    </exclusion>
+			</exclusions>
+		</dependency>
+
+So we define NonNegativeInt scalar in mutation.graphqls
+
+scalar NonNegativeInt
+
+type Mutation {
+   createBankAccount(input: CreateBankAccountInput!): BankAccount!
+}
+
+
+3. Create createBankAccountInput.graphqls inside bank folder with firstName and age 
+
+input CreateBankAccountInput {
+     firstName: String!
+     age: NonNegativeInt!
+}
+
+4. Create CreatBankAccountInput class 
+
+@Data
+public class CreateBankAccountInput {
+   String firstName;
+   int age;
+}
+
+5. Inorder to configure the scalar datatype 
+
+@Configuration
+public class ScalarConfig {
+    
+	@Bean
+	public GraphQLScalarType nonNegativeInt() {
+		return ExtendedScalars.NonNegativeInt;
+	}
+	
+}
+
+6. Create BankAccountMutation class which implements GraphQLMutationResolver which is marker inrerface 
+
+@Component
+@Slf4j
+public class BankAccountMutation implements GraphQLMutationResolver {
+	
+	public BankAccount createBankAccount(CreateBankAccountInput input) {
+		log.info("Creating bank account for {}",input);
+		return BankAccount.builder().id(UUID.randomUUID())
+				.currency(Currency.USD)
+				.build();
+	}
+}
+
+5. Start the appl, and run http://localhost:8080/playground,
+
+mutation CREATE_BANK_ACCOUNT {
+  createBankAccount(input: {
+    firstName: "Ram"
+    age: 23
+  }) {
+    id
+    currency
+  }
+}
+
+we get the output as
+
+{
+  "data": {
+    "createBankAccount": {
+      "id": "99998fa5-b460-4966-9175-d001e76b734b",
+      "currency": "USD"
+    }
+  }
+}
+
+In case if we give age as -23, then it will display error that the value should be greater than 0
+
+Graphql input validation
+   In graphql if we want to use bean validation then we need to add a dependency in pom.xml
+
+<dependency>
+			<groupId>org.hibernate.validator</groupId>
+			<artifactId>hibernate-validator</artifactId>
+		</dependency>
+
+1. In CreateBankAccountInput class we provide certain annotation to do validation
+
+@Data
+public class CreateBankAccountInput {
+   @NotBlank
+   String firstName;
+   int age;
+}
+
+
+2. In BankAccountMutation class we use @Validated and @Valid 
+
+@Component
+@Slf4j
+@Validated
+public class BankAccountMutation implements GraphQLMutationResolver {
+
+	public BankAccount createBankAccount(@Valid CreateBankAccountInput input) {
+		log.info("Creating bank account for {}",input);
+		return BankAccount.builder().id(UUID.randomUUID()).currency(Currency.USD).build();
+	}
+}
+
+3. Start the appl, and run http://localhost:8080/playground,
+
+mutation CREATE_BANK_ACCOUNT {
+  createBankAccount(input: {
+    firstName: ""
+    age: 23
+  }) {
+    id
+    currency
+  }
+}
+
+Now it will show internal server error as firstname cannot be empty  
+
+
+GraphQL Schema Validation
+    Schema validation is kind of a new library that's been introduced to graphql which allow us to take away the annotations in our java pojos, we can remove the validation constraints from pojos and we can actually transform or
+transfer them validations into schema directives directly on the schema, so no longer need to have a bean validation we can put that directly in the schema 
+
+1. Add Extended validation dependency in pom.xml
+<dependency>
+    <groupId>com.graphql-java</groupId>
+    <artifactId>graphql-java-extended-validation</artifactId>
+    <version>14.0.1</version>
+</dependency>
+
+2. Create ValidationDirectiveConfig.java which contains default standard
+library provide by @Directive constraints
+
+@Configuration
+public class ValidationDirectiveConfig {
+	
+	@Bean
+	public ValidationSchemaWiring validationSchemaWiring() {
+		var validationRules=ValidationRules.newValidationRules()
+				 .onValidationErrorStrategy(OnValidationErrorStrategy.RETURN_NULL)
+				 .build();
+		return new ValidationSchemaWiring(validationRules);
+	}
+
+}
+
+3. In mutation.graphqls we create another mutation query called updateBankAccount
+
+type Mutation {
+   createBankAccount(input: CreateBankAccountInput!): BankAccount!
+   updateBankAccount(id:ID,name:String!,age:Int):BankAccount!
+}
+
+4. Create updateBankAccount() method in BankAccountMutation.java
+
+@Component
+@Slf4j
+public class BankAccountMutation implements GraphQLMutationResolver {
+
+	public BankAccount createBankAccount(CreateBankAccountInput input) {
+		log.info("Creating bank account for {}",input);
+		return BankAccount.builder().id(UUID.randomUUID())
+				.currency(Currency.USD)
+				.build();
+	}
+	
+	public BankAccount updateBankAccount(UUID id, String name, int age) {
+		log.info("Updating bank account for {}, Name {},age {}",id, name, age);
+		return BankAccount.builder().id(UUID.randomUUID())
+				.currency(Currency.USD)
+				.build();
+	}
+}
+
+5. Start the appl, and run http://localhost:8080/playground,
+
+mutation UPDATE_BANK_ACCOUNT($id:ID) {
+     updateBankAccount(id: $id,name: "",age: 30) {
+       id
+   }
+}
+
+Now will we get display as 
+
+{
+  "data": {
+    "updateBankAccount": {
+      "id": "381ca215-2dc8-4e7d-b288-b91ae9fb9dfa"
+    }
+  }
+}
+
+Now it is working and now we will use the validation
+
+6. In mutation.graphqls, we use validation for name, refer https://github.com/graphql-java/graphql-java-extended-validation/tree/master
+
+type Mutation {
+   createBankAccount(input: CreateBankAccountInput!): BankAccount!
+   updateBankAccount(id: ID,name: String! @NotBlank,age: Int @Expression(value: "${validatedValue < 50}")): BankAccount!
+}
+
+validatedValue is predefined one
+
+
+7. Start the appl, and run http://localhost:8080/playground,
+
+mutation UPDATE_BANK_ACCOUNT($id:ID) {
+     updateBankAccount(id: $id,name: "",age: 30) {
+       id
+   }
+}
+
+Now will we get error message the "/updateBankAccount/name must not be blank"
+
+8. Now we want to write some custom message, so we create ValidationMessages.properties inside resources folder 
+
+updateBankAccount.name=${gqlArgument.name} must not be blank
+
+and configure this name in mutation.graphqls file
+
+type Mutation {
+   createBankAccount(input: CreateBankAccountInput!): BankAccount!
+   updateBankAccount(id: ID,name: String! @NotBlank(message:"updateBankAccount.name"),age: Int @Expression(value: "${validatedValue < 50}" message: "updateBankAccount.age")): BankAccount!
+}
+
+9. Start the appl, and run http://localhost:8080/playground,
+
+mutation UPDATE_BANK_ACCOUNT($id:ID) {
+     updateBankAccount(id: $id,name: "",age: 90) {
+       id
+   }
+}
+     
+Now it will display the custom message from properties file if name="" and age is greater than 50 
+
+     
