@@ -472,13 +472,10 @@ Iaas vs Paas vs Saas
 and it is provided as a service and in this SAS  software as a service 
    
 IT Infrastructure On Premises
-    Before we directly jump to understand the different cloud delivery models it will be good to understand how exactly the it infrastructure is built on 
-premises and by on premise mean, IT infrastructure which is located within
-the enterprise, often in the company's data center and running remotely on hosted servers or in the cloud 
-   Consider we are a big construction company and we want to keep up with the modernization, so we want to host our website or application and for that we must build an entire IT infrastructure. So we build an IT infrastructure layer by layer, so the first element in building an IT infrastructure is to purchase some servers with some cpus and some core memory so now we have some core computing strength in terms of these servers in order 
-   To run your application the very next step is to connect all these servers
-to internet and for that we will need networking infrastructure, so networking
-infrastructure includes the interconnection of all these servers along with the internet connectivity
+    Before we directly jump to understand the different cloud delivery models it will be good to understand how exactly the IT infrastructure is built on 
+premises and by on premise mean, IT infrastructure which is located within the enterprise, often in the company's data center and running remotely on hosted servers or in the cloud 
+   Consider we are a big construction company and we want to keep up with the modernization, so we want to host our website or application and for that we must build an entire IT infrastructure. So we build an IT infrastructure layer by layer, so the first element in building an IT infrastructure is to purchase some servers with some cpus and some core memory so now we have some core computing strength in terms of these servers 
+   In order to run your application the very next step is to connect all these servers to internet and for that we will need networking infrastructure, so networking infrastructure includes the interconnection of all these servers along with the internet connectivity
     Now we have servers and network but there is no server that can come alive without a good storage so here comes the storage. Now storage can come in 
 different flavors it could be HDD or hard disk drive or it could also SSD
 or solid state drive. Now we have all the basic components of our IT
@@ -532,7 +529,7 @@ suitable for test and development, for storage backup and recovery web apps and 
     But the configuration of 5 computer and 1 server is not sufficient, so I want to upgrade the memory, processor, storage etc which is cost consuming. So instead I will reach some cloud providers and ask for powerful virtual computers. Now cloud providers will be asking for configuration and I will be provide the configuration for RAM, processor and storage and based on that, they will provide virtual computers based on the configuraton we provided, they will provide only virtual computers not physical computers. Now using internet I will login into virtual computer and start coding which is of high configuration compared to physical computer
     I have also provided additional info to cloud providers, that they should just create a virtual machine (ie) only infrastructure but no need to install any softwares, which software is needed I will login into virtual computer and I will install and with that I will code and develop advance product
    So instead of buying physical computers, if we try to use infrasturture (ie) virtual machine from some cloud provider then that is called IAAS 
-eg: Amazon Elastic Compute Cloud(EC2), Apache CloudStalk, Google Compute Engine
+eg: Amazon Elastic Compute Cloud(EC2), Apache CloudStalk, Google Compute Engine, Digital Ocean, IBM Cloud, Google Cloud, AWS 
 
 Platform-as-a-Service (PaaS)
     Platform as a service it's only the service layer that you or your company
