@@ -1,0 +1,1325 @@
+Sonarqube
+   - It is open source continuous code quality integration tool with which we can identify code vulnerabilities, the bugs and the code quality 
+   - It can track all the repositories at a common place, u can have a profile set in sonarqube and based on that profile ur code will be scanned and then ur vulnerabilities will be identified
+   - written in java lang and support for various lang like c#,PHP,Ruby to do code quality
+   - If we use Sonarqube 5 yrs back, they dont have  online version, but right now they have online version, called https://sonarcloud.io where u can have ur open source project configured for free and publish ur stats into that particular sonar instance.
+   Click Explore, we can see code quality of different projects published by different open source contributors across the world
+   - provides reports of code quality issues such as duplicate code, how many unit test case are in project and what is % of unit test case failed or success
+   - provides information about code coverage which tells what % of code is covered by test cases whether it is integration or unit test cases
+   - provides report about code complexity which tells whatever coding we have done is in simplied manner or complex way
+    - Provides historical report (ie) when u run sonarqube it provides report and based on the report developer or manager takes corrective action. Once u fix those issue,again second time if we run the sonarqube,it is going to give the comparison with historical report with current report, so that whatever changes have done by developer really improved the code quality or not.
+   - support with other tools like ANT, Maven and Gradle 
+   - SonarLint plugin in eclipse - the developer can analyze the code quality in development itself
+
+
+
+SonarQube server is central processing unit to process the analysis provided by the sonar runner. Sonar runner is tool which actually analyse your project code and send the report to sonarqube server to process the results.
+
+
+There are three types of issues:  https://rules.sonarsource.com/java/type/Code%20Smell
+
+Bug – A coding error that will break your code and needs to be fixed immediately.
+Vulnerability – A point in your code that's open to attack.
+Code Smell – A maintainability issue that makes your code confusing and difficult to maintain. 
+eg: 
+1. Methods should not return constants
+2. "catch" clauses should do more than rethrow
+3. The diamond operator ("<>") should be used
+
+
+The SonarQube platform consists of five components: analyzers, server, plugins installed on the server, database, and sonarqube scanner (higher version) or runner(lower version)
+
+When we run mvn sonar:sonar, Analyzers are responsible for running line-by-line code analysis. They can provide information about technical debt, code coverage, code complexity, detected problems, etc. The problems, detected in code, can be some bugs, potential bugs, things that can lead to mistakes in future, etc. When the analysis is done, the results can be viewed on the web page hosted by SonarQube web server and store inside the database(by default H2 database)
+
+Sonarqube scanner used to run ur sonarqube analyser.So when u run mvn sonar:sonar, the scanner will be enable by default and ask analyser to analysis entire code and after that generate the report to server and then store in to database.
+
+severity: Blocker, Critical, Major, Minor and Info
+
+The great thing about SonarQube is that all the data is stored in relational database with which all the developers are generally familiar. The database of our choice was a MySQL database. Primarily, this happened because we are avoid supporters of open source technologies. If you have other preferences when it comes to databases or you have more experience in working with another database, some of supported databases are: PostgreSQL, Oracle, etc.
+
+
+Sonarqube - it is on-premises tool (ie) if u want to embed with maven or gradle u have to just add dependency, so that inside ur maven or gradle appl we can use sonarqube
+Sonarlint - separate IDE to check code coverage like eclipse
+Sonar cloud - in cloud environment we want to check static code analysis
+
+Example:
+
+1. Start the sonarqube - Go to C:\Softwares\sonarqube-7.0\bin\windows-x86-64 and click startsonar
+
+2. Create simple maven project 
+New - Maven Project - Next - Catalog: Internal - Select maven-archetype-quickstart
+
+3. In pom.xml we add junit5 and sonar plugin 
+ <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
+        <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
+        <junit.platform.version>1.0.0-M3</junit.platform.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>1.0.0-M3</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+               <groupId>org.sonarsource.scanner.maven</groupId>
+<artifactId>sonar-maven-plugin</artifactId>
+<version>3.3.0.603</version>
+       </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.0.0-M3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+            <version>${junit.platform.version}</version>
+        </dependency>
+
+    </dependencies>
+
+4. Create App.java
+
+public class App {
+	public static void main(String[] args) {
+		System.out.println("Hello World!");
+	}
+
+	class A {
+		private String TEST = "";
+
+		A() {
+
+		}
+
+		public void show(int num) {
+			num = 10;
+			if (num == 0) {
+				System.out.println("Zero");
+			}
+		}
+	}
+}
+
+5. Once we add sonar plugin, maven will provide a task called sonar:sonar 
+   >mvn clean install
+   >mvn sonar:sonar 
+
+6. Copy the link from sonar to see sonarqube dashboard of that project
+   Goto Issues and check what are the issues 
+
+7. In order to go for code coverage we can go for JACOCO(Java Code Coverage) plugin. We add jacoco plugin in pom.xml
+
+<plugin>
+   <groupId>org.jacoco</groupId>
+   <artifactId>jacoco-maven-plugin</artifactId>
+   <version>0.7.9</version>
+</plugin>
+
+8. To lanuch jacoco as part of maven build we run
+>mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install
+
+Now it will create jacoco.exec inside target folder of our project 
+
+9. Now run >mvn sonar:sonar
+It will display the code coverage in red color, means the code is not covered
+
+10. In order to have code coverage we write test
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class AppTest {
+
+    @Test
+    public void testApp()
+    {
+    		App a = new App();
+    		a.m1();
+    		a.getData();
+    		assertTrue(true);
+    	
+    }
+}
+
+11. Now run jacoco plugin which create jacoco file and that file will upload in sonar 
+>mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install
+
+12. Now run >mvn sonar:sonar which upload that jacoco file into sonar 
+
+13. Now we can see code coverage is green for that method because we wrote test case 
+
+
+
+What is code smell?
+    Code smells are not bugs and not prevent the program from functioning but instead it will slow down development or increase the risk or bugs in future 
+    It is bad pattern which when we see, we can recognize that there might be possible defect in there code. For example if we assign a variable to null and immediately calling method on it then we get NPE so that is code smell
+   Sonarqube is a tool to find code smell. In sonar dashboard - Rules - Java - Code smell, we can see 307 code smells in Java
+
+
+Springboot with Sonarqube
+     - Sonarqube is open source platform to perform automatic reviewing and static analysis of code. Sonar is an open source software quality platform which uses static and dynamic code analysis tool like checkstyle, PMD, Findbugs etc
+     As sonar is static code analysis where the code is performed without actual executing programs and source code will be checked for compliance with predefined set of rules or best practices set by the organization
+     Sonarqube also checks for duplication of code, lack of unit test cases, potential bugs and no coding standards if we not following that will be checked by sonarqube
+
+Why Sonarqube?
+    - As Code quality is important parameter for software quality deliverable and affects the overall success of the software. So sonarqube is used to detect the bug, code smell and security vulnerability before executing the program 
+    - used to keep the code clean, simple and easy to read 
+
+
+1. start sonarqube, doubleclick startsonar
+
+2. Goto http://localhost:9000
+
+3. Create springboot project with web dependency 
+
+4. Create controller
+@RestController
+@RequestMapping("/message")
+public class MessageController {
+
+	@Autowired
+	private MessageServiceImpl service;
+	 
+	@GetMapping("/")
+	public String getMessage() {
+		return service.getMessage();
+	}
+}
+
+5. Create service 
+
+@Service
+public class MessageServiceImpl {
+
+	public String getMessage() {
+		String str = " gain java knowledge";
+		Object obj = getObject();
+		System.out.println(obj.toString());
+		return str;
+	}
+
+	private Object getObject() {
+		return null;
+	}
+
+}
+
+
+6. Now we add sonarqube dependency in pom.xml
+
+<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.8.0.2131</version>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.8</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+Jacoco plugin with goal as "report" to generate a code coverage report, by default the generated report will go into target folder which will automatically by sonar jacoco plugin 
+
+7. If we see the project will not added into sonar dashboard
+
+8. Now we run - Right click project - Run as - Maven build - under goal:
+
+clean org.jacoco:jacoco-maven-plugin:prepare-agent install
+
+Apply - Run
+
+Now test case will execute but we didnt write any test case 
+
+9. Refresh project - In target - it creates Site folder - jacoco folder - creates jacoco.xml which automatically implement in sonar dashboard
+
+10. Now we execute sonar command, first we need to generate token 
+Right click project - Run as - Maven build - under goal:
+
+sonar:sonar - Apply - Run
+
+Refresh project - Refresh the sonar dashboard
+
+Now we can see our project is added with 33.3% code coverage and 1 bug
+
+11. First click on 1 in bug where it says NPE, so we need to resolve this issue.
+  So we go service program and change null to some string 
+
+private Object getObject() {
+		return "abc";
+	}
+
+Now run sonar:sonar 
+
+Refresh the project and refresh the dashboard
+
+We can see bug is rectified and but still project is failed since code coverage should be more than 80% - check in Quality Gates
+
+12. In order to make project pass, we write some test cases
+
+@SpringBootTest
+class SonarqubeDemoApplicationTests {
+
+	@Autowired
+	private MessageController controller;
+	
+	@Test
+	void contextLoads() {
+	}
+
+	@Test
+	void testGetMessage() {
+		String message = controller.getMessage();
+		Assertions.assertNotNull(message);
+	}
+}
+
+13. Run sonar:sonar once again 
+
+Refresh the project
+
+Run jacoco plugin once again 
+Run sonar:sonar once again 
+Refresh the project
+Refresh the dashboard
+    Now we can see the project is passed as code coverage is more than 80%
+
+
+Jacoco Code Coverage
+      - Jacoco is a free code coverage library in Java
+      - Code coverage is measured by determining the number of lines that are run through unit test. The main benefits of coverage report are used to figure out the ways to improve the code or test for the next phase of development. It allows the team to evaluate and get a general idea of where potential areas of bug are in the code 
+
+1. Create spring boot project 
+
+2. Create messages.java
+
+public class Messages {
+
+    public String getMessage(String name)
+    {
+        StringBuilder s = new StringBuilder();
+        if(name == null || name.trim().length() == 0)
+        {
+            s = s.append("Please Provide a name!");
+        }
+        else
+        {
+            s.append("Hello " + name + "!");
+        }
+        return s.toString();
+    }
+}
+
+3. Create test case for messages.java
+
+public class TestMessages {
+
+    @Test
+    public void testNameDailyCodeBuffer()
+    {
+        Messages obj = new Messages();
+        Assertions.assertEquals("Hello Daily Code Buffer!", obj.getMessage("Daily Code Buffer"));
+    }
+}
+
+4. Configure jacoco plugin in pom.xml
+
+<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.8</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<!-- attached to Maven test phase -->
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+</executions>
+</plugin>
+
+Now we run this test and Jacoco plugin will generate a report for the code coverage like how much code coverage is done
+
+4. Run mvn clean test 
+5. Refresh the project, inside target folder - site folder - jacoco folder - open index.html in browser 
+   we can open Messages.java, where it says green is completely covered, yellow is partially covered and red is not covered  
+   So we pass argument to getMessage(), where if stmt is not executed and else part is executed, so everything is covered but inside if stmt is not covered. So we need to check for other conditions also 
+    So we need to cover the scenario where name is null as well as name is blank 
+
+ @Test
+    public void testNameBlank()
+    {
+        Messages obj = new Messages();
+        Assertions.assertEquals("Please Provide a name!", obj.getMessage(""));
+    }
+
+    @Test
+    public void testNameNull()
+    {
+        Messages obj = new Messages();
+        Assertions.assertEquals("Please Provide a name!", obj.getMessage(null));
+    }
+
+6. Run mvn clean test 
+7. Refresh the project, inside target folder - site folder - jacoco folder - open index.html in browser
+    Now we can see all code are covered using unit testing
+
+8. Consider we are CI/CD pipeline for verifying the code at that time we need to verify how much percentage of code coverage is been done, at that we can implement certain configuration in pom.xml 
+    Now we define one more execution phase under jacoco plugin
+
+<execution>
+						<id>jacoco-check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>PACKAGE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.9</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+
+So here we added the rule (ie) for package the counter should be line, so we see each and every line wht is the covered ratio, we define 0.9(ie) 90% of line should be covered when we run our test
+
+9. In order to do that, we use
+>mvn clean verify 
+
+Now we can see verification is failed and clearly says rule is violated because expected is 90% but covered only 70% 
+
+Java Code Coverage (Jacoco)
+      Code coverage is a metric that can help you understand how much of your source is tested. It's a very useful metric that can help you assess the quality of your test suite. A program with high test coverage has more of its source code executed during testing, which suggests it has a lower chance of containing undetected software bugs compared to a program with low test coverage. So, it really depends on how well your tests are written.
+
+Now, there are multiple tools available to help you measure the code coverage for your Java code like Open Clover, Cobertura, JCov. 
+
+Jacoco - It measures the code coverage by instrumenting the byte code on the fly while running the code with Java agent. We can also do coverage in offline mode (ie) prior to the execution of the code, it is not most popular and typically used in special cases like when the runtime env dosent supports java agent or deployments where we cannot modify JVM arguments of the appl 
+
+Jacoco plugin goals
+1. prepare-agent - this prepares a property pointing to the jacoco runtime agent that can be passed as a JVM argument to the appl under test. It is default bound to the initialized phase of the default lifecycle 
+
+2. prepare-agent-integration - similar to prepare-agent but provides default values which are suitable for integration tests like it will have a different file location for integration test when they get run. It is attached to pre-integration test phase of the default lifecycle 
+
+1. Create maven java project 
+
+ <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.19.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+            </plugin>
+ </plugins>
+    </build>
+
+</project>
+
+2. Create LastDigit.java
+
+public class LastDigit {
+
+    public final boolean lastDigit(final int a, final int b) {
+
+        final int lastDigitA = a % 10;
+        final int lastDigitB = b % 10;
+
+        return (lastDigitA == lastDigitB);
+    }
+}
+
+
+3. Create HelloName.java
+
+public class HelloName {
+
+    public final String helloName(final String name) {
+
+        String greeting = "Hello";
+
+        if (name != null && !name.isEmpty()) {
+            greeting += " " + name;
+        }
+
+        return greeting + "!";
+    }
+}
+
+4. Create test cases
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class LastDigitTest {
+
+    private LastDigit fixture;
+
+    @BeforeEach
+    public void setUp() {
+        fixture = new LastDigit();
+    }
+/*
+    @Test
+    public void shouldReturnTrueWhenLastDigitsAreSame() {
+
+        final int num1 = 17;
+        final int num2 = 7;
+
+        final boolean expected = true;
+
+        final boolean actual = fixture.lastDigit(num1, num2);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenLastDigitsAreNotSame() {
+
+        final int num1 = 17;
+        final int num2 = 13;
+
+        final boolean expected = false;
+
+        final boolean actual = fixture.lastDigit(num1, num2);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+*/
+}
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class HelloNameTest {
+
+    private HelloName fixture;
+
+    @BeforeEach
+    public void setUp() {
+        fixture = new HelloName();
+    }
+
+    @Test
+    public void shouldReturnHelloWhenNameIsNull() {
+
+        final String name = null;
+
+        final String expected = "Hello!";
+
+        final String actual = fixture.helloName(name);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldReturnHelloWhenNameIsEmpty() {
+
+        final String name = "";
+
+        final String expected = "Hello!";
+
+        final String actual = fixture.helloName(name);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldReturnGreetingWhenNameIsNotEmpty1() {
+
+        final String name = "Bob";
+
+        final String expected = "Hello Bob!";
+
+        final String actual = fixture.helloName(name);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldReturnGreetingWhenNameIsNotEmpty2() {
+
+        final String name = "X";
+
+        final String expected = "Hello X!";
+
+        final String actual = fixture.helloName(name);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldReturnGreetingWhenNameIsNotEmpty3() {
+
+        final String name = "Alice";
+
+        final String expected = "Hello Alice!";
+
+        final String actual = fixture.helloName(name);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+}
+
+5. Configure jacoco plugin in pom.xml
+
+<plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+prepare-agent is actually prepares the property which needs to be passed on to ur appl where its run so that it can generate the coverage data. By default it is bound to initialize phase, so when initialize phase runs it automatically detects and runs this prepare-agent 
+
+6. Now we run >mvn clean verify
+      We can see tests are running, when we come up we can see that when initailize phase runs, prepare-agent goal also run and argline property which is set to java agent and then all the properties are set to agent location jar file and destination file is within target folder 
+
+7. Next we see report goal, which creates a code coverage report for the tests of a single project in multiple formats like html or csv or xml, by default it generate in all 3 formats 
+
+report-integration - to generate report for integration test
+
+ <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+
+8. Now we run >mvn clean verify, we can generate the report for our project 
+
+Now we can open inside target folder - sites - jacoco - open index.html
+
+which displays how much code is covered, we can go into each class and within each class then for each of the methods and constructors and if we are missing any of files also it will indicate 
+
+9. So now we comment second test case in LastDigitTest so that the we can see coverage is  not 100%
+
+>mvn clean verify 
+
+so like this way it is very helpful to understand how much coverage and how much branches are covered and how much each classes or packages are missing the coverage
+
+10. Now we generate the report, so in pom.xml file
+   Now if we want agent to generate report for one of files using <datafile> attributes to tell which of coverage file it needs to use to generate the report
+   - If we want to generate footer for the report we can use <footer>
+
+ <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                           <dataFile>${project.build.directory}/jacoco-unit-tests.exec</dataFile>
+                           <footer>Report Generated by ABC Team</footer>
+                        </configuration>
+                    </execution>
+
+Since we are generating a different files, so we need to make sure our agent is generating this particular file 
+
+ <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                         <configuration>
+                           <destFile>${project.build.directory}/jacoco-unit-tests.exec</destFile>
+                        </configuration>
+                    </execution>
+
+So our agent is going to generate a file which is jacoco-unit-tests.exec and then report will read that file and generate a report out of it 
+
+11. Now run  >mvn clean verify 
+
+We can see our prepare-agent set to write the file as jacoco-unit-tests.exec and report goal is taking same file and generating the report 
+
+Now we can open inside target folder - sites - jacoco - open index.html, which displays the report 
+
+12. Next we have <includes> and <excludes> where we can include and exclude certain files from the report generation 
+
+ <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                           <dataFile>${project.build.directory}/jacoco-unit-tests.exec</dataFile>
+                           <footer>Report Generated by ABC Team</footer>
+                           <includes>
+                              <include>**/numbers/**/*</include> 
+                           </includes>
+                        </configuration>
+                    </execution>
+
+-- so the classes of this pkg only report will be generated, similarly if we want to exclude we can define using <excludes>
+
+13. As our report goal will generate report in all 3 formats like index.html, jacoco.csv and jacoco.xml. So if we want to configure particular format using <format> 
+
+<configuration>
+                           <dataFile>${project.build.directory}/jacoco-unit-tests.exec</dataFile>
+                           <footer>Report Generated by ABC Team</footer>
+                           <includes>
+                              <include>**/numbers/**/*</include> 
+                           </includes>
+                            <formats>
+                              <format>CSV</format>
+                              <format>HTML</format>
+                           </formats>
+                        </configuration>
+
+Now when we run "mvn clean verify", it will generate report only in csv and HTML format
+
+14. <outputDirectory> to generate report in different location instead of target/site/jacoco folder
+15. If we want to skip the execution we can use <skip>
+
+<configuration>
+                           <skip>true</skip>
+                           <dataFile>${project.build.directory}/jacoco-unit-tests.exec</dataFile>
+                           <footer>Report Generated by ABC Team</footer>
+                           <includes>
+                              <include>**/numbers/**/*</include> 
+                           </includes>
+                            <formats>
+                              <format>CSV</format>
+                              <format>HTML</format>
+                           </formats>
+                        </configuration>
+
+Now when we run "mvn clean verify", it will skip the report generation goal 
+
+16. <title> to provide title for ur generated report
+
+<configuration>
+                           <!-- <skip>true</skip> -->
+                           <title>Jacoco Demo</title>
+                           <dataFile>${project.build.directory}/jacoco-unit-tests.exec</dataFile>
+                           <footer>Report Generated by ABC Team</footer>
+                           <includes>
+                              <include>**/numbers/**/*</include>
+                           </includes>
+                           <formats>
+                              <format>CSV</format>
+                              <format>HTML</format>
+                           </formats>
+                        </configuration>
+
+Now when we run "mvn clean verify", it will give the title for report generation goal 
+
+17. Next we see "check" goal in jacoco plugin  which check that the code coverage metrics are being met (or) we can specify some rules that ur code must pass for the build to pass 
+    For example we can configure that our project must have 80% code coverage for the build to pass
+    - check goal is bound to verify phase of default lifecycle 
+
+- In pom.xml we just have prepare-agent and report goal 
+
+<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.8.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.19.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M5</version>
+			</plugin>
+			<plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                       <!--   <configuration>
+                           <destFile>${project.build.directory}/jacoco-unit-tests.exec</destFile>
+                        </configuration> -->
+                    </execution>
+                     <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <!-- <configuration>
+                           <skip>true</skip>
+                           <title>Jacoco Demo</title>
+                           <dataFile>${project.build.directory}/jacoco-unit-tests.exec</dataFile>
+                           <footer>Report Generated by ABC Team</footer>
+                           <includes>
+                              <include>**/numbers/**/*</include>
+                           </includes>
+                           <formats>
+                              <format>CSV</format>
+                              <format>HTML</format>
+                           </formats>
+                        </configuration> -->
+                    </execution>
+                </executions>
+            </plugin>
+		</plugins>
+	</build>
+
+-- Now we comment both test case in LastDigitTest.java 
+
+-- Now we run "mvn clean verify", and we can see code coverage is missing for LastDigit class 
+   So if we want to enforce that none of ur classes can have 0% coverage and if at all thats the case then we can have ur build failing and that would indicate that somebody whoever working on it will make sure that the code coverage is added to ur build
+    So we need to add some rules, this rule is applicable for which element like BUNDLE, PACKAGE,CLASS, SOURCEFILE, METHOD and next represent what sort of limitation we need to add to this particular element so it can be INSTRUCTIONS, LINE, BRANCH, COMPLEXITY,METHOD,CLASS and then what should be the value which should be used like TOTALCOUNT,COVEREDCOUNT, MISSEDCOUNT, COVEREDRATIO, MISSEDRATIO
+    
+    In this example we say that in the bundle we say total number of instructions which are there, they should be covered and they should be minimum 80%, if it is goes below 80% then the build will start to fail automatically. Second condition is all of ur classes should not have any of  instructions missed  
+
+<execution>
+                        <id>jacoco-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                           <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+
+So we say that for our entire bundle, the covered ratio should be minimum 80%, if it is less then the build will fail 
+
+-- Now run "mvn clean verify", we can see that the build is failed since instructions covered ratio is 0.48, but expected minimum is 0.80
+
+-- Now we change element to package, so at each package level the covered ratio should be 80%
+
+<rule>
+                                    <!-- <element>BUNDLE</element> -->
+                                    <element>PACKAGE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+
+-- Now run "mvn clean verify", we can see that the build is failed since instructions covered ratio is 0.00, but expected minimum is 0.80
+
+-- Similarly we define element as CLASS, which covers total number of instruction which are covered by your test as 1 
+
+ <element>CLASS</element>          
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>TOTALCOUNT</value>
+                                            <maximum>1</maximum>
+                                        </limit>
+                                    </limits>
+
+which means for each classes the maximum number of coverage should be 1
+
+-- Now run "mvn clean verify", we can see that the build is failed since instructions is more in each class
+
+-- The difference between CLASSFILE and SOURCEFILE is that, CLASSFILE will look at the class files after compilation and SOURCEFILE will take ur java file
+   So LastDigit.java has one class file, now we create another class 
+
+public class LastDigit {
+
+    public final boolean lastDigit(final int a, final int b) {
+
+        final int lastDigitA = a % 10;
+        final int lastDigitB = b % 10;
+
+        return (lastDigitA == lastDigitB);
+    }
+}
+
+class Random {
+   public void testing() {
+   }
+}
+
+So with SOURCEFILE we have 2 java files LastDigit and HelloName, but when we compile it we get 3 class files
+
+<element>CLASS</element>          
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>TOTALCOUNT</value>
+                                            <maximum>1</maximum>
+                                        </limit>
+                                    </limits>
+
+-- Now run "mvn clean verify", we can see that the build is failed for 3 classes separately, because it creates class file separately. But when we change
+
+<element>SOURCEFILE</element>          
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>TOTALCOUNT</value>
+                                            <maximum>1</maximum>
+                                        </limit>
+                                    </limits>
+
+-- Now run "mvn clean verify", we can see that the build is failed for 2 classes separately.
+
+18. Next we have "merge" goal, used to combine several jacoco coverage files together and then either generate a report out of them or we can perform checks to ensure that ur code is passing the defined rule checks combined together
+   For merge goal we need multiple coverage files so we generate individual coverage files, so we can run specific tests for each of the package and then we will collect those coverage files 
+
+- In pom.xml we just have prepare-agent and report goal 
+
+<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.8.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.19.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M5</version>
+			</plugin>
+			<plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                     <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+  
+                    </execution>
+                </executions>
+            </plugin>
+		</plugins>
+	</build>
+
+-- Uncomment both test case in LastDigitTest 
+
+Now run >mvn clean verify -Dtest=LastDigitTest
+ 
+Now we can open inside target folder - sites - jacoco - open index.html, which displays 100% code coverage only for LastDigit and for other class it is marked in red color 
+
+-- Rename jacoco.exec to jacoco-numbers.exec so that it wont override when it run on next time 
+
+-- Now run >mvn verify -Dtest=HelloNameTest
+ 
+When we refresh the project, we can see jacoco-numbers.exec and jacoco.exec. Now we rename jacoco.exec as jacoco-strings.exec. When we open index.html we can see for Strings it is totally covered and for numbers it is in red color 
+
+-- Now we have 2 coverage files so now we can combine these files with merge call and generate the report 
+
+- Create folder jacoco-merge-input folder and move both exec files into that folder
+
+- Now we create execution section in pom.xml. Now it will look for the files in /jacoco-merge-input directory which includes .exec format specifiers and generate the files in the build dir as jacoco.exec file which is going to picked by report plugin 
+
+
+                  <execution>
+                        <id>jacoco-merge</id>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                           <fileSets>
+                              <fileSet>
+                                 <directory>${project.build.directory}/jacoco-merge-input</directory>
+                                 <includes>
+                                    <include>*.exec</include>
+                                 </includes>
+                              </fileSet>
+                           </fileSets>
+                        </configuration> 
+                    </execution>
+
+- Now we run >mvn verify -Dmaven.test.skip=true, so that there is no new file generated 
+   Now we can see merge call is executed by picking jacoco-numbers.exec and jacoco-strings.exec and write the merged data into jacoco.exec 
+     
+Now we can open inside target folder - sites - jacoco - open index.html, which displays 100% code coverage for both LastDigit and HelloName files
+
+19. If we want to just generate a report for multiple coverage files then we can use report-aggregate goal to generate a combined report for all of them. This is used with multi module maven project 
+
+- Create maven project MultiModuleSonar with pom packaging
+
+<properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.19.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+- Right click MultiModuleSonar - Create maven module - maven-numbers with jar packaging 
+   Create LastDigit and LastDigitTest
+
+- Right click MultiModuleSonar - Create maven module - maven-strings with jar packaging 
+   Create HelloName and HelloNameTest
+ 
+- So when we run maven build we can see jacoco reports generated for each of the child modules 
+>mvn clean verify 
+
+we can see all modules are successfully build 
+
+- Refresh both modules, under target - site - jacoco - open index.html and we can see the code coverage is 100%
+
+- Now we need to generate the completed combined report out of this. So we create an another maven module which contains all the modules which we want the report to be generated for as their dependencies
+
+- Right click MultiModuleSonar - create maven module - maven-reports with jar pkg
+- change in pom.xml as first module since it has to executed first 
+
+- Now run >mvn clean verify, so that it executes reports module, numbers and strings module since there is no interdependency on this 
+   Reports module is the one which should be executed at the end of everything since you want the reports to be generated for all the modules first and then we can combine them with report-aggregation goal
+    To ensure that report is running at the end of everything we can add other modules as dependencies in reports module
+
+In maven-reports pom.xml we add 
+
+<dependencies>
+     <dependency>
+         <groupId>com.pack</groupId>
+         <artifactId>maven-numbers</artifactId>
+         <version>${project.version}</version>
+     </dependency>
+     <dependency>
+         <groupId>com.pack</groupId>
+         <artifactId>maven-strings</artifactId>
+         <version>${project.version}</version>
+     </dependency>
+  </dependencies>
+
+- Now we run >mvn clean verify, we can see it is executing number, strings and then reports module indicating both numbers and strings modules are dependent on reports module
+
+- Now we configure report goal in maven-reports module 
+
+<build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+- Now we run >mvn clean verify, now in console we can report-aggregate took the jacoco.exec file from numbers and strings module 
+
+- Now we refresh the maven-reports project, under target - site - jacoco aggregate - open index.html, we can see the combined report of both modules
+
+20. Next we see "dump" goal - where we can request code coverage data dump over TCP/IP from a jacoco agent running in TCP server mode (ie) we can have our appl run with jacoco java agent on separate host and then when u need to collect the coverage data, simply run the dump goal and the coverage data output will be generated. This is useful for appl when they are run in prod env
+
+1. Create spring boot project JacocoDump with web dependency 
+
+<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<builder>paketobuildpacks/builder-jammy-base:latest</builder>
+					</image>
+				</configuration>
+			</plugin>
+			 <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+		</plugins>
+	</build>
+
+
+2. Create controller in main class
+
+@SpringBootApplication
+public class JacocoDumpApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(JacocoDumpApplication.class, args);
+	}
+
+}
+
+@RestController
+class SayHelloController {
+
+    @GetMapping("/say-hello")
+    public String sayHello(@RequestParam(required = false) final String name) {
+        return "Hello " + Optional.ofNullable(name).orElse("") + "\n";
+    }
+}
+
+3. Let build this project without running the test and run the appl with java agent so we will do this activity manually rather than running it from maven
+
+>mvn clean verify -Dmaven.test.skip=true
+
+we can see prepare-agent have created the javaagent property where it will dump the output of the coverage when the tests are done 
+
+4. Now run the appl with java-agent just to demonstrate that this appl run in a different env and dump the code on different host 
+
+- copy -javaagent from mvn console 
+
+-javaagent:C:\\Users\\senthil.kumart\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.8\\org.jacoco.agent-0.8.8-runtime.jar=destfile=C:\\Spring\\JacocoDump\\target\\jacoco.exec
+
+we can see javaagent is pointing to jar file in maven local repository and destination file is jacoco.exec. But we need the appl to be running in a server mode so that we can request the dump. 
+
+Goto Maven jacoco plugin in google - prepareagent, we can see <output> method is by default is file mode, but basically we need to run it on tcpserver mode so
+
+-javaagent:C:\\Users\\senthil.kumart\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.8\\org.jacoco.agent-0.8.8-runtime.jar=output=tcpserver
+
+- First we copy the jar file 
+C:\Spring\JacocoDump>copy C:\Users\senthil.kumart\.m2\repository\org\jacoco\org.jacoco.agent\0.8.8\org.jacoco.agent-0.8.8-runtime.jar target\jacoco-agent.jar
+
+Now we can see agent jar file in target folder
+
+- So now we create the file as
+-javaagent:C:\\Spring\\JacocoDump\\target\\jacoco-agent.jar=output=tcpserver
+
+If we dont have maven also and if we are getting this jar file from some other location 
+
+- Now we run on tcpserver as
+>java -javaagent:C:\\Spring\\JacocoDump\\target\\jacoco-agent.jar=output=tcpserver -jar target/JacocoDump-0.0.1-SNAPSHOT.jar
+
+Now we can see the appl is running 
+
+-- Now configure the dump goal in pom.xml and skip the prepare-agent goal 
+
+                  <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                           <skip>true</skip>
+                        </configuration>
+                    </execution>
+                  <execution>
+                        <id>jacoco-dump</id>
+                        <goals>
+                            <goal>dump</goal>
+                        </goals>
+                    </execution>
+
+-- Now run >mvn verify -Dmaven.test.skip=true
+
+Now it will skip prepare-agent and jacoco dump goal says that connected to localhost:6300 and generated the execution files. Finally report goal took that jacoco.exec and generated the report 
+
+- Goto target/site/jacoco folder - open index.html 
+
+Now we can see code coverage for our project, within this pkg we have 2 classes one is JacocoDumpApplication which is covered 100% and other just 30%. Since endpoint is never called so the coverage for that method is missing
+
+-- Now we send request to the appl
+
+C:\Spring\JacocoDump>curl http://localhost:2000/say-hello?name=Ram
+Hello Ram
+
+-- Now server is running and we generate the report 
+
+>mvn verify -Dmaven.test.skip=true
+
+- Goto target/site/jacoco folder - open index.html
+
+Now we can see code coverage is 100% for all the classes 
