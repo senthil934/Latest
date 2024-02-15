@@ -1,0 +1,2465 @@
+Spring batch 5
+
+Up until version 4.3, the @EnableBatchProcessing annotation exposed a tranasaction manager bean in the application context. While this was convenient in many cases, the unconditional exposure of a tranasaction manager could interfere with a user-defined transaction manager. In this release, @EnableBatchProcessing does not expose a transaction manager bean in the application context anymore, so  it is now required to manually configure the transaction manager on any Step
+
+ Unless you are using a custom Job repository/explorer implementation, the @EnableBatchProcessing annotation will configure a Jdbc-based JobRepository which requires a DataSource bean in the application context. The DataSource bean could refer to an embedded database like H2, HSQL, etc to work with an in-memory job repository.
+
+        @Autowired
+	private JobRepository jobRepository;
+	@Autowired
+        private PlatformTransactionManager batchTransactionManager;
+
+           @Bean
+	    public Job demo1Job() throws Exception {
+	        return new JobBuilder("first job", jobRepository).incrementer(new RunIdIncrementer()).start(chunkStep()) .build();
+	    }
+
+	 @Bean
+	    public Step chunkStep() throws Exception {
+	        return new StepBuilder("first step", jobRepository)
+	                .<Employee,Employee>chunk(5, batchTransactionManager)
+	                .reader(employeeReader())
+                        .processor(employeeProcessor)
+                        .writer(employeeWriter)
+	                .build();
+	    }
+
+- No need to define @EnableBatchProcessing in v5
+Introduction
+
+Spring Batch is used to execute series of job at a particular point of time.
+- It is developed by Spring community, it is an open source, very lightweight and this framework has been designed to solve enterprise problem and reduce lot of times of developer 
+
+Initially we have do everything manually now if we want automate that process at particular time. For example daily when time reach 6pm we want to execute some sort of job automatically we dont want to depend manually
+   We have bank appl, whenever they want to take backup means they send a message stating that we are planning to take backup so if u r doing any transaction at that time it will not reflect in ur database. Once every month or every year we want to execute series of job to take backup of the transaction
+
+The real use cases where this batch processing being used nowadays is banking, consider customer using credit card, so we do some shopping or transaction using this credit card but if we login back to our account to net banking or some other system this transaction detail not reflecting immediately, it will take some time to reflect their, why because this transaction detail being saved by some other application and belongs to different system. In customer account where you are seeing this detail which belong to some other application and have their own system and own databases, in order to get
+the information from there to here, some batch processing comes into the picture and transfer those data from those systems to this system  
+    Similarly in education system where we  receive sms or mails or notification regarding fees due date, some holiday or some other
+notification and our result got processed 
+ In retail domain where dealing with lot of products (ie) in inventory management system they updating their data frequently from other system which communicate with inventory system to get availability details back from the inventory system to this system. In Healthcare processing world we getting our health report or any diagnosis report or any notification so a lot of cases we use batch processing 
+
+Features
+   - Transaction management
+   - Chunk based processing 
+     1. Consider we transfer money through NEFT it will take minimum 30 min. Now when we submit the transaction and at same time another 100 people wants to do NEFT transaction, so it will stored in batches, after certain amount of time based on their configuration at server that job will triggered and then job will pick all transaction and it will start the processing. 
+     2. Used for settlement purpose (ie) each and every month u will be getting credit card statement. Consider first week of every month so same date from same bank another 1000 customers credit card report will be generated and send to mail id. So it will run batch process on that time and capture all data, process and generate complete pdf file and automatically trigger to ur mail id 
+   - Job start/stop/retry
+
+
+   - Job processing statistics
+        Consider we are running any job with help of Spring batch, one of batch may be succeed or failure due to certain reason, so u can find out using their statistics
+
+Spring Batch Architecture
+1.	Consider scheduler that runs inside our JVM which is going to trigger our Spring batch processing, in general we use spring scheduler or quartz scheduler. The scheduler launch JobLauncher which is class in Spring batch framework, it is a starting point for any particular job to be started inside spring batch
+2.	Job Launcher immediately triggers Job Repository which holds all statistical info of how many batches where run and what is the status of each batch, how many messages are processed or how many are skipped etc
+
+
+3.	Once Job Launcher triggers a Job repository, the Job Launcher has also have Job registered with this Job Launcher. This particular Job has a step, a Step basically consist of 3 different component inside Spring framework called ItemReader, ItemProcessor, ItemWriter, all these are useful when you want to read something from particular source, process that particular message and then write back to some other source. Most of the case these sources are either database or file system or queuing system 
+
+4.	For example, reading a file, we will read the file using ItemReader, we process the data inside the file basically each data can be converted into pojo or it can transfer to some other object using ItemProcessor and finally using ItemWriter we can write back to database or publish that to a queue.
+
+5.	You can configure multiple steps inside the job but ItemReader, processor and writer can be one instance per step. All steps are enclosed within Step Exceution, whereas job execution happens at job level so if there are multiple step inside the job that is consider as JobExecution and each step has its own step execution
+6.	Once all steps are completed, the step status is updated back into Job repository and we can also get some statistics on how many messages have read, how many processed and how many failed or skipped etc
+  
+Job Scheduler - in a day when it 6pm it is launch a job. So scheduler will take responsibility when it reaches wht time we have to execute the job.
+
+Job Launcher - someone should take responsiblity to launch the job
+
+Job -divided into step and job will have single task/step or multiple step
+
+Step can have 3 division called Reader,processor,writer but we can decide whether we have 3 division or not. Based on chunk and tasklet we will decide 
+
+Step of 2 types based on requirement
+  1. Chunk - step is very complex
+  2. Tasklet  - step is very simple
+
+Consider we take 2 step 
+  1. delete a file which use tasklet
+  2. excel to database which use chunk 
+
+
+Core concept of Spring batch 
+
+1. Job is like an activity, for example a job can be like import sales, import customer status 
+
+2. Step - job have one or more step, a step can be like get somelines from a file and save it into a database, the step can have like a reader a processor which is optional and a writer 
+    Spring batch has two kind of steps for processing data
+the first one is chunk oriented processing and tasklet
+    Suppose we have a file and we are reading a file from database and it has
+like 100 lines, so in chunk oriented processing, we are reading from a file which contains like 100 records with the chunk size  10, so we are going
+to read the first one and process the first one, next we are going to
+read the second one and process the second one, we are going to repeat it until we reach the chunk size then we are going to persist it. 
+      The tasklet is the concept where everything happens in one transaction
+or you can just process everything in a single
+
+
+3. Job repository which is a like a infrastructure that spring batch offers
+us, in order to  monitor and to save the state like the metadata of
+our job, for example when the job run the time it took to finish, all metadata related to our job  persisted in the job repository 
+
+4. JobInstance - In order to have a job and a step, in order
+to create them we are going to use JobBuilderFactory and also we are going to to use the StepBuilderFactory
+
+5. Job repository  is the place where spring batch will persists the metadata related to our job
+
+In this architecture, how many job and how many steps.
+1 job and 2 step and steps are configured based on chunks, most properly in chuck only we will go with reader, processor and writer
+
+Entire step process is maintained by Step Execution and entire job process is maintained by Job Execution
+
+Spring Batch Components
+1. Job Repository
+      This represents the persistence of batch metadata entities in the database. It acts as a repository that contains batch job's information, for exampke when the last batch job was run etc
+
+2. JobLauncher 
+       This is an interface used to launch a job or run jobs when the job's scheduled time arrives. It takes the job name and some other parameters while launching or running the job
+
+3. Job
+     This is the main module, which consist of the business logic to be run
+
+4. Step
+    Steps are nothing but an execution flow of the job. A complex job can be divided into several steps or chunks, which can be run one after another
+
+5. ItemReader
+      This interface is used to perform bulk reading of data, eg: reading several lines of data from an Excel file when job starts
+
+6. ItemProcessor
+      When the data is read using ItemReader, itemProcessor can be used to perform the processing of data, depending on the business logic
+
+7. ItemWriter
+      This interface is used to write bulk data, either to a database or any other file disks
+
+
+We will read csv files and write those data to database, so it is extract data from csv file transform to different object and store into database
+
+1. Create project with batch,web,spring datajpa, devtools database dependency 
+
+2. Create users.csv file
+
+3. Enable @EnableBatchProcessing in main class
+
+4. Configure db info in application.properties
+server.port=8081
+spring.jpa.hibernate.ddl-auto=update
+spring.datasource.url=jdbc:mysql://localhost:3306/batch
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.database-platform = org.hibernate.dialect.MySQL8Dialect
+
+spring.batch.job.enabled=false
+spring.batch.jdbc.initialize-schema = ALWAYS
+
+spring.batch.job.enabled=false  - which disable default batch launcher, if we dont do it spring boot by default use SimpleJobLanucher and automatically start based on confgiuration which we add 
+
+
+5. Create entity class
+@Entity
+@Data
+//@Table(name="emp") - optional
+public class Employee {
+   @Id
+   private String employeeId;
+   private String firstName;
+   private String lastName;
+   private Integer age;
+   private String email;
+}
+
+6. Create repository interface 
+public interface EmployeeRepository extends JpaRepository<Employee, String> {
+
+}
+
+7. Create a job - JobDemo.java with @Configuration inside this we say what  is my job and what are all the steps, whether we have 1 step or multiple step, whether that step is created as chunk or tasklet
+   -First we configure Job as bean, to create a job JobBuilderFactory take responsibility. Job contain step so create a step we need to use StepBuilderFactory. Step is divided into like ItemReader, ItemProcessor, ItemWriter so we have to pass as arguments
+
+@Configuration
+public class JobDemo {
+              
+             @Autowired
+	private JobRepository jobRepository;
+	@Autowired
+	private PlatformTransactionManager transactionManager;
+	@Autowired
+	EmployeeProcessor employeeProcessor;
+	@Autowired
+	EmployeeWriter employeeWriter;
+	
+	@Qualifier(value="job1")
+	@Bean
+	public Job demo1Job() throws Exception {
+		return new JobBuilder("job2",jobRepository)
+				.incrementer(new RunIdIncrementer())
+				.start(chunkStep())
+				.build();
+	}
+	
+	@Bean
+	public Step chunkStep() throws Exception {
+		return new StepBuilder("step1",jobRepository)
+				.<Employee,Employee>chunk(5, transactionManager)
+				.reader(employeeReader())
+				.processor(employeeProcessor)
+				.writer(employeeWriter)
+				.build();
+	}
+	
+chunksize is used for maintaining the transaction, suppose we have 30 records in a file and we are giving chunk size as 5 (ie) spring batch will record one by one from the file and processing one by one, but when we specify chunksize it will goes to writer once it reach 5 (ie) it will one record it will process it and stores somewhere else until it reach same operation 5 times , once 5 records got processed then it will goes to writer and save into database. Next time it will read 6 to 10 record and then comes to writer and insert into database, this keep going on until all records got processed 
+    Assume 15 records got written into db, coming to 16 to 20 record, if 17th record has some issue in writer then all those 5 records will not be persisted 
+
+3. Here we have used employeeReader, as we are going to read from the file which contains employee info. So if we read any file we have to know what are the columns, what are the types and where we want to store, so we have to create reader 
+    There are 17 inbuild ItemReader provided by Springboot like FlatFileItemReader, XmlReader, JdbcCursorItemReader etc
+    We have to specify what type of file we are going to read inside setResource(), but if we hardcode the filename here it will always refer the same file, but we may read different file at runtime. So spring batch provides jobParameters where we can pass any value at runtime, so when we trigger the job we can pass some value and job will take as input and do some operation on that.
+    For this we have to provide what jobparameter it has to refer at runtime
+
+@Bean
+    @StepScope
+    Resource inputFileResource(@Value("#{jobParameters[fileName]}") final String fileName) throws Exception {
+        return new ClassPathResource(fileName);
+    }
+
+and we are configuring this fileName while running the job, and then resource will be created with that filename and triggered at runtime 
+
+@StepScope is provided by Spring batch framework which means whatever object is created their scope is only for steps, as we mentioned our job can have multiple steps, these beans are available only for particular steps 
+
+4. Now we create Reader to read the data from CSV file 
+
+- read data from flatfile, so we create instance
+   - from which source read the data (ie)from csv file
+   - give name for ItemReader as "CSV-Reader"
+   -  flatFileItemReader.setLinesToSkip(1); read the csv file but skip the first line as first line is header
+   - flatFileItemReader.setLineMapper(lineMapper());
+
+              @Bean
+              public FlatFileItemReader<Employee> employeeReader() throws Exception {
+                             FlatFileItemReader<Employee> flatFileReader=new FlatFileItemReader<Employee>();
+                         flatFileReader.setResource(inputFileResource(null));
+                             flatFileReader.setName("CSV Reader");
+                             flatFileReader.setLinesToSkip(0);
+                             flatFileReader.setLineMapper(lineMapper());
+                             return flatFileReader;
+              }
+              
+
+
+5. Now we create lineMapper() which pojo class should refer so based on that we store info in database 
+
+@Bean
+public LineMapper<Employee> lineMapper(){
+//We have to map csv file with pojo class for that we use
+     DefaultLineMapper<Employee> defaultLineMapper=new DefaultLineMapper<>();
+
+// CSV is comma separated file 1,ram,33 where 1 represent 1st col, ram represent 2nd col. CSV need some delimiter to specify delimiter we use DelimitedLineTokenizer
+     DelimitedLineTokenizer lineTokenizer=new DelimitedLineTokenizer();
+                lineTokenizer.setDelimiter(",");
+                lineTokenizer.setStrict(false);
+   lineTokenizer.setNames("employeeId","firstName","lastName","age","email");
+        
+
+
+//Now we map csv separated with , to pojo class using                     
+      BeanWrapperFieldSetMapper<Employee> fieldSetMapper=new BeanWrapperFieldSetMapper<Employee>();
+                    fieldSetMapper.setTargetType(Employee.class);
+   
+//Now we set DelimitedLineTokenizer and BeanWrapperFieldSetMapper to DefaultLineMapper using                           
+               defaultLineMapper.setLineTokenizer(lineTokenizer);
+          defaultLineMapper.setFieldSetMapper(fieldSetMapper);
+                             
+                      return defaultLineMapper;
+              }
+
+8. Create EmployeeProcessor implements ItemProcessor, if we want to process any data before storing into database 
+
+@Component
+public class EmployeeProcessor implements ItemProcessor<Employee, Employee>{
+
+	@Override
+	public Employee process(Employee item) throws Exception {
+        Employee emp=new Employee();
+        emp.setEmployeeId(item.getEmployeeId());
+        emp.setFirstName(item.getFirstName().toUpperCase());
+        emp.setLastName(item.getLastName().toUpperCase());
+        emp.setAge(item.getAge());
+        emp.setEmail(item.getEmail());
+        System.out.println("Inside processor: "+emp.toString());
+		return emp;
+	}
+}
+
+9. Create Writer class to write into database
+
+@Component
+public class EmployeeWriter implements ItemWriter<Employee>{
+	
+	@Autowired
+	EmployeeRepository empRepo;
+
+	@Override
+	public void write(List<? extends Employee> items) throws Exception {
+		empRepo.saveAll(items);
+		System.out.println("Writerinfo: "+items);
+	}
+
+}
+
+10. Once job is ready we have to trigger this job by using JobLauncher. JobLauncher is responsible for taking job object and trigger that
+   So we create JobRunner.java, where we inject JobLauncher, here we use one of launcher called SimpleJobLauncher where we have to inject it separately using BaseConfig class
+   As we saw in reader, we are not providing any filename, where we provide the filename at runtime using JobParametersBuilders  
+   So once jobparameters are created we can run the job using runJob() and inside we have run() where we can pass job and its parameters and it is triggered using jobLauncher with all info provided in the job. First it will take reader part and it will read the file, then it will process it and write the data how it is configured 
+
+@Component
+public class JobRunner {
+              
+              @Autowired
+              JobLauncher jobLauncher;
+              @Autowired
+              Job demo1;
+              
+              public JobExecution runBatchJob() {
+     JobParametersBuilder jobParameterBuilder=new JobParametersBuilder();
+              jobParameterBuilder.addString("fileName","employees.csv");       
+JobExecution jobExecution=runJob(demo1, jobParameterBuilder.toJobParameters());
+                             return jobExecution;
+              }
+
+              public JobExecution runJob(Job job, JobParameters jobParameters) {
+                             JobExecution jobExecution=null;
+                             try {
+                   jobExecution=jobLauncher.run(job, jobParameters);                             
+                             }
+                             catch(JobExecutionAlreadyRunningException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobRestartException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobInstanceAlreadyCompleteException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobParametersInvalidException e) {
+                                           System.out.println(e);
+                             }
+                             return jobExecution;
+              }
+              
+}
+
+11. create a controller to call the job 
+
+@RestController
+@RequestMapping("/api")
+public class EmployeeController {
+              @Autowired
+              JobRunner jobRunner;
+
+              @RequestMapping("/job")
+              public String runJob() {
+                             JobExecution je=jobRunner.runBatchJob();
+                             return String.format("Job is successfully finished "+je.getJobId()+" "je.getExitStatus());
+              }  }
+
+12. Start the appl and run http://localhost:8081/run/job, it will store all data into db
+
+8. Run http://localhost:8081/h2-console and we can see it create employee table apart from that it creates other tables
+
+When we execute the appl, it will creates extra 9 tables automatically 
+
+   batch_job_seq, batch_step_execution_seq, batch_job_execution_seq – which maintenance the sequence, normally mysql does not support to create sequence so that’s why spring batch creates separate table to generate primary key. This primary key is retrieved from corressponding sequence tables.
+
+    For example, JobInstance, JobExecution, JobParameters, and StepExecution map to BATCH_JOB_INSTANCE, BATCH_JOB_EXECUTION, BATCH_JOB_EXECUTION_PARAMS, and BATCH_STEP_EXECUTION, respectively. ExecutionContext maps to both BATCH_JOB_EXECUTION_CONTEXT and BATCH_STEP_EXECUTION_CONTEXT. The JobRepository is responsible for saving and storing each Java object into its correct table.  
+
+batch_job_instance is used to holds all info about job instance, which contains job_name which comes from our project in BatchConfiguration.class as importUserJob, JOB_KEY: A serialization of the JobParameters that uniquely identifies separate instances of the same job from one another. (JobInstances with the same job name must have different JobParameters, and thus, different JOB_KEY values).
+
+ExecutionContext
+ - It is similar with Http request object and session object where we will keep something in key value format and using in appl throughout the session scope or request scope. Similarly in JobExecution if we put something  into ExecutionContext and we can use it throughout the Job execution.
+   - Suppose we are reading some data from file then we are processing and inserting into db and vice versa, so there might be certain situation where we must access some information at processing layer which we are not reading from the file. So in the processing layer we have that much information which is coming from file (ie) reading from file but not other information. If we want to read such kind of data which is not available in processing layer, where we can get it, it is one of use case of ExecutionContext 
+    Consider we are reading a file, we are putting something as key as string and value as object  in ExecutionContext and now that will be available in processing part also and now we also can add some key value pair in processing layer and now both will be available in writer layer 
+
+executionContext.putString("customFileName", "employee.csv");
+
+    - If we put something in ExecutionContext we can access throughout the JobExecution
+
+@SpringBootApplication
+@EnableBatchProcessing
+public class SpringBatch1Application {
+
+              public static void main(String[] args) {
+                             SpringApplication.run(SpringBatch1Application.class, args);
+              }
+
+              @Bean
+              public ExecutionContext executionContext() {
+                             return new ExecutionContext();
+              }
+}
+
+
+@Component
+public class JobRunner {
+              
+              @Autowired
+              JobLauncher jobLauncher;
+              @Autowired
+              Job demo2;
+              
+              @Autowired
+              ExecutionContext context;
+                          
+              
+              public JobExecution runBatchJob() {
+                             JobParametersBuilder jobParameterBuilder=new JobParametersBuilder();
+                            jobParameterBuilder.addString("fileName","employees.csv");
+                  context.putString("empid", "1000");
+                             JobExecution jobExecution=runJob(demo2, jobParameterBuilder.toJobParameters());
+                             return jobExecution;
+              }
+
+              public JobExecution runJob(Job job, JobParameters jobParameters) {
+                             JobExecution jobExecution=null;
+                             try {
+                                           jobExecution=jobLauncher.run(job, jobParameters);                            
+                             }
+                             catch(JobExecutionAlreadyRunningException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobRestartException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobInstanceAlreadyCompleteException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobParametersInvalidException e) {
+                                           System.out.println(e);
+                             }
+                             return jobExecution;
+              }
+}
+
+
+@Component
+public class EmployeeProcessor implements ItemProcessor<Employee, Employee>{
+
+	@Autowired
+	ExecutionContext executionContext;
+	
+	@Override
+	public Employee process(Employee item) throws Exception {
+        Employee emp=new Employee();
+        emp.setEmployeeId(item.getEmployeeId()+executionContext.getString("empid"));
+        emp.setFirstName(item.getFirstName().toUpperCase());
+        emp.setLastName(item.getLastName().toUpperCase());
+        emp.setAge(item.getAge());
+        emp.setEmail(item.getEmail());
+        System.out.println("Inside processor: "+emp.toString());
+		return emp;
+	}
+}
+
+
+Read from XML file and write into database
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.1.8</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBatch1</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBatch1</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.4.18</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-oxm</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.batch</groupId>
+			<artifactId>spring-batch-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<builder>paketobuildpacks/builder-jammy-base:latest</builder>
+					</image>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+1. Create spring boot project with jdbc api, mysql, lombok, spring batch, spring oxm, xstream
+2. In main class we define @EnableBatchProcessing
+3. Configure db info in application.properties
+
+spring.datasource.url=jdbc:mysql://localhost:3306/batch?useSSL=false
+spring.datasource.password=root
+spring.datasource.username=root
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.initialize=true
+spring.datasource.schema=classpath:schema.sql
+
+4. Create table
+CREATE TABLE person  ( person_id BIGINT NOT NULL PRIMARY KEY,
+    first_name VARCHAR(40), last_name VARCHAR(40), email VARCHAR(100),
+    age INT
+);
+
+5. Create Person class
+@Data
+public class Person {
+   private Integer personId; private String firstName;private String lastName;
+   private String email; private Integer age;
+}
+
+6. Create job
+@Configuration
+public class JobDemo {
+
+	@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+	DataSource dataSource;
+
+	@Autowired
+        PersonProcessor processor;
+	
+	//Reading from xml to db
+	@Bean
+	public Job importPersonJob() {
+		return new JobBuilder("importJob",jobRepository)
+ .incrementer(new RunIdIncrementer()) .start(step1()).build();			                }
+	
+	@Bean
+	public Step step1() {
+		return new StepBuilder("stepJob", jobRepository)
+	 .<Person,Person>chunk(100, transactionManager)
+	  .reader(reader()) .processor(processor)
+	.writer(writer()) .build();
+	}
+	
+	@Bean
+	public StaxEventItemReader<Person> reader(){
+	StaxEventItemReader<Person> reader=new StaxEventItemReader<>();
+		reader.setResource(new ClassPathResource("persons.xml"));
+		reader.setFragmentRootElementName("person");
+		
+		Map<String,String> map=new HashMap<>();
+		map.put("person", "com.pack.SpringBatch1.Person");
+		
+//provides facility to marshal objects into xml and vice-versa
+		XStreamMarshaller marshaller=new XStreamMarshaller();
+//Check permission for a provided type
+		ExplicitTypePermission typePermission = new ExplicitTypePermission(new Class[] { Person.class });
+		marshaller.setTypePermissions(typePermission);
+		marshaller.setAliases(map);
+		reader.setUnmarshaller(marshaller);
+		return reader;
+	}
+	
+	@Bean
+	public JdbcBatchItemWriter<Person> writer(){
+		JdbcBatchItemWriter<Person> writer=new JdbcBatchItemWriter<Person>();
+		writer.setDataSource(dataSource);
+		writer.setSql("insert into person(person_id,first_name,last_name,email,age) values(?,?,?,?,?)");
+		writer.setItemPreparedStatementSetter(new PersonPreparedStatementSetter());
+		return writer;
+	}
+	
+	
+	
+}
+----------------------------------------------------------------------
+7. Create PersonPreparedStatementSetter class
+
+public class PersonPreparedStatementSetter implements ItemPreparedStatementSetter<Person> {
+
+              @Override
+              public void setValues(Person item, PreparedStatement ps) throws SQLException {
+                   ps.setInt(1, item.getPersonId());
+                   ps.setString(2, item.getFirstName());
+                   ps.setString(3, item.getLastName());
+                   ps.setString(4, item.getEmail());
+                   ps.setInt(5, item.getAge());
+              }
+
+}
+
+
+8. Create processor 
+
+@Component
+public class PersonProcessor implements ItemProcessor<Person, Person> {
+
+              @Override
+              public Person process(Person item) throws Exception {
+                             return item;
+              }
+
+}
+
+9. Start the appl, we can read data from xml and write into db
+
+
+
+
+Read from db and write to xml - In above project 
+	
+	@Bean
+	public Job exportPersonJob() {
+		return new JobBuilder("exportJob",jobRepository)
+			.incrementer(new RunIdIncrementer())
+				      .start(exportStep())
+				                .build();
+	}
+	
+	@Bean
+	public Step exportStep() {
+		return new StepBuilder("exportstepJob",jobRepository)
+		 .<Person,Person>chunk(100, transactionManager)
+		 .reader(reader()).processor(processor)
+		 .writer(writer()).build();
+	}
+	
+	@Bean
+	public JdbcCursorItemReader<Person> reader(){
+		JdbcCursorItemReader<Person> cursorreader=new JdbcCursorItemReader<Person>();
+		cursorreader.setDataSource(dataSource);
+		cursorreader.setSql("select person_id,first_name,last_name,email,age from person");
+		cursorreader.setRowMapper(new PersonRowMapper());
+		return cursorreader;
+	}
+	
+	private WritableResource outputResource = new FileSystemResource("output/person.xml");
+	
+	@Bean
+	public StaxEventItemWriter<Person> writer(){
+		StaxEventItemWriter<Person> writer=new StaxEventItemWriter<Person>();
+		writer.setResource(outputResource);
+		
+		Map<String,String> map=new HashMap<>();
+		map.put("person", "com.pack.SpringBatch1.Person");
+		XStreamMarshaller marshaller=new XStreamMarshaller();
+		marshaller.setAliases(map);
+		writer.setMarshaller(marshaller);
+		writer.setRootTagName("persons");
+		writer.setOverwriteOutput(true);
+		return writer;
+	}
+
+2. Create PersonMapper              
+public class PersonRowMapper implements RowMapper<Person>{
+
+              @Override
+              public Person mapRow(ResultSet rs, int rowNum) throws SQLException {
+                             Person person=new Person();
+                             person.setPersonId(rs.getInt("person_id"));
+                             person.setFirstName(rs.getString("first_name"));
+                             person.setLastName(rs.getString("last_name"));
+                             person.setEmail(rs.getString("email"));
+                             person.setAge(rs.getInt("age"));
+                             return person;
+              }
+}
+
+3. Start the appl, it will create output folder inside we can see person.xml
+--------------------------------------------------------------------------
+Read from JSON and write into db
+1. Create springboot project with spring batch, spring data jpa, mysql, lombok,jackson-databind
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.1.8</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBatch2</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBatch2</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+ <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+    </dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.batch</groupId>
+			<artifactId>spring-batch-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<builder>paketobuildpacks/builder-jammy-base:latest</builder>
+					</image>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+2. In main class we define @EnableBatchProcessing
+3. Configure db info in application.properties
+
+spring.datasource.url=jdbc:mysql://localhost:3306/batch
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+server.port = 9093
+spring.batch.jdbc.initialize-schema=always
+              
+4. Create entity class
+@Entity
+@Data
+public class Student {
+   @Id
+   private Long id;  private String name; private String rollNumber;
+}
+
+5. Create job
+@Configuration
+public class JobDemo {       
+              @Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+	EntityManagerFactory entityManagerFactory;
+	@Autowired
+	StudentProcessor processor;
+	
+	@Bean
+	public Job importStudent() {
+		return new JobBuilder("importStudent",jobRepository)
+		   .incrementer(new RunIdIncrementer())
+	           .start(stepForJsontoDb()).build();
+	}
+	
+	@Bean
+	public Step stepForJsontoDb() {
+		return new StepBuilde("stepStudent",jobRepository)
+	        .<Student,Student>chunk(1, transactionManager)
+ .reader(reader()).processor(processor).writer(writer()).build();
+	}	
+	@Bean
+	public JsonItemReader<Student> reader(){
+		return new JsonItemReaderBuilder<Student>()
+	.jsonObjectReader(new JacksonJsonObjectReader<(Student.class))
+.resource(new ClassPathResource("data.json")).name("studentJsonItemReader")
+				  .build();}
+	
+	@Bean
+	public JpaItemWriter<Student> writer() {
+return new JpaItemWriterBuilder<Student>().entityManagerFactory(entityManagerFactory).build();
+	}
+
+
+}
+
+6. Create processor
+@Component 
+public class StudentProcessor implements ItemProcessor<Student, Student> {
+              @Override
+              public Student process(Student item) throws Exception {
+                             return item;
+              }
+}
+
+7. Start the appl, check db where json info stored in db
+
+SpringBatch with Rest service 
+   Spring Batch has a good support for reading data from different data sources such as files (CSV or XML) or databases. However, it doesn’t have a built-in support for reading input data from a REST API. If you want to use a REST API as a data source of your Spring Batch job, you have to implement a custom ItemReader which reads the input data from the REST API.
+
+1. Create springboot project with spring web, spring batch, spring data jpa, mysql, lombok
+2. In main class we define @EnableBatchProcessing
+
+3. Configure db info in application.properties
+
+spring.batch.initialize-schema=NEVER
+spring.batch.job.enabled=false
+
+spring.datasource.url=jdbc:mysql://localhost:3306/batch
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=create
+server.port=2000
+
+rest.api.url=http://localhost:2000/api/student
+
+4. Create StudentDTO class
+@Data
+public class StudentDTO {
+ private String email;  private String name;   private String purchaseProduct;
+}
+
+5. Create controller
+@RestController
+@RequestMapping("/api/student")
+@Slf4j
+public class StudentController {     
+              @GetMapping
+              public List<StudentDTO> findStudent(){
+                             log.info("Finding all students");
+                             List<StudentDTO> list=createStudents();
+                             log.info("Found {} students", list.size());
+                             return list;
+              }
+
+              private List<StudentDTO> createStudents() {
+                             StudentDTO s1=new StudentDTO();
+                             s1.setEmail(ram@gmail.com);
+                             s1.setName("Ram");
+                             s1.setPurchaseProduct("ABC");
+                             StudentDTO s2=new StudentDTO();
+                             s2.setEmail(sam@gmail.com);
+                             s2.setName("Sam");
+                             s2.setPurchaseProduct("XYZ");
+                             StudentDTO s3=new StudentDTO();
+                             s3.setEmail(raj@gmail.com);
+                             s3.setName("Raj");
+                             s3.setPurchaseProduct("PQR"); 
+                             
+                             return Arrays.asList(s1,s2,s3);
+              }
+}
+
+6. Create job
+@Configuration
+public class JobDemo {
+	
+	private static final String api="rest.api.url";
+	
+	@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+	StudentItemWriter itemWriter;	
+	@Bean
+	public ItemReader<StudentDTO> itemReader(Environment env, RestTemplate restTemplate){
+		return new RestStudentReader(env.getProperty(api), restTemplate);
+	}
+	
+	@Bean
+	public Job exampleJob(Step exampleStep) {
+		 return new JobBuilder("exampleJob1", jobRepository)
+				          .incrementer(new RunIdIncrementer())
+				          .start(exampleStep)
+				          .build();
+	}
+	
+	@Bean
+	public Step exampleStep(ItemReader<StudentDTO> reader) {
+		return new StepBuilder("exampleStep1",jobRepository)
+              .<StudentDTO,StudentDTO>chunk(1, transactionManager)
+				      .reader(reader)
+				      .writer(itemWriter)
+				      .build();
+	}
+
+}
+
+
+7. Create custom reader
+Now we create ItemReader which reads the input data of your batch job by using the RestTemplate class.
+
+---First, you have to create a new class (RESTStudentReader) and implement the ItemReader interface
+
+public class RestStudentReader implements ItemReader<StudentDTO>{
+              
+--- Second, you have to add the following private fields to the RESTStudentReader class:
+  - The final apiUrl field contains the url of the invoked REST API.
+         private final String apiUrl;
+  - The final RestTemplate field contains a reference to the RestTemplate object which you use when you read the student information.
+         private final RestTemplate restTemplate;
+  - The nextStudentIndex field contains the index of the next StudentDTO object.
+         private int nextStudentIndex;
+  - The studentData field contains the found StudentDTO objects.
+         private List<StudentDTO> studentData;
+
+              private final String apiUrl;
+              private final RestTemplate restTemplate;
+              private int nextStudentIndex;
+              private List<StudentDTO> studentData;
+
+-- Third, you have to add a constructor to the RESTStudentReader
+              public RestStudentReader(String apiUrl, RestTemplate restTemplate) {
+                             super();
+                             this.apiUrl = apiUrl;
+                             this.restTemplate = restTemplate;
+                             nextStudentIndex=0;
+              }
+
+-- Fourth, you have to add a public read() method to the RESTStudentReader class and specify that the method returns a StudentDTO object with follwoing logic
+
+- If the student information hasn't been read, read the student information by invoking the REST API.
+- If the next student is found, return the found StudentDTO object and increase the value of the nextStudentIndex field (the index of the next student) by 1.
+- If the next student isn't found, return null. Ensure that your ItemReader reads the input data from the REST API when its read() method is invoked for the next time (set the value of the nextStudentIndex field to 0, and set the value of the studentData field to null).
+
+              @Override
+              public StudentDTO read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+                             if(studentDataIsNotInitialized()) {
+                                           studentData=fetchStudentFromAPI();
+                             }
+                             
+                             StudentDTO nextStudent=null;
+                             if(nextStudentIndex < studentData.size()) {
+                             nextStudent=studentData.get(nextStudentIndex);
+                                           nextStudentIndex++;
+                             }
+                             else {
+                                           nextStudentIndex=0;
+                                           studentData=null;
+                             }
+                             return nextStudent;
+              }
+
+
+              private List<StudentDTO> fetchStudentFromAPI() {
+                             ResponseEntity<StudentDTO[]> response=restTemplate.getForEntity(apiUrl, StudentDTO[].class);
+                             StudentDTO[] studentData=response.getBody();
+                             return Arrays.asList(studentData);
+              }
+
+              private boolean studentDataIsNotInitialized() {
+                             return this.studentData==null;
+              }
+}
+
+8. Create writer 
+
+@Component
+@Slf4j
+public class StudentItemWriter implements ItemWriter<StudentDTO>{
+
+	@Override
+	public void write(Chunk<? extends StudentDTO> chunk) throws Exception {
+		log.info("Writing student: {} ",chunk);
+	}
+
+}
+
+
+10. Create job launcher
+
+@Scheduled(cron="0/5 * * * * *")
+second(0-59)
+minute(0-59)
+hour(0-23)
+day of month(1-31)
+month(1-12) or(JAN-DEC)
+Day of week(0-7) or(MON - SUN)
+The pattern is a list of six single space-separated fields: representing second, minute, hour, day, month, weekday. Month and weekday names can be given as the first three letters of the English names.
+
+@Component
+@Slf4j
+public class StudentJobLauncher {
+
+	@Autowired
+	JobLauncher jobLauncher;
+	@Autowired
+	Job job;
+	
+	
+	@Scheduled(cron="0/5 * * * * *")
+	public void runBatchJob() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+		log.info("Batch job is started");
+		jobLauncher.run(job, jobParameters());
+		log.info("Batch job is stopped");
+	}
+	
+	private JobParameters jobParameters() {
+		Map<String,JobParameter> parameters=new HashMap<>();
+		JobParameter parameter=new JobParameter(new Date(), Date.class);
+		parameters.put("currentTime", parameter);
+		return new JobParameters();
+	}
+}
+
+
+11. Configure RestTemplate  and enable scheduler in main class
+@SpringBootApplication
+@EnableBatchProcessing
+@EnableScheduling
+public class SpringBatch5Application {
+
+              public static void main(String[] args) {
+                             SpringApplication.run(SpringBatch5Application.class, args);
+              }
+              
+              @Bean
+              public RestTemplate restTemplate() {
+                             return new RestTemplate();
+              }
+                
+}
+
+12.  Start the application, so for every 10 sec the job will be launched, so first it will invoke job - from there step - then goes to reader - in reader by using RestTemplate we are invoking the url api configured in application.properties 
+-----------------------------------------------------------------------
+
+TaskExecutor - Here we will read the file in faster way using multithreading concept where we reading the file using multiple thread instead of one thread so we can read the file very fastly using TaskExecutor interface 
+
+- If we run first project, we can see processor is reading one by one and running in a single threaded way so it will take more time than multithreading way 
+   If we are running in multithreaded way we can see the logs will be generated in random order 
+
+- In the SpringBatch project we configure TaskExecutor in JobDemo.java
+
+@Configuration
+public class JobDemo {             
+              @Autowired
+              private JobBuilderFactory jobBuilderFactory;
+              @Autowired
+              private StepBuilderFactory stepBuilderFactory;
+              @Autowired
+              private EmployeeProcessor employeeProcessor;
+              @Autowired
+              private EmployeeWriter employeeWriter;
+              //@Autowired
+              //ExecutionContext context;
+              
+              @Bean
+              public Job demo1Job() throws Exception {
+                             return this.jobBuilderFactory.get("demo8")
+                    .start(demo1Step()).build();}
+              
+              @Bean
+              public Step demo1Step() throws Exception {
+                             return this.stepBuilderFactory.get("step1")
+         .<Employee,Employee>chunk(5).reader(employeeReader())
+         .processor(employeeProcessor).writer(employeeWriter)
+                               .taskExecutor(taskExecutor())
+                                  .build();
+              }
+              
+              @Bean
+              @StepScope
+              Resource inputFileResource(@Value("#{jobParameters[fileName]}") final String fileName) throws Exception {
+                             return new ClassPathResource(fileName);
+              }
+              
+              @Bean
+              public FlatFileItemReader<Employee> employeeReader() throws Exception {
+                             FlatFileItemReader<Employee> flatFileReader=new FlatFileItemReader<Employee>();
+                flatFileReader.setResource(inputFileResource(null));
+                             flatFileReader.setName("CSV Reader");
+                             flatFileReader.setLinesToSkip(0);
+                             flatFileReader.setLineMapper(lineMapper());
+                             return flatFileReader;
+              }
+              
+              @Bean
+              public LineMapper<Employee> lineMapper(){
+                             DefaultLineMapper<Employee> defaultLineMapper=new DefaultLineMapper<>();
+                             DelimitedLineTokenizer lineTokenizer=new DelimitedLineTokenizer();
+                             lineTokenizer.setDelimiter(",");
+                             lineTokenizer.setStrict(false);
+ lineTokenizer.setNames("employeeId","firstName","lastName","email","age");
+                             
+                             BeanWrapperFieldSetMapper<Employee> fieldSetMapper=new BeanWrapperFieldSetMapper<Employee>();
+                             fieldSetMapper.setTargetType(Employee.class); 
+                      defaultLineMapper.setLineTokenizer(lineTokenizer);
+                    defaultLineMapper.setFieldSetMapper(fieldSetMapper);      
+                             return defaultLineMapper;
+              }
+              
+              @Bean
+              public TaskExecutor taskExecutor() {
+                             SimpleAsyncTaskExecutor s=new SimpleAsyncTaskExecutor();
+                             s.setConcurrencyLimit(5);//how many threads to introduce
+                             return s;
+              }
+              
+}
+
+- Start the appl, we can see the data will be printed in random order in console and also check the timing when it started and when it ends 
+
+- Comment the TaskExecutor and run again and check the comparsion of time with single threaded 
+   But file contains only 30 records where we cant see much difference, so we copy paste some 1000 records in csv file 
+
+- In processor program we randomly generate the empid
+ emp.setEmployeeId(employeeDTO.getEmployeeId()+new Random().nextInt(10000000));
+
+If we start the appl, we can see the difference in time for single and multithreaded way
+
+
+Spring batch - Apache Kafka using KafkaItemWriter
+     - Kafka is an open source, distributed, event streaming platform 
+
+1. Create spring boot project with spring batch, spring data jpa, mysql, lombok, spring-kafka, jackson-databind
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>		<version>3.1.8</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBatch4</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBatch4</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.16.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.batch</groupId>
+			<artifactId>spring-batch-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<builder>paketobuildpacks/builder-jammy-base:latest</builder>
+					</image>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+               
+
+
+3. Configure db info in application.properties
+
+4. Create entity class
+@Entity
+@Data
+public class SalesInfo {
+              @Id
+              @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long id;
+    private String product;
+    private String seller;
+    private Integer sellerId;
+    private Double price;
+    private String city;
+}
+
+
+5. Create model class
+@Data
+public class SalesInfoDTO {
+              private Long id;
+    private String product;
+    private String seller;
+    private Integer sellerId;
+    private Double price;
+    private String city;
+}
+
+6. Create job
+
+create KafkaItemWriter which receive salesinfo, because this is the object
+that we are going to send into our kafka, kafka need key which is going to be a string and value is our salesinfo object 
+
+
+    Now we set some property on KafkaItemWriter, the first thing that we can call is setItemKeyMapper which takes Converter functional interface as argument and we write lambda expr, the second property that we are going
+to use setDelete as false which performing the deletes, so
+the next thing we call afterPropertiesSet() 
+Next we inject KafkaTemplate and set the kafkaTemplate to create
+our kafkaItemWriter
+
+@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+	SalesItemProcessor salesProcessor;
+	@Autowired
+	KafkaTemplate<String,SalesInfo> salesInfoKafkaTemplate; //used to send data to kafka 
+	
+	@Bean
+	public Job importSalesInfo() {
+		return new JobBuilder("importSaleInfo",jobRepository)
+				   .incrementer(new RunIdIncrementer())
+				   .start(stepDemo())
+				   .build();
+	}
+	
+	@Bean
+	public Step stepDemo() {
+		return new StepBuilder("stepImportSales", jobRepository)
+				.<SalesInfoDTO,SalesInfo>chunk(100, transactionManager)
+				.reader(salesInfoFileReader())
+				.processor(salesProcessor)
+				.writer(salesInfoKafkaItemWriter())
+				.build();
+	}
+              
+              public FlatFileItemReader<SalesInfoDTO> salesInfoFileReader() {
+                             return new FlatFileItemReaderBuilder<SalesInfoDTO>()
+                 .resource(new ClassPathResource("Store.csv"))
+                 .name("salesInfoFileReader")
+                 .delimited()
+                 .delimiter(",")
+        .names(new String[] {"product","seller","sellerId","price","city"})
+                 .linesToSkip(1)
+                 .targetType(SalesInfoDTO.class)
+                 .build();
+              }
+              
+              @Bean
+              @SneakyThrows //@SneakyThrows is an annotation introduced by Lombok that helps to throw checked exceptions without using the throws declaration.
+              public KafkaItemWriter<String, SalesInfo> salesInfoKafkaItemWriter(){
+                             var kafkaItemWriter=new KafkaItemWriter<String,SalesInfo>();
+             kafkaItemWriter.setKafkaTemplate(salesInfoKafkaTemplate);
+       kafkaItemWriter.setItemKeyMapper(salesInfo -> String.valueOf(salesInfo.getSellerId()));
+                             kafkaItemWriter.setDelete(false);
+                             kafkaItemWriter.afterPropertiesSet();
+                             return kafkaItemWriter;
+              }
+}
+
+
+7. Configure kafka serializer, kafka topic in application.properties
+
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsobSerializer
+spring.kafka.template.default-topic=sales
+spring.kafka.producer.properties.spring.json.trusted.packages=*
+
+
+8. Download kafka https://kafka.apache.org/downloads
+- Download scala 2.12 
+- Extract the kafka
+- create zookeeper_data folder inside kakfa which contains all zookeeper logs
+- Edit zookeeper.properties in config folder
+dataDir=C:\Softwares\kafka_2.12-2.6.0\zookeeper_data
+- create kafka-logs folder inside kafka folder
+- Edit server.properties in config folder
+log.dirs=C:\Softwares\kafka_2.12-2.6.0\kafka-logs
+port=9092
+advertised.host.name=localhost
+- Set path in env variables for C:\Softwares\kafka_2.12-2.6.0\bin\windows
+
+9. Start zookeeper
+C:\Softwares\kafka_2.12-2.6.0\config>zookeeper-server-start.bat zookeeper.properties
+
+10. Start kafka server
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-server-start.bat server.properties
+
+11. Start the application
+
+12. Start console consumer to view the data from csv file
+C:\Softwares\kafka_2.12-2.6.0\bin\windows>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic salesinfo --from-beginning
+
+
+Tasklet
+    So far whatever we have done is chunk based approach, where we writing in chunk base (ie) piece by piece we are reading, processing and performing some operation on the same.
+   In tasklet we are reading as a whole the entire file or entire db at once. Once we are done with reading then we are doing the processing 
+
+Tasklet use cases:
+1. Resource cleanup
+      - Nowadays so many appl generating lot of temporary files, images, videos on daily bases, we are frequently cleaning based on heavy size or file which not been used, file older than threshold date and time.
+      - Suppose there are so many images uploaded on server, we want to remove few of them which is older than 1 week or 1 month, for those kind of cleanup we can use tasklets
+
+
+
+2. Tabledata cleanup
+      - We have so many data which we deleted daily bases like we generate too many OTP nowadays or other data and we can remove those data hourly or weekly bases
+3. Validation
+      - Suppose we want check whether user is already active, send some notification if they are inactive for long time, however they are active in db but not performing any operation. So such kind of validation if we want to perform behind the scene for that we can use tasklet 
+4. Report generation
+       - Suppose we have employee data file where we have 100 employee and we want to read all those employee and employee whose age is between 25 to 30 and we generate the report
+5. Summary creation
+
+
+1. Create spring boot project with spring batch, spring data jpa, mysql, lombok, web
+
+2. In main class we define @EnableBatchProcessing
+
+3. Configure db info in application.properties
+
+server.port=8081
+
+spring.jpa.hibernate.ddl-auto=update
+spring.datasource.url=jdbc:mysql://localhost:3306/batch
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.database-platform = org.hibernate.dialect.MySQL8Dialect
+
+spring.batch.job.enabled=false
+spring.batch.jdbc.initialize-schema = ALWAYS
+
+4. Create Employee
+@Entity
+@Data
+//@Table(name="emp") - optional
+public class Employee {
+   @Id
+   private String employeeId;
+   private String firstName;
+   private String lastName;
+   private Integer age;
+   private String email;
+}
+
+5. Create EmployeeRepo
+public interface EmployeeRepository extends JpaRepository<Employee, String> {
+
+}
+6. Craete JobController
+@RestController
+@RequestMapping("/api")
+public class EmployeeController {
+              
+              @Autowired
+              JobRunner jobRunner;
+
+              @RequestMapping("/job")
+              public String runJob() {
+                             JobExecution je=jobRunner.runBatchJob();
+                             return String.format("Job is successfully finished "+je.getJobId()+" "+je.getExitStatus());
+              }
+}
+
+7. Create JobRunner
+@Component
+public class JobRunner {      
+              @Autowired
+              JobLauncher jobLauncher;
+              @Autowired
+              Job demo2;              
+              @Autowired
+              ExecutionContext context;              
+              
+              public JobExecution runBatchJob() {
+       JobParametersBuilder jobParameterBuilder=new JobParametersBuilder();
+         jobParameterBuilder.addString("fileName","employees.csv");
+                  context.putString("empid", "1000");
+JobExecution jobExecution=runJob(demo2, jobParameterBuilder.toJobParameters());
+                             return jobExecution;
+              }
+
+              public JobExecution runJob(Job job, JobParameters jobParameters) {
+                             JobExecution jobExecution=null;
+                             try {
+              jobExecution=jobLauncher.run(job, jobParameters); }
+                             catch(JobExecutionAlreadyRunningException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobRestartException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobInstanceAlreadyCompleteException e) {
+                                           System.out.println(e);
+                             }
+                             catch(JobParametersInvalidException e) {
+                                           System.out.println(e);
+                             }
+                             return jobExecution;
+              }
+              
+              
+
+}
+
+In Springbatch project we will apply Tasklet instead of chunk based processing in JobDemo
+
+2. Create job
+@Configuration
+public class JobDemo {
+
+	@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+	EmployeeRepository empRepo;
+	
+	@Bean
+	public Job demo1Job() throws Exception {
+		return new JobBuilder("demo41",jobRepository)
+				   .start(demo1Step())
+				   .build();
+	}
+	
+	@Bean
+	public Step demo1Step() throws Exception {
+		return new StepBuilder("step41",jobRepository)
+	.tasklet(new TableCleanUp(empRepo), transactionManager)
+				   .build();
+	}
+	
+}
+
+
+3. Create tasklet
+public class TableCleanUp implements Tasklet{
+              
+              private EmployeeRepository empRepo;
+              
+              public TableCleanUp(EmployeeRepository empRepo) {
+                             super();
+                             this.empRepo = empRepo;
+              }
+              @Override
+              public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+                             empRepo.deleteAll();
+                             return RepeatStatus.FINISHED;
+              }
+
+}
+
+4. Start the appl and  run http://localhost:8081/run/job, it will remove all data from employee table 
+
+
+Fault tolerance
+     Consider we are reading salesinfo.csv file which contains 1000 records
+and we are reading as a chunk, let's suppose that while reading we just
+read a line that contain bad record, so spring batch will give us an exception and we cannot continue reading other lines and our job will be failed. So this is very bad because we have a lot of lines and we read almost 90 percent of lines but just one record can make our job to fail, so in order to solve this problem we can use fault tolerance
+    Fault tolerance allows application system to continue operating despite
+failures or malfunctions, so spring batch give us very nice ability to use fault tolerance, 
+     1. To skip bad records 2. To retry on bad records 
+
+1. Create spring boot project with spring batch, spring data jpa, mysql, lombok
+
+2. In main class we define @EnableBatchProcessing
+
+3. Configure db info in application.properties
+
+4. Create SalesInfo entity 
+@Entity
+@Data
+public class SalesInfo {
+              @Id
+              @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long id;
+    private String product;
+    private String seller;
+    private Integer sellerId;
+    private Double price;
+    private String city;
+}
+
+
+5. Create SalesInfoDTO
+@Data
+public class SalesInfoDTO {
+              private Long id;
+    private String product;
+    private String seller;
+    private Integer sellerId;
+    private Double price;
+    private String city;
+}
+
+6. Create SalesProcessor
+@Component
+@Slf4j
+public class SalesItemProcessor implements ItemProcessor<SalesInfoDTO, SalesInfo>{
+              @Override
+              public SalesInfo process(SalesInfoDTO item) throws Exception {
+                             log.info("Processing item: {}",item.toString());
+                             SalesInfo sales=new SalesInfo();
+                             sales.setProduct(item.getProduct());
+                             sales.setSeller(item.getSeller());
+                             sales.setSellerId(item.getSellerId());
+                             sales.setPrice(item.getPrice());
+                             sales.setCity(item.getCity());
+                             return sales;
+              }
+
+}
+
+6. Create job
+
+@Configuration
+public class SalesJob {
+
+	@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+	SalesItemProcessor salesProcessor;
+	@Autowired
+	EntityManagerFactory entityManagerFactory;
+	@Autowired
+	CustomSkipPolicy customSkipPolicy;
+	
+	@Bean
+	public Job importSalesInfo() {
+		return new JobBuilder("importSaleInfo21",jobRepository)
+				   .incrementer(new RunIdIncrementer())
+				   .start(stepDemo20())
+				   .build();
+	}
+	
+	@Bean
+	public Step stepDemo20() {
+		return new StepBuilder("stepImportSales20",jobRepository)
+				.<SalesInfoDTO,SalesInfo>chunk(10, transactionManager)
+				.reader(salesInfoFileReader())
+				.processor(salesProcessor)
+				.writer(salesInfoItemWriter())
+				.taskExecutor(taskExecutor())
+				.build();
+	}
+	
+	@Bean
+	public FlatFileItemReader<SalesInfoDTO> salesInfoFileReader() {
+		return new FlatFileItemReaderBuilder<SalesInfoDTO>()
+				.resource(new ClassPathResource("Store.csv"))
+				.name("salesInfoFileReader")
+				.delimited()
+				.delimiter(",")
+				.names(new String[] {"product","seller","sellerId","price","city"})
+				.linesToSkip(1)
+				.targetType(SalesInfoDTO.class)
+				.build();
+	}
+	
+	@Bean
+	public JpaItemWriter<SalesInfo> salesInfoItemWriter(){
+		return new JpaItemWriterBuilder<SalesInfo>()
+				   .entityManagerFactory(entityManagerFactory)
+				   .build();
+	}
+	
+	@Bean
+	public TaskExecutor taskExecutor() {
+		var executor=new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(5);
+		executor.setMaxPoolSize(5);
+		executor.setQueueCapacity(10);
+		executor.setThreadNamePrefix("Thread N -> : ");
+		return executor;
+	}
+	
+}
+
+
+7. Create csv file with bad records (ie) in csv we change the value of sellerid with some string
+
+8. start our spring batch application and we can see that the job will fail
+and we got some parsing error
+
+9. First thing that we have to do is in our step we have to enable  fault
+tolerance by using the property faulttolerant(), the next thing to do is Skip limit so we have to tell spring batch how many bad records or exceptions we are going to skip like 10, then the next thing we use skip() to represent what we are trying to skip (ie) which exception
+
+
+@Bean
+    public Step fromFileIntoKafka(ItemReader<SalesInfoDTO> salesInfoDTOItemReader){
+        return stepBuilderFactory.get("fromFileIntoDatabase")
+                .<SalesInfoDTO, Future<SalesInfo>>chunk(100)
+                .reader(salesInfoDTOItemReader)
+                .processor(asyncItemProcessor())
+                .writer(asyncItemWriter())
+                .faultTolerant()
+                .skipLimit(10)
+                .skip(FlatFileParseException.class)
+                .taskExecutor(taskExecutor())
+                .build();
+    }
+
+Suppose that we want to skip more exceptions so we can just define more skip() 
+
+10. Start the appl, we can see it will not throw any exception, it just skip those bad records and insert other records in db
+
+11. Using skipLimit(), we can skip the bad record and we don't want to throw
+an exception once the skip limit is reached. Suppose we want to audit the line that was skipped, for example writing the line into a file or maybe for each
+line that were skipped we want to send an email, for that we can introduce a
+new concept called skippolicy, where we can do when it hit that exception 
+
+- create CustomSkipPolicy class which implement SkipPolicy interface and override shouldSkip() which receive a skipcount and exception
+
+@Component
+@Slf4j
+public class CustomSkipPolicy implements SkipPolicy {
+
+    private final Integer skipLimit = 0;
+    @Override
+    public boolean shouldSkip(Throwable exception, long skipCount) throws SkipLimitExceededException {
+        if (exception instanceof FileNotFoundException){
+            return Boolean.FALSE;
+        }else if ((exception instanceof FlatFileParseException) && (skipCount <= skipLimit) ){
+
+            FlatFileParseException fileParseException = (FlatFileParseException) exception;
+            String input = fileParseException.getInput();
+            int lineNumber = fileParseException.getLineNumber();
+            log.warn("The line with error is: {}",input);
+            log.warn("The line number with error is: {}",lineNumber);
+            return Boolean.TRUE;
+        }
+        return false;
+    }
+}
+
+
+First thing that we are going to do is, we want to skip if a
+file was not found, but actually  we cannot skip when the file was not
+found so we are just going to return false. Next if exception is instance of
+FlatFileParseException and we write some logic
+
+12. Now we inject our CustomSkipPolicy in config class and configure it using skipPolicy()
+
+ @Autowired
+ private CustomSkipPolicy customSkipPolicy;
+
+  @Bean
+    public Step fromFileIntoKafka(ItemReader<SalesInfoDTO> salesInfoDTOItemReader){
+        return stepBuilderFactory.get("fromFileIntoDatabase")
+                .<SalesInfoDTO, Future<SalesInfo>>chunk(100)
+                .reader(salesInfoDTOItemReader)
+                .processor(asyncItemProcessor())
+                .writer(asyncItemWriter())
+                .faultTolerant()
+                 //.skipLimit(5)
+                 //.skip(FlatFileParseException.class)
+                 //.noSkip(FileNotFoundException.class)
+                .skipPolicy(customSkipPolicy)
+                .taskExecutor(taskExecutor())
+                .build();
+    }
+
+13. Start the appl, so in console we can see the log message on which line the bad records are found
+
+
+Spring batch job restart using preventRestart()
+    - By default all spring batch job have flexibility to restart the job from where it has left, but it is not suitable for all scenarios
+
+1. Create spring boot project with spring batch, spring data jpa, mysql, lombok
+
+2. In main class we define @EnableBatchProcessing
+
+3. Configure db info in application.properties
+
+4. Create reader class
+
+public class Reader implements ItemReader<String>{
+              
+              private String files[]= {"C:\\Training\\Notes\\readFile\\1.txt"};
+              static int count=0;
+              Logger log=LoggerFactory.getLogger(this.getClass());
+
+              @Override
+              public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+                             if(count < files.length) {
+                                           return files[count++];
+                             }else {
+                                           count=0;
+                             }
+                             return null;
+              }
+
+}
+
+5. Create writer class
+public class Writer implements ItemWriter<String>{
+              
+              Logger log=LoggerFactory.getLogger(this.getClass());
+
+              @Override
+              public void write(List<? extends String> items) throws Exception {
+                             for(String filePath:items) {
+                  System.out.println("filepath= "+filePath);
+             try(Stream<String> stream=Files.lines(Paths.get(filePath))){
+                           stream.forEach(System.out::println);
+                                           }
+                                           catch(Exception e) {
+                                                          throw(e);
+                                           }
+                             }
+              }
+
+}
+
+6. Create job
+
+
+@Configuration
+public class JobDemo {
+              @Autowired
+              private JobBuilderFactory jobBuilderFactory;
+              @Autowired
+              private StepBuilderFactory stepBuilderFactory;
+              
+              @Bean
+              public Job job() {
+                             return jobBuilderFactory.get("job")
+                              .incrementer(new RunIdIncrementer())
+                           .flow(step1()).end().build();
+              }
+
+
+              @Bean
+              public Step step1() {
+                             return stepBuilderFactory.get("step2") 
+                                     .<String,String>chunk(1)
+                                    .reader(new Reader())
+                                     .writer(new Writer())
+                                     .build();
+              }
+}
+
+7. Create controller
+@RestController
+public class JobController {
+              
+              @Autowired
+              JobLauncher jobLauncher;
+              @Autowired
+              Job job;
+              
+              @RequestMapping("/launchJob")
+              public String handle() {
+                             JobExecution j=null;
+                             try {
+                     j=jobLauncher.run(job, new JobParameters());
+                             }
+                             catch(Exception e) {
+                                           e.printStackTrace();
+                             }
+     return "JobExecution Id = "+j.getId()+" Status = "+j.getExitStatus();
+              }
+
+}
+
+8. Start the appl
+
+
+- First rename 1.txt as 1_backup.txt and lanuch the job, http://localhost:2000/launchJob, now the appl will fail as job launched with empty parameters, since the file does not exist
+      - Rename 1_backup.txt to 1.txt file with some content 
+line1
+line2
+line3
+line4
+line5
+ and again run http://localhost:2000/launchJob, we can see the job is launched and completed 
+     - Launch one again http://localhost:2000/launchJob, it will say step is already completed and not restartable 
+
+7. Springbatch also supports a config to prevent restartable ability of a job even if a job instance execution is failed
+   So we configure in job with preventRestart()
+
+-Stop the appl
+-Rename 1.txt to 1_backup.txt and restart the appl and launch http://lh:2000/launchJob
+  When we run the appl, we can see appl failed with whilelabel error page 
+- Again rename 1_backup.txt to 1.txt and launch http://localhost:2000/launchJob, again we can see the appl failed, since we have given prevent restart so the job is not restartable 
+
+Listener in Spring batch 
+    It is more about interceptor or filters in spring batch. Suppose we have one job and we want to do some operation before starting the job like retrieving the job while job execution gets started,and after finishing the job we want to do some operation. So something if we want to intercept before or after the job execution then we use listener
+
+2 types:
+1. Job listener which is specific to job execution, we can do before or after the job execution 
+2. Step listener apart from before or after executing step, it can also be done when some error occurs while reading or processing or writing 
+
+Job Listener
+    Something we want to perform before or after the job execution
+
+1. Create JobListener which implements JobExecutionListenerSupport and override afterJob and beforeJob methods
+
+public class JobListenerDemo implements JobExecutionListener {
+    @Override
+    public void beforeJob(JobExecution jobExecution) {
+        System.out.println("Before "+jobExecution.getJobInstance().getJobName()+" execution");
+        jobExecution.getExecutionContext().putString("beforeJob","beforeValue");
+    }
+
+    @Override
+    public void afterJob(JobExecution jobExecution) {
+        System.out.println("After Demo7 execution. The value of beforeJob key is="+jobExecution.getExecutionContext().getString("beforeJob"));
+        if(jobExecution.getStatus().equals(BatchStatus.COMPLETED)){
+            System.out.println("Success!");
+        }else{
+            System.out.println("Failed!");
+        }
+    }
+
+}
+
+2. Configure JobListener as bean and configure inside the job
+
+    @Bean
+    public JobListenerDemo jobListenerDemo() {
+        return new JobListenerDemo();
+    }
+
+    @Qualifier(value = "demo1")
+    @Bean
+    public Job demo1Job() throws Exception {
+        return this.jobBuilderFactory.get("demo1")
+            .start(step1Demo1()).listener(jobListenerDemo())
+                .build();
+    }
+
+3. Start the appl, run http://localhost:8081/run/job, we can see before the job start it will execute beforeJob and after executing job it will call afterJob() 
+
+StepListener
+     In Joblistener we have can do only 2 things either before or after jobs, so if we want to perform any operation before a step is started 
+     So Step is combination of 3 parts Reader,Processor and Writer part. If we want to perform some operation before reading the file or before reading record from the database. Basically if we reading something it will go to the processor,but due to some reason if we skip the records, and if u want to track how many record got failed and wht reason, for that we can use StepListener 
+    We can register the listener to the steps similar to the JobListener register to the job, generally 3 types ItemReadListener, ItemProcessListener(while processing the data when something went wrong) and ItemWriteListener 
+
+ItemReadListener
+
+1. In SpringBatch project, Create csv file with 2 bad records (ie) change string for some age
+
+2. Create ReaderListener class
+public class ReaderListener implements ItemReadListener<Employee> {
+
+    @Override
+    public void beforeRead() {
+        System.out.println("Before Read Operation.");
+    }
+
+    @Override
+    public void afterRead(Employee e) {
+        System.out.println("After Reading :" + e.toString());
+    }
+
+    @Override  //invoked when we get some error 
+    public void onReadError(Exception e) {
+        System.out.println("On error while reading :" + e.getMessage());
+    }
+}
+
+3. Create skippolicy
+
+public class JobSkipPolicy implements SkipPolicy {
+    @Override
+    public boolean shouldSkip(Throwable throwable, int failedCount) throws SkipLimitExceededException {
+
+        // return (failedCount >= 1) ? false : true;
+        return true;
+    }
+}
+
+4. Configure ReaderListener as bean class 
+
+@Bean
+    public ReaderListener readerListener(){
+        return new ReaderListener();
+    }
+
+ @Bean
+    public JobSkipPolicy skipPolicy() {
+        return new JobSkipPolicy();
+    }
+
+Configure the listener for Step
+
+ @Bean
+    public Step step1Demo1() throws Exception {
+        return this.stepBuilderFactory.get("step1")
+                .<Employee, Employee>chunk(5)
+                .reader(employeeReader()).processor(employeeProcessor)
+         .writer(employeeWriter).faultTolerant().skipPolicy(skipPolicy())
+                .listener(readerListener())
+                .build();
+    }
+
+When we run the program we can see for good records, u can see before read and after read, and for one bad record we can see onError message and we can see all records are inserted except the error record 
+   We can see after 5 records, it was invoking writer as we provide chunksize as 5 
+
+ItemProcessListener
+      Listener in the reader part we will try to record before reading, after reading and anything went wrong while hitting, but the processor talk about processing part. So once reader will read something and maybe those data passed as a input to the processor, so processor doing some operation on that input, so while processing that record if something went wrong or if something not went wrong so we have some state like beforeProcessing, afterProcessing and if anything went wrong we have onProcessError
+    So at time of processing if we dont want to allow in that case we can use this listener 
+
+1. In EmployeeProcessor we check if age is 56 then we throw exception
+
+@Component 
+public class EmployeeProcessor implements ItemProcessor<Employee, Employee>{
+
+	@Override
+	public Employee process(Employee item) throws Exception {
+		Employee e=new Employee();
+		e.setEmployeeId(item.getEmployeeId());
+		e.setFirstName(item.getFirstName());
+		e.setLastName(item.getLastName());
+		e.setAge(item.getAge());
+		e.setEmail(item.getEmail());
+		if(e.getAge()==56) {
+			throw new ArithmeticException("56 age not allowed");
+		}
+		return e;
+	}
+
+}
+
+1. Create ProcessListener class with overridden 3 methods
+public class ProcessListener implements ItemProcessListener<Employee, Employee> {
+    @Override
+    public void beforeProcess(Employee employee) {
+        System.out.println("Before process :" + employee.toString());
+    }
+
+    @Override
+    public void afterProcess(Employee employee, Employee employee) {
+        System.out.println("After process : " + employee.toString());
+    }
+
+    @Override
+    public void onProcessError(Employee employee, Exception e) {
+        System.out.println("On error :" + e.getMessage());
+    }
+}
+
+2. Configure ProcessListener as bean class and configure inside step
+    @Bean
+    public ProcessListener processListener(){
+        return new ProcessListener();
+    }
+
+     @Bean
+    public Step step1Demo8() throws Exception {
+        return this.stepBuilderFactory.get("step1")
+                .<EmployeeDTO, Employee>chunk(2)
+                .reader(employeeReader())
+                .processor(employeeProcessor)
+                .writer(employeeDBWriterDefault())
+                .faultTolerant().skipPolicy(skipPolicy())
+                .listener(readerListener())
+                .listener(processListener())
+                .build();
+    }
+
+4. When we run, it will insert only 2 records in db, since 2 are bad record and one record age is 56
+
+MultiResourceItemReader
+
+1. Create springboot project with batch,lombok,mysql
+
+2. Create person class
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Person {
+	private String firstName;
+    private String lastName;
+    private String email;
+    private Integer age;
+}
+
+3. Create job
+@Configuration
+public class BatchConfiguration {
+
+    @Autowired
+    JobRepository jobRepository;
+    @Autowired
+    PlatformTransactionManager transactionManager;
+
+    @Value(value = "input/persons_*.csv")
+    private Resource[] resources;
+
+     @Bean
+    public Job myJob() {
+        return new JobBuilder("myJob",jobRepository)
+.incrementer(new RunIdIncrementer()).flow(step1()).end().build();
+    }
+
+    @Bean
+    public Step step1() {
+        return new StepBuilder("step1", jobRepository)
+                .<Person, Person> chunk(10, transactionManager)
+.reader(multiResourceItemReader()).processor(processor()).writer(writer())
+                .build();
+    }
+
+     @Bean
+    public MultiResourceItemReader<Person> multiResourceItemReader(){
+    	MultiResourceItemReader<Person> multiResourceItemReader = new MultiResourceItemReader<Person>();
+    	multiResourceItemReader.setResources(resources);
+    	multiResourceItemReader.setDelegate(reader());
+		return multiResourceItemReader;
+    }
+
+    @Bean
+    public FlatFileItemReader<Person> reader() {
+        FlatFileItemReader<Person> reader = new FlatFileItemReader<Person>();
+        reader.setLineMapper(new DefaultLineMapper<Person>() {{
+            setLineTokenizer(new DelimitedLineTokenizer() {{
+                setNames(new String[] { "firstName", "lastName","email","age" });
+            }});
+            setFieldSetMapper(new BeanWrapperFieldSetMapper<Person>() {{
+                setTargetType(Person.class);
+            }});
+        }});
+        return reader;
+    }
+
+   
+    
+    @Bean
+    public PersonItemProcessor processor() {
+        return new PersonItemProcessor();
+    }
+
+    @Bean
+	public FlatFileItemWriter<Person> writer(){
+		FlatFileItemWriter<Person> writer = new FlatFileItemWriter<Person>();
+		WritableResource outputResource=new FileSystemResource("output/persons_output.csv");
+		writer.setResource(outputResource);
+		//writer.setAppendAllowed(true);
+		DelimitedLineAggregator<Person> lineAggregator = new DelimitedLineAggregator<Person>();
+		lineAggregator.setDelimiter(",");
+		
+		BeanWrapperFieldExtractor<Person>  fieldExtractor = new BeanWrapperFieldExtractor<Person>();
+		fieldExtractor.setNames(new String[]{"firstName","lastName","email","age"});
+		lineAggregator.setFieldExtractor(fieldExtractor);
+		
+		writer.setLineAggregator(lineAggregator);
+		return writer;
+	}
+
+   
+}
+
+4. Create processor
+public class PersonItemProcessor implements ItemProcessor<Person, Person> {
+
+    private static final Logger log = LoggerFactory.getLogger(PersonItemProcessor.class);
+
+    @Override
+    public Person process(final Person person) throws Exception {
+        final String firstName = person.getFirstName().toUpperCase();
+        final String lastName = person.getLastName().toUpperCase();
+
+        final Person transformedPerson = new Person(firstName, lastName,person.getEmail(),person.getAge());
+
+        log.info("Converting (" + person + ") into (" + transformedPerson + ")");
+
+        return transformedPerson;
+    }
+
+}
+
+5. Start the appl, we can see it copies all data and write into output/persor_output.csv file
+
+Multiple steps in Spring batch - 2 ways - Sequential and conditional 
+
+    We are going to discuss about controlling step flow, to be precise we are going to create a multi-step job, since now all jobs that we have been creating in our example contains only one step, now we are going to create a job that contains two steps and the execution of the steps going to be sequential
+
+Why do we need a job with multiple steps ?
+     Suppose that we have a job that reads a file and persists the records into database and then we receive a new requirement to delete all files that we process, so we need a new step to delete all files that you have just read before, so spring batch offers the concept of multi-step job. So the concept of separating the business logic into steps is very good because we can segregate each step in your job 
+
+
+Sequential flow      
+1. Create SpringBatch-MultiStep with spring web, spring batch, spring data jpa, lombok, mysql 
+2. Configure db info in application.properties
+
+3. Create SalesInfo class
+
+@Entity
+@Data
+public class SalesInfo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    private String product; private String seller;
+    private Integer sellerId; private double price;
+    private String city;
+    private String category;
+}
+
+4. Create SalesInfoDTO
+
+@Data
+public class SalesInfoDTO {
+    private String product;
+    private String seller;
+    private Integer sellerId;
+    private double price;
+    private String city;
+    private String category;
+}
+
+5. Create job
+
+@Configuration
+public class SalesInfoJobConfig {
+	@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+    private EntityManagerFactory entityManagerFactory;
+	@Autowired
+	private SalesInfoItemProcessor salesInfoItemProcessor;
+	
+	@Autowired
+	private CustomStepExecutionListener customStepExecutionListener;
+	@Autowired
+	private KafkaTemplate<String,SalesInfo> salesInfoKafkaTemplate;
+
+	@Autowired
+    private FileCollector fileCollector;
+
+	
+    @Bean
+    public Job importSalesInfo(){
+    	return new JobBuilder("toleranceJob2", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(fromFileIntoDataBase())
+                .next(fileCollectorTasklet())
+                .build();
+    }
+
+    @Bean
+    public Step fileCollectorTasklet() {
+    	return new StepBuilder("filecollector", jobRepository)
+                .tasklet(fileCollector, transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step fromFileIntoDataBase(){
+    	return new StepBuilder("toleranceStep2", jobRepository)
+                .<SalesInfoDTO,SalesInfo>chunk(100, transactionManager)
+                .reader(salesInfoFileReader())
+                .processor(salesInfoItemProcessor)
+                .writer(salesInfoKafkaItemWriter())
+                .faultTolerant()
+                .listener(customStepExecutionListener)
+                .build();
+    }
+
+    @Bean
+    public FlatFileItemReader<SalesInfoDTO> salesInfoFileReader(){
+        return new FlatFileItemReaderBuilder<SalesInfoDTO>()
+                .resource(new ClassPathResource("Pascoal-Store.csv"))
+                .name("salesInfoFileReader")
+                .delimited()
+                .delimiter(",")
+ .names(new String[]{"product","seller","sellerId","price","city","category"})
+                .linesToSkip(1).targetType(SalesInfoDTO.class)
+                .build();
+    }
+    
+    @Bean
+    @SneakyThrows
+    public KafkaItemWriter<String,SalesInfo> salesInfoKafkaItemWriter(){
+        var kafkaItemWriter = new KafkaItemWriter<String,SalesInfo>();
+        kafkaItemWriter.setKafkaTemplate(salesInfoKafkaTemplate);
+        kafkaItemWriter.setItemKeyMapper(salesInfo -> String.valueOf(salesInfo.getSellerId()));
+        kafkaItemWriter.setDelete(Boolean.FALSE);
+        kafkaItemWriter.afterPropertiesSet();
+        return kafkaItemWriter;
+    }
+}
+
+6. Create processor
+@Component
+@Slf4j
+public class SalesInfoItemProcessor implements ItemProcessor<SalesInfoDTO, SalesInfo> {
+
+    @Override
+    public SalesInfo process(SalesInfoDTO item) throws Exception {
+        log.info("processing the item: {}",item.toString());
+        SalesInfo sales=new SalesInfo();
+        sales.setProduct(item.getProduct());
+        sales.setSeller(item.getSeller());
+        sales.setSellerId(item.getSellerId());
+        sales.setPrice(item.getPrice());
+        sales.setCity(item.getCity());
+        sales.setCategory(item.getCategory());
+        return sales;
+    }
+}
+
+7. Create tasklet called Filecollector
+@Component  @Slf4j
+public class FileCollector implements Tasklet {
+    @Value("${sales.info.directory}")
+    private String processedDirectory;
+    @Override
+    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        log.warn("-------------> Executing the File Collector");
+        Path directoryPath = Paths.get(processedDirectory + File.separator + "processed.csv");
+        try (Stream<Path> filesToDelete = Files.walk(directoryPath)) {
+            filesToDelete.filter(Files::isRegularFile)
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        }
+        return RepeatStatus.FINISHED;
+    }
+}
+
+8. Create Step listener which delete the old record from sales_info 
+
+@Component
+@Slf4j
+public class CustomStepExecutionListener implements StepExecutionListener {
+    @Autowired
+	private JdbcTemplate jdbcTemplate;
+    private static final String DELETE_QUERY = "DELETE FROM sales_info WHERE id > 0";
+
+    @Override
+    public void beforeStep(StepExecution stepExecution) {
+        log.info("delete all old records from");
+       int deletedRows = jdbcTemplate.update(DELETE_QUERY);
+       log.info("Before Step we have deleted : {} records",deletedRows);
+    }
+
+    @Override
+    public ExitStatus afterStep(StepExecution stepExecution) {
+        //delete the directory
+        if (ExitStatus.COMPLETED.equals(stepExecution.getExitStatus())){
+            log.info("The step has finished with status: {}", stepExecution.getExitStatus());
+            return stepExecution.getExitStatus();
+        }
+        log.info("Something bad has happened after step: {}", stepExecution.getExitStatus());
+        return stepExecution.getExitStatus();
+    }
+}
+
+9. Start zookeeper, kafka server
+10. Start the appl, now it will read from csv file and write into kafka, second step will delete processed.csv file
+
+Conditional flow - Multi step job
+   Previously  we talked about sequential flow, now we  talk about conditional flow, in order to understand when and where we can use conditional flow. In sequential flow we were reading a file and persisting the records into database, after that we had another step which  delete all files that we had already read so it was sequential
+    Consider we read the file and step that we use to read the file fails,
+since it was sequential we were just deleting files which is not correct. Consider our business team says, you just delete the previous files if you read the new one successfully so this is a very simple use case where we can apply conditional flow so instead of doing that in a sequential manner we can use a conditional 
+     So we have two steps in this job, we have a first step which reads from a file and write into Kafka, and first condition is if the job fails we don't want to do anything and we want to end the job, next if we read successfully and write to Kafka then we can delete all files so we are going to call the FileCollector and we end the job
+
+1. Create SpringBatch-MultiStep with spring web, spring batch, spring data jpa, lombok, mysql 
+
+2. Configure db info in application.properties
+
+3. Create SalesInfo class
+4. Create SalesInfoDTO
+5. Create job
+
+@Configuration
+public class SalesInfoJobConfig {
+	@Autowired
+	JobRepository jobRepository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	@Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+	@Autowired
+	private SalesInfoItemProcessor salesInfoItemProcessor;
+	@Autowired
+	private CustomSkipPolicy customSkipPolicy;
+	@Autowired
+	private CustomStepExecutionListener customStepExecutionListener;
+	@Autowired
+	private KafkaTemplate<String,SalesInfo> salesInfoKafkaTemplate;
+	@Autowired
+    private FileCollector fileCollector;
+	
+	@Bean
+    public Job importSalesInfo(Step fromFileIntoKafka) {
+		return new JobBuilder("kafkaJob14", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(fromFileIntoKafka()).on("FAILED").end()
+     .from(fromFileIntoKafka()).on("COMPLETED").to(fileCollectorTasklet())
+                .end().build();
+    }
+
+
+    @Bean
+    public Step fileCollectorTasklet() {
+    	return new StepBuilder("kafkaStep14", jobRepository)
+                .tasklet(fileCollector, transactionManager)
+                .build();
+    }
+    
+    @Bean
+    public Step fromFileIntoKafka(){
+    	return new StepBuilder("kafkaStepfile41", jobRepository)
+                .<SalesInfoDTO,SalesInfo>chunk(5, transactionManager)
+                .reader(salesInfoFileReader())
+        .processor(salesInfoItemProcessor).writer(salesInfoKafkaItemWriter())
+                .faultTolerant().skipPolicy(customSkipPolicy)
+                .listener(customStepExecutionListener)
+                .taskExecutor(taskExecutor())
+                .build();
+    }
+
+    @Bean
+    public FlatFileItemReader<SalesInfoDTO> salesInfoFileReader(){
+        return new FlatFileItemReaderBuilder<SalesInfoDTO>()
+                .resource(new ClassPathResource("Pascoal-Store.csv"))
+                .name("salesInfoFileReader")
+                .delimited()
+                .delimiter(",")
+                .names(new String[]{"product","seller","sellerId","price","city","category"})
+                .linesToSkip(1)
+                .targetType(SalesInfoDTO.class)
+                .build();
+    }
+
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        var executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5); executor.setMaxPoolSize(5);
+  executor.setQueueCapacity(10);executor.setThreadNamePrefix("Thread N-> :");
+        return executor;
+    }
+    
+    @Bean
+    @SneakyThrows
+    public KafkaItemWriter<String,SalesInfo> salesInfoKafkaItemWriter(){
+        var kafkaItemWriter = new KafkaItemWriter<String,SalesInfo>();
+        kafkaItemWriter.setKafkaTemplate(salesInfoKafkaTemplate);
+        kafkaItemWriter.setItemKeyMapper(salesInfo -> String.valueOf(salesInfo.getSellerId()));
+        kafkaItemWriter.setDelete(Boolean.FALSE);
+        kafkaItemWriter.afterPropertiesSet();
+        return kafkaItemWriter;
+    }
+}
+
+1. For first time in csv file keep some bad record and comment all faulttolerance then run ur appl, now appl will be failed so it wont execute the second step
+2. For second time in csv file give all correct data and provide fault tolerance and skip policy, now appl will be executed both the step and first it will insert values in kafka and then it will remove processed.csv 
