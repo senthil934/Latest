@@ -801,6 +801,7 @@ https://programmingtechie.com/2020/03/20/java-14-new-features/
 
     String s1=null;
     s1.toLowercase();
+
 In Java11, the output will show u the line number where NPE occurs but you do not know which chained method resolves to null, you have to find out urself by means of debugging. With Java 17 the same code results which shows exactly where the NPE occured 
 
 2. Pattern matching for instanceOf
@@ -4075,16 +4076,170 @@ If still not found throws MissingResourceException
 
 Java 9
    Java8 introduced in Mar 18th 2014, so almost after 3yrs, Java 9 introduced in Sep 21st 2017.
-   Until Java7, java is considered very powerful but after jav7 other languages are dominating Java like Python, Scala, Ruby, then only Java 8 came with so many new features
+   Until Java7, java is considered very powerful but after java7 other languages are dominating Java like Python, Scala, Ruby, then only Java 8 came with so many new features
 
 Features:
 1. JShell 
    - To learn java in the beginning stage without difficult some tool is required called JShell
+   J shell provides J shell provides what's called a repl it stands for read evaluate print loop 
 
->jshell PRINTING
-Jshell> print("Hello world");
 jshell> 10+20
 jshell> 10<20
+jshell> exit;
+
+Declaring variables
+jshell> int i=10;
+jshell> i
+jshell> int j=20;
+jshell> j
+jshell> String str="Hello";
+jshell> s
+jshell> int k;
+jshell> k
+jshell> k=40
+jshell> int j=30;   //redeclare the variable
+jshell> String j="hello" //even redeclare the variable with different type
+
+Scratch Variables
+jshell> 1+1
+
+we saw a value of 2 with $1 and that was
+assigned to the value of 2, so jshell is actually creating a temporary variable called dollar one these are called scratch variables, whenever you
+create an expression and we're not assigning it
+to something then jshell does two things,
+it calculate the value and then print it and also
+stores the value of that expression into
+a temporary variable into a scratch variable called $1
+and the type of this variable dollar one it happens to be an integer because jshell is actually inferring the type from that expression
+
+jshell> $1
+jshell> int j=$1+1
+jshell> "hello"+"world"
+
+jshell> /vars
+  It is a command which tells you all the variables that you have created in your sessions 
+
+Jshell commands
+jshell> 1+1
+jshell> "hello"
+jshell> int i=10;
+jshell>i+10
+
+jshell>/history  - to print all the commands that we have executed so far
+
+jshell>/list 
+
+/history get all the commands that you've
+executed including the jshell commands however /list gives you just the Java commands and not the jshell commands in a numerical order, one number assigned to each command  and we look up
+the command by the serial number and then rerun those commands 
+
+jshell>/1
+
+It pulls up the command based on that serial number and actually reexecutes it and it creates
+a new scratch variable because this happened to be an expression 
+
+jshell>/3
+int i=10
+ But if I rerun /3, it reapplies the declaration into i and then it assigns it a value of ten 
+
+jshell>i=20
+jshell>/3
+jshell>i
+jshell>i=100
+jshell>/4
+i+10
+$11 = 110
+
+
+jshell>/!
+   To rerun the previous command, so it reexecutes the last command and creates a new scratch variable 
+
+jshell> press ctrl+r
+   - We can search the commands based on each character
+
+jshell> /reset 
+     - reset the state of the current session 
+jshell> /vars
+     -It will be empty because it has essentially reset all the work that we have done in this particular session 
+
+Methods
+jshell> System.out.println("hello");
+jshell> String greeting() {
+           return "hi";
+        }
+jshell>greeting()
+jshell>String str=greeting()
+
+jshell> String greeting(String name) {
+           return "hi" + name;
+        }
+jshell>greeting("Ram")
+
+jshell> String greeting() {
+           return "hiiiii";
+        }
+modified method greeting 
+
+Forward References
+jshell> int i=10;
+jshell> i+j;  //error
+jshell> int add() {
+          return i+j;
+        }          //error
+jshell> add();  //error
+jshell> int j;  //0
+jshell> add(); //10
+
+This is what's called forward referencing when you create a method you can refer to variables that don't exist but you cannot execute the method until all the things that method references actually exist
+
+jshell>void sayHelloWorld() {
+     sayHello();
+     sayWorld();
+ }  //error
+jshell>void sayHello() {
+          SOP("hello");
+       }
+jshell>void sayWorld() {
+          SOP("World");
+       }
+jshell>sayHelloWorld()
+
+Exceptions
+jshell>1/0
+jshell> int divide(int a,int b) {
+            return a/b;
+        }
+jshell>divide(1,0);
+jshell>int divide(int a,int b) throws IOException {
+           if(b==0){
+              throw new IOException();
+           }
+            return a/b;
+        }
+
+jshell> /imports - display inbuild packages 
+
+Creating Classes
+jshell>class Person {
+            public String name;
+       }
+jshell> Person p=new Person();
+jshell>p.   (press tab we can see all methods and variables)
+jshell>p.name="Ram";
+jshell>p.name
+jshell> $3
+jshell> $4
+
+We can reapply the class defination
+jshell> class Person {
+           String fname;
+           String lname;
+        }
+jshell> private class foo {
+         }
+jshell> abstract class foo{}
+jshell> new foo();
+
 
 2. JPMS(Java Platform Module System)
        Java8 introduced in 2014 and Java9 in 2017, but JPMS concept development was started from 2005      
@@ -4515,11 +4670,100 @@ module-info.java
    - compiler error 
 
 Module Resolution Process
-    In the case of traditional classpath, JVM wont check the required .class files at the beginning. While executing program if JVM required any .class file, then only JVM will search in the classpath for the required .class file. If it is available then it will be loaded and used and if ir is not avialable then at runtime we will get NoClassDefFoundError which is not at all recommended.
+    In the case of traditional classpath, JVM wont check the required .class files at the beginning. While executing program if JVM required any .class file, then only JVM will search in the classpath for the required .class file. If it is available then it will be loaded and used and if it is not avialable then at runtime we will get NoClassDefFoundError which is not at all recommended.
    But in  modular programming, JVM will search for the required modules in the module-path before it starts execution. If any module is missing at the beginning only JVM will identify and wont start its execution. Hence in modular programming there is no chance of getting NoClassDefFoundError in the middle of program execution.
 
 >java --module-path -d out --show-module-resolution -m useModule/packA.Test
 
+JVM has to find the required classes and packages in the given classpath directories at runtime when it is required. To search a class or package in a given classpath, the JVM needs to search the entire classpath when JVM requires the class
+   But in modular programming the JVM has to resolve the required modules in the module path before it starts execution. JVM is searching in modulepath, module C contains the class with main(), so the module resolution starts with module C. The module containing the class with main() from which module resolution process starts is called root module, here module C is root module. For execution we pass the name of root module to JVM and later on all the required modules will be resolved by JVM 
+    So first module C gets resolved, then module C requires two module B and D, after resolving module C then module B and D gets resolved. Module D does not requires any other module, but module B requires module A, so JVM also needs to resolve module A. Module E is not resolved because it is not required to execute the class containing main() in module C.
+    Suppose module E is the root module containing class with main() and we pass module E to the JVM for execution. So first root module E gets resolved and the root module E requires module D, so module D gets resolved. There is no need to resolve module C,B,A, because to execute the class containing main() in module E we dont require the module C,B,A
+
+Root module
+   1. A root module is the starting point of the module resolution process
+   2. A root module must contain a class with main()
+   3. A module containing a class with main() may or may not be the root module, because the name of the module which we really pass to the JVM for execution that module is called as root module 
+
+--show-module-resolution of the java practically shows the module resolution process 
+
+1. Create src folder, inside create A,B,C,D,E folder
+
+2. module C which is root module, so we create  
+- create module-info.java as C
+module C {
+	requires B; 
+        requires D;
+}
+
+- Create C.java inside PackC package which contains main()
+package PackC;
+public class C  {
+    public static void main(String[] args) {
+    }
+}
+
+3. Since module C requires B and D, inside B 
+- create module-info.java as B
+module C {
+	requires A; 
+        exports PackB;
+}
+
+- Create B.java inside PackB package 
+package PackB;
+public class B  {
+    
+}
+
+4. Inside D folder
+create module-info.java as D
+module D { 
+        exports PackD;
+}
+
+- Create D.java inside PackD package 
+package PackD;
+public class D  {
+    
+}
+
+5. Inside A folder
+-create module-info.java as A
+module A {
+        exports PackA;
+}
+
+- Create A.java inside PackA package 
+package PackA;
+public class A  {
+    
+}
+
+6. Inside E folder
+- create module-info.java as E
+module E {
+	requires D; 
+        exports PackE;
+}
+
+- Create E.java inside PackE package 
+package PackE;
+public class E  {
+    
+}
+
+src>javac --module-source-path src -d out -m A,B,C,D,E
+
+src>java --module-path out --show-module-resolution --module C/PackC.C
+   We can it display root module as C, then C requires B, then C requires D and module B requires A, next we can see all inbuilt modules in Java9 
+
+Benefits
+    Module Resolution process occurs before JVM starts execution, so module resolution process is very efficient, so with this process JVM will figure out following errors
+   1. Errors out the unavialable dependent module
+   2. Errors out the multiple modules with same names(even if they have different content)
+   3. Errors out the cyclic dependencies
+   4. Errors out when multiple modules contain packages with same name 
 
 Transitive dependency
    - Consider myModuleA requires myModuleB and myModuleB requires myModuleC. M2 class of myModuleB contains a method and that method returns reference of type M3 class of myModuleC. The method is M2 class which return reference of type M3 is called by main() of M1 class
@@ -4594,6 +4838,118 @@ module myModuleB {
 3. JLINK(Java Linker) - to create our own customize jre, so Java is suitable for portable devices, microservices, iot devices. The size of Java env is reduced using JLink
        We develop helloworld program and in order to run we need JRE in client machine which contain rt.jar which is around 60mb size which contain 4300+ classes. So huge memory is needed to run java appl with JRE. 
       But from JDK1.9 we can create our own JRE only with required things, so we can use Java for portable devices, IOT devices 
+
+- Modular system is designed to execute an application with minimum set of modules
+- With JLINK tool of JDK9 we can create a small execution env (ie) a small jre, which can execute on a platform without Java installation
+
+1. Create src folder, inside myModuleA folder
+2. Inside myModuleA, create module-info.java
+   So here myModuleA requires java.xml 
+
+module myModuleA {
+    requires java.xml;
+}
+
+3. Create myPack1 folder, inside create M1.java
+
+package myPack1;
+import javax.xml.parsers.SAXParserFactory;
+
+public class M1 {
+    public static void main(String[] args) {
+    SAXParserFactory f=SAXParserFactory.newInstance();
+    System.out.println("Modular JDK");
+    }
+}
+
+4. Now we compile the program
+c:/training>javac --module-source-path src --module-path . -d out -m myModuleA
+   - It creates out directory
+
+5. Execute the program
+c:/training>java --module-path out;. --module myModuleA/myPack.M1
+    - It will print the output 
+
+6. After creating the compile code of the module, we need to create a minimal set  of execution env for the given module, to create minimal set of execution env we need to execute Jlink command, we need to provide 2 paths for module paths
+  1. jmods - jmods dir of java installation contains all the readymade modules of Java9 
+  2. out directory
+
+image represent any dir name where we have to create minimal jre 
+
+>jlink --module-path "C:\Softwares\openjdk-17.0.1_windows-x64_bin\jdk-17.0.1\jmods"/;out --add-modules myModuleA 
+--output image
+
+After executing the above command, image directory will be created in current directory which will contain minimal jre. When we go into image directory, inside bin directory we have executable java which is used to execute minimal env. legal directory contains 2 directory with names of those modules which we are using in our project, java.base is complusory and java.xml which we use in our project 
+
+Now we can pass this image dir to any platform where java is not installed, the executable java inside bin directory will used to execute minimal env 
+  
+image/bin>java --module-path out --module myModuleA/myPack1.M1
+
+Now we have executed our minimal env which is present in image directory 
+
+image/bin>java --list-modules - it will display all list of modules used in image dir
+
+Link Phase Optimization using JLink plugins 
+      We know that there are 2 steps to get a Java code to execute:
+  1. Compilation(using javac)
+  2. Execution(using java)
+
+  While compilation javac does some optimization on the java codes, before it creates the bytecodes from them. But this optimization is one-by-one on each java class. javac cannot optimize whole java execution env(entire appl) at once, because after the compilation the whole java execution env is made up of various java classes and javac cannot optimize the whole java env at once, because javac supposed to work on single class at a time 
+  - Runtime optimization by JVM is very expensive and not recommended
+  - In general, in Java programming execution we have 2 stages 
+   1. Java compiler using javac command
+   2. JVM using Java command
+   In the modular programming with Java9 we are introduced with 3rd stage called JLink stage
+   javac-------JLink-------java
+  
+Why we optimize whole java execution env at once at the time of JLink?
+    Because at the time of JLink we will have whole execution env, javac already created the whole execution env one by one at the time of compilation, so jlink has all execution env 
+
+Two types of JLink Optimization
+1. Module descriptor optimizations with system-modules plugin
+    - Normally Java runtime has to do following activities for each module:
+     1. Resource Examination
+     2. Parsing
+     3. Validating the module description
+    - All these activities can be done at link time by a JLink plugin called system module. The plugin system module is enabled by default whenever you run jlink
+    - So if we use jlink, then the java runtime does not have to do these activities 
+
+So the system module plugin is by default enabled in jlink command, we do not have to do anything to implement system-module command. So whenever we use JLink command to create a minimal executable unit then the Java runtime do not have to do these 3 activities
+ 
+2. Compressing the image with compress plugin 
+       - Using compress plugin of jlink we can compress the image, but by default this plugin is not enabled. We need to enable this plugin by using --compress option of the jlink command 
+
+3 levels of comparison
+1. Level 0 - No compression 
+
+>jlink --module-path c:/software/jdk9/jmods/;out --add-modules myModuleA --compress=0 --output image 
+   - Now compressed minimal runtime env has been created, where size is 58(right click image dir-properties)
+
+2. Level 1 - Compress with String sharing (ie) String datatypes can be shared between two modules to compress minimal runtime image
+
+>jlink --module-path c:/software/jdk9/jmods/;out --add-modules myModuleA --compress=1 --output image 
+    - Now compressed minimal runtime env has been created, where size is 47.8
+
+3. Level 2 - ZIP compression of each file - zip format will be applied on each file to compress it
+
+>jlink --module-path c:/software/jdk9/jmods/;out --add-modules myModuleA --compress=2 --output image 
+   - Now compressed minimal runtime env has been created, where size is 38.8
+
+To list all the plugins
+>jlink --list-plugins
+
+JLink Launcher
+    We have created minimal execution env inside image directory, but to execute that image file we have used very long command which is not good, so we create our own launcher for our env
+   Now we are compressing the env with level=2 and create a launcher 
+
+>jlink --module-path "C:\Softwares\openjdk-17.0.1_windows-x64_bin\jdk-17.0.1\jmods";out --add-modules myModuleA --compress=2 --launcher runapp=myModuleA/myPack1.M1 --output image
+
+Now env will be created in name called image, inside bin we can see launcher runapp, we can run it to execute minimal execution env 
+
+image>bin/runapp
+  - Now it will be printing the output 
+
+So we have created launcher for our minimum execution env 
 
 4. Previously we send http request through browsers but from Java appl if we want to send http request to web server then we use HTTP/2 client 
      Until Java8 if we want to send http request, we use HttpUrlConnection which introduced in 1997. It is difficult to use and per TCP/IP connection we can send only one request so performance is down, it provide support only for text, it works only in synchronous mode. Later developers use 3rd party like Apache HttpClient and Google HttpClient to communicate 
@@ -4727,6 +5083,36 @@ Problem with JDK7:
 
 8. Factory method to create unmodifiable collection - https://javaconceptoftheday.com/java-9-immutable-collections/
 
+ List<String> modifiableList = new ArrayList<String>();
+    modifiableList.add("a");
+
+    System.out.println("modifiableList:"+modifiableList);  //[a]
+ 
+    //unModifiableList
+    List<String> unModifiableList=Collections.unmodifiableList(
+                                        modifiableList);
+    System.out.println("unmodifiableList:"+unmodifiableList); //[a]
+
+    modifiableList.add("b");
+
+    System.out.println("modifiableList:"+modifiableList);  //[a,b]
+    
+    //unModifiableList.add("b");  //error
+       
+    System.out.println("unModifiableList:"+unModifiableList); //[a,b]
+
+            //immutableList
+
+    List<String> immutableList=Collections.unmodifiableList(
+                            new ArrayList<String>(modifiableList));
+
+    modifiableList.add("c");
+    //immutableList.add("c");  //error
+   
+    System.out.println("modifiableList:"+modifiableList);-  //[a,b,c]
+    System.out.println("unModifiableList:"+unModifiableList);  //[a,b,c]
+    System.out.println("immutableList:"+immutableList); //[a,b]
+  
         Until JDK1.8, we create an unmodifiable collection using 
     List<String> l=new ArrayList<>();
         l.add("one");
@@ -4789,8 +5175,19 @@ Immutable collections returned by Java 9 static factory methods are space effici
 9. Stream API enhancement
        - default methods like takeWhile() and dropWhile()
        - static method called Stream.iterate() with 3 args with conditional check 
+
+Syntax: static <T> Stream<T> iterate(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next)
+
+iterate method now has hasNext predicate as parameter which stops the loop once hasNext predicate returns false.
+
 Stream.iterate(1,x->x<5,x>x+1).forEach(System.out::println);
+
        - static method called Stream.ofNullable() to check NPE
+
+Syntax: static <T> Stream<T> ofNullable(T t)
+
+ofNullable method is introduced to prevent NullPointerExceptions and to avoid null checks for streams. This method returns a sequential Stream containing single element, if non-null, otherwise returns an empty Stream.
+
 List l=Stream.ofNullable(100).collect(Collectors.toList());
 sop(l); //100
 
@@ -8273,7 +8670,7 @@ myPack1                                    myPack2
 
 1. Create maven project JPMS-Cyclic with pom packaging
 
-2. Right click JPMS-Cyclic project - Create maven module myModuleA
+2. Right click JPMS-Cyclic project - Create a simple project - Create maven module myModuleA
 - Create M1.java inside myPack1 package
 - Right click project - configure - create module-info.java as myModuleA
 module myModuleA {
@@ -8432,3 +8829,361 @@ module myModuleA {
 After writing this stmt, whoever requires myModuleB will automatically use myModuleC.
 
 Now when we run M1.java we wont get any error and output will be printed 
+
+Packages with same names in two modules - Same name packages in different modules
+
+     In non-modular program where we are using jar files 
+
+jarA
+myPack1 - M1.class
+myPack2 - M2.class
+
+jarB
+myPack2 - M3.class
+
+jarC
+myPack3 - M4.class
+
+jar file jarA contains subpackage myPack2, jar file jarB also contains subpackage myPack2. Both jar files contains subpackage with same name, but the class files present in both packages are different
+     myPack2 in JarA contains M2.class and myPack2 in JarB contains M3.class. When we execute the java command by setting the classpath as these 3 jar files, so in Java runtime it will look like
+
+myPack1 - M1.class
+myPack2 - M2.class, M3.class 
+myPack3 - M4.class
+
+We can see myPack2 package contains 2 classes M2.class and M3.class, so in non modular programming the packages with same name in 2 jar files combined together to create a common package, and that common package will contain both class files 
+
+When dealing with modular programming, we have myModuleA which contain 2 packages myPack1 and myPack2, myModuleB contains myPack2. So 2 modules myModuleA, myModuleB contains the packages with same name, myPack2 of myModuleA contains M2.java, myPack2 of myModuleB contains M3.java
+    But when we compile this 2 modules together, the compiler throws the error
+
+
+1. Create maven project JPMS-SamePackage with pom packaging
+
+2. Right click JPMS-SamePackage project - Create maven module myModuleA1
+3. Right click JPMS-SamePackage project - Create maven module myModuleB1
+4. Right click JPMS-SamePackage project - Create maven module myModuleC1 
+- Create M4.java inside myPack3 package
+
+package myPack3;
+public class M4 {
+
+}
+
+- Right click project - configure - create module-info.java as myModuleC1
+module myModuleC1 {
+	exports myPack3;
+}
+
+5. Create M3.java inside myPack2 package
+
+package myPack2;
+public class M3 {
+
+}
+
+- Right click project - configure - create module-info.java as myModuleB1
+module myModuleB1 {
+	requires myModuleC1;
+	exports myPack2;
+}
+
+- Right click myModuleC1 - Export - jar file - myModuleC1.jar
+- Right Click myModuleB1 - Build path - Configure build path - Module path - Add external jar - Add myModuleC1.jar 
+
+6. - Right click myModuleB1 - Export - jar file - myModuleB1.jar
+- Right Click myModuleA1 - Build path - Configure build path - Module path - Add external jar - Add myModuleB1.jar 
+
+- Right click project - configure - create module-info.java as myModuleA1
+module myModuleA1 {
+	requires myModuleB1;
+}
+
+- Create myPack1 package, Create M1.java inside myPack1 package
+package myPack1;
+public class M1 {
+	public static void main(String[] args) {
+		
+	}
+}
+
+- Create myPack2 package, Create M2.java inside myPack2 package
+package myPack2;
+public class M2 {
+	
+}
+
+7. Now we can see M2.java in myPack2 will be showing an error, that the package exists in another module myModuleB1. So if we have packages with same name in 2 different modules, then we cant compile 2 modules, so it dosent matter whether  it is source code form or compile code form we cant compile the modules 
+
+
+Aggregator modules
+      Whenever the module userModule uses the myModuleA2, myModuleB2 and myModuleC2, if this is the case then why do not create a module bundle of all these 3 modules and call these bundle as aggregator module  
+     So Aggregator module is a module which does not provide any functionality by its own. The role of aggregator module is to gather and bundle together a bunch of other modules 
+     We have aggregateModule of 3 modules which is myModuleA, myModuleB, myModuleC. The aggregateModule does not provide any functionality of its own and does not need to contain single Java file, apart from module-info.java. The aggregateModule requires transitive of other 3 modules, so any module which requires 3 modules which needs to require only aggregateModule
+
+1. Create maven project JPMS-Aggregator with pom packaging
+
+2. Right click JPMS-Aggregator project - Create maven module myModuleA2
+- Create M1.java inside myPack1 package
+
+package myPack1;
+public class M1 {
+    public void abcdM1() {
+          System.out.println("abcdM1");
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleA2
+module myModuleA2 {
+	exports myPack1;
+}
+
+3. Right click JPMS-Aggregator project - Create maven module myModuleB2
+- Create M2.java inside myPack2 package
+
+package myPack2;
+public class M2 {
+    public void abcdM2() {
+          System.out.println("abcdM2");
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleB2
+module myModuleB2 {
+	exports myPack2;
+}
+
+4. Right click JPMS-Aggregator project - Create maven module myModuleC2
+- Create M3.java inside myPack3 package
+
+package myPack3;
+public class M3 {
+    public void abcdM3() {
+          System.out.println("abcdM3");
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleC2
+module myModuleC2 {
+	exports myPack3;
+}
+ 
+5. Right click JPMS-Aggregator project - Create maven module useModule 
+- Create UsePack.java inside usePack package
+
+package usePack;
+import myPack1.M1;
+import myPack2.M2;
+import myPack3.M3;
+public class UsePack {
+    public static void main(String[] args) {
+          M1 m1=new M1();
+          M2 m2=new M2();
+          M3 m3=new M3();
+          m1.abcdM1();
+          m2.abcdM2();
+          m3.abcdM3();
+    }
+}
+
+- Right click project - configure - create module-info.java as myModuleA2
+module useModule {
+	requires myModuleA2;
+        requires myModuleB2;
+        requires myModuleC2;
+}  
+
+- Configure all 3 jar files inside useModule
+
+6. Now when we run UsePack.java, it will be successfully executed
+
+7. Now we dont want to write 3 statement to require 3 modules in useModule, so we need to create an aggregateModule for 3 modules
+
+8. Right click JPMS-Aggregator project - Create maven module aggregateModule
+       As we know aggregateModule does not contain any extra functionailites, so we create only module-info.java file 
+
+- Right click project - configure - create module-info.java as aggregateModule
+module aggregateModule {
+	requires transitive myModuleA2;
+        requires transitive myModuleB2;
+        requires transitive myModuleC2;
+}
+
+9. Now inside useModule module-info.java file, instead of writing 3 requires statement, we use only aggregateModule
+
+module useModule {
+	requires aggregateModule;
+}  
+
+10. Now when we run UsePack.java, it will be successfully executed
+
+So we can use one aggregate module when we want to use various other modules
+
+Qualified Exports
+       Sometimes a module want to export its packages to specific modules, not to everyone. Such export of a package is called qualified exports
+
+Syntax: exports packagename to module1, module2...
+
+Consider we have module called exporterModule which contains 4 packages called myPack1, myPack2, myPack3, myPack4, each package contains M1.class, M2.class, M3.class, M4.class respectively 
+
+exports myPack1; - exporterModule exports myPack1 to all modules
+exports myPack2 to myModuleA -  exporterModule have exported myPack2 only to myModuleA
+exports myPack3 to myModuleB, myModuleC -  exporterModule have exported myPack3 only to myModuleB and myModuleC
+exports myPack4 to myModuleD -  exporterModule have exported myPack4 only to myModuleD
+
+1. Create maven project JPMS-QualifiedExports with pom packaging
+
+2. Right click JPMS-QualifiedExports project - Create maven module exporterModule
+
+- Right click project - configure - create module-info.java as exporterModule
+module exporterModule {
+	exports myPack1; 
+        exports myPack2 to myModuleA3;
+        exports myPack3 to myModuleB3, myModuleC3;
+        exports myPack4 to myModuleD3;
+}
+
+- Create M1.java inside myPack1 package
+
+package myPack1;
+public class M1 {
+ 
+}
+
+- Create M2.java inside myPack2 package
+
+package myPack2;
+public class M2 {
+    
+}
+
+- Create M3.java inside myPack3 package
+
+package myPack3;
+public class M3 {
+   
+}
+
+- Create M4.java inside myPack4 package
+
+package myPack4;
+public class M4 {
+    
+}
+
+3. Right click JPMS-QualifiedExports project - Create maven module myModuleA3 which requires exporterModule
+
+- Right click project - configure - create module-info.java as myModuleA3
+module myModuleA3 {
+	requires exporterModule; 
+}
+
+- Create A.java inside PackA package
+
+package PackA;
+import myPack1.M1;
+import myPack2.M2;
+import myPack3.M3;
+import myPack3.M4;
+public class A {
+    public static void main(String[] args) {
+          
+    }
+}
+
+- Configure exporterModule jar files inside myModuleA3
+
+Here it will be showing an error for myPack3 and myPack4 as it is not visible in myModuleA3, if we comment myPack3.M3 and myPack4.M4 it will be execute properly 
+
+4. Right click JPMS-QualifiedExports project - Create maven module myModuleB3
+which requires exporterModule
+
+- Right click project - configure - create module-info.java as myModuleB3
+module myModuleB3 {
+	requires exporterModule; 
+}
+
+- Create B.java inside PackB package
+
+package PackB;
+import myPack1.M1;
+import myPack2.M2;
+import myPack3.M3;
+import myPack3.M4;
+public class B {
+    public static void main(String[] args) {
+         
+    }
+}
+
+- Configure exporterModule jar files inside myModuleB3
+
+Here it will be showing an error for myPack2 and myPack4 as it is not visible in myModuleB3, if we comment myPack2.M2 and myPack4.M4 it will be execute properly
+
+5. Right click JPMS-QualifiedExports project - Create maven module myModuleC3
+which requires exporterModule
+
+- Right click project - configure - create module-info.java as myModuleC3
+module myModuleC3 {
+	requires exporterModule; 
+}
+
+- Create C.java inside PackC package
+
+package PackC;
+import myPack1.M1;
+import myPack2.M2;
+import myPack3.M3;
+import myPack3.M4;
+public class C {
+    public static void main(String[] args) {
+         
+    }
+}
+
+- Configure exporterModule jar files inside myModuleC3
+
+Here it will be showing an error for myPack2 and myPack4 as it is not visible in myModuleC3, if we comment myPack2.M2 and myPack4.M4 it will be execute properly
+
+
+5. Right click JPMS-QualifiedExports project - Create maven module myModuleD3
+which requires exporterModule
+
+- Right click project - configure - create module-info.java as myModuleD3
+module myModuleD3 {
+	requires exporterModule; 
+}
+
+- Create D.java inside PackD package
+
+package PackD;
+import myPack1.M1;
+import myPack2.M2;
+import myPack3.M3;
+import myPack3.M4;
+public class D {
+    public static void main(String[] args) {
+         
+    }
+}
+
+- Configure exporterModule jar files inside myModuleD3
+
+Here it will be showing an error for myPack2 and myPack3 as it is not visible in myModuleD3, if we comment myPack2.M2 and myPack3.M3 it will be execute properly
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
