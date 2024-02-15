@@ -1,0 +1,696 @@
+Springboot 3 Security 
+https://github.com/Java-Techie-jt/spring-boot-security-3.0/tree/main
+
+    Springboot version 3 had lot of changes in Spring Security modules, when we say changes it means they deprecated and removed few of the classes. Earlier we configure Spring Security using WebSecurityConfigurerAdapter is now no longer supported by springboot 3.0 so it's really difficult for a developer when they will migrate their application from Spring boot 2x to 3x version 
+
+1. Create spring boot project with web, lombok, security dependency with spring boot version 3.0.1
+
+2. Create Product DTO class
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Product {
+
+    private int productId;
+    private String name;
+    private int qty;
+    private double price;
+}
+
+2. Create controller with 3 REST endpoint one will print some string message, and one will fetch all the product from the service, one will filter
+the product by ID 
+
+@RestController
+@RequestMapping("/products")
+public class ProductController {
+
+    @Autowired
+    private ProductService service;
+
+    @GetMapping("/welcome")
+    public String welcome() {
+        return "Welcome this endpoint is not secure";
+    }
+
+    @GetMapping("/all")
+    public List<Product> getAllTheProducts() {
+        return service.getProducts();
+    }
+
+    @GetMapping("/{id}")
+    public Product getProductById(@PathVariable int id) {
+        return service.getProduct(id);
+    }
+}
+
+3. Create service class where we are generating 100 of product object using this IntStream, so when we call the service getProducts() which will return the list and when we call getProductByID() we will filter from the list and 
+return the product object 
+
+@Service
+public class ProductService {
+
+    List<Product> productList = null;
+
+    @PostConstruct
+    public void loadProductsFromDB() {
+        productList = IntStream.rangeClosed(1, 100)
+                .mapToObj(i -> Product.builder()
+                        .productId(i)
+                        .name("product " + i)
+                        .qty(new Random().nextInt(10))
+                        .price(new Random().nextInt(5000)).build()
+                ).collect(Collectors.toList());
+    }
+
+
+    public List<Product> getProducts() {
+        return productList;
+    }
+
+    public Product getProduct(int id) {
+        return productList.stream()
+                .filter(product -> product.getProductId() == id)
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("product " + id + " not found"));
+    }
+
+}
+
+since we added the Spring Security dependency by default in Spring boot
+security will be enabled, but if you want to configure your username and password for your testing we can configure in application.properties file as
+
+spring.security.user.name=ram
+spring.security.user.password=abcd
+
+But this is not the recommended approach since we don't want to hard code it and also we don't want to restrict with the one user so here you
+can only Define one username and password, since we added the Spring Security dependency by default Security will be enabled so we can access
+all these three endpoint with this credential 
+
+4. Start the application and run http://localhost:8080/products/welcome and we need to pass the username and password which I have configured in my application.properties file and now we can see the response 
+   Similarly if we try to access other endpoint to get all the products and to filter product by ID, we open a new tab and provide the url 
+
+5. If we want to configure multiple user with different kind of role for that we need to create a config class and we need to define your UserDetailService with @Configuration and @EnableWebSecurity  
+   Before springboot 3.0 usually we have something called WebSecurityConfigurerAdapter class which is deprecated from 2.7.x, but what is the benefit we are getting from this websecurityconfigureadapter usually it provide us the three overloaded configure() method, first configure() method which has argument AuthenticationManagerBuilder and we can provide your user details, user password,Role and we can configure n number of user  with different role and different credential 
+   Second configure() method which has all your authorization related configuration, for which endpoint you want to enable security or what all endpoint you want to bypass without implementing the security or we can
+define the ant matches for what all endpoint you want to authenticate that
+request 
+   But in springboot 3.0 it is completely removed, so to configure the authentication and authorization without using this websecurityconfigureadapter, we have couple of new class introduced and we need to create a bean of UserDetailService to define the authentication related stuff 
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    //authentication
+    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
+        UserDetails admin = User.withUsername("Ram")
+                .password(encoder.encode("abcd"))
+               .roles("ADMIN")
+               .build();
+       UserDetails user = User.withUsername("Sam")
+               .password(encoder.encode("xyz"))
+               .roles("USER","ADMIN","HR")
+               .build();
+        return new InMemoryUserDetailsManager(admin, user);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+since we have two user currently we are hard coding, we are not connecting to our DB to load the user, we need to store these two user with inmemory so we return InMemoryUserDetailsManager
+  So in earlier version we have the overloaded configure() method which takes AuthenticationManagerBuilder and using that we are building the user details and we are storing it, now since this configure() method is not in the springboard 3.0 version we are just creating the user detail object manually and at the end we are giving it to the userDetailsManager to tell that these are the two user details 
+  Next in old approach we have configured the authorization related stuff in the second configure() method who takes the argument as HTTPSecurity, but again we don't have this configure() method with us, so how we can do that so that is the reason spring boot 3.0 given a new class called
+SecurityFilterChain where we can expose it as a bean and we can configure our authorization related stuff 
+
+@Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http.csrf().disable()
+                .authorizeHttpRequests()
+                .requestMatchers("/products/welcome",).permitAll()
+                .and()
+                .authorizeHttpRequests().requestMatchers("/products/**")
+                .authenticated().and().formLogin().and().build();
+    }
+
+6. Comment username, pwd in application.properties
+
+6. Start the appl, and run 
+http://localhost:8000/product/welcome - it should not force me to authenticate because we have just configured as permit all
+
+http://localhost:8000/product/all - it is asking me to give the credential so we will give username and password as "Ram" and "abcd" respectively, now we can able to see the response 
+   Close and open a new Incognito window and run http://localhost:8000/product/all, we can check another username "Sam" and "xyz", here also we can see response 
+
+7. So now Ram and Sam both can access because even though we have defined the role here, we didn't specify to the method which method can be accessed by which user. So we understand about the authentication if we give the username and password it validates whether the given input or username and password is correct or not. Now we need to understand authorization how we can perform authorization in this Spring Security 3.0, so Ram is the admin, now
+as a admin what all feature Ram can access and as a user what all feature Sam can access 
+  In our ProductController, we have to define
+
+ @GetMapping("/all")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public List<Product> getAllTheProducts() {
+        return service.getProducts();
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public Product getProductById(@PathVariable int id) {
+        return service.getProduct(id);
+    }
+
+By defining this annotation we cannot achieve the authorization so we need to tell to the Spring Security that we have implemented method label authorization by defining @EnableMethodSecurity 
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+}
+
+So as per our implementation two user we have, Ram is the admin and
+Sam is the user, now in my controller class Ram can only view
+all the products because he is the admin access and Sam can only view the specific product by ID 
+
+8. Start the appl, and run 
+
+http://localhost:8000/products/all - it is asking me to give the credential so we will give username and password as "Sam" and "xyz" respectively, now we can see access denied since Sam is a user
+http://localhost:8000/products/all - it is asking me to give the credential so we will give username and password as "Ram" and "abcd" respectively, now we can see the response
+
+http://localhost:8000/products/1 - it is asking me to give the credential so we will give username and password as "Sam" and "xyz" respectively, now we can see the response
+http://localhost:8000/products/1 - it is asking me to give the credential so we will give username and password as "Ram" and "abcd" respectively, now we can see access denied since Ram is a admin
+
+
+9. We have done security config but we hard coded the username and password, but actually we need to fetch it from our DB 
+
+- Add spring data jpa and mysql dependency
+- Configure db info in application.properties 
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url = jdbc:mysql://localhost:3306/javatechie
+spring.datasource.username = root
+spring.datasource.password = Password
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL5Dialect
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+- create a entity to store the username and password 
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserInfo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    private String name;
+    private String email;
+    private String password;
+    private String roles;
+}
+
+- create respository 
+
+public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
+    Optional<UserInfo> findByName(String username);
+}
+
+10. Next we need to perform the authentication by fetching from the DB and if we remember we have configured the authentication related stuff
+in the UserDetailService where we have hard coded the
+details so we comment that
+
+ @Bean
+    public UserDetailsService userDetailsService() {
+//        UserDetails admin = User.withUsername("Ram")
+//                .password(encoder.encode("abcd"))
+//                .roles("ADMIN")
+//                .build();
+//        UserDetails user = User.withUsername("Sam")
+//                .password(encoder.encode("xyz"))
+//                .roles("USER","ADMIN","HR")
+//                .build();
+//        return new InMemoryUserDetailsManager(admin, user);
+        return new UserInfoUserDetailsService();
+    }
+
+now we want to create my own UserDetailService which will talk to the DB, so
+create a class UserInfouUserDetailService by implementing from UserDetailsService, and override a method  loadUserByUsername and returns UserDetails, but where can we get the userdetail object or my user information object, we can get it from my repo so simply we need to inject UserInfoRepository
+
+@Component
+public class UserInfoUserDetailsService implements UserDetailsService {
+
+    @Autowired
+    private UserInfoRepository repository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+    }
+}
+
+We have the repository with me and we will get the username for that we need to write a custom method in JPA 
+
+@Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            Optional<UserInfo> userInfo = repository.findByName(username);
+    }
+
+But this method return UserDetails object so what we are getting from DB need to convert it to the UserDetails object and return it. So we need to get each and every info from UserInfo object and we need to convert it to the UserDetails object, so for that we need to create another class UserInfoUserDetails which implement from UserDetails and overwrite all the method and just define the field name, password and its roles which you want to convert to this userdetail object 
+
+public class UserInfoUserDetails implements UserDetails {
+
+
+    private String name;
+    private String password;
+    private List<GrantedAuthority> authorities;
+
+    public UserInfoUserDetails(UserInfo userInfo) {
+        name=userInfo.getName();
+        password=userInfo.getPassword();
+        authorities= Arrays.stream(userInfo.getRoles().split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return name;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+}
+
+Now we have UserInfo just convert it to the UserInfoUserDetails
+
+public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<UserInfo> userInfo = repository.findByName(username);
+        return userInfo.map(UserInfoUserDetails::new)
+                .orElseThrow(() -> new UsernameNotFoundException("user not found " + username));
+
+    }
+
+So we get the UserInfo from the DB and we need to convert that UserInfo which to UserDetails object by giving the username, password and roles and Authority 
+
+12. Now we have given the UserDetailService in SecurityConfig and we are not hard coding the username, now it will use our own UserInfoUserDetailService which we have implemented from UserDetailService, now the request will go to this class and then it will take the user object from the DB by giving the username and once it gets the user from the DB it will just convert to the UserInfoUserDetails and it will just do the authentication 
+
+Now we want to store few user object to the DB to validate, so for that we
+create a new endpoint in controller 
+
+    @PostMapping("/new")
+    public String addNewUser(@RequestBody UserInfo userInfo){
+        return service.addUser(userInfo);
+    }
+
+In Service class
+
+    @Autowired
+    private UserInfoRepository repository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+     public String addUser(UserInfo userInfo) {
+        userInfo.setPassword(passwordEncoder.encode(userInfo.getPassword()));
+        repository.save(userInfo);
+        return "user added to system ";
+    }
+
+Now we want anyone can add a user so we can configure the authorization related stuff in SecurityConfig
+
+  .requestMatchers("/products/welcome","/products/new").permitAll()
+
+
+12. Start the application
+
+First we need to add a couple of new user, so in Postman we give in POST request as http://localhost:8000/products/new - Body - Raw - Json
+{
+    "name":"Ram",
+    "password":"abcd",
+    "email":"ram@gmail.com",
+    "roles":"ROLE_ADMIN"
+}
+
+Click Send - Displays "User added to system".
+
+Now we add another user
+
+{
+    "name":"Sam",
+    "password":"xyz",
+    "email":"sam@gmail.com",
+    "roles":"ROLE_USER"
+}
+
+Click Send - Displays "User added to system".
+
+Now we added two user Ram as admin and Sam as a user 
+
+14. Check the database table
+>select * from userinfo;
+
+15. Now we try to access the endpoints by the user 
+
+1. First we run "http://localhost:8000/products/all" where only admin can access all products. It will ask for credentials, we try with "Ram" and "abcd"
+
+We will get an exception "no authentication provider found for this username password authentication token", so we have defined the UserDetailService which will talk to the DB and validate the user, but we also need one authentication
+provider which will talk to the UserDetailService, so we need an instance of authentication provider in our code, so in SecurityConfig  
+  we will provide the implementation of DaoAuthenticationProvider
+and specify who is the UserDetailService and what is the password encoder and now authentication provider will talk to the userdetails and generate the userdetails object and it will set to the authentication object, so In SecurityConfig class
+
+ @Bean
+    public AuthenticationProvider authenticationProvider(){
+        DaoAuthenticationProvider authenticationProvider=new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
+    }
+
+Remove argument from UserDetailsService()
+
+16. Start the appl and now we try to access the endpoints by the user 
+
+First we run "http://localhost:8000/products/all" where only admin can access all products. It will ask for credentials, we try with "Sam" and "xyz", now we get 403 error 
+
+Next we run "http://localhost:8000/products/all" where only admin can access all products. It will ask for credentials, we try with "Ram" and "abcd", now we get response as Ram is an admin
+
+Next we run "http://localhost:8000/products/1" where only user can access single products. It will ask for credentials, we try with "Sam" and "xyz", now we get response, but when we try with Ram it will show 403 error  
+
+JWT Authentication and Authorization
+https://github.com/Java-Techie-jt/spring-boot3-jwt
+
+Previously we design the appl with basic authentication and authorization mechanism of Springboot3.0 security, we have define endpoints and we define the role who can access the endpoints (ie) /all can be accessed by admin and /id can be accessed by only user 
+    So the disadvantage is everytime to access each and every endpoint we are giving the hard coded username and password as part of request which is not recommended 
+    So when we give username, password and click SignIn button, so if the user is valid user it will navigate to the application. So everytime if we want to access endpoints we must need to pass username and password, so what we want to implement here is we will allow user to give username and password for first time and while sending request we will generate one token for him, so that going forward he can pass this token to access any of the endpoint of my appl, this is JWT or Json Web Token. So give me ur credential, we will give one token going forward use this token rather than hardcoded username and pwd 
+
+Goto jwt.io url, So JWT token have 3 different color red, purple and blue color, each color has their own significant and point to different component to build a JWT token which is called as header, payload and verify signature
+    Header contains algorithm which u want to use for encryption and type of ur token, payload will contains ur actual username and when ur token will expire, verify signature will contain how we are generating the token 
+    Since payload is visible where we are giving username and expiry time of token, so lets say someone knows my username then he can easily access my information by giving the token. So payload is not only key which considered to create the token, apart from payload we have header, so how someone will know which algorithm type is used to encrypt,so eventhough if they know the header we have verify signature. We try to understand the syntax of how we verify the signature
+
+HMACSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  your-256-bit-secret
+) secret base64 encoded
+ 
+We have base64UrlEncode using header and convert to base64 format and appending with '.', then base64UrlEncode is using payload and appending with 256 bit secret and generate the token. So to authenticate payload component, header and verifysignature takes a leading role to encrypt the entire token so that by knowing username no one can able to access ur details, that will be secure by ur header and verify signature 
+
+1. Add JWT dependency in above project
+<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+
+2. Create a DTO class called AuthRequest which contains username and password
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuthRequest {
+
+    private String username ;
+    private String password;
+}
+
+3. Now we create an endpoint in ProductController and allow all the user to generate a token by hitting the endpoint which takes AuthRequest class 
+
+ @PostMapping("/authenticate")
+    public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+        
+    }
+
+4. Now we have username in AuthRequest and we want to give this username to JWT and generate the token, for that we create JwtService class with @Component and create a generateToken() where we write the logic to generate the token by taking username as input 
+
+@Component
+public class JwtService {
+ public String generateToken(String userName){
+       
+ }
+}
+
+- As we know we have 3 components header, payload and verify signature, all these are called as claims in JWT, so we create an empty Map 
+
+public String generateToken(String userName){
+        Map<String,Object> claims=new HashMap<>();
+    }
+
+- To create the token we also need to verify the signature by adding the key to sign-in the token, and also need to provide the expiry time of token etc, for that we just create createToken() with claims and username as argument
+
+public String generateToken(String userName){
+        Map<String,Object> claims=new HashMap<>();
+        return createToken(claims,userName);
+    }
+
+- Now we create createToken(), to create the token we need the help of JWT and set claims, username, token expiration and finally verify the signature using signWith() where we specify the key and what algorithm we want to use
+
+ private String createToken(Map<String, Object> claims, String userName) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userName)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis()+1000*60*30))  //for 30min
+                .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
+    } 
+
+- Next we need to create getSignKey() with our own secret 
+ public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
+
+ private Key getSignKey() {
+        byte[] keyBytes= Decoders.BASE64.decode(SECRET);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+5. Now we go to ProductController and inject JwtService and call generateToken
+
+ @Autowired
+    private JwtService jwtService;
+
+ @PostMapping("/authenticate")
+    public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+        return jwtService.generateToken(authRequest.getUsername());
+    }
+
+6. Now we want to tell spring security to bypass the "/authenticate" endpoint so anyone give username, password and generate the token. In SecurityConfig,
+
+ .requestMatchers("/products/welcome","/products/authenticate").permitAll()
+
+7. Start the appl, In postman with POST request and run "http://localhost:8080/products/authenticate" - Body - Raw - Json
+{
+   "username":"Ram",
+   "password":"abcd"
+}
+Click Send - Now it will generate the token 
+
+Goto jwt.io, paste the token, we can see payload is getting changed with username, expiry time and with secret key, we can see issued at time and expiry time will be 30 min difference as we set in JwtService class
+
+- Now we are giving Ram user which exists in db but with some random password 
+In postman with POST request and run "http://localhost:8080/products/authenticate" - Body - Raw - Json
+{
+   "username":"Ram",
+   "password":"sdjjfjasfj"   //some random password
+}
+Click Send 
+
+Now also it will generate the token which is completely incorrect, so the user  which is there in database for those user only we have to give access to generate the token
+
+8. So we need to add restriction to our code, only for user which is present in db can access this endpoint and not for everyone
+   In ProductController, before we generate the token we need to authenticate that particular user, for that we need to inject AuthenticationManager and we authenticate username, password, if it is authenticated we generate the token otherwise we throw an exception 
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @PostMapping("/authenticate")
+    public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+        if (authentication.isAuthenticated()) {
+            return jwtService.generateToken(authRequest.getUsername());
+        } else {
+            throw new UsernameNotFoundException("invalid user request !");
+        }
+    }
+
+9. Next we have to configure AuthenticationManager in SecurityConfig
+
+ @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+10. Start the appl with  invalid username and password, In postman with POST request and run "http://localhost:8080/products/authenticate" - Body - Raw - Json
+{
+   "username":"Raj",
+   "password":"abcd"
+}
+Click Send - Now it will generate the error
+
+Now we provide the correct username and password present in database
+{
+   "username":"Ram",
+   "password":"abcd"
+}
+Click Send - Now it will generate the token 
+
+11. So now how AuthenticationManager knows what this token, so we need to extract the token and get the username information from the token and check with database then only we allow this token to validate.
+    So we need to write the filter and inside that we need to write a logic to extract the token from header and get username from token and validate it with database and do all type of validations 
+- Create JwtAuthFilter class which extends OncePerRequestFilter and override doInternalFilter()
+
+@Component
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        filterChain.doFilter(request, response);
+   }
+}
+
+We have request, response and from request we get AuthorizationHeader token and then extract username, expirydate etc which are needed to validate 
+
+- First we get the header 
+ String authHeader = request.getHeader("Authorization");
+ String token = null;
+ String username = null;
+
+- Once we get authorization header immediately we check whether it is not null and starts with "Bearer", if condition match we can extract the token from 7th position and finally extract username from the token and autowired JwtService
+
+ @Autowired
+    private JwtService jwtService;
+
+if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+            username = jwtService.extractUsername(token);
+        }
+
+- So we go JwtService and write logic to extract username from token, here we set subject as username 
+
+  public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts
+                .parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    private Boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+- Now by taking the username we can go to UserInfoUserDetailsService and pass the username and load userdetails object, then we can validate that userdetails object with token and pass to JwtService 
+
+@Autowired
+    private UserInfoUserDetailsService userDetailsService;
+
+ if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (jwtService.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+         filterChain.doFilter(request, response);
+
+12. Now we tell to Spring security to use this JwtAuthFilter which we created before using any of the predefined filters. In SecurityConfig, under SecurityFilterChain, we enable session management as stateless as we dont want to keep anything in cookies, next specifying AuthenticationProvider and next we specify to use our authfilter first before using UsernamePasswordAuthenticationFilter
+
+@Autowired
+    private JwtAuthFilter authFilter;
+
+@Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http.csrf().disable()
+                .authorizeHttpRequests()
+                .requestMatchers("/products/new","/products/authenticate").permitAll()
+                .and()
+                .authorizeHttpRequests().requestMatchers("/products/**")
+                .authenticated().and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+13. Start the application
+
+- First we generate the token, in Postman with POST request, run "http://localhost:8080/products/authenticate" - Body - Raw - Json
+{
+   "username":"Ram",
+   "password":"abcd"   
+}
+Click Send - It will generate the token 
+
+So as per the code, Ram is admin where he can access only "/all" to get all products 
+
+- In Postwan with GET request, run "http://localhost:8080/products/all"
+Authorization - Type: Bearer Token - Paste the token - Click Send
+    Now we can see all the products as response 
+
+Now if we access http://localhost:8080/products/1, we get 403 Forbidden error as Ram is admin 
+
+- Now we generate the token for Sam who is an user, in Postman with POST request, run "http://localhost:8080/products/authenticate" - Body - Raw - Json
+{
+   "username":"Sam",
+   "password":"xyz"   
+}
+Click Send - It will generate the token 
+
+- In Postwan with GET request, run "http://localhost:8080/products/1"
+Authorization - Type: Bearer Token - Paste the token - Click Send
+    Now we can see single products as response 
