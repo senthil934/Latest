@@ -1,4 +1,70 @@
+Gradle project
+1. Download gradle https://gradle.org/install/ - click Binary only
+2. Extract
+3. Set env variable
+     GRADLE_HOME C:\Softwares\gradle-8.1.1
+     Path        C:\Softwares\gradle-8.1.1\bin
+4. In Eclipse - Windows - Preference - Gradle
+       Select Local installation Directory: C:\Softwares\gradle-8.1.1
+       Gradle user home: c:/users/senthil/.gradle
+       Java home: c:/softwares/openjdk/jdk17
+Click Apply - Apply and Close
+5. Create Gradle project - File - New - Other - Gradle project 
+      Projectname: Spring2
+override workspace settings
+      Select Local installation Directory: C:\Softwares\gradle-8.1.1
+      Gradle version: 8.1.1
+      click Next - Finish
 
+6. It will create project folder and lib folder, inside lib we can see all src/main/java
+    But if we use lower version it will create correctly, but it will show some issue, to avoid that so many discussions are going on
+
+https://github.com/eclipse/buildship/issues/1077
+
+1. Open settings.gradle file and delete "include('lib')" line
+2. Delete the project and lib project, but dont remove from workspace, just delete from eclipse
+3. Now goto project location in folder, now we can see lib inside the project but in eclipse it shows outside 
+4. cut all contents from lib folder and paste inside project folder
+5. Delete lib folder, so now we got all content from lib to our project 
+6. Goto eclipse - File - Import - Existing Gradle project - Next - Next -
+   Project Root Directory - sample - Next - Next - Finish
+         Now we see the project with proper directory structure
+
+7. Now we can give all dependency in build.gradle file 
+     Initially expand 'Project and External dependencies" which has basic jar files. Now we provide the dependency in build.gradle file 
+     - Right click project - Gradle - Refresh gradle project 
+     - Now expand 'Project and External dependencies" where we can see all new dependency 
+
+c/spring/sample> gradlew build - to build the appl which is equal to mvn clean install
+
+c:/> gradlew clean build - build project complete from scratch
+
+c:/> gradlew test - Run the tests
+
+----------------------------------------------------------------------------
+Your Spring-Boot version is 3 which uses jakarta namespace instead of javax.
+
+But Swagger still using old version namespace (javax).
+
+They are not match, so you have to downgrade your Spring-Boot version to older one (2.7) or wait for new version of Swagger.
+
+I suggest you to use springdoc-openapi library instead. Base on the official documentation:
+
+For the integration between spring-boot and swagger-ui, add the library to the list of your project dependencies (No additional configuration is needed):
+
+- We have to provide only this dependency, no need for configuration class and @EnableSwagger anno and all
+
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.2.0</version>
+</dependency>
+The Swagger UI page will then be available at
+
+http://localhost:8080/swagger-ui/index.html
+
+
+-----------------------------------------------------------------------------
 Spring Boot 3.0
     Spring boot has published the final release version of 3.0 on Nov 22,it is based on spring framework version 6 
 
@@ -1648,20 +1714,216 @@ public class JdbcClientPostService implements PostService {
 12. Start the appl
 
 
-Spring Data JDBC
-      We build new spring boot appl that connects to database using spring data jdbc, we already have spring data jpa which is using ORM and specifically using Hibernate. 
+Spring boot 3.0 - Spring OAuth2 Authorization Server 1.1.0
+https://www.youtube.com/watch?v=4ivnNJh-Z10&list=PLbuI9mmWSoUF3FJBK4GCRHlmwsm0b8360&index=1
+
+1. Create Springboot-AuthServer with OAuth2 Authorization server 
+
+2. Configure the properties in application.yml file
+
+3. Start the appl
+
+4. In postman, with GET request - http://localhost:9000
+   Under Authorization - Type: OAuth2.0
+Grant type: Authorization code
+Auth url: http://localhost:9000/oauth2/authorize
+Access token url: http://localhost:9000/oauth2/token
+Client ID: client
+Client Secret: secret
+scope: openid profile
+callback url: http://test
+Credentials: As Basic Auth headers  
+
+Click Get New Access token 
+
+Where it will redirected to the spring authorization servers login screen 
+   username: user
+   Pwd: copy pwd from console
+
+when we click sign-in, we get access token, id token and refresh token     
+
+create resource server and configure user's password and authorities 
+1. Create SpringBoot-ResourceServer with spring web, oauth2 resource server
+
+2. In application.yml we configure issuer url which is the url of the authorization server
+
+3. We create a controller which returns the Principal 
+
+4. Start authorization server, resource server 
+
+5. In Postman, with GET - http://localhost:9000, request for new access token 
+
+In Postman, with GET - http://localhost:8081/hello 
+Under Authorization - Select Bearer token
+ Token: paste the access token which was generated
+  Click Send
+Now we get the response from resource server as
+{
+    "home": "Home: user"
+}
+
+6. we configure users pwd and authorities in 2 ways 
+
+1. application.yml of AuthorizationServer we configure additional info  
+
+    user:
+      name: user
+      password: password
+      roles: USER   
+
+2. Using SecurityConfig class we configure 2 users user and admin 
 
 
+7. First we define extra scope in application.yml authorization server
+                - "user.read"
+                - "user.write"
 
+8. Next we create SecurityConfig class with 2 users (ie) user and admin
 
+9. In main class of Resource server we define @EnableMethodSecurity 
 
+10. Now we create HomeService class with @PreAuthorize annotation to secure the home() and make it accessible only to the user with user-read scope 
 
+@Service
+public class HomeService {
 
+	@PreAuthorize("hasAuthority('SCOPE_user.read')")
+	public Map<String, String> home() {
+		var jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		return Map.of("home", "Home: " + jwt.getSubject());
+	}
+}
 
+11. Now we modify HomeController to perform injection on HomeService 
 
+12. Start both the project
 
+13. In Postman, with GET - http://localhost:9000, 
+ scope: openid profile user.read 
+request for new access token
+   user: user
+   password: password
 
+Generate access token 
 
+In Postman, with GET - http://localhost:8081/hello 
+Under Authorization - Select Bearer token
+ Token: paste the access token which was generated
+  Click Send
+Now we get the response from resource server as
+{
+    "home": "Home: user"
+}
 
+14. Now we use user roles to enable method security, so in SecurityConfig class we use OAuth2TokenCustomizer beans to configure the roles in the access token 
 
+@Bean
+	OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
+		return context -> {
+			Authentication principal = context.getPrincipal();
+			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+				Set<String> authorities = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+						.collect(Collectors.toSet());
+				context.getClaims().claim("authorities", authorities);
+			}
+		};
+	}
 
+15. In ResourceServer, Create SecurityConfig class to use JWTAuthenticationConverter bean to filter the roles from access token and convert them to granted authorities 
+
+@Configuration
+public class SecurityConfig {
+	
+	@Bean
+	JwtAuthenticationConverter jwtAuthenticationConverter() {
+	    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+	    grantedAuthoritiesConverter.setAuthoritiesClaimName("authorities");
+	    grantedAuthoritiesConverter.setAuthorityPrefix("");
+
+	    JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+	    jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+	    return jwtAuthenticationConverter;
+	}
+}
+
+16. In HomeService class, we configure two additional method one for user role and another for admin role 
+
+@PreAuthorize("hasRole('USER')")
+	public Map<String, String> user() {
+		var jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		return Map.of("home", "USER: " + jwt.getSubject());
+	}
+	
+	@PreAuthorize("hasRole('ADMIN')")
+	public Map<String, String> admin() {
+		var jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		return Map.of("home", "ADMIN: " + jwt.getSubject());
+	}
+
+17. Next we two extra method in Controller class, one for user and another for admin
+
+@GetMapping("/user")
+	Map<String, String> user() {
+		return homeService.user();
+	}
+	
+	@GetMapping("/admin")
+	Map<String, String> admin() {
+		return homeService.admin();
+	}
+
+12. Start both the project
+
+18. In Postman, with GET - http://localhost:9000, 
+ scope: openid profile user.read 
+request for new access token
+   user: user
+   password: password
+
+Generate access token 
+
+In Postman, with GET - http://localhost:8081/user
+Under Authorization - Select Bearer token
+ Token: paste the access token which was generated
+  Click Send
+Now we get the response from resource server as
+{
+    "home": "User: user"
+}
+
+19. Now we create custom login screen in spring authorization server, so we added spring-boot-starter-thymeleaf dependency
+
+20. In SecurityConfig class, we use first SecurityFilterChain bean where we have default configuration according to the spring authorization server  
+    The configuration of custom login form can be found in second SecurityFilterChain bean, where we permit all for error and login page 
+
+20. Next we create LoginController
+21. login.html in thymeleaf and styles.css
+
+22. Start the appl
+
+23. In Postman, with GET - http://localhost:9000, 
+ scope: openid profile user.read 
+request for new access token, now it will open custom login page
+   user: user
+   password: password
+
+Generate access token 
+
+24. Next we combine spring authorization and resource server along with oauth client and cloud gateway 
+    Now we create SpringOAuthClient with cloud gateway, oauth2 client dependency 
+
+25. We do all configuration in application.yml
+    We have cloud gateway default filter which is TokenRelay which converts the browser cookie to the access token and vice versa. Next we have one route to the spring resource server 
+   The second part of configuration is the client registration for spring authorization server 
+
+26. Now change redirectUrl in authorization server application.yml file
+
+27. In HomeService of ResourceServer, we remove hello() and in HomeController home() will return just text 
+
+28. Start all 3 projects
+
+29. Run in browser http://localhost:8082/user, where it will open custom login screen
+   username: admin
+   password: password
+
+and change to http://localhost:8082/admin
