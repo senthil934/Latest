@@ -1,0 +1,1830 @@
+1. Create Spring boot project StringKafkaProducer with web, kafka
+
+2. Configure producer and consumer in application.properties 
+
+spring.kafka.consumer.bootstrap-servers: localhost:9092
+spring.kafka.consumer.group-id: myGroup
+spring.kafka.consumer.auto-offset-reset: earliest
+spring.kafka.consumer.key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+spring.kafka.producer.bootstrap-servers: localhost:9092
+spring.kafka.producer.key-serializer: org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+3. Create kafka topic
+       We create Spring bean to configure kafka topic, so we annotate with @Configuration so this class acts as spring configuration class. Inside we create a bean to create kafka topic using NewTopic and TopicBuilder class
+
+
+@Configuration
+public class KafkaTopicConfig {
+
+    @Bean
+    public NewTopic kafkaTopic(){
+        return TopicBuilder.name("stringkafka")
+                .build();
+    }
+}
+
+4. Create kafkaproducer to write message to topic 
+
+@Service
+public class KafkaProducer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducer.class);
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    public void sendMessage(String message){
+        LOGGER.info(String.format("Message sent %s", message));
+        kafkaTemplate.send("javaguides", message);
+    }
+}
+
+5. Create REST API to send message to kafkaproducer and kafkaproducer will send message to kafka topic
+
+@RestController
+@RequestMapping("/api/v1/kafka")
+public class MessageController {
+
+    @Autowired
+    private KafkaProducer kafkaProducer;
+
+    @GetMapping("/publish")
+    public ResponseEntity<String> publish(@RequestParam("message") String message){
+        kafkaProducer.sendMessage(message);
+        return ResponseEntity.ok("Message sent to the topic");
+    }
+}
+
+6. Start the appl and run to send msg to kafka topic
+http:localhost:8080/api/v1/kafka/publish?message=hello world
+
+7. Check in kafka console consumer whether message sent to topic
+>kafka-console-consumer.bat --topic stringkafka --from-beginning --bootstrap-server localhost:9092
+
+8. Create kafka consumer to consume messages from kafkatopic
+      We create subscribe method to subscribe to the topic, we use @KafkaListener to listen to topic 
+
+@Service
+public class KafkaConsumer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumer.class);
+
+    @KafkaListener(topics = "stringkafka", groupId = "myGroup")
+    public void consume(String message){
+        LOGGER.info(String.format("Message received -> %s", message));
+    }
+}
+
+So whenever kafkaproducer send message to kafka topic, then subscriber method consume() will receive that message from kafka topic 
+
+9. Start the appl, we can see message from topic will be printed in console 
+-----------------------------------------------------------------------
+1. In same project we produce and consume json message, so we change in application.properties
+
+spring.kafka.consumer.bootstrap-servers: localhost:9092
+spring.kafka.consumer.group-id: myGroup
+spring.kafka.consumer.auto-offset-reset: earliest
+spring.kafka.consumer.key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.consumer.properties.spring.json.trusted.packages=* (it means kafka consumer can deserialize all classes from all pkg)
+
+spring.kafka.producer.bootstrap-servers: localhost:9092
+spring.kafka.producer.key-serializer: org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+spring.kafka.topic-json.name=kafka_json
+
+2. Create simple pojo class to serialize and deserialize, so we send and receive User object to and from kafka. So we used JsonSerializer and JsonDeserializer to convert Json into Java object and Java object to Json 
+
+public class User {
+    private int id;
+    private String firstName;
+    private String lastName;
+    //getter and setter, toString
+}
+
+3. Create KafkaProducer to produce json message 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class JsonKafkaProducer {
+
+    @Value("${spring.kafka.topic-json.name}")
+    private String topicJsonName;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonKafkaProducer.class);
+
+    @Autowired
+    private KafkaTemplate<String, User> kafkaTemplate;
+
+    public void sendMessage(User data){
+
+        LOGGER.info(String.format("Message sent -> %s", data.toString()));
+
+        //We create a message that write to kafka topic
+        Message<User> message = MessageBuilder
+                .withPayload(data)
+                .setHeader(KafkaHeaders.TOPIC, topicJsonName)
+                .build();
+
+        kafkaTemplate.send(message);
+    }
+}
+
+4. Create REST API to send json message 
+
+@RestController
+@RequestMapping("/api/v1/kafka")
+public class JsonMessageController {
+
+    @Autowired
+    private JsonKafkaProducer kafkaProducer;
+
+    @PostMapping("/publish")
+    public ResponseEntity<String> publish(@RequestBody User user){
+        kafkaProducer.sendMessage(user);
+        return ResponseEntity.ok("Json message sent to kafka topic");
+    }
+}
+
+5. Start the application and in postman, with POST request run http://localhost:8080/api/v1/publish and in body - raw - json
+{
+  "id":1,
+  "firstName":"Ram",
+  "lastName":"Kumar"
+}
+
+Now json message sent to kafka topic, in order to check whether message sent to kafka topic in console
+>kafka-console-consumer.bat --topic kafka_json --from-beginning --bootstrap-server localhost:9092
+
+6. Create consumer to consume json message 
+
+@Service
+public class JsonKafkaConsumer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonKafkaConsumer.class);
+
+    @KafkaListener(topics = "${spring.kafka.topic-json.name}", groupId = "${spring.kafka.consumer.group-id}")
+    public void consume(User user){
+        LOGGER.info(String.format("Json message recieved -> %s", user.toString()));
+    }
+}
+
+7. Start the appl, we can see message are consumed on console
+----------------------------------------------------------------------
+1. Create producer project with kafka, lombok, web, swagger dependency 
+
+2. Create book class
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Book {
+    private Integer bookId;
+    private String bookName;
+    private String authorName;
+    private Double price;
+    private String type;
+}
+
+3. Create topic
+
+@Configuration
+public class KafkaTopicConfig {
+
+    @Bean
+    public NewTopic topic(){
+        return TopicBuilder.name("booktopic2")
+        		.partitions(3)
+                .build();
+    }
+}
+
+4. Create BookSerializer
+
+public class BookSerializer implements Serializer<Book> {
+
+	  private ObjectMapper mapper = new ObjectMapper();
+
+	  @Override
+	  public byte[] serialize(String s, Book message) {
+	    byte[] result;
+	    try {
+	      result = mapper.writeValueAsString(message).getBytes();
+	    } catch (Exception e) {
+	      throw new RuntimeException(e);
+	    }
+	    return result;
+	  }
+	}
+
+5. Configure serializer in application.properties
+
+spring.application.name=WikimediaKafkaProducer
+server.port=1111
+spring.mvc.pathmatch.matching-strategy = ANT_PATH_MATCHER
+
+spring.kafka.producer.bootstrap-servers=localhost:9092
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=com.pack.WikimediaKafkaProducer.BookSerializer
+spring.kafka.producer.acks=all
+
+6. Create Controller
+
+@RestController
+public class KafkaProducerController {
+		
+    @Autowired
+	private MyKakfaProducer kafkaProducer;
+
+	@PostMapping("/publish/stock")
+	public ResponseEntity<?> publish(@RequestBody Book book) {
+		try {			
+			return ResponseEntity.status(HttpStatus.CREATED).body(kafkaProducer.sendMessage(book));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body("Error in sending message to Kafka Topics");
+		}
+	}
+}
+
+7. Create producer
+
+@Service
+public class MyKakfaProducer {
+
+	@Autowired
+	private KafkaTemplate<String, Book> kafkaTemplate;
+
+	public Book sendMessage(Book book) {
+		kafkaTemplate.send("booktopic2", book);
+		System.out.println("Successfully sent to stock_trade topic ");
+		return book;
+
+	}
+
+}
+
+8. Start the app
+
+9. Open swagger, http://localhost:1111/swagger-ui/index.html
+Insert few books with type as Programming and drama
+
+10. Now we can check in console consumer and we can see the values will be stored in particular partitions only (ie)either 0 or 1 or 2
+
+>kafka-console-consumer.bat --topic booktopic2 --from-beginning --bootstrap-server localhost:9092 --partition 0
+>kafka-console-consumer.bat --topic booktopic2 --from-beginning --bootstrap-server localhost:9092 --partition 1
+>kafka-console-consumer.bat --topic booktopic2 --from-beginning --bootstrap-server localhost:9092 --partition 2
+
+-----------------------------------------------------------------------------
+1. Create consumer appl with kafka, spring data jpa, h2, lombok dependency
+
+2. Configure db info in application.properties
+
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+
+3. Create Book entity class
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Book {
+	@Id
+    private Integer bookId;
+    private String bookName;
+    private String authorName;
+    private Double price;
+    private String type;
+}
+
+4. Create Repository interface 
+
+public interface BookRepository extends JpaRepository<Book,Integer>{
+
+}
+
+5. Now consume data from topic and store into db
+
+@Service
+public class BookDatabaseConsumer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookDatabaseConsumer.class);
+
+    @Autowired
+    private BookRepository bookRepo;
+
+    @KafkaListener(
+            topics = "${spring.kafka.topic.name}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consume(Book book){
+        LOGGER.info(String.format("Event message received -> %s", book));              bookRepo.save(book);       
+    }
+} 
+
+6. We need to create deserializer for Book object 
+
+public class BookDeserializer implements Deserializer<Book> {
+    @Override
+    public Book deserialize(String topic, byte[] data) {
+        ObjectMapper mapper = new ObjectMapper();
+        Book book = null;
+        try {
+            book = mapper.readValue(data, Book.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return book;
+    }
+}
+
+7. Configure kafka deserializer in application.properties
+
+spring.kafka.consumer.bootstrap-servers = localhost:9092
+spring.kafka.consumer.group-id = group_id
+spring.kafka.consumer.auto-offset-reset = earliest
+spring.kafka.consumer.key-deserializer = org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer = com.pack.BookKafkaConsumer.BookDeserializer
+spring.kafka.topic.name=booktopic2
+
+8. Now after consuming we need to send the book info to other topics based on type, so first we create serializer and configure it in application.properties
+
+public class BookSerializer implements Serializer<Book> {
+
+	  private ObjectMapper mapper = new ObjectMapper();
+
+	  @Override
+	  public byte[] serialize(String s, Book message) {
+	    byte[] result;
+	    try {
+	      result = mapper.writeValueAsString(message).getBytes();
+	    } catch (Exception e) {
+	      throw new RuntimeException(e);
+	    }
+	    return result;
+	  }
+	}
+
+spring.kafka.producer.bootstrap-servers = localhost:9092
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=com.pack.BookKafkaConsumer.BookSerializer
+
+9. Create producer
+
+@Component
+public class BookProducer {
+
+	@Autowired
+    private KafkaTemplate<String, Book> kafkaTemplate;
+
+    public Book sendMessage(Book book) {
+    	if(book.getType().equals("Programming")) {
+            kafkaTemplate.send("prgtopic2", book.getType(), book);
+            System.out.println("Successfully sent to prg_book topic ");
+            return book;
+        }else{
+            kafkaTemplate.send("dramatopic2", book.getType(),book);
+            System.out.println("Successfully sent to drama_topic topic ");
+            return book;
+        }
+
+    }
+}
+
+10. Now after storing data into db, we call producer to send message to related topics
+
+@Service
+public class BookDatabaseConsumer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookDatabaseConsumer.class);
+
+    @Autowired
+    private BookRepository bookRepo;
+    
+    @Autowired
+    public BookProducer producer;
+
+    @KafkaListener(
+            topics = "${spring.kafka.topic.name}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void consume(Book book){
+
+        LOGGER.info(String.format("Event message received -> %s", book));
+
+        bookRepo.save(book);
+        producer.sendMessage(book);
+    }
+}
+
+11. Now we want to store the values in particular topic, so we create partitioner and configure in properties files
+
+public class BookPartitioner implements Partitioner {
+
+    @Override
+    public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
+        //to use last partition
+        //cluster.partitionCountForTopic(topic) - 1
+        
+        if (key.toString().equals("Programming")) {
+            System.out.println("Partition is now 2");
+            return 2;
+        } else if (key.toString().equals("drama")) {
+            System.out.println("Partition is now 1");
+            return 1;
+        } else {
+            System.out.println("Partition is now 0");
+            return 0;
+        }
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public void configure(Map<String, ?> configs) {
+    }
+}
+
+spring.kafka.producer.properties.partitioner.class=com.pack.BookKafkaConsumer.BookPartitioner
+
+12. Start the appl, now we can see based on type of book, it will goes to prog books in prog topic under partition 2 and drama books in dramatopic under partition 1 C:\Softwares\kafka_2.12-3.4.0>kafka-console-consumer.bat --topic prgtopic2 --from-beginning --bootstrap-server localhost:9092 --partition 2
+{"bookId":100,"bookName":"Java","authorName":"Patrick","price":250.0,"type":"Programming"}
+{"bookId":102,"bookName":"Spring","authorName":"Jones","price":550.0,"type":"Programming"}
+Processed a total of 2 messages
+Terminate batch job (Y/N)? y
+
+C:\Softwares\kafka_2.12-3.4.0>kafka-console-consumer.bat --topic prgtopic2 --from-beginning --bootstrap-server localhost:9092 --partition 1
+Processed a total of 0 messages
+Terminate batch job (Y/N)? y
+
+C:\Softwares\kafka_2.12-3.4.0>kafka-console-consumer.bat --topic dramatopic2 --from-beginning --bootstrap-server localhost:9092 --partition 1
+{"bookId":103,"bookName":"Modern Family","authorName":"Michell","price":550.0,"type":"drama"}
+Processed a total of 1 messages
+Terminate batch job (Y/N)? y
+
+C:\Softwares\kafka_2.12-3.4.0>kafka-console-consumer.bat --topic dramatopic2 --from-beginning --bootstrap-server localhost:9092 --partition 0
+{"bookId":101,"bookName":"Friends","authorName":"Nick","price":450.0,"type":"Drama"}respectively 
+ 
+Error handling in Kafka Producer
+      Here kafkaproducer just take the request data and produce the message to kafka topic, so what are the possible errors that happen here
+
+1. Kafka cluster is not available, so it will throws some error to appl
+2. If acks=all, and some of the brokers are not available in cluster then producer will throw some errors 
+3. min.insync.replicas config, this will take an integer value
+       min.insync.replicas=2 (ie) we need to have 2 replicas of data that produced in topic. In our local we have 3 brokers in our cluster let say for some reason 2 brokers are down and the cluster has only one broker, if the producer try to produce a message then we get error message stating not enough replicas 
+
+
+1. Kafka cluster is not available,
+- Start the appl 
+- Stop zookeeper, kafka server
+     So here kafka is completely down but the appl is not aware of that, because when we make call for very first time it will get metadata about the kafka cluster, it is blocking call and it will wait until metadata is received  and then send() happens 
+      Now in the console we can see logs saying "broker is not available" and it continuously runs, because we have a property called "max.block.ms" which is the timeout setting for getting the metadata, it is normally 60sec(u can check in console)
+      So it is going to wait for 60sec and then it will throw an error
+- Now we start the kafka and publish the message once again 
+       Now kafka server is up and it is able to get the metadata and we can see the message will be published. So kafka client library has a way to constantly check behind the scene and when the cluster is up it will get the metadata and start work as expected. So from developer perspective there is no need to restart the app, so as long as kafka cluster is up, the client appl  can communicate 
+    
+So we need to aware of even if kafka cluster is down for some reason but our app is interacting with it 
+
+2. min.insync.replicas configuration and impact to kafka cluster
+        Consider we have kafka cluster with 3 brokers and zookeeper, let say
+min.insync.replicas=2 so this configuration will allow producer to send message to kafka topic only there are atleast two brokers always up and running
+     Let say we have only 1 broker up and running and if we try to produce message from app then we get an error message stating not enough replicas 
+
+- create topics with replicas as 3
+@Configuration
+public class KafkaTopicConfig {
+
+    @Bean
+    public NewTopic topic(){
+        return TopicBuilder.name("booktopic3")
+        		.partitions(3)
+        		.replicas(3)
+                .build();
+    }
+}
+
+- Create 3 brokers, so run server.properties, server1.properties and server2.properties  
+
+- Run zookeeper and all 3 servers
+
+- Start the appl, so topic will be created 
+
+- Describe the topic
+C:\Softwares\kafka_2.12-3.4.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic booktopic3
+Topic: booktopic3       TopicId: kL4IJ6lqQy6hNp6wMmDJwQ PartitionCount: 3       ReplicationFactor: 3    Configs:
+        Topic: booktopic3       Partition: 0    Leader: 1       Replicas: 1,2,3 Isr: 1,2,3
+        Topic: booktopic3       Partition: 1    Leader: 2       Replicas: 2,3,1 Isr: 2,3,1
+        Topic: booktopic3       Partition: 2    Leader: 3       Replicas: 3,1,2 Isr: 3,1,2
+
+Now it has all 3 replicas and insync replicas are also at this point is 3. Here it dosent talk about what is mininum insync replicas that is required for this topic
+
+- Let us configure  min.insync.replica for our topic 
+C:\Softwares\kafka_2.12-3.4.0\config>kafka-configs.bat --bootstrap-server localhost:9092 --entity-type topics --entity-name booktopic3 --alter --add-config min.insync.replicas=2
+Completed updating config for topic booktopic3.
+
+- Now we run describe topic once again, where we can see new configuration added called min.insync.replicas
+
+C:\Softwares\kafka_2.12-3.4.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic booktopic3
+Topic: booktopic3       TopicId: kL4IJ6lqQy6hNp6wMmDJwQ PartitionCount: 3       ReplicationFactor: 3    Configs: min.insync.replicas=2
+        Topic: booktopic3       Partition: 0    Leader: 1       Replicas: 1,2,3 Isr: 1,2,3
+        Topic: booktopic3       Partition: 1    Leader: 2       Replicas: 2,3,1 Isr: 2,3,1
+        Topic: booktopic3       Partition: 2    Leader: 3       Replicas: 3,1,2 Isr: 3,1,2
+
+- Now we publish the message in swagger and we can see message is sent to topic
+
+- Now we stop server-1 and server-2.properties file (ie) we bring both broker down 
+
+- Now we if publish message in swagger, we get 201 response because all this kafka publish is happening behind the scene, so there is no change from the client perspective 
+   But if we go and check the appl console, we can see some exception called NotEnoughReplicasException 
+-------------------------------------------
+
+Kafka producer
+
+public class KafkaProducer {
+    private static final Logger log=LoggerFactory.getLogger(KafkaProducer.class); 
+    public static void main(String[] args) {
+     log.info("Producer");     
+Properties p=new Properties();
+     p.setProperty("bootstrap.servers","localhost:9092");
+     p.setProperty("key.serializer",StringSerializer.class);
+     p.setProperty("value.serializer",StringSerializer.class);
+
+   KafkaProducer<String,String> producer=new KafkaProducer<>(p);
+   ProducerRecord<String,String> record=new ProducerRecord<>("demojava","hello world");
+   producer.send(record);
+   producer.flush();
+   producer.close();
+   }
+}
+
+- Run the appl
+- Use Kafka console consumer to check the output
+>kafka-console-consumer.bat --topic demotopic  --from-beginning --bootstrap-server localhost:9092 
+
+Kafka Producer Callbacks
+     To understand from producer itself from which partition and offset the message was sent to using Callbacks
+
+C:\Softwares\kafka_2.12-3.4.0>kafka-topics.bat --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 --topic test
+
+- Now in above program we add callback to the producer, so this callback will be executed everytime when a record is successfully sent or an exception is thrown 
+
+public class KafkaProducerWithCallback {
+    private static final Logger log=LoggerFactory.getLogger(KafkaProducer.class); 
+    public static void main(String[] args) {
+     log.info("Producer");     
+     Properties p=new Properties();
+     p.setProperty("bootstrap.servers","localhost:9092");
+     p.setProperty("key.serializer",StringSerializer.class.getName());
+     p.setProperty("value.serializer",StringSerializer.class.getName());
+ 
+   KafkaProducer<String, String> producer=new KafkaProducer<>(p);
+   ProducerRecord<String,String> record=new ProducerRecord<>("demojava","hello world");
+   producer.send(record, new Callback() {
+	@Override
+	public void onCompletion(RecordMetadata metadata, Exception e) {
+		if(e==null) {
+			log.info("Received new metadata: Topic: "+metadata.topic()+" Partition: "+metadata.partition()+" Offset: "+metadata.offset()+" Timestamp: "+metadata.timestamp());
+		} else {
+			log.info("Error producing message",e);
+		}
+	}	   
+   });
+   System.out.println("success");
+   producer.flush();
+   producer.close();
+   }
+}
+
+- Run the appl, now we receive metadata with topic, partition and offset 
+- We run it multiple times where it produce the message and we can see partition is random when producing the message
+
+- Now we produce multiple message in topic and see the behaviour 
+
+public class KafkaProducerWithCallback {
+    private static final Logger log=LoggerFactory.getLogger(KafkaProducer.class); 
+    public static void main(String[] args) {
+     log.info("Producer");     
+     Properties p=new Properties();
+     p.setProperty("bootstrap.servers","localhost:9092");
+     p.setProperty("key.serializer",StringSerializer.class.getName());
+     p.setProperty("value.serializer",StringSerializer.class.getName());
+ 
+   KafkaProducer<String, String> producer=new KafkaProducer<>(p);
+   
+for(int i=0;i<10;i++) {
+   ProducerRecord<String,String> record=new ProducerRecord<>("test","hello world "+i);
+   producer.send(record, new Callback() {
+	@Override
+	public void onCompletion(RecordMetadata metadata, Exception e) {
+		if(e==null) {
+			System.out.println("Received new metadata: Topic: "+metadata.topic()+" Partition: "+metadata.partition()+" Offset: "+metadata.offset()+" Timestamp: "+metadata.timestamp());
+		} else {
+			System.out.println("Error producing message"+e);
+		}
+	}	   
+   });
+   }
+
+   System.out.println("success");
+   producer.flush();
+   producer.close();
+   }
+}
+
+It will print hello world 10 times, and if we look at partition number it will  be always same partition number, this is due to sticky partitioner 
+     The producer send the message in roundrobin (ie) first message goes to partition 1, 2nd goes to partition 2, 3rd goes to partition 3 and so on, but now producer using sticky partitioner which is performance improvement. 
+     For example if we send 6 messages but 10 in our code, the producer is smart enough to be batching these messages into one batch to make it more efficient. So first 3 messages will go to same batch in partition 1 and next 3 message will go to partition 2 as one batch which is more efficient then sending one message per partition because it requires as many batches as messages and not efficient for producer, since we are using default parititoner 
+
+- Now we see how we can switch between different partitions, so first we need to produce 30 messages at a time and inbetween each batch we create small thread which sleep for 500ms. Now we repeat this multiple times so we send multiple messages , so we surround by another for loop
+
+for(int j=0;j<10;j++) {
+for(int i=0;i<10;i++) {
+   ProducerRecord<String,String> record=new ProducerRecord<>("test","hello world "+i);
+   producer.send(record, new Callback() {
+	@Override
+	public void onCompletion(RecordMetadata metadata, Exception e) {
+		if(e==null) {
+			System.out.println("Received new metadata: Topic: "+metadata.topic()+" Partition: "+metadata.partition()+" Offset: "+metadata.offset()+" Timestamp: "+metadata.timestamp());
+		} else {
+			System.out.println("Error producing message"+e);
+		}
+	}	   
+   });
+   }
+   try {
+       Thread.sleep(500);
+   } catch(InterruptedException e) {
+         e.printStackTrace();
+     }
+}
+
+Now we run 10 times and for each time we create batch of 30 records and then we wait 500ms for each sent.
+
+- Now we want to set smaller batch size 
+   p.setProperty("batch.size","400");
+
+- Run the appl, we can see now it will go to different partition as batches
+
+Kafka Producer with keys
+     - send non null keys to kafka topic
+     - same keys goes to same partition 
+
+- So here we produce multiple message with same key and end up with same partition 
+
+public class KafkaProducerWithKeys {
+    private static final Logger log=LoggerFactory.getLogger(KafkaProducerWithCallback.class); 
+    public static void main(String[] args) {
+     log.info("Producer");     
+     Properties p=new Properties();
+     p.setProperty("bootstrap.servers","localhost:9092");
+     p.setProperty("key.serializer",StringSerializer.class.getName());
+     p.setProperty("value.serializer",StringSerializer.class.getName());
+    
+   KafkaProducer<String, String> producer=new KafkaProducer<>(p);
+   for(int j=0;j<2;j++) {
+	   for(int i=0;i<10;i++) {
+		   final String key="id_"+i;
+		   String value="hello world "+i;
+	      ProducerRecord<String,String> record=new ProducerRecord<>("test",key,value);
+	      producer.send(record, new Callback() {
+	   	@Override
+	   	public void onCompletion(RecordMetadata metadata, Exception e) {
+	   		if(e==null) {
+	   			System.out.println("Received new metadata: Key: "+key+" Partition: "+metadata.partition());
+	   		} else {
+	   			System.out.println("Error producing message"+e);
+	   		}
+	   	}	   
+	      });
+	      }
+	      
+	   }
+
+   System.out.println("success");
+   producer.flush();
+   producer.close();
+   }
+}
+
+- Run the appl, first batch is our first 10 message where key with id_0 will go to same partition 
+
+----------------------------------------------------------------------------
+Kafka Consumer
+
+auto.offset.reset - none/earliest/latest
+1. none - If we dont have any existing consumer group then we fail (ie) we must set consumer group before starting the appl
+2. earliest - read from the beginning of topic (ie) --from-beginning in kafka cli 
+3. latest - read only new messages sends from now 
+
+public class KafkaConsumer1 {
+ public static void main(String[] args) {
+	 Properties p=new Properties();
+     p.setProperty("bootstrap.servers","localhost:9092");
+     p.setProperty("key.deserializer",StringDeserializer.class.getName());
+     p.setProperty("value.deserializer",StringDeserializer.class.getName());
+     p.setProperty("group.id","my-group");
+     p.setProperty("auto.offset.reset", "earliest");
+     
+     //create a consumer
+     KafkaConsumer<String, String> consumer=new KafkaConsumer<>(p);
+     
+     //subscribe to a topic
+     consumer.subscribe(Arrays.asList("test"));
+     
+     //poll for data
+     while(true) {
+    	 System.out.println("Inside polling");
+    	 //we have to pass duration(ie) how long we have to wait for data
+    	 //If data return right away this will complete, but if kafka does not have any
+    	 //data for us then we wait 1sec to receive data from kafka which is used not to overload kafka
+    	 ConsumerRecords<String,String> records=consumer.poll(Duration.ofMillis(1000));
+    	 for(ConsumerRecord<String,String> record:records) {
+    		 System.out.println("key: "+record.key()+" Value: "+record.value());
+    		 System.out.println("Partition: "+record.partition()+" Offset: "+record.offset());
+    	 }
+     }
+     
+}
+}
+
+- Run the appl, since we provide auto.offset.reset as earliest so it will reset the offset for all partition from 0th position and it will start to consume data and it will receive one batch for partition 0 and next batch for next parititon because kafka is very efficient and if things can be batched then the consumer can receive upto 1mb of data at a time from broker 
+   After receive we are in infinite loop which prints "Inside polling"  until we receive next data, so now we stop the appl the consumer will exit abruptly
+
+- Restart the consumer, we can see it will print "Inside polling", because rejoined the group so by rejoining the group we started with last offset so we are not printing anything 
+- Now start the producer to produce the message
+- Start the consumer so it will rejoin the group and it will take some time, since we dont have clean shutdown yet so it was taking some time and then it will consume message 
+
+Kafka Consumer - Graceful shutdown 
+      - We add shutdownhook to our consumer code which allow us to properly shutdown 
+
+public class KafkaConsumerWithShutdown {
+	private static final Logger log=LoggerFactory.getLogger(KafkaConsumerWithShutdown.class); 
+ public static void main(String[] args) {
+	 Properties p=new Properties();
+     p.setProperty("bootstrap.servers","localhost:9092");
+     p.setProperty("key.deserializer",StringDeserializer.class.getName());
+     p.setProperty("value.deserializer",StringDeserializer.class.getName());
+     p.setProperty("group.id","my-group");
+     p.setProperty("auto.offset.reset", "earliest");
+     
+     //create a consumer
+   final  KafkaConsumer<String, String> consumer=new KafkaConsumer<>(p);
+     
+     //get reference to main thread
+     final Thread mainThread=Thread.currentThread();
+     
+     //add shutdown hook
+     Runtime.getRuntime().addShutdownHook(new Thread() {
+    	 public void run() {
+    		 log.info("Detected a shutdown,lets exit by calling consumer wakeup ");
+    		 //when u do consumer.wakeup(), next time when we do consumer.poll() it throws WakeUpException, so we catch that exception
+    		 consumer.wakeup();
+    		 //join the main thread to allow the execution of the code in main thread
+    		 try {
+    			 mainThread.join();
+    		 } catch(InterruptedException e) {
+    			 e.printStackTrace();
+    		 }
+    	 }
+    	 //To summarize if we get shutdownhook, we call consumer.wakeup()
+    	 //which will trigger an exception on consumer and then we will
+    	 //join the main thread to wait for all code to complete 
+     });
+     
+     //Since consumer.poll will throw an wakeupexception we have surround using try catch 
+     try {
+     //subscribe to a topic
+     consumer.subscribe(Arrays.asList("test"));
+     
+     //poll for data
+     while(true) {
+    	 
+    	 ConsumerRecords<String,String> records=consumer.poll(Duration.ofMillis(1000));
+    	 for(ConsumerRecord<String,String> record:records) {
+    		 log.info("key: "+record.key()+" Value: "+record.value());
+    		 log.info("Partition: "+record.partition()+" Offset: "+record.offset());
+    	 }
+     }
+     }
+     catch(WakeupException e) {
+    	 log.info("Consumer is starting to shutdown");
+     }
+     //In case we catch anyother exception 
+     catch(Exception e) {
+    	 log.info("Unexpected exception in consumer");
+     }
+     //Whether we have WakeUpException or UnExcepted exception we have finally block to close the consumer and also commit the offset
+     finally {
+    	 consumer.close();
+    	 log.info("Consumer is gracefully shutdown");
+     }
+}
+}
+
+//So we are creating reference to main thread and add a shutdownhook, and we wakeup
+//consumer in shutdownhook and then join the thread, so that the code after try gets run
+//then consumer.poll() throws wakeupexception which prints "Consumer is starting to shutdown"
+//and then goes to finally where we close the consumer which close any connection to kafka
+//
+
+
+- Run the appl, it join the group and prints "Inside polling", when we terminate, the thread will detect the shutdown and exit by calling consumer.wakeup(), we went to consumer.poll which raise wakeupexception, then we go to finally and close the consumer 
+
+Kafka Consumer inside Consumer group
+     - We see consumer rebalance works in consumer group
+
+- Remove log.info("Inside polling");
+- Run Consumer 
+- Run Consumer once again, so we create another instance of consumer 
+- Now in first consumer console, we can see group is rejoined due to second consumer demo joining with same group id
+   At the end we can see two partitions are added for first consumer and one partition added for second consumer 
+- Run KafkaProducerWithkeys, so on first consumer we can see data from partition 0 and 1, from second consumer we can see data from partition 2
+- Run Consumer once again, now we can see for each consumer one partition will be assigned 
+- Run KafkaProducerWithkeys, now for each consumer it will have related parititon data 
+- Now we stop one consumer, since we have done clean shutdown again partitions will be rebalanced between other consumers
+
+Consumer Groups and Partition rebalance 
+     So whenever ur consumers joining and leaving group, the partition are going to move, so when partitions moved between consumers and that called as rebalance. Rebalance also happens when a administrator adds new partition into a topic
+     In previous example we saw 3 partition and 2 consumers into a group and when new consumer joins the group, so how these partitions gets assigned to consumer,so based on strategy the outcome would be different 
+
+1. Eager rebalance(default)
+      So when consumer3 joins the group, all the consumer are going to stop and give up their membership of partitions (ie) no consumer is leaving with no partitions. Then all consumers would rejoin the group and gets new partition assigned to it randomly. During a short period of time, the entire consumer group has stopped processing which is called "stop the world events" and there is no guarantee the consumers are going to get back the partitions that they used to have.
+   So these are two problems. 1. maybe you want your consumers to get back the same partitions they had before. 2. maybe you don't want some consumers to stop consuming if they were reading from the same partition.
+
+2. Cooperative rebalance/Incremental rebalance
+      So instead of reassigning all partitions to all consumer the strategy is to reassign a small subsets of the partitions from one consumer to another. And the consumers that we do not have any reassigned partitions they can still process the data uninterrupted, and it can go through several iterations to find a stable assignment, hence the name incremental. This avoids where all consumers stop processing data.
+    Consider we have two consumers with three partitions. One just joins the consumer group. Now the incremental rebalance is smart and says,  I only need to revoke partition two. And so therefore consumer one and consumer two can keep on reading from partition zero and one. And then after this, the partition two is going to be assigned to my consumer three and in part consumer three can start reading partition two.
+
+How to use Cooperative rebalance?
+     In the Kafka Consumer, there's a setting called the partition.assignment. strategy. The default is
+
+1. RangeAssignor, which assigns partition on the per topic basis and can lead to imbalance.
+2. RoundRobin - It's also an eager type of assignment. And all the partition across all topics are assigned in a round robin fashion, which is really good for balance because all the consumers will have plus or minus one or the same number of partitions.
+3. StickyAssignor which is balanced just like RoundRobin in the beginning, and then it will minimize partition movements when a consumer joins or leaves the group in order to minimize movements.
+ These three strategies are eager strategies. That means that every time you use them there's going to be a stop the world event and it's going to be just breaking your consumer group for a little bit of or for a few sec.And if your consumer group is big then it can take a while to reassign all the partitions.
+
+Therefore, the newer cooperative rebalance mechanism you can use is called 4. CooperativeStickyAssignor.
+     So it minimizes the number of partition movements between consumers in order to minimize the number of movements of data. But this time it supports the cooperative protocol and therefore the consumers can keep on consuming from the topic if the partition hasn't been moved for them.
+    But the default in Kafka 3.0 is  RangeAssignor, CopperativeStickyAssignor.
+And that means that it will only use the RangeAssignor by default, but then if you remove the RangeAssignor, then it will use the CooperativeStickyAssignor
+
+Static Group Membership
+      So we've seen here that whenever consumers join or leave the group, there is going to be a a rebalance triggered because Kafka needs that all the partitions being read by all the consumers.
+    So we can decide when a consumer leaves then do not changes assignments, 
+so when it leaves and comes back there's a reassignment take place and it gets a new member ID. But if you specify a group.instance.id as part of the consumer config then it makes the consumer a static member
+   For example we have a consumer1 with ID =consumer1, a consumer2 with ID=consumer2 and a consumer3 with ID=consumer3. Then in case consumer3 leaves the group then partition two is not going to be reassigned because consumer three was a static member. And so if the consumer3 joins back within the session.timeout.ms, then the partition two will be reassigned to the consumer3 automatically without triggering rebalance.
+    But if your consumer is away for more than session.timeout.ms then a rebalance is going to happen and partition two is going to move over two different consumers. So it's up to you, whether or not you wanna use this feature but it's quite helpful when you have something like Kubernetes and so on.
+
+- Create same prg as previous and change name as ConsumerDemoCooperative
+
+- Run the appl, we can see in console log, 
+partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+
+But RangeAssignor will have precedence because it is first and this supported used by all consumers. Therefore we want to use this cooperative sticky assignor type of partition assignment strategy. so in code we set a property
+
+properties.setProperty("partition.assignment.strategy", CooperativeStickyAssignor.class.getName());
+
+- Stop and rerun the appl, now we can see in console partition.assignment.strategy as CooperativeStickyAssignor
+    Now we scroll down in log, we can the assigned partition to be the three partitions and added partitions were three.
+
+        Assigned partitions:                       [test-0, test-1, test-2]
+	Current owned partitions:                  []
+	Added partitions (assigned - owned):       [test-0, test-1, test-2]
+	Revoked partitions (owned - assigned):     []
+
+- Now run the consumer once again 
+      In first consumer console, we had 3 partition as when new consumer is added we had a new assignment where only test-2 get removed, but this was incremental and test-2 get removed, but we were still consuming from partition zero and partition one.
+
+        Assigned partitions:                       [test-0, test-1]
+	Current owned partitions:                  [test-0, test-1, test-2]
+	Added partitions (assigned - owned):       []
+	Revoked partitions (owned - assigned):     [test-2]
+
+    In second consumer console, nothing was assigned but upon having a rebalance that was sticky, then we are being assigned test-2.
+       Assigned partitions:                       [test-2]
+	Current owned partitions:                  []
+	Added partitions (assigned - owned):       [test-2]
+	Revoked partitions (owned - assigned):     []
+
+- Now run another instance of consumer, currently have zero partitions but then very soon we're going to get test-1.
+        Assigned partitions:                       [test-1]
+	Current owned partitions:                  []
+	Added partitions (assigned - owned):       [test-1]
+	Revoked partitions (owned - assigned):     []
+
+- In first consumer console first we have test-0,test-1  and then it scrolled down and it got removed and we have only test-0
+- In second consumer console well nothing happened to it because the assigned partitions and are currently owned partitions did not change.
+
+------------------------------------------------------------------------------
+How Kafka handles data loss in the event of broker failure?
+     Consider we have Kafka cluster with 3 brokers and we have some records present in the file system. As we all know by now, the clients, which are the producers and consumers, always talk to the leader to retrieve the data from a partition.
+    Let's say the broker one goes down for some reason, which is the leader
+of Partition Zero.All the data which is written to partition zero is residing in the file system of this broker1. Once it goes down, there is no way for the clients to access this data. This is a data loss actually, and it's a big problem. Kafka handles this issue using replication.
+
+>kafka-topics.bat --create --topic testtopic --bootstrap-server localhost:9092 --replication-factor 3 --partitions 3
+
+    We have a Kafka producer which produces the message to Partition Zero, and it goes to the leader, which is the broker one. And after the message is received by the broker one, the message is persisted into the file system.
+Now the broker one is the leader replica.
+    If you can look at it, the replication factor is three. Right now we have one copy of the actual message. Since the replication factor is three, we need two more copies of the same message. So replication factor is equal to number of copies of the same message.
+   So the next step is the same message is copied to broker two and it gets written into the file system. So Broker two is the follower of Partition Zero, which is also known as the follower replica, and the same step is repeated for Broker three. Now we have three copies of the same data available in all the brokers.
+   In Kafka terminology, this concept is called replication and the replica of the leader is called the leader replica, and the other two replicas are called follower replicas.
+   The same technique is applicable for broker two. In here, any message that sent to the broker two is copied into the broker one and broker three which
+behaves as a follower replicas and the same thing for broker three to. Now we have the leader replicas for each and every partition and the follower replicas.
+   Let's say the broker one is down, but still the data of the partition is available in broker two and broker three. Zookeeper gets notified about the failure and it assigns the new leader to the controller. Now the broker two is the leader of Partition zero and Partition one. This leader assignment is taken care by the controller node, which is the part of the cluster actually.
+So now the client's request for producing and consuming the data for Partition zero will go to broker two hereafter. So this is how Kafka handles data loss.
+
+In Sync Replica.
+   This represents the number of replica in sync with each other in the Kafka cluster. This includes both the leader and Follower replica. The in sync replica is always recommended to be greater than one.
+  ISR=replication factor.
+
+The in sync replica can be controlled by the min.insync.replicas property.
+This can be set at the broker level or topic level.
+
+- Start zookeeper, 3 kafka server
+
+- List all topics
+>kafka-topics.bat --bootstrap-server localhost:9092 --list
+
+- Describe topic
+>kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic testtopic
+
+For the partition zero, the leader is one. This means the cluster with the Kafka ID one is a leader, and these are the replicas actually. So the data is replicated in one, two and three. This means the data is replicated in the Kafka broker with the ID one, Kafka broker with the ID two, and Kafka broker with the ID three.
+   So the other factor is that in sync replica, as you can see, the value is one, two and three. This means all the three brokers are in sync with this data. So this in sync replica is a key property which represents how many replication of a given data is available.
+
+- Stop one kafka server
+- Describe topic
+>kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic testtopic
+
+we still get the three partition result, but the partition one and partition two, the leader is going to be the broker with the ID three. And if you take a look at it, the in sync replica value is reduced from one, two and three to just three and one.
+
+min.insync.replicas
+    Now we setting the min.insync.replicas at the topic level and then show you the behavior and the effect of the specific property.
+
+>kafka-configs.bat --bootstrap-server localhost:9092 --entity-type topics --entity-name testtopic --alter --add-config min.insync.replicas=2
+
+- Start producer
+>kafka-console-producer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic testtopic
+>hello
+
+-Start consumer
+>kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic testtopic --from-beginning
+>hello
+
+- Stop server-1 and server-2 
+
+we set the min.insync.replica value to be two, but if we bring down, the min.insync.replica value is going to be one.
+
+- Now we produce some message in producer then we get an error as Not enough replicas 
+
+This means we have set the config of min in-sync replicas value to be two, but there are not enough replicas available. So this is a way to guarantee that from a producer perspective you will not be able to produce messages if the configuration that you set up for the topic is not met.
+   So this is to guarantee that you're going to have more than one in-sync replica to make sure there is a copy of the data that's going to be available in multiple Kafka brokers that are part of the cluster.
+So min in Sync replica is an important configuration. That is to make sure your application is always going to have more than one data copy available to ensure in the event of a broker loss, you still have a copy of the data available in more than one Kafka broker.
+
+Kafka Topic
+A Kafka topic is an entity in Kafka, and it has a name and like table in a database. Topics in general live inside the Kafka Broker. Kafka clients uses the topic name to produce and consume messages.
+
+Partitions is where actually the message is located inside the topic. Each topic in general can have one or more partitions.
+  Each partition is an ordered, immutable sequence of records. That means once a record is produced, it cannot be changed at all. 
+  As you can see, each record has a number associated to it. That number is called an offset. Offset is generated when a record is published to the Kafka topic. Each partition is independent of each other, and that's why you see the offset in both of those partitions starts with zero and it continues to grow independently. Ordering is guaranteed only at the partition level.
+
+So if you have a use case where you would like to publish and read the records in a certain order, then you have to make sure to publish the records to the same partition. Partitions continue to grow as new records are produced and offsets get incremented one by one.
+
+Offset
+    Any message that's produced into the topic will have a unique ID called offset. Consumers have three options when it comes to reading the messages from the topic.
+
+1. They can read the messages from the beginning using the from beginning.
+
+2. latest meaning read only the messages that's going to come after the consumer
+
+3. specific offset meaning Read the messages in the topic by passing a specific offset value from the consumer.
+
+This option can only be done programmatically.
+
+Consider we have one partition and it has some records in it.
+
+Let's say you have a consumer which is going to read the message from the beginning. For any Kafka consumer, it is required for the consumer to provide the group ID.
+  Now the consumer in general polls and retrieves multiple records at the same time as it processes each message, it moves the consumer read offset one by one till 4 . Let's say for some reason the consumer is crashed while the consumer was down.
+   The producer of the topic produced some more messages. Now the consumer is brought up after some time.
+
+How does it know that it needs to read from offset number 4 for the consumer offset in general are stored in an internal topic called _consumer_offsets  which actually gets created automatically by the Kafka cluster. And the main reason for that one is to maintain the consumer offsets.
+
+Consumer groups
+     group ID being a mandatory attribute to start up a consumer, 
+Group ID plays a major role when it comes to scalable message consumption.
+     Consider we have a topic called TestTopic and it has four partitions.
+Now we have a consumer with a group ID as group1, we have one single consumer polling, all the four partitions in the topic and processing them.
+    The poll loop is always single threaded. So in this case, a single thread is going to pull from all the partitions. Let's say the producer of the topic is going to produce messages at a faster rate than the consumer processing rate.Then in that case it will introduce a lag in the consumer and you might end up not processing the events real time.
+    This is where consumer groups come in handy. Now we create another instance of consumer A, but make sure you are using the same groupID. Now the partitions are split between the two instances of the consumer, partition zero and partition one is taken care by the first instance and partition two and partition three is taken care by the second instance.
+   Basically what this means is that we have scaled our message consumption.
+This will help process the records a little faster than it was before.
+   Now we create two more instances of consumer. So we have four instances of consumer application, but the group ID is same across all the different instances that we have. At any given point, you are going to process four records parallelly, So the consumer groups are fundamentally the basis for scalable message consumption.
+   Now let's say you have five consumer instances, but only four partitions are available for a given topic. In that case, one of the instance will be idle. As I have mentioned before, the consumer pool is single threaded, so in this case this will lead to inefficient use of resources.
+
+Another use case consider we have two different consumer applications for the same Kafka topic. Each consumer app will have their own processing logic.
+Each app can have different number of instances based on the requirement.
+For example, we have four instances of the consumerA application with a group ID one and two instances of the consumerB app with a group ID two, but the teams have to make sure they are not using the same group ID.
+
+- View consumer groups
+>kafka-consumer-groups.bat --bootstrap-server localhost:9092 --list
+
+
+Kafka Console Consumer Groups
+   Previously we are running producers which were producing messages into this kafka topic, we also started many kafka console consumers which were consuming the messages that were written into kafka topic 
+   Now we discuss about Kafka consumers and those consumers will be made to work in a consumer group. Previously we created 4 kafka console consumers and we modify all 4 of consumers to work as part of consumer group which we name as CG1
+
+1. Now we create producer in one terminal and consumer in all 4 terminals
+> kafka-console-producer.bat --broker-list localhost:9092 --topic kafka-topic-2
+Cg11
+Cg12
+Cg13
+Cg14
+Cg15
+Cg16
+
+Now open 4 terminals to run same consumer multiple times
+>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic kafka-topic-2 --group cg1 
+ 
+>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic kafka-topic-2 --group cg1
+
+>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic kafka-topic-2 --group cg1
+
+>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic kafka-topic-2 --group cg1
+
+Now we try to give some input in the kafka console producer. If u see now the consumers are working in a group, all of the consumers are not consuming all of the messages that we send to kafka broker or that we produce to kafka topic 
+ 
+ 
+ 
+ 
+ 
+ 
+What exactly happens here?
+  In our case, kafka topic has 3 partitions so one partition can only be read by a single consumer within a consumer group. So in this consumer group since we have 4 consumers then 1 consumer will always be idle because all of these partitions 0,1,2 have already been assigned to consumer1, consumer2, and consumer3.
+   In generally topic-kafka-2 have 3 partitions and one partition can only be read by 1 consumer in a consumer group, and thats why fourth consumer is always sitting idle
+
+2. Now we stop one consumer, then if we try to enter the values in the kafka topic, then the messages will be distributed among the other kafka consumer 
+  C19,c20 …………… c29
+   If we stop one more consumer, then if we try to enter the values in the kafka topic, then the messages will be distributed among the other 2 kafka consumer
+   Now stop all consumers 
+ 
+Notes:
+1.One partition for a topic can only be read by one consumer in a consumer group
+2. One consumer in a consumer group can read more than one partitions for a given topic
+
+3. To display all consumer groups
+>kafka-consumer-groups.bat --bootstrap-server 127.0.0.1:9092 --list
+    - Will display as cg1
+
+4. To get more detail about consumer group cg1
+>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+    We can see the topic from which the members of these group consume information, next we can see each prtition for each kafka topic 
+    Current offset actually specifies the point upto which the messages within this partition of this topic have been read 
+ 
+    Log-end-offset specifies the offset of the last message in this partition of this particular kafka topic 
+    Lag is difference between the logend offset and current offset 
+ 
+5. Now i will try to give some messages in the producer console and if we try to run 
+ >kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+C30…………………….c39
+    we can see the logend offset have moved forward so how many messages we have given, that much number u can see in the lag, because these messages have  not consumed by any consumer within consumer group cg1 
+ 
+6. Now if we run
+>kafka-console-consumer.bat --bootstrap-server 127.0.0.1:9092 --topic kafka-topic-2 --group cg1
+   Now we can see the consumer will consume the new messages that we just send in topic 
+ 
+   Now if we run
+>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+   Now we can see there is no lag since all of the messages have been consumed
+
+Previously consumer-id is empty because none of consumer in group are active, but now u can see consumer-id all are same because now one consumer is active 
+ 
+7. Now if we run the 
+>kafka-console-consumer.bat --bootstrap-server 127.0.0.1:9092 --topic kafka-topic-2 --group cg1
+   and after that we run
+>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+  We can see 2 different consumer id indicate that we have started 2 consumer 
+ 
+ 
+ 
+ 
+Consumer Resetting Offset 
+      Sometimes be the case that our consumers may need to consume messages that they have already consumed which means that we might have to reset the offset to a different value from which the offset is at the moment
+
+1. C:\Softwares\kafka_2.12-2.6.0\bin\windows>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+   If we try to describe consumer group cg1, we can see there is no lag as of now, the current-offset and log-end-offset is same for all of partition 2,1,0 for kafka-topic-2
+
+2.stop all consumers running
+
+3. Now we want to reset to previous point, for that we have reset offsets is provided
+>kafka-consumer-groups.bat --bootstrap-server 127.0.0.1:9092  
+                 - we can see options for reset-offsets and explain it 
+-by-period – move offset by period
+-to-earliest – move earliest
+-to-latest – move ahead
+-shift-by – shift by some number
+-from-file – we can pick from file
+-to-current – set to current value 
+ 
+We can do these for -all-topics or single topic(--topic)
+
+4.
+>kafka-consumer-groups.bat --bootstrap-server 127.0.0.1:9092 --reset-offsets --to-earliest --group cg1 -topic kafka-topic-2 --dry-run 
+   We can see all of the offsets for all these partition would be set to this new offset 
+ 
+3. If we run 
+C:\Softwares\kafka_2.12-2.6.0\bin\windows>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+   We can see the offset is not set to zero, because we are using only dry run, not execute option
+
+4.Now we want to shift to previous offset we have to give -ve number
+>kafka-consumer-groups.bat --bootstrap-server 127.0.0.1:9092 --reset-offsets --shift-by -5 --group cg1 -topic kafka-topic-2 --dry-run 
+    Now it will display the new offset, it will take for each partition, it will take (current-offset -5)
+
+5. If we describe
+C:\Softwares\kafka_2.12-2.6.0\bin\windows>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+   There will be no changes, because we are using only dry run, not execute option
+
+6. Now we are going to execute to this command instead of dryrun
+>kafka-consumer-groups.bat --bootstrap-server 127.0.0.1:9092 --reset-offsets --shift-by -5 --group cg1 -topic kafka-topic-2 --execute 
+ 
+kafka-consumer-groups.sh --bootstrap-server kafka-host:9092 --group my-group --reset-offsets --to-datetime 2020-11-01T00:00:00Z --topic sales_topic --execute
+
+7. If we describe
+C:\Softwares\kafka_2.12-2.6.0\bin\windows>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+   Now we can see there will be a lag of 5
+
+8. Now we run console consumer which is part of cg1
+>kafka-console-consumer.bat --bootstrap-server 127.0.0.1:9092 --topic kafka-topic-2 --group cg1
+   Now we can see that this has consumed about 9 messages  because in lag we have 3+3+3
+
+9. Now stop the consumer and describe the group, now we can lag becomes 0
+C:\Softwares\kafka_2.12-2.6.0\bin\windows>kafka-consumer-groups.bat  --bootstrap-server 127.0.0.1:9092 --describe --group cg1
+
+ 
+--reset-offsets                         Reset offsets of consumer group.
+                                          Supports one consumer group at the
+                                          time, and instances should be
+                                          inactive
+                                        Has 2 execution options: --dry-run
+                                          (the default) to plan which offsets
+                                          to reset, and --execute to update
+                                          the offsets. Additionally, the --
+                                          export option is used to export the
+                                          results to a CSV format.
+                                        You must choose one of the following
+                                         reset specifications: --to-datetime,
+                                          --by-period, --to-earliest, --to-
+                                          latest, --shift-by, --from-file, --
+                                          to-current.
+                                        To define the scope use --all-topics
+                                          or --topic. One scope must be
+                                          specified unless you use '--from-
+                                          file'.
+
+
+Commit log and retention policy
+      One of the key qualities of Kafka is a concept of retaining the record for a certain period of time.
+      We have the Kafka broker, the producer sends a message, it first reaches the topic, and then the very next thing that happens is that the record gets written to a file system in the machine. So the file system is where the Kafka broker is installed (ie) our local machine. The record is always written into the file system as bytes. The file system where that file needs to be written is configured using the log.dirs property in the server dot properties file. It creates a file with the extension of dot log.
+      Each partition will have its own log actually. Meaning if we have four partitions, then you will have four log files in the file system. That's why these log files are otherwise called as partitioned commit log. After the messages are written into the log file, that's when the records that got produced are committed. So when the consumer who is continuously pulling for new records can only see the records that are committed to the file system as new records are produced to the topic, then the records get appended to the log file and the process continues. So this is all about commit log.
+    we can go into softwares/kafka/config/kafkalogs/test-0/u can see log file where the data will be resides
+
+Retention policy
+    Retention policy is one of the key properties that's going to determine how long the message is going to be retained. Retention policy is configured using the log.retention.hours property, which resides inside the server.
+properties file. The default retention period is seven days or 168hrs.
+   So what this means is that anytime you have the log that's getting created, have this data available in the Kafka cluster for seven days.
+
+
+Error Handling with Kafka - https://github.com/Java-Techie-jt/kafka-error-handling
+     It is also crucial to address the errors and recover the data in the
+event of failure, sometimes what happen when a producer send a messages and we
+process that message from the Kafka topic and error can occur for instance
+consumer services or related infrastructure such as database connections might be unavailable during that period, so in that case there is a risk of losing any events sent or received due to the failure 
+    Consider a scenario where you are processing Finance transaction, if a
+transaction fails to be processed due to some temporary issue, then how will you handle it, because here we want to ensure reliable message processing. We instruct Kafka to retry the failed event, now what Kafka will does here it will reattempt to process the messages multiple times as per your configuration, for example if you set the retry count to four, Kafka will make three retry attempts in a sequential order because it follows (n-1) order, so if you specify four times to retry, Kafka will do three times so that we need
+to decide what number we need to set for retry attempt
+  Next if the process succeed within these retries it will be success, however if the retry count is exceeded then the message will be directed to the Dead topic, so dead letter topic is a new failure topic to store all the failed messages or all the failed events. If a consumer is not able to process messages even after retry then those unprocessed messages will push to this particular dead letter topic, so this is the simple way to ensure that there is no data is lost and reliable message processing 
+
+1. Create KafkaErrorHandling Spring boot project with web, kafka, lombok
+
+2. Configure producer and consumer properties in application.properties
+
+server.port=1111
+app.topic.name=kafka-error-handle
+
+#Producer configuration
+spring.kafka.producer.bootstrap-servers=localhost:9092
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer= org.springframework.kafka.support.serializer.JsonSerializer
+
+#Consumer configuration
+spring.kafka.consumer.bootstrap-servers=localhost:9092
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.consumer.group-id=group2
+spring.kafka.consumer.auto-offset-reset=latest
+spring.kafka.consumer.properties.spring.json.trusted.packages=*
+
+3. Create User object
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class User {
+    private int id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String gender;
+    private String ipAddress;
+}
+
+4. Create kafka topic
+
+@Configuration
+public class KafkaConfig {
+
+    @Value("${app.topic.name}")
+    private String topicName;
+
+                 @Bean
+              public NewTopic topic() {
+             return TopicBuilder.name(topicName)
+                                           .replicas(1)
+                                                .partitions(3)
+                                                .build();
+              }
+
+
+}
+
+5. Create Controller
+
+@RestController
+@RequestMapping("/producer-app")
+public class EventController {
+
+    @Autowired
+    private KafkaMessagePublisher publisher;
+
+
+    @PostMapping("/publishNew")
+    public ResponseEntity<?> publishEvent(@RequestBody User user) {
+        try {
+           // List<User> users = CsvReaderUtils.readDataFromCsv();
+            //users.forEach(usr -> publisher.sendEvents(usr));
+           publisher.sendEvents(user)
+            return ResponseEntity.ok("Message published successfully");
+        } catch (Exception exception) {
+            return ResponseEntity.
+                    status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
+        }
+    }
+}
+
+6. Create producer
+
+@Service
+public class KafkaMessagePublisher {
+
+    @Autowired
+    private KafkaTemplate<String, User> kafkaTemplate;
+
+    @Value("${app.topic.name}")
+    private String topicName;
+
+
+
+    public void sendEvents(User user) {
+        try {
+            CompletableFuture<SendResult<String, User>> future = kafkaTemplate.send(topicName, user);
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    System.out.println("Sent message=[" + user.toString() +
+                            "] with offset=[" + result.getRecordMetadata().offset() + "]");
+                } else {
+                    System.out.println("Unable to send message=[" +
+                            user.toString() + "] due to : " + ex.getMessage());
+                }
+            });
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+
+}
+
+7. Create consumer
+
+Here we are taking the user object as input and we are publishing it to the
+kafka topic. In consumer we are simply taking  user input what we received from our topic then we are adding one validation here, to simulate the error
+scenario. So in user we can see there is a IP address so when we consume any event specific to the user, we will validate that if user is giving any of the IP specified in this particular list then we will not allow that user to process further. So we just added a if condition to check if the address if the list contains the address then throw some simple exception to just simulate the error scenario
+
+@Service
+@Slf4j
+public class KafkaMessageConsumer {
+
+    @KafkaListener(topics = "${app.topic.name}", groupId = "group2")
+    public void consumeEvents(User user,@Header(KafkaHeaders.RECEIVED_TOPIC) String topic, @Header(KafkaHeaders.OFFSET) long offset) {
+        try {
+            log.info("Received: {} from {} offset {}", new ObjectMapper().writeValueAsString(user), topic, offset);
+            //validate restricted IP before process the records
+            List<String> restrictedIpList = Stream.of("32.241.244.236", "15.55.49.164", "81.1.95.253", "126.130.43.183").collect(Collectors.toList());
+            if (restrictedIpList.contains(user.getIpAddress())) {
+                throw new RuntimeException("Invalid IP Address received !");
+            }
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+}
+
+8. Start zookeeper, kafka
+9. Start appl, run http://localhost:1111//producer-app/publishNew with POST request
+
+{
+  "id":1,
+  "firstName":"Ram",
+  "lastName":"Lumar",
+  "email":"ram@gmail.com",
+  "gender":"male",
+  "ipAddress":"32.241.244.23" 
+}
+
+we can see message will be send to kafka and print the producer and consumer info in console
+
+{
+  "id":2,
+  "firstName":"Sam",
+  "lastName":"kumar",
+  "email":"sam@gmail.com",
+  "gender":"male",
+  "ipAddress":"32.241.244.23" 
+}
+
+Now run with ip address provided in the list
+
+{
+  "id":3,
+  "firstName":"Ram",
+  "lastName":"Lumar",
+  "email":"ram@gmail.com",
+  "gender":"male",
+  "ipAddress":"32.241.244.236" 
+}
+
+Now we get an Caused by: java.lang.RuntimeException: Invalid IP Address received ! in the console
+
+We added if statement and throwing the exception but let's assume from this piece of code it is connecting to the DB or it is connected to the AWS in that
+case if that particular server is down and your request is not able to process
+then you completely lost that input what you received from your producer. 
+   We need to keep a retry, we need to tell to the kafka to retry for two or three times, once kafka will do the retry within the time period (ie) we define retry attempt as three then after three times reattempt if it is able to resolve the issue then good, and if the retry count exceed then it will simply push that failed messages to dead letter topic. So we need to tell to the Kafka about the retry and if retry count exceed then push the messages to the DLT, so that we have a copy of our failed messages or failed events so in future we can investigate it and we can reprocess it if required
+
+10. Stop the application
+
+11. In Consumer appl, we can tell to the Kafka by defining an  annotation @RetryableTopic(attempts="4") and tell to the kafka how many attempts you want to perform so we can define we want to retry four times, so by default attempt count is 3, if you will not specify any attempt kafka will do three times attempt,  since we have defined 4 Kafkaa will do four times attempt 
+   So internally Kafka will create three topic just appending the suffix with
+retry, each topic will retry once since you have defined there will be
+three times retries attempt because it will work on N-1 order. We are saying to the kafka by defining this particular annotation enable retry mechanism and we want to perform four times retry, now after four times retry if the issue is not resolved then we will simply push that messages to dead letter topic,  so for that we define a method and define a log statement with some meaningful messages with @DltHandler annotation, so using this annotation we can
+able to enable DLT Logic for failure message based on our Kafka topic, so
+using this annotation this will listen all the failed messages
+
+@Service
+@Slf4j
+public class KafkaMessageConsumer {
+
+    @RetryableTopic(attempts = "4")// 3 topic N-1
+    @KafkaListener(topics = "${app.topic.name}", groupId = "javatechie-group")
+    public void consumeEvents(User user, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, @Header(KafkaHeaders.OFFSET) long offset) {
+        try {
+            log.info("Received: {} from {} offset {}", new ObjectMapper().writeValueAsString(user), topic, offset);
+            //validate restricted IP before process the records
+            List<String> restrictedIpList = Stream.of("32.241.244.236", "15.55.49.164", "81.1.95.253", "126.130.43.183").collect(Collectors.toList());
+            if (restrictedIpList.contains(user.getIpAddress())) {
+                throw new RuntimeException("Invalid IP Address received !");
+            }
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @DltHandler
+    public void listenDLT(User user, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, @Header(KafkaHeaders.OFFSET) long offset) {
+        log.info("DLT Received : {} , from {} , offset {}",user.getFirstName(),topic,offset);
+    }
+}
+
+12. Start the appl
+   So in the console we can see, as we discussed already if you specify the
+retry count, for example retry count as 4, it will create internally three topic to do the reattempt like kafka-error-handle-retry-0-0, kafka-error-handle-retry-1-0, kafka-error-handle-retry-2-0
+
+Now we can list the topics which was created
+
+C:\Softwares\kafka_2.12-2.6.0>kafka-topics.bat --bootstrap-server localhost:9092 --list
+__consumer_offsets
+kafka-error-handle
+kafka-error-handle-dlt
+kafka-error-handle-retry-0
+kafka-error-handle-retry-1
+kafka-error-handle-retry-2
+
+So it creates dlt topic and 3 retry topics 
+
+13. In postman we run http://localhost:1111//producer-app/publishNew with POST request, with some valid ip so we wont see any error messages
+
+{
+  "id":1,
+  "firstName":"Ram",
+  "lastName":"Lumar",
+  "email":"ram@gmail.com",
+  "gender":"male",
+  "ipAddress":"32.241.244.23" 
+}
+
+- Now run with ip address provided in the list
+
+{
+  "id":3,
+  "firstName":"Ram",
+  "lastName":"Lumar",
+  "email":"ram@gmail.com",
+  "gender":"male",
+  "ipAddress":"32.241.244.236" 
+}
+
+So in the console we can see it has been retry 3 times and we can see log messages from which topic it was storing. After three times it retried still we are not getting any result it is failed, but between that retry if your
+DB connection or any awS specific infra issue is being resolved then you'll get the response. Since we are getting the error after four time times retry or after three times retry then where supposed to the message will go to DLT topic
+
+- Now we can check in DLT topic
+>>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic kafka-error-handle-dlt --from-beginning
+{"id":3,"firstName":"Ram","lastName":"Lumar","email":"ram@gmail.com","gender":"male","ipAddress":"32.241.244.236"}
+
+13. Now continuously our retry is happening (ie) there is no gap but if you
+want to set the attempt in every or in some time interval you can do that by defining backoff
+
+@RetryableTopic(attempts = "4",backoff=@Backoff(delay=3000,multiplier=1.5,maxDelay=15000)
+
+If you don't want to do it immediately if you want to specify your
+own time interval, here we specify 3sec and maxdelay is 15sec and each time it will multiplied by 1.5, so first time it starts with 3 sec, then 4.5 sec, then  6.75sec till 15sec
+
+14. We can tell to this retriable annotataion for what kind of exception we don't want to perform this retry then we can define
+ 
+@RetryableTopic(attempts = "4",exclude={NullPointerException.class,RuntimeException.class})
+
+Here retry will not be working for NullPointerException.class,RuntimeException.class
+
+---------------------------------------------------------------------------
+Kafka Error Handling - Dynamically Start/Stop Kafka Consumer
+https://github.com/sptrivedigit1989/kafkaconsumers
+
+Consider our application has to read the data from the kafka topic in a sequential manner, so while reading the data in a sequential manner if some exception occurred then our application must stop the listening process otherwise it might corrupt the further data and to achieve this, in our kafka listener component we are supposed to add a exception handler configuration
+and also we have created one controller so that we can dynamically start and stop the kafka listener consumer process.
+
+1. Create KafkaErrorHandling1 springboot project with web, kafka, lombok, jackson databind dependency
+
+2. Create kafka listener 
+
+@Component
+@Slf4j
+public class KListenerWithExceptioHandler {
+
+    @KafkaListener(topics = "quickstartexception",
+            groupId = "group_id",
+            containerFactory = "myConsumerFactoryForException", id = "QSE-01")
+    public void consume(String msg, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        log.info("topic name : {}", topic);
+        log.info("consumed message is : {}", msg);
+        int x = Integer.parseInt(msg);
+        log.info("msg converted to int successfully : {}", x);
+    }
+}
+
+@KafkaListener which has the topic information, group id, container factory bean information and the listener id and it will read the message from this topic. Further i have written one exception scenario like if we pass
+any non-number then it will throw the exception, so let's say i'm just writing one two three four and after four i have written some string, so that is 
+corrupted data and our application must stop the listening process until we
+correct it
+
+3. Create consumer config instead of writing in application.properties 
+
+@EnableKafka
+@Configuration
+@Slf4j
+public class KConsumerConfig {
+
+    @Bean
+    public ConsumerFactory<String, String> consumerFactory()
+    {
+
+        // Creating a Map of string-object pairs
+        Map<String, Object> config = new HashMap<>();
+
+        // Adding the Configuration
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "127.0.0.1:9092");
+        config.put(ConsumerConfig.GROUP_ID_CONFIG,
+                "group_id");
+        // enable below property when you want to acknowledge msg manually
+        //config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        config.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
+        config.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
+
+        return new DefaultKafkaConsumerFactory<>(config);
+    }
+}
+
+Next we write the bean configuration for myConsumerFactoryForException
+
+ and 
+
+@Bean(name = "myConsumerFactoryForException")
+    public ConcurrentKafkaListenerContainerFactory
+    myConsumerFactoryForException()
+    {
+        ConcurrentKafkaListenerContainerFactory<
+                String, String> factory
+                = new ConcurrentKafkaListenerContainerFactory<>();
+
+//first connect to the kafka broker with the help of this consumerFactory() method and the properties which we mentioned
+        factory.setConsumerFactory(consumerFactory());
+
+//factory have the setErrorHandler() and in this we have overwritten this
+ContainerAwareErrorHandler handle() method and which contains the
+parameter like exception,consumer and MessageListenerContainer, so here we
+can log Which exception occurred, the consumer record offset and
+everything we can log here and then immediately we can stop the consuming
+process so that our support team can identify and analysis the data further and send back the proper data
+      
+        factory.setCommonErrorHandler(new CommonErrorHandler() {      
+            public boolean handleOne(Exception thrownException,ConsumerRecord<?, ?> record,Consumer<?, ?> consumer,MessageListenerContainer messageListenerContainer)  {
+                //ConsumerRecord record = list.get(0);
+                log.info("exceptional data and topic {}-{}", record.value(), record.topic());
+                messageListenerContainer.stop();
+                log.info("consumer has been stopped for listener id : {}", messageListenerContainer.getListenerId());
+                return true;
+            }
+        });
+       return factory;
+}
+
+
+4. Let's say while reading the data exception occurred and this consumerFactoryForException being stopped the listening process now and our support team has corrected the data and sent back to the kafka topic
+again and then we have to start this listening process again and to achieve this we have to write a controller
+
+@RestController
+@RequestMapping("/kafka-consumer")
+public class KafkaContainerController {
+
+
+//KafkaListenerEndpointRegistry which will just fetch the listener container //with the help of the listener id, so here in  kafka listener we have //provided this id and in case of exception this bean will stop this listening //process using messageListenerContainer.stop(); and  once the data has been //sent back to us we will just simply use this end point and start the
+//consuming process again
+    @Autowired
+    private KafkaListenerEndpointRegistry endpointRegistry;
+
+    // kafkaTopicId QSE-01
+    @GetMapping("/start/{kafkaTopicId}")
+    public String startKafkaConsumer(@PathVariable String kafkaTopicId){
+        endpointRegistry.getListenerContainer(kafkaTopicId).start();
+        return "kafka consumer topic started";
+    }
+
+    @GetMapping("/stop/{kafkaTopicId}")
+    public String stopKafkaConsumer(@PathVariable String kafkaTopicId){
+        endpointRegistry.getListenerContainer(kafkaTopicId).stop();
+        return "kafka consumer topic stopped";
+    }
+
+}
+
+5. Start zookeeper, kafka server
+6. Create kafka topic
+>kafka-topics.bat --bootstrap-server localhost:9092 --create --topic --replication-factor 1 --partitions 3 quickstartexception
+
+7. Start kafka console producer
+>kafka-console-producer.bat --bootstrap-server localhost:9092 --topic quickstartexception
+>1
+>2
+>three
+
+so in that case our application must stop this listening process
+
+8. Now if we give 3, the appl has to start again, for that we run endpoint 
+http://localhost:8080/kafka-consumer/start/QSE-01
+
+Now the appl will be started and it will consume message 3 
+
+so we have to read the data in sequence and in case of corrupted data, this application will stop listening and when we correct it we will send back the data and with the help of controller we can start this listener again
+
+9. By default we have the acknowledgement as true and when we give "three" in this offset our listening process has been stopped, so this either should be deleted or this should be corrected and from that offset onward this
+listening process will be start again, but here as we have the default configuration ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG as true, we just read 3
+and offset move to the next position and this is considered as read. But when you enable auto commit part as false , then we have to manually acknowledge
+each and every message, at that time either someone from the maintenance team will delete the message then only with the help of controller we can read it again otherwise it will keep on read this corrupted message
+
+10. Stop the appl and producer 
+
+- So by default this auto commit is true so whatever is present we read and acknowledged so that's the default behavior, so now we disable this default behavior and put enable auto commit config as false inside consumerFactory()
+
+config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+- In  myConsumerFactoryForException(), we have to provide that we want to acknowledge msg manually
+
+factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+
+- In Listener we are going to add acknowledgement manually
+
+@KafkaListener(topics = "quickstartexception",
+            groupId = "group_id",
+            containerFactory = "myConsumerFactoryForException", id = "QSE-01")
+    public void consume(String msg, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+                        Acknowledgment acknowledgment) {
+        log.info("topic name : {}", topic);
+        log.info("consumed message is : {}", msg);
+        int x = Integer.parseInt(msg);
+        acknowledgment.acknowledge();
+        log.info("msg acknowledged and converted to int successfully : {}", x);
+    }
+
+11. Start the appl
+
+12. Start the producer
+>kafka-console-producer.bat --bootstrap-server localhost:9092 --topic quickstartexception
+>1
+>2
+>3
+>four
+
+so this is corrupted data and now this application will be stopped and if we send some more data
+>4
+>5
+>6
+
+but we won't be able to read because if we read this it might corrupt the further data
+
+13. start the consumer process again by http://localhost:8080/kafka-consumer/start/QSE-01
+
+
+But still it will read this corrupted data so that's what acknowledgement came into the picture because this is not acknowledged by the application because here we got the error and someone has to correct this data or delete this data from the topic then only further data will be read, so when this will be edited everything will be fine and we'll start this process with 
+the help of controller
+------------------------------------------------------------------------------
+Error Handling in Kafka Producer
+     Due to many reason  the producer is not able to publish the message in our Kafka broker then in that case how the error can be handled, we have different ways
+
+1. Retry in kafka producer
+      Whenever you are preparing a production level code then you should enable retry in your Kafka producer using 
+  a. properties.setProperty(ProducerConfig.RETRIES_CONFIG, Integer.toString(Integer.MAX_VALUE));
+   The retries setting determines how many times the producer will attempt to send a message before marking it as failed. The default values are: 0 for Kafka <= 2.0, MAX_INT, i.e., 2147483647 for Kafka >= 2.1. Users should generally prefer to leave this config unset and instead use delivery.timeout.ms to control retry behavior.
+  b. delivery.timeout.ms
+If retries > 0, for example, retries = 2147483647, the producer won’t try the request forever, it’s bounded by a timeout. For this, you can set an intuitive Producer Timeout such as delivery.timeout.ms=120000 (= 2 minutes). Records will be failed if they can’t be delivered in delivery.timeout.ms
+   c. retry.backoff.ms
+By default, the producer will wait 100ms between retries, but you can control this using the retry.backoff.ms parameter.
+
+- Here we are starting the producer and whenever we are publishing message
+then the messages will be sent via network, so we need to convert that
+messages to bytes so first key serialization and value serialization happens 
+- Then based on the key in which partition of the topic the data will be written that is calculated using DefaultPartitioner 
+- Once partition is calculated we batch certain amount of records based on batch size within an in memory buffer and Kafka will try to write the batch in our Kafka cluster 
+- Now it will check whether the batch is duplicate batch or not, if it is not a duplicate batch it will try to write the data in our leader and if we are enabling replicas then in other brokers also it will try to write. Now if the writing operation is successful, it go to successHandler and then here
+you can publish next set of messages or you can stop or do some other activity
+- But if due to some reason in this particular layer, the message publishing
+fails, then if we are enabling retry then Kafka will automatically try to make another attempt to publish that batch which earlier failed until and unless
+timeout happens it will try to do retry. Suppose you are configuring retry
+value as 5 so 5 times it will try to retry until an unless timeout happens, so that retry you can configure to avoid error 
+     For example suddenly our leader broker went down or whole kafka cluster is down then due to that reason, our batch was not able to publish, but when it is having retry within that small span of time suppose the Kafka cluster again became up, so in that next retry the message will be written successfully 
+    So whenever we are configuring retry we also need to make sure that we are
+configuring this particular value max_in_flight_requests_per_connection=1
+    For example we are trying to write our first batch but it failed due to some reason it is having a retry and by that time suppose our Kafka cluster again spins up then the second batch of data will be writing in our Kafka cluster before the first batch, so if the second batch is written
+before the first batch is written in the kafka topic, then within a particular
+partition the messages will no longer be in proper order, but we need to
+make sure that always within a partition the messages are available in proper
+order, so to avoid that particular improper ordering of messages whenever
+we are enabling retry we need to make sure that max_in_flight_requests_per_connection is configured as less than equal to 5. In that case what will happen, if retry is going on until and unless first batch is written, the second batch will not try to write in our cluster, if timeout happens it will go to the error Handler, maybe you can load
+somewhere and you can have attempt in latter point of time then the second
+batch will be written, so along with retry this property also plays a
+very important role 
+   properties.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5");
+
+2. min.insync.replicas
+      If after retry also if it is not able to publish the messages then we can use min.insync.replicas
+      Before that let's consider one situation where we are having
+replication Factor=3 for a particular kafka topic and acks=all for our Kafka producer client
+      With replication Factor=3 means that in three different Brokers the same data will be replicated. Suppose we are having a topic T1 with multiple partitions, now suppose we are having a partition P0 then we should be having same partition P0 in three different brokers because here we are configuring replication factor as 3. So here we can see that in Broker102 the partition 0 is available, in broker 101 the partition 0 is available, in broker103 also
+Partition 0 is available, so broker102, broker103 is replica partition and broker101 is leader partition 
+       If producer tried to publish the messages then either we can configure - acks=0 that means it will not even wait for acknowledgment it will just
+fire and forget whether the messages are written successfully in the leader
+broker or in the replica broker 
+- acks=1 in that case producer will only wait for the response that in the leader partition, the data is written successfully, producer will not worry
+about the fact that whether the same data is replicated in our follower
+partitions properly or not
+- acks=all then in that case suppose the producer sends the data to the leader first, the data will be written in the leader partition and then from that particular leader the data will be sent to the follower brokers, in those partitions also the data will be written, they will send acknowledgment to the leader and once the leader broker get all the acknowledgment from the replica
+instances, it will send the final response that the data is written successfully in the leader partition as well as the data is written successfully in the replica partitions. This is the safest option but obviously you can understand it will take some time also because it will wait to make sure that the data is copied in all the replicas properly
+  
+Suppose you are having this kind of configuration with replication Factor=3 and ack=all, so in that case obviously it is expected that the same data will be replicated in three different brokers in the respective partitions properly. But suppose broker102 goes down due to some reason, so now we are having only two active brokers, so when producer try to publish the data in the leader broker the data will be written successfully and only in this
+follower broker103 the data will be written
+    So in two places the data is written but the replication Factor is
+configured as three, so the condition will not be satisfied because
+at least we want to make sure same data is available in three places but that is not happening because one broker went down, so in that case what will happen the message it is not able to publish here and it will throw an exception that as of now the condition is not satisfied based on the configuration of replication factor and acknowledgment
+    So in that case either you need to configure acks=1, just to make sure in the leader block the data is written or you need to decrease the replication Factor, so whenever we are configuring these two properties then another property comes into picture and place a very important role called min.insync.replicas
+    So if we are keeping replicationFactor=3 and acks=all then if any
+single broker goes down among three brokers where our partitions are
+available then the producer will not able to publish the message, but suppose
+we are configuring min.insync.replicas=2 in the topic level, then ideally it will replicate the data in three brokers in three places where our partition zero is available for the same topic, but suppose broker102 is down and if you are keeping min.insync.replicas=2 then the data will be coming and it
+will be written in leader broker and broker103 successfully because it is up and running, so at least there are two places where the same data is
+available just for backup, so it will consider that as success and it will send a response that the data is written successfully 
+   So in simple words if you are having replicationFactor=3 and acks=all then
+all three Brokers should be up and running, but if you are having a
+replication Factor=3, acks=all and min.insync.replicas=2 then if one broker goes down then also it can work, suppose another broker103 goes down then
+only one broker is active, then in that case only in one place the data can be
+written.
+   So minimum we want in two place the data has to be written, but here only one place the data is written,  so in that case it will not consider that as a successful write and it will send an acknowledgment that as of now problem going on in the cluster and take care of the Brokers etc 
+   So if you are having min.insync.replica=2 and replicationfactor=3,but two Brokers are down then in that case the data will not be written in our cluster so these are several reasons for which our producer might not able to successfully publish the message in our kafka cluster
+
+Solutions
+1. We are having our producer client application which using API, it is
+hitting Kafka producer and then Kafka producer is trying to write the message
+in our topic and due to broker failure or something if after certain retry also if it is not able to publish messages in this original topic
+   In such case kafka producer can write the same message in a retry topic and then we will be having a consumer code which will read the data from this retry topic and try to re-ingest the data in the same producer topic. 
+Suppose latter point of time all the brokers are running fine and all the issues are resolved, then the producer will able to write the message in this particular topic
+   We make sure that we are having the retry Topic in some separate broker, our main topic will be created across different Brokers, retry topics between another broker, so that if in that broker where our main topic is available if there's some issue going on, then retry topic also should not face the same issue, if it is in different brokers obviously the probability of having issue in that broker also will be less, so that way our Kafka producer can publish that message in that retry Topic at least 
+    So this is one approach now the problem is this particular retry topic is sitting within Kafka cluster, suppose due to some reason if the whole
+cluster is down then our producer is not even able to publish the message in the retry topic also
+
+2. We are having our client application which using API pulling some data and trying to publish using Kafka producer and due to certain reason, if it is not able to publish the messages in our Kafka topic, then after certain retry also if the problem is not getting resolved, the Kafka producer will not write that
+messages anywhere within cluster, because it might happen the issue going on with the cluster itself, so it is not a safe approach to write the retrievable
+messages somewhere in kafka, but rather we will write those messages which the
+Kafka producer failed to publish in cluster it will write that in a database
+which is sitting outside our cluster
+   Then we will be having a scheduler code where we will be writing
+using Java which will read those messages whatever Kafka failed to publish earlier, it will read from the database then using our kafka producer it will try to publish that
+    In this case the database is sitting outside our Kafkacluster, so if issue going on across cluster then also we can easily replay our messages 
+
+-----------------------------------------------------------------------------
+Producer Retires and Idempotent Producer - https://www.youtube.com/watch?v=5PZXwmI3IeQ
+      So here we are starting the process that means, we are calling the send
+method to write our messages in cluster so we can pass key for partitioning
+calculation and we need to pass the value which is our actual message, so if we pass value and don't pass key, then key is basically none and in a round robin fashion among different partition the messages will be distributed. If we are passing the key then what happens first obviously serialization happens for both key and value always, and after serialization for both key and value we calculate the partition, once the partition is created the messages are stored in in memory queue data structure for efficient micro matching, and once the batch size is satisfied, the messages are sent to be written in kafka cluster using  io thread 
+    So io thread will try to write the message in kafka cluster, here three
+important parameters are there 
+1. acks
+     Suppose our io thread is able to write the message properly, then how the acknowledgement will be sent, whether we want acknowledgement if io thread is able to write the messages in leader partition or we want acknowledgement only after the messages are successfully written in leader partition as well as all the follower partition 
+
+       So io thread is trying to write the messages, so before writing a batch in kafka cluster it is checked, whether it is a duplicate batch or not. So
+first time if the batch is coming obviously it will not be duplicate, what
+the kafka will do it will push that particular batch in leader and in replicas, if we are having multi broker cluster and if we have enabled
+replication 
+      If io thread is successfully able to write the batch in our cluster then here we are having a check whether it is successful or not, if it is successful then it will go for this particular path and here it will call a
+success handler, in success handler the client can do anything you can capture that as logs or you can store this message
+     If suppose due to some reason the io thread is not able to write the batch in kafka cluster, then it will go to this particular path that means it is not successful, then there is another important component comes retry behavior. So while creating the producer we can configure whether we want to retry for message writing, so if suppose retry we have not enabled so initially what happened our io thread is not able to write the message in kafka cluster, so success will be not true so you come in this particular path and suppose we have not configured retry, so it will go to the no path and it will call the error handler and in client side you will get a message that this particular messages are not written successfully
+     But suppose you have enabled retry then what will happen there is another check happens and that is delivery.timeout.ms so in delivery time of millisecond you can configure for how much time the kafka will retry to write the message if it fails first time, so suppose delivery timeout is over for writing the messages or while having a retry, then obviously it will go to the error handler code and then in front side you will get error. But suppose the delivery.timeout.millisecond is not over and you have enabled retry, then that particular batch will try to write the batch in kafka cluster 
+
+2. enable.idempotence
+        Consider a scenario that we are having some messages in a batch and we
+are trying to write that batch in kafka cluster, if that particular batch writing fails due to some reason and if we have enabled retry, kafka will try to write the message in kafka cluster. But if the batch is successfully written in kafka cluster, and when sending the acknowledgement something happens and the return response is not returned to the producer.
+       So our producer will think the batch due to some reason it is not
+written in our kafka cluster and the producer will again try to send that particular batch to kafka cluster, so now if kafka simply write that
+particular batch again, then obviously duplication will happen, that is not
+required. So if you enable.idempotence what the kafka will do before writing
+that particular batch in kafka cluster, it will check whether it is duplicate
+batch or not, if it is duplicate batch then kafka cluster will understand that it is already written that particular batch in cluster
+      But when we send the written response or acknowledgement due to some reason the producer was not able to receive that particular acknowledgement and producer thought that the batch is not written successfully, so the producer is resending but we should not rewrite rather what we will do instead of rewriting that same batch again, we will send the acknowledgement again for that particular batch because in the earlier writing operation the particular acknowledgement was lost and it was not sent to producer, so we will not write the batch again to avoid duplicate but rather we will send the acknowledgement to producer to ensure that producer will understand that particular batch is written successfully and that's the importance of enable idempotence
+
+3. max_in_flights_request_per_connection 
+       Suppose when batching of record happens in our kafka buffer, then three batches are created and coincidentally all the batches are going to one single partition only for a particular topic, now first batch is sent our io thread
+is successfully able to write that particular batch in our kafka partition.
+      Now when our io thread is trying to write that second batch in the same
+partition due to some reason it failed and we have enabled retry and that's why our kafka cluster will try to have a retry to write the second batch in our partition again,but when it is having a retry obviously it will take
+some time, by that time the io thread has written the third batch in the same partition. Now we know one thing that within a particular partition
+the messages are in order, but due to this retry what happened first batch is written successfully, then the third batch is coming because by the time the second batch was having a retry and then the second batch is written so actually within our partition the ordering is first batch, third batch
+and then the second batch, so basically the retry behavior is screwing up our
+actual message ordering within a particular partition 
+      So we use max_in_flight_requests_per_connection=1, if we want the messages should be always in proper order within a partition. If you are enabling in-flight request as one that means we will send a request and we will wait until it is completed, so suppose you sent a batch first time it is not able to be written in kafka cluster due to some reason, it will have a retry and while having retry, kafka will not write any other batch in
+the cluster. In simple words if you are making max_in_flight_request=1, you are making your kafka message writing operation is synchronous process
+that means once you are writing a batch, you are waiting to receive the
+acknowledgement and then you are writing next batch
