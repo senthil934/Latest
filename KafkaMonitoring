@@ -1,0 +1,1285 @@
+
+Kafka without Zookeeper
+1. Generate cluster UUID
+C:\Softwares\kafka_2.12-3.4.0\bin\windows>kafka-storage.bat random-uuid
+MoJQvNtvQ9upj1G6GlHQxw
+
+2. Delete kafka-logs and zookeeper_data if created
+
+3. Inside kraft/server.properties, 
+log.dirs=./data/kraft-combined-logs
+
+4. Format log directories
+C:\Softwares\kafka_2.12-3.4.0>.\bin\windows\kafka-storage.bat format -t Susym9O9RIOp22PpvCcemA -c .\config\kraft\server.properties
+Formatting ./data/kraft-combined-logs with metadata.version 3.4-IV0.
+
+Now go into C:\Softwares\kafka_2.12-3.4.0\data\kraft-combined-logs, we can see meta.properties where it would store the cluster id 
+
+5. Start kafka server
+C:\Softwares\kafka_2.12-3.4.0>.\bin\windows\kafka-server-start.bat .\config\kraft\server.properties
+
+
+Consider we have twitter like appl where anyone can come and put their ideas and everyone can see  based on the followers and all. So we gave such kind of freedom for everyone to put their tweets so there is a possibility for huge contents so it needs to be regulated, so anyone who is posting, there should be analyst before posting and it should pass through that validation pipeline and if it is passing it would be posted otherwise it will be discarded right away. Another options is that we can post for a second but on the backend side we put some validation checks and whenever they found any tweet not following the guideline, they can remove that tweet immediately 
+   Another usecase is on Youtube many times we can seen some movie is uploaded their, so whenever it is detected after 30min or 1hr it will be removed. So in backend side there lot of asynchronous system is running to check the content against the copyright. So twitter is going to lot of tweets there so we need to put a filter, so this filter is some keyword so based on each keyword their will be different services or processes. So each services might be filtering out some content or creating some dashboard and putting that data for analytics. For example some companies want to listen to the tweets and they want to see how much social media content has been published for their products, so lot of processing can happen
+   This processing cannot be synchronous, so they put Kafka inbetween filter service and our processes
+
+1. We create a text file with some keywords and we want to filter out based on those keywords 
+
+So we have data file, now we want to read this file by DataFilterService, so when it loads the data into in-memory system now it has to filter that, so based on that filteration criteria we want to put into different topics. We need to have a separate processor for each topic, so these processor are realistic companies who are interested in these keywords, so they can get topic name from kafka cluster and they can listen to tweets
+
+2. Reading file, filtering and putting into kafka topic
+
+In real time data processor, publisher all these are going to be different micro services but let's simulate that with different classes in our case. Sif the tweet contains "microservice" then it will put in microservice-topic and etc
+
+public class DataFilteringService {
+    public static void main(String[] args) throws IOException {
+        String file = "E:\\kafka\\kafka-chapter-1\\data.txt";
+
+        List<String> tweets = Files.readAllLines(Paths.get(file));
+        KafkaProducer<String, String> kafkaProducer = getKafkaProducer();
+
+        tweets.stream().forEach(tweet -> {
+            if (tweet.toLowerCase().contains("microservice")) {
+//put to microservice topic
+                ProducerRecord<String, String> record = new ProducerRecord<>("microservice-topic", tweet);
+                kafkaProducer.send(record);
+
+            } else if (tweet.toLowerCase().contains("kafka")) {
+                //put to kafka topic
+                ProducerRecord<String, String> record = new ProducerRecord<>("kafka-topic", tweet);
+                kafkaProducer.send(record);
+            } else if (tweet.toLowerCase().contains("chatgpt")) {
+                //put to chatgpt topic
+                ProducerRecord<String, String> record = new ProducerRecord<>("chatgpt-topic", tweet);
+                kafkaProducer.send(record);
+            } else {
+                //put to others topic
+                ProducerRecord<String, String> record = new ProducerRecord<>("others-topic", tweet);
+                kafkaProducer.send(record);
+            }
+        });
+
+        kafkaProducer.flush();
+        kafkaProducer.close();
+    }
+
+    private static KafkaProducer<String, String> getKafkaProducer() {
+        Properties kafkaProducerConfig = new Properties();
+
+        kafkaProducerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        kafkaProducerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaProducerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(kafkaProducerConfig);
+        return kafkaProducer;
+    }
+  
+}
+
+3. Create topics
+
+>kafka-topics.bat --create --topic microservice-topic --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092 
+>kafka-topics.bat --create --topic kafka-topic --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092 
+>kafka-topics.bat --create --topic chatgpt-topic --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092 
+>kafka-topics.bat --create --topic others-topic --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092 
+
+4. Start kafka server
+
+5. Start console consumers
+
+>kafka-console-consumer.bat --topic microservice-topic --bootstrap-server localhost:9092 --from-beginning
+>kafka-console-consumer.bat --topic kafka-topic --bootstrap-server localhost:9092 --from-beginning
+>kafka-console-consumer.bat --topic chatgpt-topic --bootstrap-server localhost:9092 --from-beginning
+>kafka-console-consumer.bat --topic others-topic --bootstrap-server localhost:9092 --from-beginning
+
+6. Run DataFilterService which is a kafka producer, so first it will read the file and based on keywords it will store into respective topics dvc
+
+7. Now we write consumer to consume the data instead of console consumer 
+
+Kafka Monitoring
+    Kafka cluster monitoring is a very important topic, so every time we want
+to monitor the cluster we don't want to go to the CLI or to see the topics
+partitions and lot of more details, so we need some tools around that. There are different tools are available like
+1. Confluent Control Center
+2. Lenses
+3. Datadog Kafka Dashboard
+4. Cloudera Manager
+5. Yahoo Kafka Manager
+6. Kafdrop
+7. LinkedIn Burrow
+8. Kafka tool 
+
+Kafdrop is the open source that is very handy, it is a spring boot based application and it is web-based UI
+
+1. Start kafka server and zookeeper
+
+2. Download Kafdrop jar file 4.0.1 from https://github.com/obsidiandynamics/kafdrop/releases
+
+3. Run the jar file
+c:/softwares>java -jar kafdrop-4.0.1.jar   and runs on 9000
+
+4. Run http://localhost:9000 which will open kafdrop ui and we can see all the topics which are created 
+- we see from the top bootstrap server we had we have only one, total
+topics there are five topics, total partition in combination chatGPT, microservice,kafka and others are there one and consumer_offset is 50 so total 54
+- click on chatgpt-topic if we want to see the messages, we just click on view message you will be able to see that events
+- on right side we can see the consumers, so we can see combined lag=0 means all the events that are there is processed by this topic 
+
+- stop Microservice consumer 
+- Run Producer again - it will produce all the messages once again to
+all the topics and now come to that
+monitoring, so if we refresh  microservice consumer is not running so it
+has all more messages coming into so that is why you are seeing this combined
+lag
+- Run Microservice consumer and now this combined lag is gone away 
+
+so this is the default configuration with the Kafdrop 
+
+
+
+-------------------------------------------------
+Starting more than one broker 
+
+1. Create kafka-logs1 folder 
+
+2. Copy server.properties and rename as server1.properties, change as 
+broker.id=1
+log.dirs=C:\Softwares\kafka_2.12-3.4.0\kafka-logs1
+port=9093
+advertised.host.name=localhost
+
+and uncomment listeners=localhost://9093
+
+3. Start zookeeper
+>zookeeper-server-start.bat zookeeper.properties
+
+4. Start both kafka server
+>kafka-server-start.bat server.properties
+>kafka-server-start.bat server-1.properties
+
+5. Run the jar file
+c:/softwares>java -jar kafdrop-4.0.1.jar  and run localhost:9000
+
+Now we can see only localhost:9092 broker
+
+6. In order to reflect both the server, we create application.properties file with
+kafka.brokerConnect=localhost:9092,localhost:9093
+
+7. Now rerun jar file, now we can see both the brokers are reflected 
+
+8. If we want to run with custom configuration, we have to go to the source code of Kafdrop
+https://github.com/obsidiandynamics/kafdrop/tree/master/src/main/resources/application.yml
+
+By default it is going to the localhost 9000 but in production application this won't be the case we want to customize it,we want to pass it more than one or more Brokers, so we can do by creating application.properties
+
+server.port=9095 
+kafka.brokerConnect=localhost:9092,localhost:9093
+
+9. Run our jar file which pick  application.properties automatically
+where undertow server started in 9095 
+ 
+Starting more than one broker
+1. Create kafka-logs1 folder inside kafka
+
+2. Copy server.properties and rename as server-1.properties file and change the port no and logs dir
+broker.id=1
+
+listeners=PLAINTEXT://:9093
+log.dirs=C:\Softwares\kafka_2.12-3.4.0\kafka-logs1
+port=9093
+advertised.host.name=localhost
+
+3. Start zookeeper
+
+4. Start both kafka server
+
+5. Run kafdrop jar file, but still we can see only localhost:9092
+   In order to include all brokers, we need to create application.properties file with, where it will pick application.properties automatically
+
+kafka.brokerConnect=localhost:9092,localhost:9093
+
+6. Rerun kafdrop jar file, we can see all the brokers
+
+7. In case if we want to run kafdrop with different port no we can again configure in application.properties as
+server.port=9095
+   Now kafdrop run in 9095, so we give localhost:9095
+
+9. On the rightside we can see lags as 0, if we stop microservicetopic and rerun the producer now the lag will be changing, once we rerun microservice consumer the lag changed to 0, means it has consumed it 
+
+
+Monitor Apache Kafka Using Grafana and Prometheus
+
+1. Using JMX Exporter
+     JMX exporter is intended to be run as a Java Agent, exposing a HTTP server and serving metrics of the local JVM. It can be also run as a standalone HTTP server and scrape remote JMX targets, but this has various disadvantages, such as being harder to configure and being unable to expose process metrics (e.g., memory and CPU usage).
+
+2. Create Prometheus dir
+
+3. Download jmx jar file 
+https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.9/jmx_prometheus_javaagent-0.9.jar
+
+4. JMX exporter has a YAML config file. Download kafka-2.0.0.yml file from 
+https://github.com/prometheus/jmx_exporter/tree/main/example_configs
+
+5. Configure KAFKA_OPTS in env variables
+
+KAFKA_OPTS=-javaagent:\Softwares\prometheus\jmx_prometheus_javaagent-0.9.jar=1051:\Softwares\prometheus\kafka-2_0_0.yml
+
+give some random port number
+
+With this environment variable, we are able to view Kafka metrics through HTTP. 
+
+6. Run zookeeper, kafka server
+
+7. Run http://localhost:10151/metrics, to view all kafka metrics 
+
+8. Run Microservice consumer, DataProducer
+
+9. View JMX Metrics
+Kafka brokers expose their metric through JMX. We can think of JMX as an API in JVM that allows us to pull metrics of the application that is running on JVM. It is similar to the way we call a web service API to get information about a resource.
+
+JDK has a tool called JConsole that is used to view available metrics of a JVM:
+
+>jconsole
+
+- Select com.pack.MicroserviceConsumer and click on the Connect button - Click MBeans - Expand Kafka.consumer - consumer-fetch-manager-metrics-consumercodefarmmicroservice-microservicetopic-recordsconsumedtotal
+
+10. Expose Metrics Using Prometheus JMX Exporter
+
+Although you can view Kafka and Zookeeper metrics in jConsole, in a real-world scenario you probably want to automatically collect these metrics and show them in an informative dashboard. To collect Kafka metrics for Prometheus we use JMX exporter.
+
+JMX exporter collects metrics from Kafka and exposes them via HTTP API in a format that is readable for Prometheus.Now Prometheus is able to pull monitoring data from localhost:10151/metrics.
+
+- Download Prometheus from https://prometheus.io/download/
+prometheus-2.50.1.windows-amd64.zip
+
+- Extract it
+
+- Edit prometheus.yml in this directory and put following content in it:
+
+global:
+ scrape_interval: 10s
+ evaluation_interval: 10s
+scrape_configs:
+ - job_name: 'kafka'
+   static_configs:
+    - targets:
+      - localhost:10151
+
+- Run Prometheus.exepro
+C:\Softwares\prometheus-2.50.1.windows-amd64>prometheus.exe
+
+- Run http://localhost:9090/, we can see all kafka metrics
+
+Select kafka_cluster_partition_replicascount - Click Execute
+
+kafka_cluster_partition_replicascount{topic="microservice-topic"} - Click Execute
+
+Select jvm_memory_bytes_used metric - click Graph tab - This graph shows you some history of Kafka JVM memory. 
+
+11. Visualize Metrics in Grafana
+Grafana allows us to create a visual dashboard by providing it a data source. Some data sources such as Prometheus are supported officially. 
+
+- Download Grafana from http://grafana.com/grafana/download?platform=windows - Extract the zip file 
+- Start Grafana server
+C:\Softwares\grafana-v10.3.3\bin>grafana-server.exe
+
+- Open http://localhost:3000 in browser
+       Default username and password is admin,admin
+       After that we can change new password 
+New Password: abcd1234
+
+- Click Add Data Sources - Select Prometheus
+     Name: prometheus
+     Prometheus url: http:localhost:9090
+  Click Save & Test
+
+- Click 3line on left side - Dashboard - Create a dashboard
+
+some developers have created their own dashboard and added it to Grafana as a plugin so that other developers can use it. You can download one of Kafka template  https://grafana.com/api/dashboards/721/revisions/1/download
+
+- Click Import Dashboard - Upload Dashboard json file - Select Prometheus: promethus -  Click Import
+
+By default, Grafana does not refresh the page automatically but you can enable this by clicking on the Last 30 minutes button on the top right corner of the page and then click on refreshing every drop-down list and finally select 10s. Click apply and your dashboard will be refreshed every 10 seconds.
+
+------------------------------------------------------------------------------
+
+Kafka Security Mechanism
+     When we talk to the Kafka cluster inorder to ensure a secure communication between Kafka client and Kafka cluster we need some security mechanism like
+
+1. Plaintext - no security
+2. SASL(Simple Authentication and Security Layer)/Plain - enables authentication using username and password but does not encrypt
+3. SSL(Secured Socket Layer)/TLS(Transport Layer Security)- requires SSL certificate, encrypt the network communication between clients and kafka cluster - encrypted but no authentication
+4. SASL/SSL - [SSL/TLS + SASL/PLAIN] in prod recommended 
+5. Kerberos - secure authentication [ticket+centralized key]
+
+We will secure Kafka broker with username and password and any Kafka
+client should provide the authentication data to talk to the Kafka cluster and if we secure that Kafka cluster and we don't provide the authentication data like username and password then we used to see this sasl handshake field authentication exception
+
+1. Create KafkaMessageReceiver Springboot project with web, kafka and kafka client dependency 
+
+2. Configure application.properties without authentication
+
+#-------------------no auth config ----------------
+#spring.kafka.bootstrap-servers=localhost:9092
+#server.port=8081
+#spring.kafka.consumer.enable-auto-commit=false
+#spring.kafka.consumer.auto-offset-reset=earliest
+
+3. Create listener
+
+@Component
+public class KafkaMessageReceiver {
+
+     @KafkaListener(topics = "authTopic", groupId = "authgrp1")
+    public void receiveMessage(ConsumerRecord<String, String> record) {
+        System.out.println("Received message: " + record.value());
+        System.out.println("**** Completed ****");
+    }
+}
+
+4. Create KafkaMessageProducer Springboot project with web, kafka and kafka client dependency 
+
+5. Configure application.properties without authentication
+#-------------------no auth config ----------------
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.topic-name=authTopic
+server.port=2000
+
+6. Create controller
+
+@RestController
+@Configuration
+@RequestMapping("/send")
+public class KafkaMessageSender {
+
+    @Value("${spring.kafka.topic-name}")
+    String topicName;
+
+    @Autowired
+    KafkaMessageProducer kafkaMessageProducer;
+
+    @PostMapping("/{msg}")
+    public String postMsg(@PathVariable String msg){
+        System.out.println("started pushing data into topic "+topicName);
+        kafkaMessageProducer.sendMessage(topicName, msg);
+        System.out.println("pushed successfully");
+        return "success";
+    }
+
+}
+
+7. Create producer
+
+@Component
+public class KafkaMessageProducer {
+
+    @Autowired
+    KafkaTemplate<String, String> kafkaTemplate;
+
+    public void sendMessage(String topic, String message) {
+        kafkaTemplate.send(topic, message);
+    }
+
+}
+
+8. Start zookeeper, kafka server
+
+9. Run KafkaMessageReceiver appl (ie) consumer
+
+10. Run producer appl, in Postman with POST request run http://localhost:2000/send/welcome
+
+11. Stop both the appl and kafka server also 
+
+12. Create config file  kafka_server_jaas.conf inside /config folder to enable kafka security 
+
+KafkaServer { 
+    org.apache.kafka.common.security.plain.PlainLoginModule required     username="admin" 
+    password="admin-secret" 
+    user_admin="admin-secret" 
+    user_alice="alice-secret"; 
+};
+
+13. We need to set up this environment variable, so that Java knows about this configuration and internally they are bind together kafka and Java 
+
+KAFKA_OPTS -Djava.security.auth.login.config=C:\Softwares\kafka_2.12-2.6.0\config\kafka_server_jaas.conf
+
+14. Update server.properties file
+
+listeners=SASL_PLAINTEXT://:9092
+advertised.listeners=SASL_PLAINTEXT://:9092
+security.inter.broker.protocol=SASL_PLAINTEXT
+sasl.enabled.mechanisms=PLAIN
+sasl.mechanism.inter.broker.protocol=PLAIN
+
+15. Start zookeeper, kafka server
+16. Change the topic name and group name
+17. Start consumer and producer appl
+         Now we can see Unexpected handshake in consumer appl as it dosent know the username and password
+
+18. Stop both the appl 
+
+19. We apply auth configuration in producer and consumer 
+
+#-------------------Producer auth config---------------- spring.kafka.bootstrap-servers=localhost:9092 
+spring.kafka.topic-name=authTopic2
+spring.kafka.producer.properties.security.protocol=SASL_PLAINTEXT spring.kafka.producer.properties.sasl.mechanism=PLAIN spring.kafka.producer.properties.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+username="admin" \
+password="admin-secret";
+
+#-------------------Consumer auth config ---------------- 
+server.port=8081 
+spring.kafka.bootstrap-servers=localhost:9092 
+spring.kafka.consumer.enable-auto-commit=false 
+spring.kafka.consumer.auto-offset-reset=earliest spring.kafka.consumer.properties.security.protocol=SASL_PLAINTEXT spring.kafka.consumer.properties.sasl.mechanism=PLAIN spring.kafka.consumer.properties.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+username="admin" \
+password="admin-secret";
+
+20. Start both appl
+
+when we run the app now we have enabled the authentication data and the
+same authentication data applied to our Kafka cluster
+
+If we run the appl  in Postman with POST request run http://localhost:2000/send/welcome123. Now it will produce and consume the message successfully since we have provide username and pwd to access kafka
+-----------------------------------------------------------------------------
+
+https://www.youtube.com/watch?v=N1pqDgaeNWU&list=PLlBQ_B5-H_xjI_0acsJFy4l3LZk0x6oh2
+
+Why Security in Kafka?
+     Imagine we have kafka cluster with 3 brokers B0,B1,B2, now we have producer appl wants to send message to kafka, so there are 2 steps behind this process 
+   1. Producer needs to connect with kafka
+   2. Then producer need to send the message 
+
+So basically the appl is not authenticating itself (ie) it is not providing any username and password to connect with kafka. So major issue with whole process is
+   1. No authentication
+   2. No encryption
+Once producer connects with kafka and starts sending messages, so by default all communication between kafka and producer happens by protocol called PLAINTEXT, so anyone can able to read the messages since it is in plain text
+  
+- So to avoid these 2 problems we need security concepts, for this purpose we will implement a concept called SSL, so by using SSL we can overcome these 2 problems. This SSL can be applied not only between producer and kafka cluster, but also between consumer and kafka cluster, also between 2 brokers, also between broker and zookeeper, and also between zookeeper and any zookeeper client 
+
+SSL/TLS
+   SSL is Secured Socket Layer, it is network security protocol being introduced by Netscape for internet security purposes. Later in 1999 IETF(Internet Engineering Task Force) identified some bugs and fixed those bugs, once it is fixed they renamed protocol to TLS(Transport Layer Security). If SSL is implemented between client and server then that mechanism is called as SSL handshake  
+   Consider a client is making a request to web server, now web server will provide id to the client, then the client will check the id and verify that the connection request made was valid server or not, so if it is valid server then the client authenticates the server, once the client authenticates the server then the connection will be established, so we call this whole process as one way SSL handshake
+   Normally in client server setup, apart from webserver providing id, the client also needs to authenticate itself by providing id, now webserver will verify the id and authenticates whether the client is valid or not, once it is authenticated then actual connection will be established between client and server. So first webserver will provide id and client will authenticate the server, now client will provide id and server will authenticate the server, so authentication is happen from both ends, this process is called two way SSL handshake
+   So if we are implementing security in kafka by means of SSL then we need to always implement twoway SSL handshake. So once the connection is established between client and server then both these parties agree upon a common encryption mechanism called TLS v1.2, then all the messages transmitted between these two parties will be encrypted as per the encryption mechanism. Consider if any hacker tries to hack these messages, so first hacker needs to provide his id so without authenticating himself he cannot connect to this setup and hack the message. In case if he provide the id and hack the setup, he cant read the message because all messages are encrypted by TLS v1.2, so in this way the entire setup is free from security preeches 
+
+How SSL handshake mechanism works internally ?
+      We need to understand 3 concepts
+1. Certificate Authority(CA) - 
+2. Trust Store(TS)
+3. Key Store(KS)
+
+Consider there is a person in India and he wants to travel to USA, so first he goes to USA Embassy in India and submits his passport, now US embassy will verify his passport and issues VISA and now the passport will be having US visa. Now the person travels to US, and now security officer in US airport will check the visa, once they check it they will come to know the visa is issued by US Embassy in India. So now US airport wants to find whether US Embassy in India is allowed to issue visa for people to enter USA, for this purpose the security officer will goto passport control system and then checks whether US Embassy in India is listed in passport control system, if it is present then US Embassy in India is legally allowed to issue visa for the people to enter US, so then security officer will allow that person to enter US
+   In this example, the person is consider as client, US security officer is Server, US Embassy in India is Certificate Authority, passport along with visa is Key store for client and Passport Control System is Trust store
+
+1. Certificate Authority(CA) - So whenever client is making a request the server, there is a id which actually verifies client request and then certifies whether this client is valid or not 
+2. Trust Store(TS)
+3. Key Store(KS) - It is personal identification component of client which contains id of the client and certificate that is assigned by valid CA. In our example Key Store consist of passport which is id of client and visa which is the certificate issued by Certificate Authority 
+    So when client makes request to server, the server first check key store of the client and checks id of the client and then it check the certificate of the client, then it checks who assigned this certificate. So server comes to know that CA have assigned the certificate, now server will goes to trust store which is archive file which contains list of CA and then check whether CA is present or not, then server understand that the client is valid and establish the connection 
+
+SSL Handshake in Kafka
+     Consider we have 2 brokers B0 and B1, now B0 wants to make connection request with B1 so B0 is client and B1 is server, so for this connection to be completed two way SSL handshake has to be performed
+1. B1 Server will expose the keystore to the B0 client  
+2. Now broker B0 will check which CA signed this keystore
+3. Now broker B0 will check whether CA who signed keystore is present in trust store 
+  - If CA is present in broker B0 trust store, then B0 will know that we are making connection to valid broker, so client will authenticate the server. This is first part SSL handshake where client authenticate server, for the second part server has to authenticate client, for this purpose the whole process will happen in reverse manner  
+1. B0 will expose the keystore to the B1
+2. Now broker B1 will check which CA signed this keystore
+3. Now broker B1 will check whether CA who signed keystore is present in trust store, then server will authenticate the client
+   - If both authentication is over then the connection will be established then both the brokers will agree a common encryption algorithm called TLS v1.2 for encrypting the message 
+
+What is security in Kafka ?
+    We can categorize in 3 steps - Encryption, Authentication, Authorization 
+
+1. Forms of communication
+      If we take kafka setup usually there are different forms of communication like communication between zookeeper and broker, communication inside kafka cluster (ie) amoung brokers, communication between brokers and producer/consumer appl etc
+
+2. Encryption  
+      If we take the communication happening between any two components like between broker and zookeeper or between 2 brokers, by default all these communication are happened by a protocol called PLAINTEXT (ie) messages transmitted between these 2 components are just plain text messages and they are not encrypted with any type of encryption mechanism 
+     So if there is a broker who tries to hack kafka cluster then he could easily read those messages, since those messages are plain text. For this purpose we need to encrypt all ur messages between any two components, for our purpose we will encrypt all the messages in our kafka setup using encryption mechanism called TLS v1.2
+
+3. Authentication
+       Imagine producer is making connection to broker, so in this process first producer needs to verify whether it is connecting to correct broker (ie) producer need to authenticate the broker first, next broker also need to authenticate that producer who is trying to connect with broker is a valid producer, so both these parties trying to authenticate each other, we call this as 2-way SSL authentication or 2-way SSL handshake mechanism 
+
+Based on the component where we implement Security, there are 2 types of security
+1. Zookeeper security 
+      1. Security between zookeeper and zookeeper clients
+            Zookeeper clients are the appl that connect to the zookeeper like kafka brokers, zookeeper-shell.sh (used to find what are the brokers that are connected to zookeeper), kafka-acls.sh, kafka-configs.sh, zookeeper-security-migration.sh etc
+      2. Also applicable for zookeeper ensemble(zk1, zk2, etc)
+             If we have more than 1 zookeeper in ur kafka setup, then that is zookeeper ensemble, then security amoung each of these zookeeper is also called as zookeeper security
+      3. SSL/TLS support available since zookeeper v3.5
+             As far as zookeeper is concerned, support for SSL security is available only from v3.5, if ur zookeeper is less than 3.5 then we cant implement SSL security for zookeeper. This is because zookeeper contains only information about kafka metadata like which of the broker is controller for kafka cluster or if partition has 3 copies then which amoung those copies is actually leader for that partition
+            Normally zookeeper dosent contain any kind of application data (ie) data written by the producer, hence there is no need to implement any kind of security for zookeeper. But later it is found that there is possible to disturb the operation of entire kafka cluster by using metadata info available in zookeeper. So suport for security is implemented from V3.5
+     4. Apache Kafka V2.5 ships with zookeeper v3.5
+             If we are using kafka v2.5 or above, it already ships with zk v3.5.7, hence there is no need to upgrade ur zookeeper individually     
+     5. SSL still not yet supported for some zookeeper clients like kafka-topics.sh 
+            Hence for such appl we still need to connect them to zk without any kind of security
+
+Kafka Security/Broker security 
+      The security between kafka brokers and kafka clients. Kafka clients are nothing but the appl that actually communicates with brokers (ie) producers and consumers
+
+Steps for SSL security both for zookeeper security and kafka security
+1. Fix the Certificate Authority
+2. Create Trust store
+3. Create key store
+4. Generate certificate siging request 
+5. Sign the certificate using CA
+6. Import signed certificate and CA into Keystore
+
+Implementation of Zookeeper security - Use kafka_2.12-2.5.0
+
+1. Create 3 kafka brokers
+        - create data folder inside kafka
+        - create zookeeper-data,kafka-logs1, kafka-logs2,kafka-logs3 in data folder
+        - In zookeeper.properties, configure 
+dataDir=C:\Softwares\kafka_2.12-2.6.0\data\zookeeper-data
+        - In server.properties configure
+listeners=PLAINTEXT://localhost:9092
+advertised.listeners=PLAINTEXT://localhost:9092
+log.dirs=C:\Softwares\kafka_2.12-2.6.0\data\kafka-logs1
+num.partitions=3
+         - In server-1.properties configure
+broker.id=1
+listeners=PLAINTEXT://localhost:9093
+advertised.listeners=PLAINTEXT://localhost:9093
+log.dirs=C:\Softwares\kafka_2.12-2.6.0\data\kafka-logs2
+num.partitions=3
+         - In server-2.properties configure
+broker.id=2
+listeners=PLAINTEXT://localhost:9094
+advertised.listeners=PLAINTEXT://localhost:9094
+log.dirs=C:\Softwares\kafka_2.12-2.6.0\data\kafka-logs3
+num.partitions=3
+
+2. Start zookeeper and all 3 kafka brokers
+
+3. To check whether how many brokers are running
+>zookeeper-shell.bat localhost:2181 ls /brokers/ids
+
+4. Stop zookeeper and brokers
+
+5. Now we create directory ssl inside kafka folder to store all files which are created while implementing security 
+     
+6. Fix Certificate Authority for zookeeper security 
+
+Inside ssl folder - open GIT bash 
+
+>winpty openssl req -new -x509 -keyout ca-key -out ca-cert -days 3650
+
+- We use cryptographic library called OpenSSL to generate CA. Here we use openssl and requesting new certificate of type x509, this certificate will contains 2 keys private key called ca-key and public key called ca-cert, next we specify expiry days of 3650 for this certificate  
+
+Enter PEM pass phrase: senthilca
+Verifying - Enter PEM pass phrase: senthilca
+Country Name (2 letter code) [AU]:IN
+State or Province Name (full name) [Some-State]:Tamilnadu
+Locality Name (eg, city) []:Chennai
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:HCL
+Organizational Unit Name (eg, section) []:HCL
+Common Name (e.g. server FQDN or YOUR name) []:ca-cert
+Email Address []:senthil1418@gmail.com
+
+Now we can see inside ssl folder, it creates private and public key. We need to keep private key very safe, we should not give private key to producer, consumers, also if ur zookeeper is running on separate machine and if we have several kafka clusters and each kafka clusters is matched by individual teams then we should not share the private keys amoung those teams, we share only public key in production env not private key 
+
+7. Create truststore - In GIT bash 
+
+> keytool -keystore kafka.zookeeper.truststore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilts
+Re-enter new password: senthilts
+Trust certificate: yes
+
+We use java utility called keytool which is used to manage the certificate, creating a file kafka.zookeeper.truststore using --keystore option, inside this trust store file we are import certificate authority called ca-cert with alias ca-cert
+
+Now it will create truststore file inside ssl folder
+
+8. Create key store which is nothing but machine identity where zookeeper is running 
+
+$ keytool -keystore kafka.zookeeper.keystore.jks -alias zookeeper -validity 3650 -genkey -keyalg RSA -ext SAN=dns:localhost
+Enter keystore password:  senthilks
+Re-enter new password: senthilks
+What is your first and last name?
+  [Unknown]:  localhost
+What is the name of your organizational unit?
+  [Unknown]:  HCL
+What is the name of your organization?
+  [Unknown]:  HCL
+What is the name of your City or Locality?
+  [Unknown]:  Chennai
+What is the name of your State or Province?
+  [Unknown]:  Tamilnadu
+What is the two-letter country code for this unit?
+  [Unknown]:  IN
+Is CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=IN correct?
+  [no]:  yes
+
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 3,650 days
+        for: CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=IN
+
+
+Using keytool we are creating a keystore file called kafka.zookeeper.keystore, in this file we create a key using RSA algorithm with alias zookeeper and store inside the file with validity of 3650 days. For keystore file we create a extension called SAN(Subject Alternative Name) and we need to give dns name of machine on which ur zookeeper is running 
+
+Now it will create keystore file inside ssl folder
+
+9. Create certificate signing request 
+
+$ keytool -keystore kafka.zookeeper.keystore.jks -alias zookeeper -certreq -file ca-request-zookeeper
+Enter keystore password:  senthilks
+
+Here signing request will be generated under the file ca-request-zookeeper and it is generated using keystore file which we created earlier. 
+Now it will create certificate signing file inside ssl folder
+
+10. Sign the certificate using CA 
+
+$ winpty openssl x509 -req -CA ca-cert -CAkey ca-key -in ca-request-zookeeper -out ca-signed-zookeeper -days 3650 -CAcreateserial
+Signature ok
+subject=C = IN, ST = Tamilnadu, L = Chennai, O = HCL, OU = HCL, CN = localhost
+Getting CA Private Key
+Enter pass phrase for ca-key: senthilca (password created while generating key)
+
+We use openssl cryptography library and then we are going to request certificate authority which created earlier, -CA means public key of certificate authority and -CAKey is private key of certificate authority, then we will supply an input (ie) certificate signing request which was generated in previous step and output is x509 certificate is generated under the name ca-signed-zookeeper and it is valid for 3650 days 
+
+Now the certificate is signed and stored in ssl folder as ca-signed-zookeeper, also we can see some intermediate files generated 
+
+11. Import signed certificate and CA and keystore 
+
+- First we import CA using keytool and import public key(ca-cert) of certificate authority inside keystore under alias name ca-cert
+
+$ keytool -keystore kafka.zookeeper.keystore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilks
+Trust the certificate: yes
+
+- Next import signed certificate ca-signed-zookeeper into keystore using keytool with alias zookeeper
+
+$ keytool -keystore kafka.zookeeper.keystore.jks -alias zookeeper -import -file ca-signed-zookeeper
+Enter keystore password:  senthilks
+Certificate reply was installed in keystore
+
+12. Remove ca-cert.srl, ca-request-zookeeper, ca-signed-zookeeper
+
+Now we have generate all components required to configure zookeeper for implementing zookeeper security
+
+13. Now we configure zookeeper in zookeeper.properties file 
+
+- secureClientPort=2182
+    So our zookeeper is running on port no 2181 without any security, so to run zookeeper in secure port we need to add. We need to keep both ports open, because some of zookeeper client like kafka-topics.bat are still not supported to communicate to zookeeper with SSL 
+     
+- authProvider.x509=org.apache.zookeeper.server.auth.X509AuthenticationProvider
+      We use x509 certificate type for all our authentication purpose, so we need to provide a property authProvider.x509 and add a Java class implementation which is used by zookeeper for performing any kind of authentication
+
+- serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+        Netty is client server Java framework which is used to implement any kind of client server appl in Java, here we use Server class of this appl
+
+- ssl.trustStore.location=C:\\Softwares\\kafka_2.12-2.6.0\\ssl\\kafka.zookeeper.truststore.jks
+- ssl.trustStore.password=senthilts
+- ssl.keyStore.location=C:\\Softwares\\kafka_2.12-2.6.0\\ssl\\\kafka.zookeeper.keystore.jks
+- ssl.keyStore.password=senthilks
+- ssl.clientAuth=need - used to say whether any zookeeper client like broker or zookeeper-shell or any type of zookeeper client, when they are connecting to zookeeper, this parameter is used to check whether they need to provide credentials for authenticating themself with zookeeper. Since we perform 2-way SSL handshake we need to provide the parameter "need". If we pass as "none" then all the zookeeper clients can connect with zookeeper without providing their authentication 
+
+admin.enableServer=true
+admin.serverPort=9090
+server.1=localhost:2888:3888
+
+14. Start zookeeper
+>zookeeper-server-start.bat zookeeper.properties
+
+Now we can see zookeeper is up and running in port 2182 securely
+
+
+
+Configure zookeeper clients for zookeeper security 
+     Now zookeeper is securely running on 2182 port, so any zookeeper client communicating with zookeeper need to provide their ssl authentication only then they can connect with zookeeper. So now we configure all security related concepts for zookeeper client
+
+1. Create truststore - In GIT bash 
+
+> keytool -keystore kafka.zookeeper-client.truststore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilts
+Re-enter new password: senthilts
+Trust certificate: yes
+
+Now it will create truststore file inside ssl folder
+
+2. Create keystore
+
+$ keytool -keystore kafka.zookeeper-client.keystore.jks -alias zookeeper-client -validity 3650 -genkey -keyalg RSA -ext SAN=dns:localhost
+Enter keystore password:  senthilks
+Re-enter new password: senthilks
+What is your first and last name?
+  [Unknown]:  localhost
+What is the name of your organizational unit?
+  [Unknown]:  HCL
+What is the name of your organization?
+  [Unknown]:  HCL
+What is the name of your City or Locality?
+  [Unknown]:  Chennai
+What is the name of your State or Province?
+  [Unknown]:  Tamilnadu
+What is the two-letter country code for this unit?
+  [Unknown]:  IN
+Is CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=IN correct?
+  [no]:  yes
+
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 3,650 days
+        for: CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=IN
+
+3. Create certificate signing request 
+
+$ keytool -keystore kafka.zookeeper-client.keystore.jks -alias zookeeper-client -certreq -file ca-request-zookeeper-client
+Enter keystore password:  senthilks
+
+4. Sign the certificate using CA 
+
+$ winpty openssl x509 -req -CA ca-cert -CAkey ca-key -in ca-request-zookeeper-client -out ca-signed-zookeeper-client -days 3650 -CAcreateserial
+Signature ok
+subject=C = IN, ST = Tamilnadu, L = Chennai, O = HCL, OU = HCL, CN = localhost
+Getting CA Private Key
+Enter pass phrase for ca-key: senthilca
+
+5. Import signed certificate and CA into keystore 
+
+- First we import CA using keytool and import public key(ca-cert) of certificate authority inside keystore under alias name ca-cert
+
+$ keytool -keystore kafka.zookeeper-client.keystore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilks
+Trust the certificate: yes
+
+- Next import signed certificate ca-signed-zookeeper into keystore using keytool with alias zookeeper
+
+$ keytool -keystore kafka.zookeeper-client.keystore.jks -alias zookeeper-client -import -file ca-signed-zookeeper-client
+Enter keystore password:  senthilks
+Certificate reply was installed in keystore
+ 
+6. Remove ca-cert.srl, ca-request-zookeeper-client, ca-signed-zookeeper-client
+ 
+7. For implementing ssl security for zookeeper-shell, we create zookeeper-client.properties inside config folder 
+
+zookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+    - we add java class implementation for the client
+
+zookeeper.ssl.client.enable=true - we are asking zookeeper client (ie) zookeeper-shell to use ssl to encrypt the messages while communicating with zk
+
+zookeeper.ssl.protocol=TLSv1.2 - specify encryption protocol
+
+zookeeper.ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.zookeeper-client.truststore.jks
+zookeeper.ssl.truststore.password=senthilts
+zookeeper.ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.zookeeper-client.keystore.jks
+zookeeper.ssl.keystore.password=senthilks
+
+8. Start zookeeper-shell, so since zookeeper-shell tries to connect with zookeeper securely we need to provide zookeeper-client as input
+
+>zookeeper-shell.bat localhost:2182 -zk-tls-config-file zookeeper-client.properties ls /brokers/ids
+Connecting to localhost:2182
+
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+Node does not exist: /brokers/ids
+
+Security for Kafka brokers
+     We need implement zookeeper security on all the brokers, as broker is a one of zookeeper client
+
+1. Create truststore - In Git bash from ssl folder
+
+> keytool -keystore kafka.broker0.truststore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilts
+Re-enter new password: senthilts
+Trust the certificate: yes
+
+2. Create keystore
+
+$ keytool -keystore kafka.broker0.keystore.jks -alias broker0 -validity 3650 -genkey -keyalg RSA -ext SAN=dns:localhost
+Enter keystore password:  senthilks
+Re-enter new password: senthilks
+What is your first and last name?
+  [Unknown]:  localhost
+What is the name of your organizational unit?
+  [Unknown]:  HCL
+What is the name of your organization?
+  [Unknown]:  HCL
+What is the name of your City or Locality?
+  [Unknown]:  Chennai
+What is the name of your State or Province?
+  [Unknown]:  Tamilnadu
+What is the two-letter country code for this unit?
+  [Unknown]:  TN
+Is CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=TN correct?
+  [no]:  yes
+
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 3,650 days
+        for: CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=TN
+
+3. Create certificate signing request 
+
+$ keytool -keystore kafka.broker0.keystore.jks -alias broker0 -certreq -file ca-request-broker0
+Enter keystore password:  senthilks
+
+4. Sign the certificate using CA
+
+$ winpty openssl x509 -req -CA ca-cert -CAkey ca-key -in ca-request-broker0 -out ca-signed-broker0 -days 3650 -CAcreateserial
+
+Enter pass phrase for ca-key:senthilca
+
+5. Import signed certificate and CA into keystore
+
+$ keytool -keystore kafka.broker0.keystore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilks
+Trust certificate: yes
+
+$ keytool -keystore kafka.broker0.keystore.jks -alias broker0 -import -file ca-signed-broker0
+Enter keystore password:  senthilks
+
+6.  Remove ca-cert.srl, ca-request-broker0, ca-signed-broker0
+
+7. Now we configure broker0 for zookeeper security in server.properties
+
+zookeeper.connect=localhost:2182
+
+zookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+zookeeper.ssl.client.enable=true
+zookeeper.ssl.protocol=TLSv1.2
+
+zookeeper.ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker0.truststore.jks
+zookeeper.ssl.truststore.password=senthilts
+zookeeper.ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker0.keystore.jks
+zookeeper.ssl.keystore.password=senthilks
+
+zookeeper.set.acl=true - Normally zookeeper contains metadata info, so whenever any broker is connecting with zookeeper it shares some metadata likr info related to topics, offsets etc. So when u set this property that all the info shared by this broker to the zookeeper can be accessed by only this broker. So if anyother appl tries to access the info shared by this broker to the zookeeper it will be rejected 
+     So how zookeeper knows that this broker is trying to access the info, since we are giving keystore info to zookeeper, so zookeeper comes to know the identity of this broker when it tries to access the info that it shared to zookeeper earlier 
+
+8. Start kafka server
+>kafka-server-start.bat server.properties
+
+Now kafka server is executed properly
+
+9. We can verify by running zookeeper-shell, where it display 1 broker
+>zookeeper-shell.bat localhost:2182 -zk-tls-config-file zookeeper-client.properties ls /brokers/ids
+
+Connecting to localhost:2182
+
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+[0]
+
+Note:
+  In order to see logs, we can goto logs folder and see server.log, how it was created means, u can open kafka-server-start file and export log4j.properties file where it will define log info, similarly u can create ur own log properties and configure it 
+
+10. Repeat the same steps for broker 1 and broker 2
+
+11. Start zookeeper, server, server-1 and server-2
+
+12. We can verify by running zookeeper-shell,
+
+g>zookeeper-shell.bat localhost:2182 -zk-tls-config-file zookeeper-client.properties ls /brokers/ids
+Connecting to localhost:2182
+
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+[0, 1, 2]
+
+Where it will display 3 brokers and connected to zookeeper securely 
+
+Summary:
+   For zookeeper security, first we implemented security inside zookeeper, for this we performed steps from 2 to 6 and generated truststore and keystore file. Then inside zookeeper.properties we added all security related properties 
+    Once we finsihed configuring zookeeper, we started zookeeper and we performed same steps 2 to 6 for zookeeper client. For our usecase we use 2 zookeeper client (ie) zookeeper-shell and brokers. For zookeeper-shell we created zookeeper-client.properties and created truststore and keystore files, and added all security related parameters and started zookeeper-shell and we repeated same steps for the brokers 
+
+---------------------------------------------
+
+Kafka Security/Broker Security Implementation
+       Kafka Security means security between kafka brokers and kafka clients like producer and consumer appl.
+      For this purpose we perform same steps from 1 to 6, so first create certificate authority then need to create truststore, keystore for all kafka brokers, producers and consumers. But for my convenience we are going to use same CA which we used for zookeeper security. But in prod env make sure we should have 2 different CA, one for zookeeper security and other for kafka security because we will share public key of CA with producer and consumer so make sure we use different CA for kafka security. We also use same keystore and truststore file for kafka security but in prod env make sure we use different one
+
+Configure security for all 3 brokers
+1. Stop all brokers
+
+2. So far producers, consumers and other brokers are communicate through plaintext (ie) messages is not encrypted and it will connect with brokers without any authentication, but now we use SSL for both authentication and encryption, so in server.properties file we change
+
+listeners=SSL://localhost:9092
+advertised.listeners=SSL://localhost:9092
+
+- So any broker, producer or consumer connectiny to this broker must authenticate them by SSL and also all communication with this broker will be encrypted by SSL 
+
+- Now we need to add certain properties for broker SSL security 
+
+ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker0.truststore.jks
+ssl.truststore.password=senthilts
+ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker0.keystore.jks
+ssl.keystore.password=senthilks
+security.inter.broker.protocol=SSL - security method to communicate with other                                        brokers 
+ssl.client.auth=required - any other broker or producer or consumers, when they connect with this broker, they also need to authenticate themselves by SSL
+ssl.protocol=TLSv1.2
+
+3. Repeat same steps for server-1 and server-2 properties file 
+
+listeners=SSL://localhost:9093
+advertised.listeners=SSL://localhost:9093
+ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker1.truststore.jks
+ssl.truststore.password=senthilts
+ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker1.keystore.jks
+ssl.keystore.password=senthilks
+security.inter.broker.protocol=SSL
+ssl.client.auth=required 
+ssl.protocol=TLSv1.2
+
+
+listeners=SSL://localhost:9094
+advertised.listeners=SSL://localhost:9093
+ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker2.truststore.jks
+ssl.truststore.password=senthilts
+ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.broker2.keystore.jks
+ssl.keystore.password=senthilks
+security.inter.broker.protocol=SSL
+ssl.client.auth=required 
+ssl.protocol=TLSv1.2
+
+4. Start kafka server, server-1 and server-2
+
+We can see all 3 brokers now connected to zookeeper. Now we implemented kafka security on all brokers
+
+----------------------------------------------------------------------------
+Implement kafka security on broker client (ie) Producer and consumer
+
+1. Create topic 
+
+>kafka-topics.bat --zookeeper localhost:2181 --create --topic ssl-topic --partitions 2 --replication-factor 3
+
+If topic is not created, in zookeeper.properties file add 
+skipACL=yes and then try to create
+
+2. Describe the topic
+
+>kafka-topics.bat --zookeeper localhost:2181 --topic ssl-topic --describe
+Topic: ssl-topic        PartitionCount: 2       ReplicationFactor: 3    Configs:
+        Topic: ssl-topic        Partition: 0    Leader: 2       Replicas: 2,1,0 Isr: 2,1,0
+        Topic: ssl-topic        Partition: 1    Leader: 0       Replicas: 0,2,1 Isr: 0,2,1
+
+Note:
+comment skipACL=yes then restart zookeeper and kafka server
+
+3. For configuring producer and consumer for kafka security we need to repeat step 2 to 6 for generating truststore and keystore files 
+
+Repeat step 2 to 6 for producer and consumer separately
+
+Configuration for Producer
+$ keytool -keystore kafka.producer.truststore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilts
+Re-enter new password: senthilts
+Trust this certificate? [no]:  yes
+
+$ keytool -keystore kafka.producer.keystore.jks -alias producer -validity 3650 -genkey -keyalg RSA -ext SAN=dns:localhost
+Enter keystore password:  senthilks
+Re-enter new password: senthilks
+What is your first and last name?
+  [Unknown]:  localhost
+What is the name of your organizational unit?
+  [Unknown]:  HCL
+What is the name of your organization?
+  [Unknown]:  HCL
+What is the name of your City or Locality?
+  [Unknown]:  Chennai
+What is the name of your State or Province?
+  [Unknown]:  Tamilnadu
+What is the two-letter country code for this unit?
+  [Unknown]:  IN
+Is CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=IN correct?
+  [no]:  yes
+
+$ keytool -keystore kafka.producer.keystore.jks -alias producer -certreq -file ca-request-producer
+Enter keystore password:  senthilks
+
+$ winpty openssl x509 -req -CA ca-cert -CAkey ca-key -in ca-request-producer -out ca-signed-producer -days 3650 -CAcreateserial
+Enter pass phrase for ca-key:senthilca
+
+$ keytool -keystore kafka.producer.keystore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilks
+Trust this certificate? [no]:  yes
+
+$ keytool -keystore kafka.producer.keystore.jks -alias producer -import -file ca-signed-producer
+Enter keystore password:  senthilks
+Certificate reply was installed in keystore
+
+Configuration for Consumer
+$ keytool -keystore kafka.consumer.truststore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilts
+Re-enter new password: senthilts
+Trust this certificate? [no]:  yes
+
+$ keytool -keystore kafka.consumer.keystore.jks -alias consumer -validity 3650 -genkey -keyalg RSA -ext SAN=dns:localhost
+Enter keystore password:  senthilks
+Re-enter new password: senthilks
+What is your first and last name?
+  [Unknown]:  localhost
+What is the name of your organizational unit?
+  [Unknown]:  HCL
+What is the name of your organization?
+  [Unknown]:  HCL
+What is the name of your City or Locality?
+  [Unknown]:  Chennai
+What is the name of your State or Province?
+  [Unknown]:  Tamilnadu
+What is the two-letter country code for this unit?
+  [Unknown]:  IN
+Is CN=localhost, OU=HCL, O=HCL, L=Chennai, ST=Tamilnadu, C=IN correct?
+  [no]:  yes
+
+
+$ keytool -keystore kafka.consumer.keystore.jks -alias consumer -certreq -file ca-request-consumer
+Enter keystore password:  senthilks
+
+$ winpty openssl x509 -req -CA ca-cert -CAkey ca-key -in ca-request-consumer 
+Enter pass phrase for ca-key:senthilca
+
+$ keytool -keystore kafka.consumer.keystore.jks -alias ca-cert -import -file ca-cert
+Enter keystore password:  senthilks
+Trust this certificate? [no]:  yes
+
+$ keytool -keystore kafka.consumer.keystore.jks -alias consumer -import -file ca-signed-consumer
+Enter keystore password:  senthilks
+Certificate reply was installed in keystore
+
+4. For producer and consumer appl, we use kafka-console-producer and kafka-console-consumer. Since we are connecting with broker using SSL security we need to configure producers and consumers 
+
+- Inside config folder we have producer.properties where we can configure producer related configurations 
+
+bootstrap.servers=localhost:9092, localhost:9093 - we need to specify one or two brokers, because if one broker is down still producer appl can connect with kafka cluster 
+
+security.protocol=SSL
+ssl.protocol=TLSv1.2
+ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.producer.truststore.jks
+ssl.truststore.password=senthilts
+ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.producer.keystore.jks
+ssl.keystore.password=senthilks
+
+5. Configure the consumer by using consumer.properties
+
+bootstrap.servers=localhost:9092,localhost:9093
+group.id=ssl-consumer
+security.protocol=SSL
+ssl.protocol=TLSv1.2
+ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.consumer.truststore.jks
+ssl.truststore.password=senthilts
+ssl.keystore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.consumer.keystore.jks
+ssl.keystore.password=senthilks
+
+6. Start kafka-console-producer
+config>kafka-console-producer.bat --topic ssl-topic --producer.config producer.properties --broker-list localhost:9092,localhost:9093
+>Hello
+
+7. Start kafka console consumer
+config>kafka-console-consumer.bat --topic ssl-topic --from-beginning --consumer.config consumer.properties --bootstrap-server localhost:9092,localhost:9093
+>Hello
+
+Now we can successfully produce and consume message, so they are connecting to kafka brokers by means of SSL authentication and also all communication between producer and broker, consumer and brokers are happening means of SSL encryption protocol TLSv1.2
+
+
+Why SASL Authentication and Authorization in Kafka?
+    In last part we implemented encryption and authentication by means of SSL (ie) we implemented encryption using security protocol called TLSv1.2. We implemented authentication by means of two way SSL authentication, for example if producer is making connection request to kafka, then first kafka brokers will authenticate themselves to the producer by means of SSL, then the producer will authenticate itself to kafka by means of SSL, this is called 2-way SSL 
+    Since we have 2-way SSL in place, then
+
+Purpose of SASL Authentication
+      Used to simplify the authentication process from kafka client side, imagine we have kafka user who is running producer appl on one machine, now for some purpose this user has to transfer his producer appl to another machine. In this case user also needs to configure his SSL certificate according to new machine. 
+    So inorder to simplify this authentication process from client side we are going to replace SSL client side authentication by means of SASL authentication. So once we have SASL authentication then kafka client like producer or consumer can easily perform their authentication using username/password, oauth tokens etc 
+
+What is SASL authentication ?
+   - Simple Authentication and Security Layer(SASL)
+   - It is a framework used for implementing authentication mechanism in Internet protocol
+   - Different types of SASL authentication mechanism
+ 1. Generic Security Services Application Program Interface(GSSAPI)
+ 2. OAUTHBEARER
+ 3. SCRAM
+ 4. PLAIN
+ 5. Delegation Tokens
+
+What is SASL/SCRAM ?
+   - SCRAM is Salted Challenge Response Authentication Mechanism 
+   - How this mechanism works?
+          Imagine there is a client making connection request to server, so in order to verify its identity, the client instead of sending password directly to server it computes a hash value based on its password and then sends hash value to server 
+      Now the server will verify whether hash value belongs to password of the client, so once verification is done then the server will accept the connection request from the client, so this how SCRAM mechanism works
+     - In order to compute has value Kafka supports 2 hash functions like SHA-256 and SHA-512, so for our implementation we use SHA-512
+     - As for as Kafka is concerned all SASL/SCRAM credentials (ie) username and pwd are stored inside zookeeper 
+
+Authentication in Kafka Architecture 
+
+1. Zookeeper Authentication
+       Imagine we have a zookeeper and we have number of zookeeper clients like brokers, zookeeper-shell etc. Now when these zookeeper clients make a request to Zookeeper, then we have 2-way SSL authentication which we implement previously. 
+      We can implement SASL authentication in this area, however it is not necessary because most of zookeeper clients will be only used by kafka organization and not by kafka users, so zookeeper is going to follow 2-way ssl 
+
+2. Kafka/Broker authentication
+       Imagine we have kafka broker and kafka client like producer, consumers and other kafka brokers, now kafka client makes a request to kafka broker
+   - First broker will authenticate itself by means of SSL authentication, then kafka clients will use SASL authentication for their authentication purpose, hence we are not going to use 2-way SSL authentication, instead we use 1-way SSL authentication (ie) only broker will be using SSL authentication for authenticating its identity, whereas kafka client will be using SASL authentication (ie) username and pwd for their authentication purpose 
+    - Hence security protocol we are going to use for kafka authentication is SASL_SSL 
+    - If we use SASL_SSL, previously when we use 2-way SSL in server.properties we set ssl.client.auth=required (ie) the client also needs to use ssl while authenticating to user, since we use SASL authentication for client we set  ssl.client.auth=none
+
+What is Authorization in Kafka?
+     - It is a technique that allows Kafka to check the scope of its client (ie) producer or consumer 
+     For example, whenever producer tries to write into topic, authorization enables kafka to check whether this producer is allowed to write into topic. Similarly when consumer is try to read from topic, authorization enables kafka to check whether this consumer is allowed to read from topic
+    - As far as kafka is concerned we are implementing authorization using ACL(Access Control List)
+
+Implementation of SASL Authentication and Authorization between brokers
+1. In my machine 3 node kafka cluster is running with 2-way SSL authentication enabled.
+    For zookeeper authentication we are not making any changes, we are fix with 2-way ssL authentication. We will implement SASL authentication only for kafka brokers and kafka clients (ie) producers and consumers
+
+2. Stop all brokers
+
+3. In order to implement SASL authentication for kafka brokers, we first need to generate SASL username and pwd for the broker, because whenever a broker tries to connect with other broker it supplies SASL credential 
+    All SASL credentials will be stored inside zookeeper, so we generate SASL username and pwd using zookeeper client called kafka-configs
+    Here we created zookeeper client called kafka-configs which connected to zookeeper, since zookeeper is using 2-way ssl we passed zookeeper-client properties, then we created user called "broker-admin", for this user we created SCRAM password using SHA-512
+
+>kafka-configs.bat --zookeeper localhost:2182 --zk-tls-config-file zookeeper-client.properties --entity-type users --entity-name broker-admin --alter --add-config SCRAM-SHA-512=[password=abcd123]
+Warning: --zookeeper is deprecated and will be removed in a future version of Kafka.
+Use --bootstrap-server instead to specify a broker to connect to.
+Completed updating config for entity: user-principal 'broker-admin'.
+
+Now we have credential for the broker have been created with name broker-admin
+
+4. In order to implement SASL for brokers, we need to change some properties and add few properties in server.properties file 
+
+security.inter.broker.protocol=SASL_SSL 
+     - So whenever this broker is connecting to other brokers, it connect to them by supplying SASL credential and all the messages between this brokers and other brokers will be encrypted using SSL 
+
+ssl.client.auth=none
+     - So whenever other brokers or kafka client like producers or consumers try to connect with this broker, they will supply their SASL credential not their SSL credential any more
+
+listeners=SASL_SSL://localhost:9092
+advertised.listeners=SASL_SSL://localhost:9092
+     - So whenever other brokers or producers or consumers try to connect with this broker, they will connect using SASL credential and all communication between this broker and other brokers will happen means of SSL
+
+- Next we need to add some properties related to SASL 
+
+sasl.enabled.mechanisms=SCRAM-SHA-512 - list of SASL mechanism to be enabled
+
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512 - what is the mechanism amoung list of mechanism, that we are going to use for this broker while connecting to other brokers
+
+listener.name.sasl_ssl.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="broker-admin" password="abcd123";
+    - Now we pass the credential created using Java class name called "listener.name.sasl_ssl.scram-sha-512" and it uses a service jaas(Java Authentication and Authorization service), which needs a parameter called "config". For this config parameter we need to pass ScramLoginModule which requires username and password 
+
+super.users=User:broker-admin
+    - Whatever credentials we are using we need to make sure it as super-user, because super-user can access all the resources of topic, partitions etc
+     The reason why we are making broker credential as super-user is, imagine we have a partition inside the broker and this partition needs to be replicate to other broker, so these 2 brokers needs to communicate with each other, so this communication is possible only if we make broker credential as super-user 
+
+5. Now we have to add java implementation for authorization 
+
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+
+6. Now update the configuration for server-1 and server-2 properties files
+
+listeners=SASL_SSL://localhost:9093
+advertised.listeners=SASL_SSL://localhost:9093
+
+security.inter.broker.protocol=SASL_SSL 
+ssl.client.auth=none
+
+sasl.enabled.mechanisms=SCRAM-SHA-512
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+listener.name.sasl_ssl.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="broker-admin" password="abcd123";
+super.users=User:broker-admin
+
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+
+server-2.properties
+
+listeners=SASL_SSL://localhost:9094
+advertised.listeners=SASL_SSL://localhost:9094
+
+security.inter.broker.protocol=SASL_SSL 
+ssl.client.auth=none
+
+sasl.enabled.mechanisms=SCRAM-SHA-512
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+listener.name.sasl_ssl.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="broker-admin" password="abcd123";
+super.users=User:broker-admin
+
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+
+7. Start all 3 brokers
+
+8. Now we can verify whether it is running
+
+config>zookeeper-shell.bat localhost:2182 -zk-tls-config-file zookeeper-client.properties ls /brokers/ids
+
+Connecting to localhost:2182
+
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+[0, 1, 2]
+
+So we finsihed configuring brokers for SASL configuration 
+
+Now we see how authentication works between these brokers?
+      Consider broker0 is making connection request with broker1, so broker0 is client and broker1 is server. So first server side authentication will happen, so broker1 will expose its keystore to broker0, so broker0 will check whether the certificate present in keystore are also available in its truststore, so if it is available then broker0 will authenticate broker1 (ie)client will authenticate the server, so the server authentication is done
+      Now broker0 to authenticate itself to broker1, it will pass its SASL credential to broker1. Previously when we are using SSL for authentication, broker0 also provides its keystore and broker1 will verify its truststore, but now only server will do SSL authentication and client (ie) broker0 will provide SASL credential and authenticate itself 
+      So all client side authentication will be happening using SASL and server side authentication happened by SSL and all communication between them will be encrypted using TLSv1.2
+
+Implementation of SASL authentication between producers and consumers 
+
+1. Create SASL credential username and pwd for producer using kafka-configs
+
+>kafka-configs.bat --zookeeper localhost:2182 --zk-tls-config-file zookeeper-client.properties --entity-type users --entity-name sasl-producer --alter --add-config SCRAM-SHA-512=[password=abcd123]
+
+Warning: --zookeeper is deprecated and will be removed in a future version of Kafka.
+Use --bootstrap-server instead to specify a broker to connect to.
+Completed updating config for entity: user-principal 'sasl-producer'.
+
+2. Create SASL credential username and pwd for consumer using kafka-configs
+
+>kafka-configs.bat --zookeeper localhost:2182 --zk-tls-config-file zookeeper-client.properties --entity-type users --entity-name sasl-consumer --alter --add-config SCRAM-SHA-512=[password=abcd123]
+
+Warning: --zookeeper is deprecated and will be removed in a future version of Kafka.
+Use --bootstrap-server instead to specify a broker to connect to.
+Completed updating config for entity: user-principal 'sasl-consumer'.
+
+3. Now we are going to add authorization (ie) only created user can produce and consume message from this topic using kafka-acls
+    So we created access control list(acl) which is zookeeper client, so we are connecting to zookeeper by ssl and allowing principal (ie) user ssl-producer to write to topic ssl-topic, for writing we need 3 operations WRITE, DESCRIBE, DESCRIBECONFIGS
+
+config>kafka-acls.bat --authorizer-properties zookeeper.connect=localhost:2182 --zk-tls-config-file zookeeper-client.properties --add --allow-principal User:sasl-producer --topic ssl-topic --operation WRITE --operation DESCRIBE --operation DESCRIBECONFIGS
+
+Now user sasl-producer can write, describe and describeconfigs on ssl-topic
+
+4. Similarly we add acls for consumer
+
+config> kafka-acls.bat --authorizer-properties zookeeper.connect=localhost:2182 --zk-tls-config-file zookeeper-client.properties --add --allow-principal User:sasl-consumer --topic ssl-topic --operation READ --operation DESCRIBE
+
+Now read permission is created for consumer 
+
+5. So any consumer that wants to read from topic, wants to specify consumer group. So in order to use consumer group for this consumer 
+
+config>kafka-acls.bat --authorizer-properties zookeeper.connect=localhost:2182 --zk-tls-config-file zookeeper-client.properties --add --allow-principal User:sasl-consumer --group sasl-consumer --operation READ 
+
+So now we can use this consumer group while consuming from this topic
+
+6. Now we configure producer.properties file
+
+security.protocol=SASL_SSL
+   - This producer when it tries to connect with kafka broker, it is going to SASL credential and all communication between then will be happened by SSL 
+
+Now we are not going to use keystore because producer when it connects to broker it will provide its SASL credential (ie) client side authentication and how broker authenticate with producer is, it will expose its keystore and producer will check whether keystore certificate are present in truststore, so only sasl and truststore path will be used in producer, so we can disable keystore properties
+
+- We need to configure SASL mechanism and its credentials
+
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="sasl-producer" password="abcd123";
+
+7. Now we configure consumer.properties
+
+group.id=sasl-consumer
+security.protocol=SASL_SSL
+ssl.protocol=TLSv1.2
+ssl.truststore.location=C:\\Softwares\\kafka_2.12-2.5.0\\ssl\\kafka.consumer.truststore.jks
+ssl.truststore.password=senthilts
+
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="sasl-consumer" password="abcd123";
+
+8. Start the producer
+config>kafka-console-producer.bat --broker-list localhost:9092,localhost:9093 --topic ssl-topic --producer.config producer.properties
+
+9. Start the consumer
+config>kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093 --topic ssl-topic --consumer.config consumer.properties --from-beginning
+
+In case if we didnt create ACL, the producer will not able to write into topic  because in all brokers we added a property
+     authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+
+So whenever we add this property, then producer and consumer tries to read or write from topic should have all necessary access 
+
+
+Spring boot implementation of SASL_SSL
+   https://github.com/camelya58/kafka-sasl-ssl
+
