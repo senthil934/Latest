@@ -1,0 +1,350 @@
+Day 1
+
+The important word we know is "beyond coding", so we start our IT life or once we get into IT world we start our coding, so initially we will have a training to understand different technologies and then we get into coding directly. But in this training we are going to understand beyond coding since this training for tech lead so we understand beyond coding and then we come to technical aspects 
+   You have seen lot of leads who have come across ur project exp, so apart from coding whatelse u have observed from them 
+1. Deployments
+2. Planning
+3. Technical stack 
+   Now we go back one more level up, so what are the roles u have seen in ur project (ie) the roles performed by different set of people 
+1. Business Analyst
+2. Developer
+3. Project manager
+4. Tester
+5. Architect
+6. Agile coach
+7. Scrum master 
+8. Product owner 
+9. UX designer
+10. Solution Architect
+11. DevOps team
+12. Database administrator
+13. Release Manager
+14. Quality Analyst 
+15. Site Reliability Engineer(SRE)
+16. Subject Matter Expert(SME)
+
+So to start with every project is unique, there might be some resemblence between project A and project B, but there could be a small difference, so thats where the role has so many things and why do we have this, if we talk about SME, technical architect, solution architect all these roles are belong to same category but we will call in different name in different project requirements, so whatever we talked in terms of billing. May be some roles and responsibilty ties to each role, so billing and project execution is different 
+    To execute our project what are roles are required 
+1. Business Analyst
+2. Developer
+3. Architect
+4. Tester
+5. QA
+
+So now we are going to categorize all roles into single one
+1. Customer - so without customer we cant perform any project, so even in internal project we will make a team or a sponsor to be a customer 
+2. Manager 
+      - Project Manager
+3. Developers 
+      - Business Analyst
+      - Developer
+      - Architect
+      - UX Designer
+      - Security Engineer
+      - DevOps
+      - Database admin
+      - Release Manager
+      - SRE
+4. Testers
+      - QA
+5. Users 
+
+so this are the major classification in project, so all the roles are categorize under different name, so customer is a foremost and also he is final because without his approval the product will not go live and also we cannot get the revenue as well 
+   So from customer we get requirement, then manager will go through them and we will understand them and project manager will call these members whichever it is applicable for the requirement analysis to breakdown to SDLC. Next manager will call the testers team as well. Finally we have users/endusers where they might be part of our project execution 
+
+Now we see what are the non-technical problems that we faced in software development ?
+1. Resource
+2. Cost Utilization
+3. Requirement understanding/changes/change request
+4. Time management
+5. Lack of documentation 
+6. Lack of technical expertise 
+7. Quality and productivity 
+
+why SDLC or standard process or tool?
+1. First image is what customer has explained to the project execution team
+2. Next image says what is the understanding of project leader
+3. Third image is about Business analyst, how he have understood the requirement
+4. Fourth image is actual developer who have wrote the requirement 
+5. Fifth image is what business conslutant or sales team, how they have projected it, saying that how product will come
+6. Next image, how the project was documented, so people are only thinking about project requirement and every time while developing we have some kind of problem and we have to solve them, without solving we cant move to next step. So we never think about documentation, so in some project there is no documentation and in some project the documentation will be outdated and not updated on every lifecycle 
+7. Next image is when we install what will happen, so we can see only one work hanging 
+8. Next image represent how we are billing the customer 
+9. Next image how it was supported, so why it was half cut (ie) when we do support it is not helping them. Why we are not able to support entire project 
+  1. Lack of documentation 
+This is related to production support where entire team will get dismandle first, so if there is any new release they will not be working on production support. So there will minimal team will be available as production support, so that team will not have the entire picture of the requirement.
+   So as per the image, the tree is not our product at all, the product is about the swing, so in production support we are supporting the tree and not also entire tree 
+10. Next image represent how the customer expects, but while explaining the communication is mismatched throughout the entire product lifecycle 
+
+So roles and responsiblity of each and everyone is important for project execution along with customer
+
+SDLC Model
+1. Waterfall
+      - Project planning & feasibility study
+      - Requirement analysis 
+      - Design
+      - Development
+      - Testing
+      - Production implementation/deployment
+      - Operation and maintainence 
+2. V model
+3. Incremental
+4. Sprial
+5. RAD
+6. Prototyping
+7. Agile 
+
+
+
+
+Design phase
+    As a technical lead you have to involve in design phase as an observer for couple of sittings and observe how they do and how they conduct design meetings. So we have to contribute in design phase based on the principles and design patterns 
+    Their are different types of principles
+1. SOLID
+2. DRY - Do Not keep yourself (ie) dont duplicate, if there is in-built function available use it instead of creating it which reduce lot of code. So whenever we discuss anything we always think about reusable component, the more we remove duplicate, the more it will be helpful
+3. DIY - Do It Yourself, for coding purpose dont depend on others 
+4. KISS - Keep it stupid and simple (ie) dont complex things. So if any new person comes without any knowledge he should be able to understand our design patterns. So when they see the design diagram they able to understand after long years also, rather putting lot of efforts to understand the design principles or patterns or code
+  
+SOLID Principles
+1. Single responsibility principle
+       - A class should have one and only one reason to change (ie) it will do only one logical job  
+       For example Entity/DAO/model class, controller class, repository, Exception classes, Listeners, aspects, Enum which contains specific related info 
+     Consider we have banking domain, we create Customer class which contains custid, name, address, next customer will have accounts and we are not supposed to have details of Accounts in this class. 
+
+class Customer  {
+    private Long customerid;
+    private String name;
+    private String address;
+    private List<Account> accounts;
+}
+
+We create separate Account class which contains accountno, accType, and map with Customer
+
+class Account {
+    private Long accountNo;
+    private String accType;
+}
+
+So anything happen to accounts we will modify only Accounts class, in terms of Customer we update only Customer class
+
+2. Open closed principle
+       - open for extension and closed for modification. On Sprint 1 we cannot achieve this, because in sprint 1, 2 and 3 we are just starting the functionality 
+       - Example is abstract class and interface, so we have to apply more inheritance 
+       - Suppose the client is telling about the product with some specification, we need to design the product which has specific size and color. So initially in sprint 1 he tells to build our product based on the specific size and color, then in the next sprint the client asks us to add few more colors and sizes. So we cannot modify the method by adding another color or another size actually
+    So in sprint 2 or sprint 3, it is going to expand and new colors and sizes are going to be added for the product, so then in sprint 3 or sprint 4 we realize that this things are not going to be static and this things are keep on changing then we need to optimize our code. So we need to go for an interface and we need to put a specification filter or color filter  
+    - Consider we have Person class with some fields
+
+class Person {
+   String name;
+   int age;
+   String dob;
+}
+
+But during panademic they are expecting to have dosage of vacanation, so we create PersonVacanation class that extends Person
+
+class PersonVaccination extends Person {
+   String dose1;
+   String dose2;
+}
+
+So if we want to get the info about the person who are vaccinated we will use PersonVaccination class rather than Person class. So if we keep dose1, dose2 in Person class, because it is not needed in all cases, previously it was needed but now not needed
+    Even we can try to control that this class can be inherited only by couple of classes using Sealed classes 
+
+3. Lisknov Principle
+       - Talks about Inheritance where Derived classes must be totally interchangeable with their base class
+       - In covariant return type where we can have return type as ur base class or derived class and we can use instanceof to find the object type
+
+public class Main { PSVM {
+   Person p=getPersonDetail();
+   SOP(p instanceof Person);   //true
+   SOP(p instanceof PersonVaccination);  //false
+   }
+   public static Person getPersonDetail() {
+     return new Person();
+    //return new PersonVaccination();
+    }
+}
+
+This is covariant which returns base or child class
+
+4. Interface Segregation
+        - Larger interface break into smaller ones
+        - Example: Printer, Scanner, MultiFunctional Printing device, All-in-one 
+    So if we mix everything in single interface, then old printers dosent have all new features so it is better to have separate interfaces for Printer, Scanner and MultiFunctional device which extends Printer, Scanner etc 
+
+5. Dependency Inversion
+       - Higher level modules should not depend on lower level modules, instead lower level modules depends on higher level modules. It should depend on abstractions means abstract class or interface, abstract class should not depend on concrete classes but concrete class should always depend on abstarct 
+      So when we spoke about SRP, we have entity, repository so if we look closely they all follow this DI principle. With this Dependency Inversion principle we are going to use Dependency Injection also. So Dependency Injection is not equal to Dependency Inversion, but it is an advantage of Dependency Inversion principle, so that we can inject lower level modules to higher level modules by autowiring. So if we are using autowiring then unknowingly we are try to use Dependency inversion principle
+    - Constructor injection is also an example of dependency inversion 
+    - Association relationship is also dependency inversion 
+     How we can identify which is higher level and which is lower level?
+    So we have an repository interface which extend it from another interface like JpaRepository or CrudRepository. But we are going to inject that repository in ur service class, so that service class is a higher level module which is dependent on lower level module which is nothing but ur repository interface, so there is no relationship or link between them, but we are just using with the help of Dependency Inversion principle. So we are telling spring context to use this instance of repository intf to higher level module called Service class 
+
+Design Pattern
+1. Creational - the way of creating object
+ 1. Factory method - It is nothing but a method which produces base class object based on some kind of condition 
+    Example is var keyword where java can determine the datatype based on value at runtime 
+    - using of() method we can create either List or Set or Map
+ 2. Abstract factory - Factory of factory 
+Example are ApplicationContext, BeanFactory because in Spring everything is bean but the type of bean is different
+     
+ 3. Singleton - we have only one object throughout the execution scope 
+ 4. Prototype - opp of singleton - whenever we ask for it create new object 
+   Shallow copy - ref by object (ie) source is changed, your target will reflect 
+   Deep copy - ref by value (ie) source is changed, your target will not reflect 
+ 5. Builder - it is a step by step approach
+   Using Lombok @Builder where it will create the object after building all values, but in getter and setters first we create object then it will set the values 
+ 6. Object pool
+      Earlier days we have connection pooling, so if we create everywhere connection object then it is not singleton and if we have single object then we have performance problem. So we take pool of objects created and keep it ready, whoever is asked we will give to them and number of objects created is based on threshold, by using stress testing and find out how many connections we need and provide the number. So first we create the object in pool and reuse the object 
+    Example: In Spring we have Hikari thread pool for DB connection.
+     - ThreadPoolExecutor 
+     - String pool
+2. Behaviourable - interaction and responsibility of object
+   1. Chain of responsibility - we will have sequence of operation and we want to do operation A only after operation B then we go sequentially and also we should set some flag if operation B fails then we should not continue to C. And also we have skip mechanism, so if we start from A and we skip B,C and then we go for D 
+   2. Command
+   3. Iterator
+   4. Observer
+   5. State 
+        - Consider we have traffic signal that has 3 states like red, green and yellow. Next we have action() that is going to call one by one. In each state we will define the next state and we will move from one state to another state 
+RedState - YellowState
+YellowState - GreenState or RedState
+GreenState - YellowState 
+   6. Strategy 
+   7. Template
+   8. Momento - For Financial or banking transaction like undo, event driven architecture
+   9. Mediator
+   10. Interpreter
+3. Structure - structure of object 
+
+
+When we develop any project we should write only normal java code which is the starting point, eventhough if we know abt design patterns. If it is visible very clearly that this is the requirement then we can easily implement the design pattern, but suddenly into pattern is not good. Actually the pattern should evolve throughout the agile sprints and depend on requirements and add patterns to our project 
+
+
+Day 2 - Agile Process - Motivation, Roles and Ceremonies 
+
+Day 3 - DevOps Evoluation
+     First we talk about Release management (ie) after getting sign off from testing team either it could be system testing or UAT, now we want to send to live env 
+     For that we have to prepare Release Tickets or notes which is done by Lead, provide working software done by Lead, then deployment notes done by Lead + development team, deployment support done by Lead + 2/3 developers + 1/2 testers + 1 UAT/client/BA, next post production testing like site testing, site reliability testing, security vulnerabilities done by Lead + 2/3 developers + 1/2 testers
+    Now actual deployment will be done by Operation team like setting server/hardware, software installation, code deployment and configuration, monitoring + control 
+    Now there are huge challenges as more number of team is involved almost 5 or 6 teams, like Lead but he belongs to development team, but as per agile it is a scrum team, but in waterfall Lead is separate, developers are separate and operations team are separate, testers will be separate. So multiple teams are involved here which leads to many problems and leads to delay 
+
+Key Performance Indicators
+1. Reduce Deployment failures 
+       Deployment failures are happened because of documentation, if we miss few steps that could be a possibility of deployment failures. If other person whos is going to deploy, if they misunderstood or missed one step it will consider as failure and it will be rollbacked 
+2. Shorter development cycles 
+      Previously all team should be available and they have to dedicately available, in case if any problem they will rollback and again redeployment will take place 
+3. Improved Communication and colloboration
+     So agile will give focus on the people, devops will focus on the tools and automation, so because of that their is improved communication because tool will never do any mistake. We have multiple tools and we can easily colloborate where both should have common communication response 
+4. Increase efficiency
+       This is more of automation testing so that it reduces the time 
+5. Reduce cost and IT headcount
+       During waterfall model we will bill the resources from customer,we will saying we have to put a Lead, 2/3 developers and 1 testers. Sometimes the operation team will be done by different company, they will also doing billing. So when we have large team, if we have more effort automatically the cost is more.
+    But now because of tools and automation, the efforts are more but in longer run we will see reduction of cost. Next we dont need too many people for infrastructure and to maintain them 
+
+DevOps Lifecycle and Workflow
+   - Continuous
+           Integration
+           Delivery
+           Testing
+           Deployment
+           Monitoring
+           Feedback
+           Operation 
+
+Future in DevOps
+1. SecOps - Security and Operation
+2. DevSecOps - Focusing more on Security and Operation 
+3. AI/ML - where we want to build a system in such a way that to fix itself so that manual intervention is reduced 
+4. Paas - Platform as a service - we dont need to control or monitor it we will give to somebody else like Google Drive, OneDrive 
+
+Day 4 
+
+Branch in Git
+     When we start our project in master/main branch, where we start from the development and it will be stay forever. So everytime after completing the functionalities we will give that functionality for testing, thats where we use branches. So now we take a branch and we will do the testing of functionality 1, we dont want to disturb our main branch 
+    Once if it is success then we merge into master branch. Here we have one more branch also called bug fixing branch   
+
+Evolution of Cloud
+      
+On Premises             On Cloud
+1. we are deciding who has to control it, when we say on-premises, if we have solution on on-premises then we have more control 
+
+2. Infrastructure is not easy to scale, for example customers says that they got 1000 more users, so u have to upgrade urself for high scalability which is not easy. We may think like adding RAM or change CPU processor which is not easy 
+
+3. Internet connectivity is not need all the time because we are going to access within the room from LAN OR WAN, we dont need any internet and customer can access through VPN, there will be site to site VPN will be established which means customer might require internet but not all the time. Developers, testers dosent need any internet 
+
+4. These services will run within the enterprises (ie) for that particular company only it is available or for his customer customers, they will be having access only to web portals and not actual physical servers. 
+
+5. These services are not flexible 
+       Scalability means based on usage we can increase the number of users. Flexibility means changes (ie) we want to access from android or macos, that flexibility is little problem, if we are using old technology it is very difficult to support 
+
+6. Not available on subscription basis 
+       For example take postpaid connection if we are not using also it will be chargeable, but in prepaid it is not like that. So in on-premises they will put license cost, all software whenever we buy they will put license cost (ie) if we are not using then other person can use it. But in cloud it is based on usage (ie) when we use they will charge it, if we not using they wont charge it 
+
+7. For hardware and software updates, enterprise is responsible 
+     Here we have to maintain hardware and software especially antivirus is regularly updatable, because it is our responsible to maintain 
+
+8. Cost is fixed 
+       We already know that we have one server and how much it is going to cost we will get from our vendor. Only operating cost will vary and other cost is fixed since we already know how much money we spent on ur infrastructure
+
+9. Data is easily portable - we can move the data to any machine or OS, only thing we need to install all essential software 
+    But in on-cloud the data cannot be moved from one cloud to another cloud 
+
+10. Deployment happens in local env (ie) we should have proper installation guide to install every software, every configuration 
+
+11. Security is more - since we can control, we know who is going to enter, so we can control it, because we are going to open the port only for our appl or services 
+
+12. Services are used in larger companies - Still on-premises are used, not everybody moved to on-cloud. It is used in large companies like banking, finance etc where we have to maintain security related stuffs and not to move data in cloud because we dont to expose the data to everybody. But in on-cloud we dont where it is present since we dont have any control because anybody can access. They will share same machine with different people but with different partition, so that each person can access their own data but we dont know whether we are accessing only our data or not 
+
+13. Infrastructure is not easily scalable - Because we are not maintaining, once we say that we need extra 512GB then they will easily upgrade. If we want to install anything they will install very quickly. Sometime they will also give some package, how do we want the env to be, with database + security like that, so we have to buy that package and that env is readily available 
+
+Characteristics of cloud
+1. On Demand Self service (ie) we will go and say that we want it, and we will service it, we wont depend on anything because already infrastructure is available, platform is available and some softwares are already available. So we just say that we want this type of package and they will give you all we needed 
+
+2. Broad Network access - we can access from anywhere so we need only the internet 
+
+3. Resource Pooling - Suppose as an enterprise, actually HCL is doing resource pooling (ie) it has authentication service which is outsourced to Microsoft. 
+
+4. Rapid Elasticity means we can decide, suppose if we want more performance or more memory, we can give requirement to the service provider and then will accomadate very easily. Especially in database it is keep on growing, so we can tell then that we need more storage and they will add storage on db side 
+
+5. Measured service (ie) we will build only for our usages and even we can monitor. Previously in on-premises we will not have any clue, like how many service, what service we are using, we have to put lot of tools to be installed and we have to monitor, but still we wont get full picture  
+    But in on-cloud, all services will be containerized so that we can easily measure and it can used only for specific usage 
+
+Cloud Deployment model 
+     Public cloud is anybody can access it, private is only for u or for ur team, community means we have to create a login and people can come from different organization and forms a small community team it can be private but some part of public people will be present, Hybrid means we will access via public as well as private cloud also, so it is combination of public+private 
+      2. Scalabily, Flexibility - For community it is fixed because community will be mostly used only for development. But in public,private and hybrid we have lot of services are available, but in community it is more of development only, they will develop some tools, some utilities etc so that it is fixed actually. They cannot scalable because we are going to push the code, for example GitHub, similarly for every software we can create some community because we are just going to push the code, so there is no flexibility or scalability 
+     3. Cost comparison - when we say public, it is easy for them so they will not have more cost but when we go for others it will be costly, private is more costly, hybrid is compare to private it is less costly 
+    4. Reliability - public, private is low reliable. Private is still low reliable eventhough we are only access it, still it is available over the network but we cant access it
+     In case of community for example Google will not give community to Github but Github will create a community, similarly Amazon will create a community which means they will already will have some on-premises infrasturcture, they will maintain it but their services will be available over the cloud, so only reliability on hybrid and community are high
+     5. Data security - except public for everything it is high 
+     6. Data privacy - In public we cant except our privacy 
+
+Cloud Native application
+     This is another term we will be hearing whenever we talk about cloud, even in terms of DevOps
+     Cloud native appl means when we develop an appl, we can deploy them on the cloud or we can say as appl ready for cloud deployment. It should be act as independent, small and loosely coupled services  eg: Microservice architecture, so we can deploy some of services in amazon, some of services in Google and some in Azure by building cloud native appl. So cloud native appl is going to help with ur data portability, so we try to give the data because we are building the appl and deploy in any container like Docker, Kubernetes or Azure so it is called independent. Loosely coupled means we should not dependent on other services or else we have to deploy all services in one cloud service provider 
+
+1. SaaS
+     If we want to build some software and we want to maintain them, we need a small app for accessing them 
+   eg: Salesforce, AWS, Google Apps, Zendesk
+    We use Google apps mostly via some apps mostly for mobile and othes are available on cloud like Google maps where we provide start and end point and all other things will be available on the google cloud and they will help with navigation, to display that we need some app or browser
+
+2. PaaS
+     Suppose if we want to develop some appl, so we need OS, some tools so they try to give all platform for u, so that we can build something. So in platform we do development, testing and deployment 
+  eg: openshift, windows azure, heroku
+
+3. IaaS
+      Infrastructure is totally everything, they will provide everything like if we need ethernet, within ethernet what kind of address like ipv4 or ipv6 we want to use, tcp or udp protocol to use, like we provide all info to that. So they will create entire infrastructure for you 
+   It is widely used for backup because through infrastructure we have everything there, so instead of on-premises if we want to take backup then we can have infrastructure, since we cant replicate one more backup in  our enterprise organization 
+
+Tech Challenges
+   We are developers so when we create cloud related apps, what are the challenges we have to make sure to overcome that
+1. Service design 
+       So when we create any service it should be small, independent and loosely coupled. It is always we have to create a separate services and in future we can deploy them in the cloud 
+
+2. Application security 
+       Once we create an app then we make sure that it is secured. When we use springboot we have springboot security which automatically brings the basic security, but when we go for different type of technologies we have to make sure it is secured. Mostly we use reverse proxy and data encryption to address security concern, if we use sensitive data then we have to use some additional security features 
+    In normal proxy it is one step filtering for example our hcl proxy, if we are in office we have to give proxy where we have to authenticated with username and password and we can access the sites. In reverse proxy we will do 2 types (ie) proxy will be available at front end as well as backend (ie) it will goes via proxy through entire appl and again when it comes out again there will a proxy, so there is no intermediate attack is available 
+    In javascript we can create lot of attacks and deploy those attacks in middle of the internet and there we can execute some of the request without knowing the proxy server, we can filter that using reverse proxy 
+    So when reverse proxy is going to get the data back, it will again check who is the client, who invokes this particular request, at that time name of client would be different because Javascript will always append its header, so it will aware that it is not request by the employee, inbetween there is one more process has been initiated and that is creating the request and try to get the response which is able to find out using reverse proxy 
+
+3. Interoperability and portability 
+      Whenever we create an app in on-cloud, the problem is data portability but we can solve them using app development, so we have to make sure that it has internet. Now we can develop in Java as well as Kotlin and deploy it anywhere, so it is language portability 
