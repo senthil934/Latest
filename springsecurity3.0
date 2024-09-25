@@ -105,12 +105,11 @@ public class SecurityConfig {
     //authentication
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
         UserDetails admin = User.withUsername("Ram")
-                .password(encoder.encode("abcd"))
-               .roles("ADMIN")
+                .password(encoder.encode("abcd")).roles("ADMIN")
                .build();
        UserDetails user = User.withUsername("Sam")
                .password(encoder.encode("xyz"))
-               .roles("USER","ADMIN","HR")
+               .roles("USER")
                .build();
         return new InMemoryUserDetailsManager(admin, user);
     }
@@ -121,27 +120,26 @@ public class SecurityConfig {
     }
 
 since we have two user currently we are hard coding, we are not connecting to our DB to load the user, we need to store these two user with inmemory so we return InMemoryUserDetailsManager
-  So in earlier version we have the overloaded configure() method which takes AuthenticationManagerBuilder and using that we are building the user details and we are storing it, now since this configure() method is not in the springboard 3.0 version we are just creating the user detail object manually and at the end we are giving it to the userDetailsManager to tell that these are the two user details 
+  So in earlier version we have the overloaded configure() method which takes AuthenticationManagerBuilder and using that we are building the user details and we are storing it, now since this configure() method is not in the springboot 3.0 version we are just creating the user detail object manually and at the end we are giving it to the userDetailsManager to tell that these are the two user details 
   Next in old approach we have configured the authorization related stuff in the second configure() method who takes the argument as HTTPSecurity, but again we don't have this configure() method with us, so how we can do that so that is the reason spring boot 3.0 given a new class called
 SecurityFilterChain where we can expose it as a bean and we can configure our authorization related stuff 
 
 @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/products/welcome",).permitAll()
-                .and()
-                .authorizeHttpRequests().requestMatchers("/products/**")
-                .authenticated().and().formLogin().and().build();
+        return http.csrf(csrf -> csrf.disable())
+               .authorizeHttpRequests(auth -> auth
+        	            .requestMatchers("/api/movie/welcome").permitAll()
+        	            .anyRequest().authenticated()
+        	        ).and().formLogin().and().build();
     }
 
 6. Comment username, pwd in application.properties
 
 6. Start the appl, and run 
-http://localhost:8000/product/welcome - it should not force me to authenticate because we have just configured as permit all
+http://localhost:8000/products/welcome - it should not force me to authenticate because we have just configured as permit all
 
-http://localhost:8000/product/all - it is asking me to give the credential so we will give username and password as "Ram" and "abcd" respectively, now we can able to see the response 
-   Close and open a new Incognito window and run http://localhost:8000/product/all, we can check another username "Sam" and "xyz", here also we can see response 
+http://localhost:8000/products/all - it is asking me to give the credential so we will give username and password as "Ram" and "abcd" respectively, now we can able to see the response 
+   Close and open a new Incognito window and run http://localhost:8000/products/all, we can check another username "Sam" and "xyz", here also we can see response 
 
 7. So now Ram and Sam both can access because even though we have defined the role here, we didn't specify to the method which method can be accessed by which user. So we understand about the authentication if we give the username and password it validates whether the given input or username and password is correct or not. Now we need to understand authorization how we can perform authorization in this Spring Security 3.0, so Ram is the admin, now
 as a admin what all feature Ram can access and as a user what all feature Sam can access 
@@ -216,7 +214,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 
 10. Next we need to perform the authentication by fetching from the DB and if we remember we have configured the authentication related stuff
 in the UserDetailService where we have hard coded the
-details so we comment that
+details so we have to comment that
 
  @Bean
     public UserDetailsService userDetailsService() {
@@ -311,12 +309,11 @@ Now we have UserInfo just convert it to the UserInfoUserDetails
 
 public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<UserInfo> userInfo = repository.findByName(username);
-        return userInfo.map(UserInfoUserDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("user not found " + username));
+        return userInfo.map(UserInfoUserDetails::new).orElseThrow(() -> new UsernameNotFoundException("user not found " + username));
 
     }
 
-So we get the UserInfo from the DB and we need to convert that UserInfo which to UserDetails object by giving the username, password and roles and Authority 
+So we get the UserInfo from the DB and we need to convert that UserInfo to UserDetails object by giving the username, password and roles and Authority 
 
 12. Now we have given the UserDetailService in SecurityConfig and we are not hard coding the username, now it will use our own UserInfoUserDetailService which we have implemented from UserDetailService, now the request will go to this class and then it will take the user object from the DB by giving the username and once it gets the user from the DB it will just convert to the UserInfoUserDetails and it will just do the authentication 
 
@@ -349,7 +346,7 @@ Now we want anyone can add a user so we can configure the authorization related 
 
 12. Start the application
 
-First we need to add a couple of new user, so in Postman we give in POST request as http://localhost:8000/products/new - Body - Raw - Json
+First we need to add a couple of new user, so in Postman we give in POST request as http://localhost:8080/products/new - Body - Raw - Json
 {
     "name":"Ram",
     "password":"abcd",
@@ -369,7 +366,6 @@ Now we add another user
 }
 
 Click Send - Displays "User added to system".
-
 Now we added two user Ram as admin and Sam as a user 
 
 14. Check the database table
@@ -396,11 +392,11 @@ Remove argument from UserDetailsService()
 
 16. Start the appl and now we try to access the endpoints by the user 
 
-First we run "http://localhost:8000/products/all" where only admin can access all products. It will ask for credentials, we try with "Sam" and "xyz", now we get 403 error 
+First we run "http://localhost:8080/products/all" where only admin can access all products. It will ask for credentials, we try with "Sam" and "xyz", now we get 403 error 
 
-Next we run "http://localhost:8000/products/all" where only admin can access all products. It will ask for credentials, we try with "Ram" and "abcd", now we get response as Ram is an admin
+Next we run "http://localhost:8080/products/all" where only admin can access all products. It will ask for credentials, we try with "Ram" and "abcd", now we get response as Ram is an admin
 
-Next we run "http://localhost:8000/products/1" where only user can access single products. It will ask for credentials, we try with "Sam" and "xyz", now we get response, but when we try with Ram it will show 403 error  
+Next we run "http://localhost:8080/products/1" where only user can access single products. It will ask for credentials, we try with "Sam" and "xyz", now we get response, but when we try with Ram it will show 403 error  
 
 JWT Authentication and Authorization
 https://github.com/Java-Techie-jt/spring-boot3-jwt
@@ -478,6 +474,8 @@ public String generateToken(String userName){
         return createToken(claims,userName);
     }
 
+
+
 - Now we create createToken(), to create the token we need the help of JWT and set claims, username, token expiration and finally verify the signature using signWith() where we specify the key and what algorithm we want to use
 
  private String createToken(Map<String, Object> claims, String userName) {
@@ -506,6 +504,8 @@ public String generateToken(String userName){
     public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
         return jwtService.generateToken(authRequest.getUsername());
     }
+
+
 
 6. Now we want to tell spring security to bypass the "/authenticate" endpoint so anyone give username, password and generate the token. In SecurityConfig,
 
@@ -560,6 +560,7 @@ Now also it will generate the token which is completely incorrect, so the user  
 }
 Click Send - Now it will generate the error
 
+
 Now we provide the correct username and password present in database
 {
    "username":"Ram",
@@ -570,6 +571,8 @@ Click Send - Now it will generate the token
 11. So now how AuthenticationManager knows what this token, so we need to extract the token and get the username information from the token and check with database then only we allow this token to validate.
     So we need to write the filter and inside that we need to write a logic to extract the token from header and get username from token and validate it with database and do all type of validations 
 - Create JwtAuthFilter class which extends OncePerRequestFilter and override doInternalFilter()
+
+
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -635,6 +638,7 @@ if (authHeader != null && authHeader.startsWith("Bearer ")) {
 @Autowired
     private UserInfoUserDetailsService userDetailsService;
 
+
  if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (jwtService.validateToken(token, userDetails)) {
@@ -645,6 +649,7 @@ if (authHeader != null && authHeader.startsWith("Bearer ")) {
         }
 
          filterChain.doFilter(request, response);
+
 
 12. Now we tell to Spring security to use this JwtAuthFilter which we created before using any of the predefined filters. In SecurityConfig, under SecurityFilterChain, we enable session management as stateless as we dont want to keep anything in cookies, next specifying AuthenticationProvider and next we specify to use our authfilter first before using UsernamePasswordAuthenticationFilter
 
@@ -694,3 +699,1654 @@ Click Send - It will generate the token
 - In Postwan with GET request, run "http://localhost:8080/products/1"
 Authorization - Type: Bearer Token - Paste the token - Click Send
     Now we can see single products as response 
+
+14. To apply JWT token in swagger we need to configure
+
+@Configuration
+public class SwaggerConfig {
+
+	@Bean
+	public OpenAPI customOpenAPI() {
+		
+		return new OpenAPI()
+				.info(new Info().title("Authentication Service"))				
+				.addSecurityItem(new SecurityRequirement().addList("SecurityScheme"))
+				.components(new Components().addSecuritySchemes("SecurityScheme", new SecurityScheme()
+						.name("SecurityScheme").type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")));
+		
+	}
+}
+------------------------------------------------------------------------------
+
+Spring boot 3.0 - Secure your API with JWT Token
+https://www.youtube.com/watch?v=BVdQ3iuovg0&list=PL41m5U3u3wwl5FoM2Y5gIu1Q-Wr5ascD_&index=14
+
+How JWT token Works?
+      when a customer or a client send an HTTP request to our
+backend system which is running using spring boot container and running on an
+Apache Tomcat embedded server, so the first thing that gets executed within a spring application is the filter. So in this case the first thing that will be executed is our JWTAuthenticationfilter which is OnlyOncePerRequestFilter and has the role to validate and check everything regarding the JWT token
+that we have
+      The first thing that will happen we will have an internal check to check if we have the JWT token or not, so if the token is missing as we can see here we will send a 403 response to the client and the reason is missing JWT 
+      So now we have our JWT token and now we will start the validation process, so the filter will first make a call using the UserDetailsService to fetch the user information from the database and this we will based on the user email that we will set as a claim or a token subject that we will extract within this JWT authentication filter. This JWT authentication field will
+check the JWT token extract the username or the email or we call it the subject and it will use that email to fetch the user details information from our database 
+      Once the user is fetched we have the response from our database and the response can be eitherway, can we existing user or non-existing user,
+so once we get the response to our JWT authentication filter here we will make
+a few checks, which is if the user does not exist we will also send a 403 to our customer in case everything is fine and we get our
+user from the database 
+     Now we will start validation process, because this JWT token was generated for specific user so we want to validate this token based on the user, so here we have this validate JWT process which will try to call a 
+JWTService which will take as parameter the user itself and also the JWT token. After the execution of this validation process, here we have two case scenario 
+    1. The token is not valid or the token is expired or the token is not for that specific user, so what we do we will send also a 403 back to our
+customer with reason as Invalid JWT token
+   2. Otherwise we will update the SecurityContextHolder and set this
+connected user because when we fetch the user details information from the database, we will be able to set this securitycontextholder, so we will tell spring that this user is now authenticated and we will update the AuthenticationManager, so every time we check if this user is authenticated for this request the answer will be yes 
+    Once the SecurityContextHolder will be updated, it will automatically dispatch the the request and it will be sent to the DispatcherServlet and from the DispatcherServlet it will be sent directly to the controller, where we will do all the execution that we need to do, for example calling the service going to the database and so on and then we will send back the response 
+
+1. Create SpringSecurityRoles project with web, spring data jpa, mysql, spring security, lombok
+
+2. Configure db info in application.properties
+
+3. Create User class
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "user")
+public class User {
+
+  @Id
+  @GeneratedValue
+  private Integer id;
+  private String firstname;
+  private String lastname;
+  private String email;
+  private String password;
+}
+
+4.  Extend the user to UserDeatils object
+        when Spring Security starts and set up the application it will use an object called UserDetails, and this UserDetails is an interface that contains a bunch of methods and each time you want to work with Spring Security you
+need to ensure that you are providing this UserDetails object in order to
+make a Spring Security life easy to use 
+    So here we implements UserDetails interface and override the methods
+
+public class User implements UserDetails {
+}
+ 
+- First one is we need to provide a collection of granted authorities
+to getAuthorities() which return a list of roles, so we need to define the role and create the role
+
+  @Enumerated(EnumType.STRING)
+  private Role role;
+
+  @RequiredArgsConstructor
+  public enum Role {
+      USER, ADMIN
+  }
+
+- we decided that user can have only one role so I will just return a list and change other methods 
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority(role.name()));
+  }
+
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "_user")
+public class User implements UserDetails {
+
+  @Id
+  @GeneratedValue
+  private Integer id;
+  private String firstname;
+  private String lastname;
+  private String email;
+  private String password;
+
+  @Enumerated(EnumType.STRING)
+  private Role role;
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority(role.name()));
+  }
+
+//In UserDetails interface we see that we have this getPassword(), but this getPassword() was not was not overridden here because we have this string password in User.java and we have the lombok annotation so we have already the method called getPassword(), so we have to override getPassword() and return my password 
+  @Override
+  public String getPassword() {
+    return password;
+  }
+
+  @Override
+  public String getUsername() {
+    return email;
+  }
+
+  @Override
+  public boolean isAccountNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isAccountNonLocked() {
+    return true;
+  }
+
+  @Override
+  public boolean isCredentialsNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
+  }
+}
+
+5. Create repository interface
+
+public interface UserRepository extends JpaRepository<User, Integer> {
+  Optional<User> findByEmail(String email);
+}
+
+6. Create the JWT authentication filter
+      As we see that the first thing that will intercept our HTTP request is the JWT authentication filter, so we create it 
+      So every time the user sends a request we want our filter to get fired and do all the job that we wanted to do, so we need to extend
+a class called OncePerRequestFilter class and implement doFilterInternal() with 3 parameters to request, the response and the filterchain
+     we can intercept every request and extract data from the request and
+provide new data within the response, and the filterchain is the chain of responsibility design pattern which contains the list of the other filters that we need to execute, so when we call this filterchain.doFilter it will call the next filter within the chain 
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  @Override
+  protected void doFilterInternal(
+     HttpServletRequest request,
+     HttpServletResponse response,
+     FilterChain filterChain
+  ) throws ServletException, IOException {
+   }
+}
+
+7. Checking the JWT token
+       The first thing we do within this JWT authentication filter is checking if we have the JWT token, so inside doFilterInternal()
+
+- When we make a call we need to pass the JWT authentication token within the header called authorization, so what we need to extract this header which  contains the JWT token or the bearer token 
+     final String authHeader = request.getHeader("Authorization");
+
+- Now we want to check whether JWT token is present or not, if not we need to pass the request and the response to the next filter 
+      final String jwt;
+    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
+
+- Now we try to extract the token from this header
+     jwt = authHeader.substring(7);
+
+- Now we try to extract username from token, so we need to autowired JwtService 
+     @Autowired
+     JwtService jwtService;
+
+    final String userEmail;
+    userEmail = jwtService.extractUsername(jwt);
+
+8. Create JWTService
+       After checking the JWT token, we need to call this 
+UserDetailsService to check if we have the user already within our database or not, so we need to create a JwtService class with @Service to extract the username
+
+@Service
+public class JwtService {
+  public String extractUsername(String token) {
+    return null;
+  }
+}
+
+9. Add JWT dependency 
+
+<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+
+10. Extract claims from JWT
+        Before start implementing this extractUsername() method, we want to
+implement to extract all the claims and also another method
+to extract one single claim 
+        Now we create extractAllClaims() which take a token as parameter, first we need to return Jwts and we need this parseBuilder() and in order to parse this Builder, we need to setSigningKey() because we try to create a token, to use the signing key we call this getSignInkey(), and then we
+need to build() because it's a builder and once the object is built we can call the method parseclaimsJws() to parse our token and once the
+token is parsed, we can call the method getBody() where we can get all the claims that we have within this token 
+
+private Claims extractAllClaims(String token) {
+    return Jwts
+        .parserBuilder()
+        .setSigningKey(getSignInKey())
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
+  }
+
+- Implement the getSignInKey method
+           So in the context of Json web tokens, a signing key is a secret that is used to digitally sign the JWT, the signing key is used to create the signature part of the JWT which is used to verify that the sender of the JWT is who it claims to be and ensure that the message wasn't changed along the way, so we want to ensure that the same person or the same client that is sending this JWT key is the one that claims who to be
+   so the signing key is used in conjunction with the sign-in algorithm
+specified in the JWT header to create the signature, the specific sign-in
+algorithm and key size will depend on the security requirement of your
+application and the level of trust you have in the signing party,  so here
+in order to do that first of all we need to go ahead and generate a secret key  size 256 
+
+Goto https://asecuritysite.com/encryption/plain - key size -256 bit - Generate
+     
+private static final String SECRET_KEY="404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+
+Now we create the method getSignInKey() and this method should return a key, first we create byte[] called keyBytes and call  Decoders.BASE64.decode() and we want to decode our secret key, so once the secret key is decoded now  we will call hmac algorithm
+
+private Key getSignInKey() {
+    byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+    return Keys.hmacShaKeyFor(keyBytes);
+  }
+
+11. Extract a single claim from JWT
+         Now we implement another method which will allow me or which can extract a single claim that we pass 
+        Create a generic method called extractClaim() which takes string token and Function functional interface and this Function is of type claims and T which is the type that I want to return and call as claimResolver. 
+       First we want to extract all the claims and then we want to return this claim resolver with apply() which takes claims 
+
+public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    final Claims claims = extractAllClaims(token);
+    return claimsResolver.apply(claims);
+  }
+
+12. Extract the username from the token
+           Once extracting all the claims and also extracting one single claim now we can extract the username out of this token
+           So it will be extractClaim() and we need to pass the
+token and only we need to pass the Claims.getSubject because as we
+mentioned the subject is the email or the username of the user
+
+  public String extractUsername(String token) {
+    return extractClaim(token, Claims::getSubject);
+  }
+
+13. Generate JWT token
+        Now implement the method that will help us to generate a token called generateToken() which takes Map<String,Object>  which contain
+the claims or the extra claims that we want to add and also UserDetails which  return other information like 
+
+private String generateToken(
+          Map<String, Object> extraClaims,
+          UserDetails userDetails
+  ) {
+    return Jwts
+            .builder()
+            .setClaims(extraClaims)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() +1000*60*24))  //valid for 24 hrs
+            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+            .compact(); //generate and return the token
+  }
+
+Now we have generate a token out of extra claims and the user details. But if we want to generate a token without extra claims, we create another generateToken() which  take  only user details as a parameter
+
+public String generateRefreshToken(UserDetails userDetails) {
+    return generateToken(new HashMap<>(), userDetails);
+  }
+
+- Next we implement a method that will validate a token  
+     Create a method isTokenValid() with two parameters as input which is the token itself and the UserDetails because we want to validate if this token belongs to this user details.
+     First we extract username out of the token and return that username we have within the token is the same as the username we have as input and need to check that my token is not expired
+     
+public boolean isTokenValid(String token, UserDetails userDetails) {
+    final String username = extractUsername(token);
+    return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+  }
+
+- Now we create isTokenExpired() and pass the token as parameter and create a method extractExpiration() from the token and make sure that it's before
+today's date
+
+private boolean isTokenExpired(String token) {
+    return extractExpiration(token).before(new Date());
+  }
+
+- Now create this extractExpiration() with parameter as token  and return
+a date with extractClaim() from the token and then it's claims.getExpiration which extract the expiration date 
+
+   private Date extractExpiration(String token) {
+    return extractClaim(token, Claims::getExpiration);
+  }
+
+14. Check the user existence in the database (JwtAuthFilter)
+        So here we just finished implementing this JWT validation process, after that in JwtAuthFilter we want to check if my user email is not
+null and also want to check that the user is not authenticated yet, because if the user is authenticated we don't need to perform again all the checks and setting or and updating the security context and so on, to check
+if the user is already authenticated or not we have an object called 
+SecurityContextHolder and from that we can get the context using getContext() and then we have a method called getAuthentication and when the
+authentication is null means that the user is not yet authenticated 
+
+if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) { }
+
+- Once the user is not connected then we need to get the user from the database,
+and we need to check if we have the user within the database, so we will create an object called UserDetails and call loadUserByUsername()
+   UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+- Now we autowired UserDetailsService of spring security core
+ @Autowired
+ private final UserDetailsService userDetailsService;
+
+15. Implement the UserDetailsService
+         We want our own implementation of UserDetailsService because we want to fetch our user from our database, so we need to create a class that implements UserDetailsService interface with @Service or @Component annotation so it becomes a managed bean and spring will be able to inject it, instead 
+we will create a class called ApplicationConfig with @Configuration which hold all the application configurations beans, so at the startup spring will pick up this class and try to implement and inject all the beans that we will declare within this ApplicationConfig 
+
+@Configuration
+@RequiredArgsConstructor
+public class ApplicationConfig {
+
+  @Autowired     
+  UserRepository repository;
+
+  @Bean
+  public UserDetailsService userDetailsService() {
+    return username -> repository.findByEmail(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+  }
+}
+
+16. In JwtAuthFilter, we need to validate and check if the token is still valid or not 
+   if (jwtService.isTokenValid(jwt, userDetails)) {}
+
+-  If the token is valid then we need to update the security context and send the request to our DispatcherServlet 
+    once the our token is valid,we need to create an object of type UsernamePasswordAuthenticationToken which takes parameter as UserDetails, and then for the next parameter is authorities and we pass it as null and then userDetails.getAuthorities() which is needed by the SecurityContextHolder in order to update our security context. 
+       UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+            userDetails,
+            null,
+            userDetails.getAuthorities()
+        );
+
+- So once we finish creating user name authentication token we need to provide some more details so we use setDetails() which takes WebAuthenticationDetailsSource and build the details out of our HTTP request
+
+authToken.setDetails(
+            new WebAuthenticationDetailsSource().buildDetails(request)
+        );
+
+- Now the final step is to update the securitycontextholder using getContext()
+and setAuthentication() with our authentication token 
+   SecurityContextHolder.getContext().setAuthentication(authToken);
+
+- After two if condition, paste
+       filterChain.doFilter(request, response);
+
+when if we have our useremail and the user is not authenticated, we get the user details from the database and then we need to check if the user is valid or not, if the user and the token is valid so we
+create an object of type a usernamepasswordauthenticationtoken we pass
+userdetails credentials and authorities as parameter, and then we extend or
+reinforce this authentication token with the details of our request and then we update the authentication token 
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  @Autowired JwtService jwtService;
+  @Autowired UserDetailsService userDetailsService;
+  
+  @Override
+  protected void doFilterInternal(HttpServletRequest request,
+      HttpServletResponse response,FilterChain filterChain
+  ) throws ServletException, IOException {
+ 
+    final String authHeader = request.getHeader("Authorization");
+    final String jwt;
+    final String userEmail;
+    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
+    jwt = authHeader.substring(7);
+    userEmail = jwtService.extractUsername(jwt);
+    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+      UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+      if (jwtService.isTokenValid(jwt, userDetails)) {
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+            userDetails,
+            null,
+            userDetails.getAuthorities()
+        );
+        authToken.setDetails(
+            new WebAuthenticationDetailsSource().buildDetails(request)
+        );
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+      }
+    }
+    filterChain.doFilter(request, response);
+  }
+}
+
+17. Add the security configuration
+       We need to tell spring which configuration that we want to use in order to make all this works, so we created the filter we implemented the 
+userDetailService validation, updating context and so. Now we need to bind, because we created a filter but this filter is not yet used so we need to use it and in order to do that we need to create a new configuration class called SecurityConfig with @Configuration and @EnableWebSecurity, @RequiredArgsConstructor  and override SecurityFilterChain
+
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfiguration {
+
+    private final JwtAuthFilter authFilter;
+    private final AuthenticationProvider authenticationProvider;
+
+   @Bean
+	   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		   return http.csrf(csrf->csrf.disable())
+				   .authorizeHttpRequests(auth->auth
+		    		        .requestMatchers("/api/v1/auth/**").permitAll()
+		    		        .anyRequest().authenticated())
+				    .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+	                .authenticationProvider(authenticationProvider)
+	                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+	                .build();
+	   }
+	 
+}
+
+18. Create AuthenticationProvider bean in ApplicationConfig class
+       So this authentication provider is the data access object which
+is responsible to fetch the user details and also encode password, so for this we have many implementations and one of them is the DaoAuthenticationProvider,
+so we need to tell this authentication provider which userdetailsservice to use in order to fetch information about our user, next we need to provide a passwordencoder 
+
+ @Bean
+  public AuthenticationProvider authenticationProvider() {
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+    authProvider.setUserDetailsService(userDetailsService());
+    authProvider.setPasswordEncoder(passwordEncoder());
+    return authProvider;
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }      
+
+19. Create the authentication manager bean
+        Next we have AuthenticationManager bean which is responsible to manage the authentication 
+
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    return config.getAuthenticationManager();
+  }
+
+20. Create the authentication controller
+       We need to provide at least two endpoints where the user can create an
+account or also can authenticate 
+
+@RestController
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+public class AuthenticationController {
+
+  private final AuthenticationService service;
+
+  @PostMapping("/register")
+  public ResponseEntity<AuthenticationResponse> register(
+      @RequestBody RegisterRequest request
+  ) {
+    return ResponseEntity.ok(service.register(request));
+  }
+
+  @PostMapping("/authenticate")
+  public ResponseEntity<AuthenticationResponse> authenticate(
+      @RequestBody AuthenticationRequest request
+  ) {
+    return ResponseEntity.ok(service.authenticate(request));
+  }
+
+}
+
+21. Create RegisterRequest
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class RegisterRequest {
+
+  private String firstname;
+  private String lastname;
+  private String email;
+  private String password;
+}
+
+22. Create AuthenticationResponse
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuthenticationResponse {
+
+  @JsonProperty("access_token")
+  private String accessToken;
+}
+
+23. Create AuthenticationRequest
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuthenticationRequest {
+
+  private String email;
+  String password;
+}
+
+24. Create AuthenticationService
+         We implement this register() method and this register will allow us
+to create a user save it to the database and return the generated token out of it
+
+@Service
+@RequiredArgsConstructor
+public class AuthenticationService {
+  private final UserRepository repository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
+  private final AuthenticationManager authenticationManager;
+
+  public AuthenticationResponse register(RegisterRequest request) {
+    var user = User.builder()
+        .firstname(request.getFirstname())
+        .lastname(request.getLastname())
+        .email(request.getEmail())
+        .password(passwordEncoder.encode(request.getPassword()))
+        .role(Role.USER)
+        .build();
+    var savedUser = repository.save(user);
+    var jwtToken = jwtService.generateToken(user);
+    return AuthenticationResponse.builder()
+        .accessToken(jwtToken)
+        .build();
+  }
+
+  public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+            request.getEmail(),
+            request.getPassword()
+        )
+    );
+    var user = repository.findByEmail(request.getEmail())
+        .orElseThrow();
+    var jwtToken = jwtService.generateToken(user);
+    return AuthenticationResponse.builder()
+        .accessToken(jwtToken)
+        .build();
+  }
+}
+
+25. Create democontroller to test
+
+@RestController
+@RequestMapping("/api/v1/demo-controller")
+public class DemoController {
+
+  @GetMapping
+  public ResponseEntity<String> sayHello() {
+    return ResponseEntity.ok("Hello from secured endpoint");
+  }
+
+}
+
+26. Start the appl and in Postman, with GET request
+http://localhost:8000/api/v1/demo-controller, now we get 403 forbidden as we didnt provide the token
+
+Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, you can goto jwt.io paste the token and explain
+
+- Now we give with POST request, http://localhost:8080/api/v1/auth/authenticate - Body - Raw -JSON
+{
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token
+
+- Now we give with GET request, http://localhost:8080/api/v1/demo-controller - Authorization - Bearer token - Paste the token - Click send
+    - we get the expected result 
+
+
+Spring boot 3 & Spring security 6 - Roles and Permissions Based Authorization 
+
+https://www.youtube.com/watch?v=mq5oUXcAXL4&list=PL41m5U3u3wwl5FoM2Y5gIu1Q-Wr5ascD_&index=10
+
+Understanding Roles and Permissions
+     In our application we have a user, so we
+have the dedicated endpoints to register and to authenticate user. Here the user has one role, you can also change it and you can make the user to have many or multiple roles,now
+we say user has a RoleA and it has many or multiple permissions and the permission is per resource. For example I have RoleA and then this RoleA is able to read from specific resource or another resource and so  
+   So RoleA for example can access admin Administration resource and also access management resources and they can also perform a read request on there and etc
+
+1. Create Admin contorller
+
+@RestController
+@RequestMapping("/api/v1/admin")
+public class AdminController {
+
+    @GetMapping
+    public String get() {
+        return "GET:: admin controller";
+    }
+    @PostMapping
+    public String post() {
+        return "POST:: admin controller";
+    }
+    @PutMapping
+    public String put() {
+        return "PUT:: admin controller";
+    }
+    @DeleteMapping
+    public String delete() {
+        return "DELETE:: admin controller";
+    }
+}
+
+@RestController
+@RequestMapping("/api/v1/management")
+public class ManagementController {
+
+    @GetMapping
+    public String get() {
+        return "GET:: management controller";
+    }
+    @PostMapping
+    public String post() {
+        return "POST:: management controller";
+    }
+    @PutMapping
+    public String put() {
+        return "PUT:: management controller";
+    }
+    @DeleteMapping
+    public String delete() {
+        return "DELETE:: management controller";
+    }
+}
+
+Now we have two controllers, ManagementController is should be accessible only by manager and admins and the AdminController is going to be accessible only by the Admin itself
+
+3. Since we spoke about roles we create few more roles,
+
+@RequiredArgsConstructor
+public enum Role {
+   USER, ADMIN, MANAGER
+}
+
+4. We said that each role can have multiple permissions, so we create enum which will hold the different permissions for the different resources 
+
+@RequiredArgsConstructor
+public enum Permission {
+
+    ADMIN_READ("admin:read"),
+    ADMIN_UPDATE("admin:update"),
+    ADMIN_CREATE("admin:create"),
+    ADMIN_DELETE("admin:delete"),
+    MANAGER_READ("management:read"),
+    MANAGER_UPDATE("management:update"),
+    MANAGER_CREATE("management:create"),
+    MANAGER_DELETE("management:delete");
+
+    @Getter
+    private final String permission;  //refers the permission name
+}
+
+3. Now we go and link these permissions to the roles, so in Role.java 
+
+- Since role has a set of permissions so we will create a Set of type permission, since we don't want to have duplications on the permissions 
+
+ @Getter
+  private final Set<Permission> permissions;
+
+- Now we add @RequiredArgConstructor in Role.java
+
+- Now we need to assign some roles, let's say that the user has no permissions and to do, we use 
+   USER(Collections.emptySet()),
+
+- Now we define some permissions for the admin, as we discussed we want the admin to be able to read from the admin resource and also from the management resource
+
+   ADMIN(
+          Set.of(
+                  ADMIN_READ,
+                  ADMIN_UPDATE,
+                  ADMIN_DELETE,
+                  ADMIN_CREATE,
+                  MANAGER_READ,
+                  MANAGER_UPDATE,
+                  MANAGER_DELETE,
+                  MANAGER_CREATE
+          )
+  ),
+
+- As we mentioned the manager should be only able to read the management resource, now we set permission for manager as
+
+ MANAGER(
+          Set.of(
+                  MANAGER_READ,
+                  MANAGER_UPDATE,
+                  MANAGER_DELETE,
+                  MANAGER_CREATE
+          )
+  );
+
+- Now we will create a method called getAuthorities() which returns List<SimpleGrantedAuthority>
+
+public List<SimpleGrantedAuthority> getAuthorities() { }
+
+- First we call getPermissions(), and then we will stream over
+the permissions and we will do a mapping, we want to transform one permission or each permission to a new simplegrantedAuthority, and this simplegranted Authority takes a string role as argument and spring will use this
+information to decide who can access what in this case it is permission,  and finally collect as List, and return authorities
+      var authorities = getPermissions()
+            .stream()
+            .map(permission -> new SimpleGrantedAuthority(permission.name()))
+            .collect(Collectors.toList());
+      return authorities;
+
+-Before return authorities, now we need to assign the current role, so for example when we when we get the admin.authorities we will return any one of authorities and also we need to return the role admin
+     authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
+
+ public List<SimpleGrantedAuthority> getAuthorities() {
+    var authorities = getPermissions()
+            .stream()
+            .map(permission -> new SimpleGrantedAuthority(permission.name()))
+            .collect(Collectors.toList());
+    authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
+    return authorities;
+  }
+
+4. Now in User.java, instead of returning in single role, we return authorities
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return role.getAuthorities();
+  }
+
+5. Configuration-based Authorization using Request Matchers
+         In SecurityConfig, we need to secure the rest of API’s. First we the endpoint to be only accessible by admin and manager now
+  
+ .requestMatchers("/api/v1/management/**").hasAnyRole(ADMIN.name(), MANAGER.name())
+
+- Now we have request matchers to secure HTTP GET method on the following endpoint, and we want to secure the get of the
+management endpoint to be only accessible by admin and management 
+ 
+ .requestMatchers(GET, "/api/v1/management/**").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
+
+ .requestMatchers("/api/v1/management/**").hasAnyRole(ADMIN.name(), MANAGER.name())
+                                .requestMatchers(GET, "/api/v1/management/**").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
+                                .requestMatchers(POST, "/api/v1/management/**").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
+                                .requestMatchers(PUT, "/api/v1/management/**").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
+                                .requestMatchers(DELETE, "/api/v1/management/**").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
+
+first we it we secured the management endpoint or like the whole management endpoint that should be only accessible by admin and manager and now I'm securing the different operations so the get it's only by admin and manager and post the same and so
+
+- Now in the admin endpoint the different methods and resources are accessible only by admin and should have admin role
+
+.requestMatchers("/api/v1/admin/**").hasRole(ADMIN.name())
+.requestMatchers(GET, "/api/v1/admin/**").hasAuthority(ADMIN_READ.name()))
+.requestMatchers(POST, "/api/v1/admin/**").hasAuthority(ADMIN_CREATE.name())
+.requestMatchers(PUT, "/api/v1/admin/**").hasAuthority(ADMIN_UPDATE.name())
+.requestMatchers(DELETE, "/api/v1/admin/**").hasAuthority(ADMIN_DELETE.name())
+
+6. In AuthenticationService where we have the register() method and we
+are automatically assigning a user role to any user that will be registered now we want to make it dynamic in order to create different roles 
+   So in RegisterRequest we create 
+       private Role role; 
+
+- So in AuthenticationSevice, we call request.getRole()
+
+ var user = User.builder()
+        .firstname(request.getFirstname())
+        .lastname(request.getLastname())
+        .email(request.getEmail())
+        .password(passwordEncoder.encode(request.getPassword()))
+        .role(request.getRole())
+        .build();
+
+7. Now we insert some users in main class using CommandLineRunner
+
+@Bean
+	public CommandLineRunner commandLineRunner(
+			AuthenticationService service
+	) {
+		return args -> {
+			var admin = RegisterRequest.builder()
+					.firstname("Admin")
+					.lastname("Admin")
+					.email("admin@mail.com")
+					.password("password")
+					.role(ADMIN)
+					.build();
+			System.out.println("Admin token: " + service.register(admin).getAccessToken());
+
+			var manager = RegisterRequest.builder()
+					.firstname("Admin")
+					.lastname("Admin")
+					.email("manager@mail.com")
+					.password("password")
+					.role(MANAGER)
+					.build();
+			System.out.println("Manager token: " + service.register(manager).getAccessToken());
+
+		};
+	}
+
+when we start my application we will have two users with two different roles
+
+8. Start the appl, it will generate Admin Token and Manager Token
+Now goto Postman with POST request, we run http://localhost:8000/api/v1/admin
+In Authorization - Bearer Token - Paste  the admin token - Click Send
+    Now we get 403 Forbidden error which is not expected, in console we get UnsupportedOperationException
+
+9. Now in Role.java, to get all authority we call
+
+.map(permission -> new SimpleGrantedAuthority(permission.getPermission()))
+
+10.  Start the appl, it will generate Admin Token and Manager Token
+Now goto Postman with POST request, we run http://localhost:8000/api/v1/admin
+In Authorization - Bearer Token - Paste  the admin token - Click Send
+    Now we get output as “Post:Admin Controller”
+
+If we give GET request, again we get as  “Get:Admin Controller”
+
+- with GET request, if we run http://localhost:8000/api/v1/management, In Authorization - Bearer Token - Paste  the admin token - Click Send
+    Now we get output as “GET:Management Controller”
+
+-with GET request, if we run http://localhost:8000/api/v1/management, In Authorization - Bearer Token - Paste  the manager token - Click Send
+    Now we get output as “GET:Management Controller”
+
+- with GET request, if we run http://localhost:8000/api/v1/admin, In Authorization - Bearer Token - Paste  the manager token - Click Send
+    Now we get 403 Forbidden error 
+
+because the manager is not able to access the admin endpoint or the admin resources
+
+we saw how we can Implement authorizations and role based and permission based authorization in Spring boot
+
+11. Annotation-based Authorization using @PreAuthorize
+- Now comment all security endpoint for admin in SecurityConfiguration
+
+- Now we use annotation to secure the admin endpoints with role and autheority using @PreAuthorize, so in AdminController
+    we said that the AdminController should have the role admin using @PreAuthorize and authority 
+
+@RestController
+@RequestMapping("/api/v1/admin")
+@PreAuthorize("hasRole('ADMIN')")
+public class AdminController {
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('admin:read')")
+    public String get() {
+        return "GET:: admin controller";
+    }
+    @PostMapping
+    @PreAuthorize("hasAuthority('admin:create')")
+    public String post() {
+        return "POST:: admin controller";
+    }
+    @PutMapping
+    @PreAuthorize("hasAuthority('admin:update')")
+    public String put() {
+        return "PUT:: admin controller";
+    }
+    @DeleteMapping
+    @PreAuthorize("hasAuthority('admin:delete')")
+    public String delete() {
+        return "DELETE:: admin controller";
+    }
+}
+
+- when you want to use this pre-authorized method, you need to tell spring that you want to use this pre-authorized by using @EnableMethodSecurity in SecurityConfiguration
+
+12.  Start the appl, it will generate Admin Token and Manager Token
+Now goto Postman with GET request, we run http://localhost:8000/api/v1/management
+In Authorization - Bearer Token - Paste  the manager token - Click Send
+    Now we get output as “GET:Mgt Controller”
+
+- with GET request, if we run http://localhost:8000/api/v1/admin, In Authorization - Bearer Token - Paste  the manager token - Click Send
+    Now we get 403 Forbidden error 
+
+- with GET request, if we run http://localhost:8000/api/v1/admin, In Authorization - Bearer Token - Paste  the admin token - Click Send
+    Now we get output as “GET:Admin Controller”
+
+- with GET request, if we run http://localhost:8000/api/v1/management, In Authorization - Bearer Token - Paste  the admin token - Click Send
+    Now we get output as “GET:Management Controller”
+
+Choose the right authorization approach for your use case
+    - when you want a fine-grained control over an individual method and their access also when you want to keep the authorization rules close to the code that affect and then, when the authorization rules may change dynamically as annotations can be easily updated without needed to configure or reconfigure the entire security setup
+    so also the advantages of this annotation based is it provides a better
+readability and maintainability as authorization rules are placed directly
+on the method they protect, also it allows the use of spring expression
+language for complex authorization rules, finally it supports complex Access Control scenarios such as hierarchical roles and custom permission evaluators 
+   - when we talk about configuration based authorizations using the request matchers, so we use when you want to centralize your security configuration in single place, also when you have a clear and straightforward mapping between URLs and roles and also when you want to enforce Global secure security rules that apply to all endpoints in your application
+    so for example if you want to secure all the get methods in your entire application it's really easier using the request matchers configuration and the advantages of this type of configuration it provides a clear overview of the entire security configuration, it allows for easy management of security rules as they are in one place and finally it offers a simple way to apply security rules to specific URL patterns 
+   so in summary the choice between annotation based and configuration based role-based authorization depends on really on your specific requirements and preferences, so the annotation based authorization offers fine-grained control  and better readability, while the configuration based authorization centralizes security rules and is easier to manage 
+
+Logout in JWT
+      Spring Security with JWT token there is no built-in implementation for the logout, as the stateless nature of the JWT tokens means that the server does not store or keep any track of the user's session and thats why
+we don't have a built-in or a default implementation for logging out, so this
+means that the client is responsible of managing the tokens and initializing the logout process 
+     when we talk about front-ends for example the user can just remove the token from the local storage or set an expiration date for that token, so the token gets expired or we can also implement a custom mechanism on the backend side to invalidate these tokens 
+    So when we want to perform a logout operation, we need provide an endpoint and then spring will provide us with a logoutHandler and
+there we can implement our logic on how we want to invalidate that token
+
+Logout mechanism
+      We have our authentication filter which is the entry point and will be executing once we get the request, so before it was only
+checking the token using JWTService which checks that if the token is not expired then the user exists.
+      Now we will be adding another step
+where we need to fetch the token where we stored it in our storage system and make sure that this token is not expired and also is not revoked, because we need to revoke it or message it as expired once the user implements or clicks on logout or perform a logout operation.
+   So once we get the result of these two then we will pass them to the calculation and based
+of the result which is a Boolean result, so if true so it's a valid token so we can continue
+and move on within the filter chain otherwise we need we have an invalid token and we need to send an authorized or 403 back to the user 
+    Previously we have one entity which is the user and contains primary key ID, first name, last name, email, password, and a role. 
+    Now we create a new table where we will be storing all our tokens for the user which contains contain an ID, token which is unique,token type in case we want to implement different token type but for now it will be by default a bearer token, next we will be having two Boolean Flags (ie) expired and revoked where we need to update these flags once the user performs a logout. Next we check the relation between the user and the
+token as one to many 
+
+1. Create Token entity class
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Token {
+
+  @Id
+  @GeneratedValue
+  public Integer id;
+
+  @Column(unique = true)
+  public String token;
+
+  @Enumerated(EnumType.STRING)
+  public TokenType tokenType;
+
+  public boolean revoked;
+
+  public boolean expired;
+
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  public User user;
+}
+
+2. Create TokenType enum
+
+public enum TokenType {
+  BEARER
+}
+
+3. Now we associate these tokens to that user, so in User.java
+
+  @OneToMany(mappedBy = "user")
+  private List<Token> tokens;
+
+4. Create TokenRepository 
+       We need to create two methods 
+1. To get all the valid tokens for specific user, so we pass the user ID and based on that
+we can get all the tokens that belong to this user 
+    @Query(value = " select t from Token t inner join User u on t.user.id = u.id where u.id = :id and (t.expired = false or t.revoked = false)")
+    List<Token> findAllValidTokenByUser(Integer id);
+    We have query that will allow me to get all  the tokens from the token table which are not yet expired or revoked 
+
+2. To find a token by the token itself, so we pass the token string which is unique and then get the token from the database
+     Optional<Token> findByToken(String token);
+
+
+public interface TokenRepository extends JpaRepository<Token, Integer> {
+
+ @Query(value = " select t from Token t inner join User u on t.user.id = u.id where u.id = :id and (t.expired = false or t.revoked = false)")
+    List<Token> findAllValidTokenByUser(Integer id);
+
+  Optional<Token> findByToken(String token);
+}
+
+5. Next we persist any generated token, so in AuthenticationService register() we implement that logic
+    So within the register method, after generating the token and saving the user we need to persist that generated token into our database. Similarly we need to implement this also on the authentication level (ie) authenticate() so when user gets authenticated and we return the generated JWT token, we need also store that in db
+    So we have user, jwtToken, tokenType as Bearer and we need to set the flags to false because when we generate a token it's not revoked and it's not expired.To save the token into db we need to inject TokenRepository
+
+In AuthenticationService,
+
+private final TokenRepository  tokenRepository;
+
+- create separate method to persist the token
+
+  private void saveUserToken(User user, String jwtToken) {
+    var token = Token.builder()
+        .user(user)
+        .token(jwtToken)
+        .tokenType(TokenType.BEARER)
+        .expired(false)
+        .revoked(false)
+        .build();
+    tokenRepository.save(token);
+  }
+
+- Call this method in register()
+
+var savedUser = repository.save(user);
+    var jwtToken = jwtService.generateToken(user);
+    saveUserToken(savedUser, jwtToken);
+
+- Call method in authenticate() also
+
+var user = repository.findByEmail(request.getEmail())
+        .orElseThrow();
+    var jwtToken = jwtService.generateToken(user);
+    saveUserToken(user, jwtToken);
+
+6. In AuthenticationService, register() provide the role instead of request.getRole()
+
+ var user = User.builder()
+        .firstname(request.getFirstname())
+        .lastname(request.getLastname())
+        .email(request.getEmail())
+        .password(passwordEncoder.encode(request.getPassword()))
+        .role(Role.USER)
+        .build();
+
+6. Start the appl, we can see it creates 2 tables
+
+In Postman, Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, and it will store in user and token table 
+
+- Now we give with POST request, http://localhost:8000/api/v1/auth/authenticate - Body - Raw -JSON
+{
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, again execute 4 times it will generate token, check in db it will store all generated tokens
+
+7. Revoke all user tokens
+       Now we implement the method that will revoke all the existing tokens for a specific user
+      Create another method revokeAllUserTokens() which take a user as a
+parameter, and need to fetch all the available and valid tokens for a specific user in the database
+
+So in AuthenticationService, 
+
+private void revokeAllUserTokens(User user) {
+    var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+    if (validUserTokens.isEmpty())
+      return;
+    validUserTokens.forEach(token -> {
+      token.setExpired(true);
+      token.setRevoked(true);
+    });
+    tokenRepository.saveAll(validUserTokens);
+  }
+
+- In authenticate() method before saving the user token, we need to revoke all of them because if you save the token and then call for revoking the tokens even that new token also revoked
+
+revokeAllUserTokens(user);
+    saveUserToken(user, jwtToken);
+
+8. Start the appl
+
+In Postman, Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, and it will store in user and token table 
+
+- Now we give with POST request, http://localhost:8000/api/v1/auth/authenticate - Body - Raw -JSON
+{
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate new JWT token, if we check the db table we will see that this old data is expired and revoked with true and the new one which is just got generated is still available with false. If we authenticate multiple times again we will find only one token valid which is the last one
+
+9. Now if we pass a non-valid token which is expired true and revoked true, but this token is still valid and the request will pass through my application and it will return a response because on the JWT authentication filter level we did not include this logic 
+    So in JwtAuthenticationFilter, we check JWTservice to valid the token but we need to go to the database fetch the token and then check if the token is
+valid or not 
+
+For example, 
+
+In Postman, Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, and it will store in user and token table 
+
+- Now we access with GET request, http://localhost:8000/api/vi/demo-controller - In authorization - Bearer Token - Paste the token - click Send - It will generate the ouput
+
+- Now we give with POST request, http://localhost:8000/api/v1/auth/authenticate - Body - Raw -JSON
+{
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate new JWT token, if we check the db table we will see that this old data is expired and revoked with true and the new one which is just got generated is still available with false.
+
+- But Now we access with GET request, http://localhost:8000/api/vi/demo-controller - with same old token - It will generate the ouput which is not accepted 
+
+- So in JwtAuthenticationFilter, we need to check whether the token is not expired and not revoked, so first inject TokenRepository
+
+private final TokenRepository tokenRepository;
+
+SO we're fetching the user details from the database using the UserDetailsService and we are checking if the token is valid or not, so we need check that the token is valid on the database side
+
+ UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+      var isTokenValid = tokenRepository.findByToken(jwt)
+          .map(t -> !t.isExpired() && !t.isRevoked())
+          .orElse(false);
+      if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
+      }
+
+10. Start the appl,
+In Postman, Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, and it will store in user and token table 
+
+- Now we access with GET request, http://localhost:8000/api/vi/demo-controller - In authorization - Bearer Token - Paste the token - click Send - It will generate the ouput
+
+- Now we give with POST request, http://localhost:8000/api/v1/auth/authenticate - Body - Raw -JSON
+{
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate new JWT token, if we check the db table we will see that this old data is expired and revoked with true and the new one which is just got generated is still available with false.
+
+- But Now we access with GET request, http://localhost:8000/api/vi/demo-controller - with same old token - It will generate 403 Forbidden error 
+
+now we are relying on the token itself and also we are relying on the database to check that token is already in our database and it's not expired and not revoked 
+
+11. Implement Logout
+         Spring already provides with a logoutHandler and also a logoutSuccessHandler beans that will help us to implement our log out mechanism. For logout spring uses a default URL which is /logout or we can implement our own one
+     So in SecurityConfiguration we have configure some code in order to tell spring that we have now or we want to implement a logout mechanism, so after adding addFilterBefore, we add
+
+ private final LogoutHandler logoutHandler;
+
+.logout(logout ->
+                        logout.logoutUrl("/api/v1/auth/logout")
+                                .addLogoutHandler(logoutHandler)
+                                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
+                )
+
+so if the user is logged out we need to clear our securitycontext in
+order the user cannot access again with this expired token he would not be able to access again our API
+   We will tell spring every time you get a request for this specific URL /api/v1/auth/logout, just execute this logoutHandler and do not
+delegate it to any of our controllers
+
+12. Create LogoutHandler
+      We create class LogoutService which implement LogoutHandler and override logout() which takes the request, the response and also the authentication to get user data 
+
+@Service
+@RequiredArgsConstructor
+public class LogoutService implements LogoutHandler {
+
+  private final TokenRepository tokenRepository;
+
+  @Override
+  public void logout(HttpServletRequest request,HttpServletResponse response,
+      Authentication authentication
+  ) { }
+
+- In authentication filter, first we extract the JWT from our authorization header and we try to extract the JWT and based on that we check if we have the user, similarly in logout() method also we implement same concept
+
+final String authHeader = request.getHeader("Authorization");
+    final String jwt;
+    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      return;
+    }
+    jwt = authHeader.substring(7);
+
+- Now inject TokenRepository 
+
+ private final TokenRepository tokenRepository;
+
+- The token that I got is valid and in my database so I just need to unvalidate by setting expired and revoked to be true and save into db 
+
+var storedToken = tokenRepository.findByToken(jwt)
+        .orElse(null);
+    if (storedToken != null) {
+      storedToken.setExpired(true);
+      storedToken.setRevoked(true);
+      tokenRepository.save(storedToken);
+      SecurityContextHolder.clearContext();
+    }
+
+@Service
+@RequiredArgsConstructor
+public class LogoutService implements LogoutHandler {
+
+  private final TokenRepository tokenRepository;
+
+  @Override
+  public void logout(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      Authentication authentication
+  ) {
+    final String authHeader = request.getHeader("Authorization");
+    final String jwt;
+    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      return;
+    }
+    jwt = authHeader.substring(7);
+    var storedToken = tokenRepository.findByToken(jwt)
+        .orElse(null);
+    if (storedToken != null) {
+      storedToken.setExpired(true);
+      storedToken.setRevoked(true);
+      tokenRepository.save(storedToken);
+      SecurityContextHolder.clearContext();
+    }
+  }
+}
+
+13. Start the appl, 
+In Postman, Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate JWT token, and it will store in user and token table 
+
+- Now we access with GET request, http://localhost:8000/api/vi/demo-controller - In authorization - Bearer Token - Paste the token - click Send - It will generate the ouput because it was valid
+
+- Now we want to perform logout, so with POST request, we run http://localhost:8000/api/v1/auth/logout - In Authorization - Bearer token - Paste the token - Click Send
+    Now we get 200 OK response and go to the database we can see the token is expired and also revoked at the same time
+
+- But Now we access with GET request, http://localhost:8000/api/vi/demo-controller - with same old token - It will generate 403 Forbidden error 
+Since we have logged out 
+
+- Now we give with POST request, http://localhost:8000/api/v1/auth/authenticate - Body - Raw -JSON
+{
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate new JWT token
+
+- Now we access with GET request, http://localhost:8000/api/vi/demo-controller - with new token - It will generate the output
+
+Refresh Token
+     It is a token used to refresh our access
+token (ie) we can reduce the validity of our token and every time our client needs a new token so all you need to do is to pass this refresh token and ask for a new token. It will reduce the expiration date of the access token and also the refresh token can be available for some time (ie) for one week and after one week the user needs to authenticate once again to get a new access token and also a new refresh
+token
+
+Benefits of using a refresh token
+1. The user will have an access token with a short period of time and then he will use a refresh token in order to refresh that access
+token 
+2. Revoking access, for example if you want to force all the users to re-login again, all you need to do is to revoke your refresh token and once the access token gets expired so the user has to reconnect or to re-login again in order to have a new refresh token or a new access token 
+3. Reduces the user interactions (ie) the user
+does not need to reconnect every time when the token gets expired and all you need to do is from your front-end application or from your rest client, we check the token is expired and then we perform a refresh token and pass this refresh token and then you get a new access token
+
+1. Extending AuthenticationResponse
+        We enhance AuthenticationResponse because when we talk about refresh tokens we need to return the access token plus refresh tokens
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuthenticationResponse {
+
+  @JsonProperty("access_token")
+  private String accessToken;
+  @JsonProperty("refresh_token")
+  private String refreshToken;
+}
+
+2. In JwtService, we need a new method that will help us to generate a refresh token, so we define some variables
+    We declare variables of expiration for JWT token as 1 day and expiration for refresh token as 7 day 
+
+private long jwtExpiration = 86400000;
+private long refreshExpiration = 604800000;
+
+- Now we will refactor the methods in JwtService
+    First we create buildToken() and move all code from generateToken() and call the buildToken inside generateToken 
+
+private String buildToken(
+          Map<String, Object> extraClaims,
+          UserDetails userDetails,
+          long expiration
+  ) {
+    return Jwts
+            .builder()
+            .setClaims(extraClaims)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+            .compact();
+  }
+
+public String generateToken(
+      Map<String, Object> extraClaims,
+      UserDetails userDetails
+  ) {
+    return buildToken(extraClaims, userDetails, jwtExpiration);
+  }
+
+-  Now we create generateRefreshToken() where it don't need these extraclaims, so I will just pass a new HashMap and refreshExpiration 
+
+ public String generateRefreshToken(
+      UserDetails userDetails
+  ) {
+    return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+  }
+
+3. Adjust the register and authenticate endpoint
+    In AuthenticationService register(), we generate the refresh token and return refreshToken  
+
+var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+    saveUserToken(savedUser, jwtToken);
+    return AuthenticationResponse.builder()
+        .accessToken(jwtToken)
+            .refreshToken(refreshToken)
+        .build();
+
+- We need to do samething in authenticate()
+
+var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+    revokeAllUserTokens(user);
+    saveUserToken(user, jwtToken);
+    return AuthenticationResponse.builder()
+        .accessToken(jwtToken)
+            .refreshToken(refreshToken)
+        .build();
+
+Now register and authenticate will return both accessToken and refreshToken
+
+4. Add refresh token endpoint 
+      In AuthenticationControllerwe create a new endpoint with post mapping to generate 
+refresh token and we inject the HTTP servlet request and response because the request is the
+object where we can get authorization header which will hold the refresh token and the response is the object that help us to send back the response to the user
+
+@PostMapping("/refresh-token")
+  public void refreshToken(
+      HttpServletRequest request,
+      HttpServletResponse response
+  ) throws IOException {
+    service.refreshToken(request, response);
+  }
+
+5. Create refreshToken() in AuthenticationService
+     It is similar to JwtAuthFilter doFilterInternal() code, so we copy and paste the code and refactor it
+
+- First we extract the token from header
+
+ final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+    final String refreshToken;
+    final String userEmail;
+
+- Next if we don't have the authorization header because the refresh token should be
+sent as a bearer token in the header
+
+  if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      return;
+    }
+
+- we extract the token from  authorization header and then the useremail we need to extract it from the refresh token
+
+refreshToken = authHeader.substring(7);
+    userEmail = jwtService.extractUsername(refreshToken);
+
+-  we need to test if useremail exists (ie) it's not null and  check if we have the user in the database
+
+ if (userEmail != null) {
+      var user = this.repository.findByEmail(userEmail)
+              .orElseThrow();
+
+- Now we will validate the refreshToken based on userdetails
+   if (jwtService.isTokenValid(refreshToken, user)) { }
+
+- Next we need to generate a new access token
+
+ var accessToken = jwtService.generateToken(user);
+
+- we need to revoke all user tokens and also we
+need to save the new generated token
+
+revokeAllUserTokens(user);
+        saveUserToken(user, accessToken);
+
+- Now we have our access token and then we will just create an AuthenticationResponse with accessToken and refreshToken 
+
+ var authResponse = AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+
+- Now we return response to user by using ObjectMapper and return the body of response
+
+new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+
+public void refreshToken(
+          HttpServletRequest request,
+          HttpServletResponse response
+  ) throws IOException {
+    final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+    final String refreshToken;
+    final String userEmail;
+    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      return;
+    }
+    refreshToken = authHeader.substring(7);
+    userEmail = jwtService.extractUsername(refreshToken);
+    if (userEmail != null) {
+      var user = this.repository.findByEmail(userEmail)
+              .orElseThrow();
+      if (jwtService.isTokenValid(refreshToken, user)) {
+        var accessToken = jwtService.generateToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, accessToken);
+        var authResponse = AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+        new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+      }
+    }
+  }
+
+6. Start the appl, For demo purpose we define accesstoken expiration as 1 min, so in JwtService we define
+     	private long jwtExpiration = 60000;
+
+In Postman, Now we give with POST request, http://localhost:8080/api/v1/auth/register - Body - Raw -JSON
+{
+   “firstname”:”Ram”,
+   “lastname”:”Kumar”,
+   “email”:”ram@gmail.com”,
+   “password”:”1234”
+}
+Now it will generate access token and refresh token
+
+- Now we access with GET request, http://localhost:8000/api/vi/demo-controller - In authorization - Bearer Token - Paste the access token - click Send - It will generate the output, if we wait for one minute and send again it will be 403 
+
+- So  once the token gets expired, it would be refreshed for that we call
+With POST request, we run  http://localhost:8080/api/v1/auth/refresh-token, In authorization - Bearer token - Paste refresh token - click Send
+   Now we have access token and the refresh token
+
+- - Now we access with GET request, http://localhost:8000/api/vi/demo-controller - In authorization - Bearer Token - Paste the new access token - click Send - It will generate the output
+
+OAuth2 & Spring Boot
+     oauth 2.0 which stands for open authorization is a standard designed to
+allow a website or application to access resources hosted by other web apps on
+behalf of a user
+     oauth 2.0 provides access and restricts  what the client app can perform on resources on behalf of the user without ever sharing the user credentials. So they don't need to request the credentials of that user, so the user is already managed within a different
+application and then this authorization server will be just used as a security layer for our application
+
+Principles of OAuth 2.0
+1. oauth 2.0 is an authorization protocol and not an Authentication Protocol, it is designed primarily for granting access to a set of resources like remote apis or user data 
+2. oauth 2.0 uses access tokens and an access token is a piece of data that represents the authorization to access resources on behalf of the end user and in oauth 2.0
+
+OAuth 2.0 flow
+    We have a user that wants to access our backend, so user makes the request and since we have configured oauth 2.0 in our backend application.
+    If the user is not authorized he needs to redirect the user to an authorization server in order to authenticate and authorize the user, so our application will redirect the user to login with GitHub using username and password and then click on sign in, but this is not enough because we mentioned already that oauth 2.0 is an authorization protocol not an Authentication Protocol 
+   Now we made GitHub to check that this user exists within their database, but we have a another interface to authorize this
+application and access this application. Once the user validates then it will be automatically redirected to the back end and the back end will send back the response 
+
+How the authorization or oauth 2.0 works with social login ?
+     1. It starts all from a resource owner, where we provide a request "/api/v1/secured" using our browser, so it will sent to my client which is in this case the browser or Postman 
+   2. Then the browser will check that these request of this resource is secured or protected, so it will be automatically redirected to an authorization server in this case GitHub or Google etc. Now the authorization server will check that the user is not valid or doesn't have the access token, so the user needs to perform a login
+    3. Now redirecting the user to authenticate so it will goes to Github form and ask for authentication, so it goes back to the
+resource owner 
+   4. Used to authenticate with user credentials, because here we are within GitHub and we need to have an account on GitHub in order to get the authorization to access this backend 
+   5. Now it will ask Github to authorize client and once you click on authorize 
+   6. This will redirect the client with the authorization code that was generated by this authorization server 
+   7. Next step is navigate back to client with authorization code after this redirection 
+   8. After navigating to the client, the client needs to perform some check so it will transmit the authorization code and the client credentials to the authorization server to check again, if this code is allowed
+to access these resources 
+  9. Now the authorization server will
+return a valid access token and then finally this access token will be sent to our backend as a header 
+ 10. Then we perform the call to this API in  secured 
+ 11. Then the backend will send back the response to the user or resource owner 
+
+1. Resource owner is the user or the system that owns the  protected resources and can grant access to them 
+2. Client is the system that requires access to the protected resources or to access resources the client must hold the appropriate access token, so the client you can consider it as an app or a browser 
+3. Authorization server which receives requests from the client to access token and issues
+them after successful authentication and permission by the resource owner. So the authorization server exposes two endpoints, the first one is authorization endpoint which handle the interactive authentication and permission of the user and the token endpoint which is involved in a machine to machine interaction 
+4. Resource server is ur backend application where it have the protected resources that a resource owner and a client wants to access
+
+1. Create SpringBootOAuth2.0 project with web, lombok, oauth2 client
+
+2. we need authorization server(Github) so when the user tries to access this authorization server, it will redirect to GitHub authorization page
+
+Login into Github - click Right side icon - Click Settings - Click Developer Settings - Github App - Click New Github App
+
+Github App Name: DemoApp
+Description: Some Demo
+Homepage Url: http://localhost:2500
+ 
+Identifying and authorizing users: 
+    It is the Callback URL which means once the user accepts to be authorized so we need to send him back to the Callback URL, should be same like homepage url
+
+Callback URL: http://localhost:2500
+
+Webhook: uncheck Active
+Where can this Github app be installed? check any account
+
+Click Create Github App
+
+Click Generate new Client Secret
+
+We have to keep note of ClientID and client Secrets  in order to perform any login
+operations
+
+3. Create demo controller 
+
+@RestController
+@RequestMapping("/api/v1/demo")
+public class DemoController {
+
+  @GetMapping
+  public ResponseEntity<String> sayHello() {
+    return ResponseEntity.ok("Hell OAuth2");
+  }
+}
+
+4. Start the appl and run http://localhost:2500/api/v1/demo
+
+Now we automatically redirected to the login page, because within our pom.xml we have security dependency (ie) oauth2 client, so we need to implement our security in order to do access it, but we dont have username and pwd
+
+5. Now we add the configuration in order to  activate the oauth2 authentication
+     create our SecurityConfig class with @Configuration and @EnableWebSecurity, now we need to override SecurityFilterChain for authorization 
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	  http.csrf(csrf->csrf.disable())
+      .authorizeHttpRequests(authorize -> authorize
+              .anyRequest().authenticated()
+      ).oauth2Login(Customizer.withDefaults());
+    return http.build();
+  }
+}
+
+With oauth2Login(), spring will automatically understand that we want to use oauth2 to
+login or to authenticate and authorize our users to this backend
+
+6. Add the OAuth 2.0 GitHub configuration in application.yml 
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            clientId: paste clientid
+            clientSecret: paste clientsecret
+
+7. Start the appl, open incognito browser run 
+http://localhost:2500/api/v1/demo
+
+- Now it will open Github login page 
+    We request for endpoint, the client checked that we are not authorized to access this resource, so it redirected us to the authorization endpoint and then the to authorization server, we are not authenticated in github in order to authorize this
+application so we were redirected to again to the user
+ 
+-  Now we will authorize into github with credentials
+   Provide username and password of Github
+
+When we authenticated myself and it will asked to authorize a client, once I authorize this  will be automatically redirected here to the the Callback URL,  then we asked again the
+authorization server if this user and credentials are allowed to access this resource then we got the response with the valid token and then it was sent to the back end and our backend sent back the response 
+
+Debug the authorization flow
+1. Open Incognito window
+2. Right click on browser, open the console - Goto Network tab - Check Preserve log because
+once we we switch from one URL to another it will clean up all all the networks and generate like log the new ones but we want to have everything together
+2. Now we give http://localhost:2500/api/v1/demo, now in Network tab we can see more paths
+3. demo - first of all when we are performing a call to our API, we received is 302 and HTTP 302 is a redirection means that this call was redirected somewhere else
+4. github - we were redirected to this URL localhost:8080/oauth2/authorization/github and from that too we have been redirected to a next one
+5. click 3rd one which is authorize - first of all we've
+been redirected to this github.com/oauth/authorization/responsetype=code
+  we said after authorizing and doing everything so here redirect to client with authorization code, then we have client ID that we have in our code and scopes is read:user, with status code 302
+6. click 4th one which is login - since the user is not logged in, it redirect to authorization endpoint so and then it asks for authentication from Github
+    we are transmitting the authorization code and credentials, the authorization server check that user is already authenticated so no need to authenticate and authorize so it was automatically redirected back to our backend
+7. Now provide username, pwd in Github and click signin button, now we get the output
+8. In Networks tab, click Session and authorize
+Click authorize - we have same client ID, we can see all the tokens that are generated and
+sent back to our backend
+
+How Spring really implements OAuth 2.0 ?
+      In application.yml, spring understands till Spring.Security.oauth2.client.registration, after that we can provide anything we want  like GitHub, Google, Facebook etc
+     First it's all starts from pom.xml spring-boot-starter-oauth2-client dependency which provide the minimum configuration. 
+    So first class will be called is "OAuth2ClientProperties", it's a property class with prefix of Spring.Security.oauth2.client and inside that we have the registration
+which is a map of String and Registration, which is nothing but github as string and clientid, client secret as Registeration, this is how spring is mapping the properties that we provided in application.yml
+    Next is OAuth2ClientPropertiesRegistrationAdapter class which is responsible of registering the oauth2 clients, so we have getClientRegistration() and we pass
+the OAuth2clientProperties and bunch of other parameters.
+    So the first method that we are called getBuilderFromIssuerIfPossible(), if we don't have the Builder we have some information to set properties like client ID, secret, authentication method,authorization Grant type, redirect uri, scope and client name 
+    Next we have getBuilder() so it takes the
+registration ID, the provider and the list of providers, inside getBuilder() we created object for CommonOAuth2Provider 
+    If we goto CommonOAuth2Provider which is an enum and  it contains a bunch of values and by default Spring already supports Google, GitHub, Facebook, and Okta supports where we are setting this information for GitHub as scope read:user which is provided in console 
+
