@@ -1927,3 +1927,734 @@ Generate access token
    password: password
 
 and change to http://localhost:8082/admin
+
+
+How Spring boot autoconfiguration works?
+    Whenever you are creating a springboot application you are basically getting a jar by default called Springboot-autoconfigure.jar, inside this jar spring developer has created a combination of many different auto configuration classes, for example we have Dao related autoconfiguration, mongodb related Auto configuration, there is something web related Auto configuration, free marker related auto configuration, graphql related auto configuration, H2 related auto configuration etc 
+   So there are a lot of different classes so if you're going to any package for example you are going to this JPA package, so how jpa will be automatically configured with a springboot application that related thing a springboot developers has created some classes and this class will automatically run and will configure the JPA related things 
+   So if you as a developer need to set up a springboot project with JPA or a spring boot project with Web or a springboot project with security then you have to do some primary setup, so springboot development team says that if you want to configure anything then you need to write some of the primary things like  you need to create some beans, you need to write some configurations. The springboot development team knows like what configuration thing that you will be writing so we will write it by default for you, once you start
+your application those things will be automatically configured  
+    Now if you want to go to this META-INF folder - spring folder and goto org.springframework.boot.autoconfigure.autoconfiguration.imports
+where they have mentioned all their auto configuration classes, so when we start our springboot application all this auto configuration classes 
+   For example TomcatAutoConfiguration class this is a Java class
+where we have a bean getting created, for an example we have a bean called
+createTomcatServer() so springboot developer has already written some code inside it, once this auto configuration class is activated this bean will be automatically created for me, so as a developer doesn't have to specify how a tomcat server will be created and I don't have to create any specific bean. Similarly we have a DispatcherServletAutoConfiguration class and inside this class springboot development team has already written how a dispatcher servlet beam will be created and obviously once this particular autoconfiguration class is activated this bean will be created and this bean will go into the application context 
+    So when the TomcatAutoConfiguration will be activated the Tomcat server bean will be created, when the DispatcherServletAutoConfiguration class will be activated the DispatcherServlet bean will be created. So when they will be
+activated how they will be activated, they will be activated from your starter app 
+   In every spring boot application we have a starter app and inside the starter app we are using the run method, the run method is bootstrapping my application and in our starter app we are using @EnableAutoConfiguration or 
+@SpringBootApplication annotation it internally consists of @EnableAutoconfiguration
+   So whenever you are writing @EnableAutoConfiguration all this
+Auto configuration class will be triggered and they will be activated and all these beans will be created and that's how all this Auto configuration  is happening and as a developer we don't have to do all these things by myself 
+    Consider we are not creating any web application we are creating a standalone application, now this DispatcherServletAutoConfiguration we don't need, we don't need a dispatcherservlet to be get created, I do not want a front controller to handle my request at that time why should I want a bean of
+dispatcherservlet to get created. Similarly I may not need a tomcat server to get auto configured because  we are creating a desktop application so I do not need a tomcat server to deploy my application at that time if we
+have @EnableAutoConfiguration then automatically all class will be activated and automatically bean will be created
+   So how spring boot is sensing like when the Tomcat server need to be
+auto configured, when the dispatcherservlet need to be auto configured, we
+have hundreds of configuration classes placed inside this auto configuration file then I do not want all those beans to be get created 
+   This Auto configuration will not create all the bean, springboot has concept called conditional annotation, this conditional annotations means this Bean will be created but based on a condition, let's say you are creating a standalone application if you are creating a standalone application then
+do you need the spring web jar, you do not need servlet jar, so  the spring developer are very intelligently written one annotation here called @ConditionalOnClass(Servlet.class) (ie)  only when servlet.class file
+is present inside your class path  then only create this bean if it is not present don't create the bean 
+   Similarly DispatcherServletAutoConfiguration will be activated only  @conditionalOnClass(DispatcherServlet.class) so if the dispatcherservlet class is present inside the class path then only we create this particular bean,
+not only @conditionalonclass there are different types of conditional related annotation for an example @conditionalonbean("xyz") which  means look inside the application context if there is a bean created by the developer called xyz, then only create this bean 
+
+Example of Autoconfiguration
+1. Create Spring boot project called SpringBootAutoConfigure with web dependency
+
+2. Create class with method
+
+package com.pack.SpringBootAutoConfigure.autoconfig;
+
+public class SpringBootCourse {
+  
+   public void showCourseDetails() {
+       System.out.println("Spring Course Details");
+       System.out.println("1. Spring Core");
+       System.out.println("2. Spring MVC");
+       System.out.println("3. Spring boot");
+   }
+}
+
+If we want to call this method then we need to create the object for this, so  the first way to create the object not by myself, I can tell spring to create the object for me by writing @Component annotation and spring will create a object or a bean for SpringBootCourse and put it inside the container and we know springboot application has @ComponentScan activated, so any classes which is present inside the main package will be scanned and obviously this object will be go to the container
+
+package com.pack.SpringBootAutoConfigure.autoconfig;
+@Component
+public class SpringBootCourse {
+  
+   public void showCourseDetails() {
+       System.out.println("Spring Course Details");
+       System.out.println("1. Spring Core");
+       System.out.println("2. Spring MVC");
+       System.out.println("3. Spring boot");
+   }
+}
+
+ Now we ask spring to give me the object of SpringBootCourse so that we can call this particular method, so whenever we start the application obviously first of all my main method will be executed, the run method will bootstrap my springboot application and the run method will give me an application context which contains springbootcourse object. This is a web application and spring boot run() method is creating a WebApplicationContext 
+    WebApplicationContext container;
+
+I can access to this container and get that bean so that I can call 
+springbootcoursedetail() inside the app, so in order to call this
+particular method I need the object of this and this object has  already been created by the spring boot because we have at the @component and that's why we are having an access to the container and this container is getting created created by the run() method so I'm gonna ask my spring to
+autowired the object of the webapplicationcontext so that I can get a hold to the container 
+
+@SpringBootApplication
+public class SpringBootAutoConfigureApplication {
+	
+	@Autowired
+	WebApplicationContext container;
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootAutoConfigureApplication.class, args);
+	}
+
+}
+
+To access the SpringBootCource class, we use CommandLineRunner interface
+
+@SpringBootApplication
+public class SpringBootAutoConfigureApplication implements CommandLineRunner{
+	
+	@Autowired
+	WebApplicationContext container;
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootAutoConfigureApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		System.out.println("Hello world");
+	}
+
+}
+
+when we start, first the main method will be called first the run method will be executed, first the spring boot will be bootstrapped  the application context will be created and the container will be created then commandlinerunner run method will be automatically called by the springboot 
+
+@SpringBootApplication
+public class SpringBootAutoConfigureApplication implements CommandLineRunner{
+	
+	@Autowired
+	WebApplicationContext container;
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootAutoConfigureApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		SpringBootCourse sp=container.getBean(SpringBootCourse.class);
+		sp.showCourseDetails();
+	}
+
+}
+
+when we run the appl, it will print all course details
+
+Custom Autoconfiguration
+    So now who is creating the object for me and that spring is creating the object for me, if I write the @component spring will create the object for me. If we remove @Component and if we run then application will fail to start, so if you don't want to write the @component annotation you can consider creating a configuration of Bean for the springbootcourse 
+   - Remove @Component in SpringBootCourse
+   Since @SpringBootApplication consists @Configuration we can define bean definition in main class 
+
+@SpringBootApplication
+public class SpringBootAutoConfigureApplication implements CommandLineRunner{
+	
+	@Autowired
+	WebApplicationContext container;
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootAutoConfigureApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		SpringBootCourse sp=container.getBean(SpringBootCourse.class);
+		sp.showCourseDetails();
+	}
+
+	@Bean
+	SpringBootCourse springBootCourse() {
+		return new SpringBootCourse();
+	}
+}
+
+-start the appl and it will print the output 
+First the run method() will bootstrap first and create the container, it will also take care of creating the springbootcourse bean and will keep it inside the container and commandlinerunner run method will be executed 
+
+
+Instead of writing my bean in main class we create different configuration file 
+
+@Configuration
+public class AppConfig {
+
+   @Bean
+	SpringBootCourse springBootCourse() {
+		return new SpringBootCourse();
+	}
+}
+
+
+@configuration annotation behind the scene is having a @component annotation so if it is a component it will be eligible for component scan, and you know that your starter app is having this @springbootapplication annotation and this annotation will be doing the component scan behind the scene, and if it is doing the component scan this class will be detected because it has a  @configuration annotation which internally has @component annotation and then this bean will be created 
+
+- Start the appl and it will print the output
+
+Instead of @configuration we have another annotation called @AutoConfiguration where we automatically going to configure the springbootcourse bean over here
+
+@AutoConfiguration
+public class AppConfig {
+
+   @Bean
+	SpringBootCourse springBootCourse() {
+		return new SpringBootCourse();
+	}
+}
+
+It will detect this auto config file and this bean will be created and able to get the springbootcourse bean 
+
+- Start  the appl, we will get an error 
+
+We can see @AutoConfiguration annotation it also  have @Configuration annotation inbuilt, so @Configuration contains @component, so if we
+write @configuration or @Autoconfiguration this both are same thing, 
+no it is not same thing because @AutoConfiguration annotation it has inbuilt 
+@Configuration annotation along with proxyBeanmethods=false
+   So we use @Autoconfiguration annotation only on top of those classes where you want to do some automatic configuration, so just remember @Autoconfiguration is not same as @configuration
+  So whenever you will be writing  @Autoconfiguration file that means you want some automatic configuration so that auto configuration will happen whenever we will be giving an entry to this particular class to a specific file. 
+   So how spring boot order configuration works we have springbootAutoconfigure.jar , we have META-INF-Spring folder inside that we have org.springframework.boot.autoconfigure.AutoConfiguration.imports file which contains an entry for my auto configuration but this jar cannot be changed.
+  - So I will goto my project - resources folder - create META-INF folder - create spring folder - create file org.springframework.boot.autoconfigure.AutoConfiguration.imports
+  - Inside we give complete qualified path 
+com.pack.SpringBootAutoConfigure.autoconfig.AppConfig
+ 
+Now we have starter app which is my main application which is helping me to bootstrap my application and it has the @springbootapplication which has @enableautoconfiguration, so it will enable all the default Aauto configurations created by the springboot team and also it will look for any developer specific auto configuration 
+
+-Start the appl, it will print the desired output 
+
+Whenever we are writing any auto configuration file we can trigger this Auto configuration based on some condition, for an example we only want to
+trigger this autoconfiguration when I have a class called Exam.java available in my classpath 
+
+Exam.java
+public class Exam {
+}
+
+AppConfig.java
+@AutoConfiguration
+//@ConditionalOnClass(name="com.pack.SpringBootAutoConfigure.autoconfig.Exam")
+@ConditionalOnClass(value=Exam.class)
+public class AppConfig {
+
+   @Bean
+	SpringBootCourse springBootCourse() {
+		return new SpringBootCourse();
+	}
+}
+
+So here if we have class called Exam is present inside the class path then only create this bean 
+
+- SpringBootCourse Bean will be created only only when we have a Example bean
+available inside my application context, so there should be a bean called Example available inside the application context 
+
+@AutoConfiguration
+public class AppConfig {
+
+   @ConditionalOnBean(name="example")
+   @Bean
+	SpringBootCourse springBootCourse() {
+		return new SpringBootCourse();
+	}
+}
+
+- Start the appl, we will get an error that Example bean is not present
+
+@Component("example")
+public class Example {
+  public void print() {
+     sop("Example");
+  }
+}
+
+- Start the appl, it will be print the output 
+
+- Every time you are basically wondering like what is basically being Auto configured, for that in application.properties we give 
+
+debug=true
+
+- Start the appl, we can find all those things which has been auto configured for you
+ We can see there are a lot of positive matches so all this Auto configurations are happening based on some class which has already been present inside your class path. We have dispatcherservlet here the dispatcher servlet is being auto configured for you and you as a developer doesn't have to write the dispatcherservlet. We have EmbeddedWebServerFactorycustomizer this is basically helping you to set up a tomcat server for you. We have
+WhiteLabelErrorViewConfiguration to get whitelabel error page, we have
+HTTPMessageConverterAutoConfiguration helpful for converting Java object
+to Jackson object 
+
+Dynamic Queries with JPA Specification
+      Consider we have Artifact table with id, name, description and owner name. Now we can query the data based on certain properties like
+
+List<Artifact> findByNameContaining(String name);
+List<Artifact> findByDescriptionContaining(String desc);
+List<Artifact> findByNameContainingAndDescriptionContaining(String name, String desc);
+List<Artifact> findByIdAndNameContainingAndDescriptionContaining(String id,String name, String desc);
+     
+1. Problem with query methods is that we can only cover a few search scenarios, the number of query methods increases exponentially as the search criteria increase. With only four search parameters we need to hard code 16 query methods in the repository interface, similarly for 5 search parameter we need to hardcode 32 query methods
+2. Another problem with this approach the query method names length can grow considerably with long field names and many criteria, so understanding the purpose of such an extended query could require a significant amount of time in other words the readability of the code decreases, for eg
+List<User> findByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndEmailContainsAndRegistrationDateBetweenOrderByLastNameAsc(String firstname,String lastname, String email, LocalDate start,LocalDate end);
+
+So how efficiently handle all possible Criterion and return a Consolidated search result by constructing Dynamic query using Spring data GPA
+
+
+1. Create Address,Employee entity class
+
+@Entity
+@Table(name ="ADDRESS")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class Address {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String city;
+}
+
+@Entity
+@AllArgsConstructor
+@Setter
+@Getter
+@NoArgsConstructor
+@Table(name="EMPLOYEE")
+public class Employee {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private Integer salary;
+    @DateTimeFormat(pattern="dd/MM/yyyy")
+    private Date doj;
+    private String skill;
+
+    @OneToOne
+    @JoinColumn(name = "address_id",referencedColumnName = "id")
+    private Address address;
+
+}
+
+2. Create Repository interface
+
+public interface AddressRepo extends JpaRepository<Address,Long> {
+}
+
+public interface EmployeeRepo extends JpaRepository<Employee,Long> {
+}
+
+3. Insert the data in main class using CommandLineRunner intf
+
+@SpringBootApplication
+@AllArgsConstructor
+@Slf4j
+public class FilterDemoApplication implements CommandLineRunner {
+
+	private final EmployeeRepo employeeRepo;
+	private final AddressRepo addressRepo;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(FilterDemoApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+
+		Address ad = new Address();
+		ad.setCity("Hyderabad");
+		addressRepo.save(ad);
+
+		Address ad1 = new Address();
+		ad1.setCity("Pune");
+		addressRepo.save(ad1);
+
+		Address ad2 = new Address();
+		ad2.setCity("Mumbai");
+		addressRepo.save(ad2);
+
+		Address ad3 = new Address();
+		ad3.setCity("Koachi");
+		addressRepo.save(ad3);
+
+		Address ad4 = new Address();
+		ad4.setCity("Kolkata");
+		addressRepo.save(ad4);
+
+
+		Employee em = new Employee();
+		em.setName("sainath");
+		em.setSalary(30000);
+		em.setSkill(Subject.ENGLISH);
+		em.setDoj(formatter.parse("10/12/2015"));
+		em.setAddress(ad);
+		employeeRepo.save(em);
+
+		Employee em1 = new Employee();
+		em1.setName("rama");
+		em1.setSalary(50000);
+		em1.setSkill(Subject.HINDI);
+		em1.setAddress(ad1);
+		em1.setDoj(formatter.parse("4/06/2016"));
+		employeeRepo.save(em1);
+
+
+		Employee em2 = new Employee();
+		em2.setName("karthik");
+		em2.setSalary(50000);
+		em2.setSkill(Subject.MATHS);
+		em2.setAddress(ad2);
+		em2.setDoj(formatter.parse("03/04/2018"));
+		employeeRepo.save(em2);
+
+		Employee em3 = new Employee();
+		em3.setName("naresh");
+		em3.setSalary(10000);
+		em3.setSkill(Subject.ENGLISH);
+		em3.setAddress(ad3);
+		em3.setDoj(formatter.parse("10/12/2016"));
+		employeeRepo.save(em3);
+
+		Employee em4 = new Employee();
+		em4.setName("rambabu");
+		em4.setSalary(40000);
+		em4.setSkill(Subject.TELUGU);
+		em4.setAddress(ad4);
+		em4.setDoj(formatter.parse("10/12/2015"));
+		employeeRepo.save(em4);
+
+	}
+}
+
+4. Now we add specification, so in EmployeeRepo we add
+
+public interface EmployeeRepo extends JpaRepository<Employee,Long>,
+            JpaSpecificationExecutor<Employee> {
+}
+
+JpaSpecificationExecutor it's all about building this specification, the specification with the help of the predicate functionality  we will write search criteria
+
+5. In EmployeeService, we create first specification 
+
+Specification is a functional interface defined with one abstract method, so we have to override the method which takes 3 argument root, query, criteriaBuilder 
+  1. root - if you are familiar with SQL, root refers as from clause in an SQL statement, the root always references the persisted entity in this case the Artifact 
+  2. query is used for ordering results or specifying that we want
+distinct results or specifying the grouping by attributes
+  3. criteriabuilder used to construct search criteria, it is like where clause in a SQL
+Now we write lambda expr for this functional interface
+
+ private Specification<Employee> getSpecification(){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"),"ramu");
+    }
+
+So specification here is on column "name" we are performing a equal
+operation with this value "Ramu"
+
+- Now we create separate method to call the specification
+
+   public List<Employee> getEmployeeByName(){
+        Specification<Employee> specification = getSpecification();
+        return employeeRepo.findAll(specification);
+    }
+
+@Service
+@AllArgsConstructor
+public class EmployeeService {
+    private final EmployeeRepo employeeRepo;
+
+    private Specification<Employee> getSpecification(){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"),"ramu");
+    }
+
+    public List<Employee> getEmployeeByName(){
+        Specification<Employee> specification = getSpecification();
+        return employeeRepo.findAll(specification);
+    }
+}
+
+7. Create Controller program
+
+@RestController
+@AllArgsConstructor
+public class EmployeeController {
+    private final EmployeeService employeeService;
+
+    @GetMapping("/ByName")
+    List<Employee> getByName(){
+        return employeeService.getEmployeeByName();
+    }
+}
+
+8. Start the appl, run http://localhost:8080/ByName
+
+9. Previously we have hardcoded name value and it will search based on the
+name and it will perform a equal operation because we have given criteria
+Builder equal with this value. Now we fetch what column we need to perform operation on and what value we need to perform
+    So we create a separate class SpecificationInput with columnName and value
+
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class SpecificationInput {
+    private String columnName;
+    private String value;
+}
+
+10. In Controller program, we create request with request body 
+
+@GetMapping("/ByEquals")
+    List<Employee> ByEqual(@RequestBody SpecificationInput specificationInput) throws ParseException {
+        return employeeService.getEmployeeData(specificationInput);
+    }
+
+11. In EmployeeService, we create specification and method to call that specification
+
+  private Specification<Employee> getSpecification(SpecificationInput specificationInput){
+         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(specificationInput.getColumnName()),
+                    specificationInput.getValue());
+
+    }
+    public List<Employee> getEmployeeData(SpecificationInput specificationInput) {
+        Specification<Employee> specification = getSpecification(specificationInput);
+
+        return  employeeRepo.findAll(specification);
+    }
+
+12. Start the appl, run http://localhost:8080/ByEquals with body
+{
+   "columnName":"salary",
+   "value":"50000"
+}
+
+Now it wil display 2 records, so now we can fetch data based on name column
+
+13. Previously we can get the data from the input and based on it we are performing our specifications, we have did the equals operation.
+    Now we perform between operation using dates 
+
+- In Controller we create an endpoint
+
+@GetMapping("/ByBetweenDates")
+    List<Employee> ByBetweenDates(@RequestBody SpecificationInput input) throws ParseException {
+        return employeeService.getEmployeesBetweenDates(input);
+    }
+
+- In Service, we create a specification and method to invoke it, so here we will be sending 2 dates separated by , 
+
+{
+   "columnName":"doj",
+   "value":"2016/05/4,2020/12/12"
+}
+
+private Specification<Employee> getEmployeeSpecificationBetweenDates(SpecificationInput input) throws ParseException {
+        String value = input.getValue();
+        String[] values = value.split(",");
+       SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+       Date startDt = simpleDateFormat.parse(values[0]);
+       Date endDt = simpleDateFormat.parse(values[1]);
+       return (root, query, criteriaBuilder) -> criteriaBuilder.between(root.get(input.getColumnName()),startDt,endDt);
+
+   }
+
+public List<Employee> getEmployeesBetweenDates(SpecificationInput input) throws ParseException {
+       Specification<Employee> empSpec = getEmployeeSpecificationBetweenDates(input);
+  return  employeeRepo.findAll(empSpec);
+}
+
+- Start the appl, run http://localhost:8080/ByBetweenDates with body
+{
+   "columnName":"doj",
+   "value":"2016/05/4,2020/12/12"
+}
+
+Now it wil display records, so now we can fetch data between doj column
+
+14. Specification with sort condition 
+
+- In SpecificationInput, we add 2 more fields
+
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class SpecificationInput {
+    private String columnName;
+    private String value;
+    private String sortColumn;
+    private String sortOrder;
+}
+
+- In Service, we add sort feature in getEmployeesBetweenDates()
+
+public List<Employee> getEmployeesBetweenDates(SpecificationInput input) throws ParseException {
+       Specification<Employee> empSpec = getEmployeeSpecificationBetweenDates(input);
+       String sortColumn = input.getSortColumn();
+       String sortOrder = input.getSortOrder();
+
+       boolean sortFlag = sortOrder.equalsIgnoreCase("ASC")?true:false;
+
+       Sort sort = Sort.by(sortFlag?Sort.Direction.ASC: Sort.Direction.DESC,sortColumn);
+       return employeeRepo.findAll(empSpec,sort);
+}
+
+- Start the appl, run http://localhost:8080/ByBetweenDates with body
+{
+   "columnName":"doj",
+   "value":"2016/05/4,2020/12/12",
+   "sortColumn":"salary",
+   "sortOrder":"ASC"
+}
+
+Now it will display the data between the dates and sorted salary in ASC order 
+
+15. Specification using like
+
+- In controller prg, we create 
+
+@GetMapping("/ByLike")
+    List<Employee> ByLikeOperation(@RequestBody SpecificationInput input){
+        return employeeService.getEmployeeByLike(input);
+    }
+
+- In service, we create specification and method to invoke it
+
+private Specification<Employee> getEmployeeSpecificationByLike(SpecificationInput input){
+       return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get(input.getColumnName()),
+               "%"+input.getValue()+"%");
+
+    }
+    public List<Employee> getEmployeeByLike(SpecificationInput specificationInput){
+        Specification<Employee> employeeSpecification = getEmployeeSpecificationByLike(specificationInput);
+        return employeeRepo.findAll(employeeSpecification);
+    }
+
+- Start the appl, run http://localhost:8080/ByLike with body
+{
+   "columnName":"name",
+   "value":"ram"
+}
+
+Now it wil display records that starts with ram
+
+16. Specification using greater than equal 
+
+- In Controller prg, we create
+
+ @GetMapping("/ByGreaterThanEqual")
+    List<Employee> ByGreaterThanEqual(@RequestBody SpecificationInput input){
+        return employeeService.getGreaterThan(input);
+    }
+
+- In Service we create specification and method to invoke it
+
+private Specification<Employee> getSpecificationByGreaterThan(SpecificationInput input){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(root.get(input.getColumnName()),input.getValue());
+
+    }
+    public List<Employee> getGreaterThan(SpecificationInput input){
+        Specification<Employee> specificationByGreaterThan = getSpecificationByGreaterThan(input);
+      return employeeRepo.findAll(specificationByGreaterThan );
+    }
+
+- Start the appl, run http://localhost:8080/ByGreaterThanEqual with body
+{
+   "columnName":"salary",
+   "value":"20000"
+}
+
+Now it wil display records whose salary > 20000
+
+Like that we can use criteriaBuilder.greaterThan, lessThan, lessThanOrEqualTo
+
+17. JpaSpecificationExecutor all contains some methods like count, delete, exists
+
+ public long getGreaterThan(SpecificationInput input){
+        Specification<Employee> specificationByGreaterThan = getSpecificationByGreaterThan(input);
+        Long empCount =  employeeRepo.count(specificationByGreaterThan);
+        System.out.println("Emp count is :"+empCount);
+        boolean emExists = employeeRepo.exists(specificationByGreaterThan);
+        System.out.println("Emp Exists :"+emExists);
+        long deleteStatus = 0;
+        if(emExists){
+           deleteStatus= employeeRepo.delete(specificationByGreaterThan);
+        }
+       return  deleteStatus;
+
+    }
+
+- Start the appl, run http://localhost:8080/ByGreaterThanEqual with body
+{
+   "columnName":"salary",
+   "value":"20000"
+}
+
+Now it will count, check whether it is exists and delete it 
+
+17. Now we create specification based on multiple search criteria, we are going to search on multiple column names
+
+- Create SeacrhSpecification class which represent type of columns we are going to do the search
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+public class SearchSpecification {
+    private String columnName;
+    private String value;
+}
+
+- In Service class create specification
+
+private Specification<Employee> getSpecificationForList(List<SearchSpecification> searchSpecificationList) {
+    SearchSpecification search1=searchSpecificationList.get(0);
+    SearchSpecification search2=searchSpecificationList.get(1);
+
+   List<Predicate> predicateList=new ArrayList<>();
+   return (root,query,criteriaBuilder) -> {
+        Predicate equal=criteriaBuilder.equals(root.get(search1.getColumnName()),search1.getValue());
+        Predicate greaterThan=criteriaBuilder.greaterThan(root.get(search2.getColumnName()),search2.getValue());
+        predicate.add(equal);
+        predicate.add(greaterThan);
+        return criteriaBuilder.add(predicateList.toArray(predicateList.toArray(new Predicate[0])));
+   };
+}
+
+
+public List<Employee> getDetailsFromList(List<SearchSpecification> l) {
+     Specification<Employee> sp=getSpecificationForList(l);
+    return empRepo.findAll(sp);
+}
+
+- Create RequestDTO class which represent the input data 
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class RequestDTO {
+    List<SearchSpecification> specificationList;
+}
+
+- In controller, create endpoint
+
+ @GetMapping("/ByList")
+    List<Employee> byList(@RequestBody RequestDTO input){
+        return employeeService.getDetailsFromList(input.getSpecificationList());
+    }
+
+- Start the appl, run http://localhost:8080/ByList with body
+{ 
+  "specificationList": [
+     {
+          "columnName":"name",
+           "value":"rama"
+     },
+     {
+            "columnName":"salary",
+            "value":"40000"
+     }
+   ]
+}
+
+Now it will display the data
+
