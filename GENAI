@@ -1,0 +1,1057 @@
+What is Generative AI?
+     So going back to the root of artificial intelligence right, so if I
+ask you what is artificial intelligence, so AI is nothing but just in three words we will say "making computers intelligent" , so if we do anything that
+makes systems intelligent everything comes under the Umbrella of AI.  Now I can make system intelligent by doing n number of things out of those n
+number of things one thing is known as machine learning 
+     So what is machine learning the simple definition will be,we try to learn the past attributes and try to predict what will happen in the future. Then we
+would have heard of something known as deep learning so what is deep
+learning, here also we try to learn the pattern or behavior from the
+past data and predict the future but in a specific way, so that way is called
+neural network way or neuron way 
+    So the definition of machine learning + deep learning = a system to Predict or classify or cluster using algorithms.
+    So what will generative AI do, in generative AI you do not predict, you
+do not estimate, you do not classify, you do not cluster, what you do is generate
+    Gen AI = A system to GENERATE, so generate can be many
+things for example it can be a text generation or  it can be a audio generation or it can be a video generation or it can be a image generation and so on
+
+Major categories of generative 
+  So broadly two main categories of generative AI
+  1. Large language models(LLM)
+         It have certain properties
+           1. Trained on very large data 
+           2. it will be generic in nature
+  So when you are not able to understand what is large language
+model, think it as chat GPT so every time you are interacting with chat GPT you are interacting with a large language model, so large language model will normally when it is created it is generic, it is not prepared to serve any specific purpose, so it will serve for all the purposes   
+          3. Trained on millions and billions of parameter 
+    suppose you don't have very Hi-Fi infrastructure then how would you
+train a model on millions and billions of parameters, so if you don't
+have a good infrastructure it will be very difficult for you to train your
+model, hence all the big shots for example Google, meta or Facebook, Microsoft
+have their own large language models which they have trained on very large data set and very high infrastructure, now it is not possible for you and me to have that kind of infrastructure and this kind of data set, so that we can build our own large language model 
+
+
+Spring AI  https://www.youtube.com/watch?v=ZA5g0SHg7eI
+   If you want to build generative AI application then as of now, you had only
+two options either you can use a Langchain framework or you can use Llamaindex framework and all these Frameworks are written in Python, so if you want to
+build an any application on generative AI then you have to be aware of python,
+but what if you are a Java developer and you have a background in Spring boot and if  we write to write any generative application using spring boot that's where the spring AI coming into picture
+   So spring AI provides you the flexibility where we can generate generative AI application using spring Boot and Java so as of now this particular framework can work with open Ai and it can also work with Azure openai which is an Enterprise version of open AI 
+   The spring AI introduced a new interface called ChatClient which is having implementation of open AI and Azure open AI. Spring AI current version is 0.8.0
+  If you want to implement open AI or Azure open AI you have to register with their portal and you have to generate the API key 
+
+1. Goto https://spring.io/ - Project - View all projects - Spring AI - Learn - Reference doc - Getting started
+
+2. Since we are going to start with open AI, we have to go to this open AI
+sign up page and you have to generate the token 
+https://platform.openai.com/signup
+
+Create ur account:
+   email: senthil.kumart@hcl.com
+   password: Birthday12!@
+
+On the RHS menu - API Keys - Create new key 
+    key name: TestKey
+
+3. Create Spring boot project with web, lombok, open AI dependency, use 3.2.3 version
+
+4. Create service class which is used to get the top singers in the countries, so first we autowire ChatClient provided by Spring AI
+
+@Service
+public class TopSingers {
+    
+     @Autowired
+     ChatClient chatClient;
+
+     public String getTopSingers(String country) {
+        String promptString="Top singer details of "+country;
+        String response=chatClient.call(promptString);
+        return response;
+     }
+}
+
+5. Create controller 
+
+@RestController
+@RequestMapping("/chat")
+public class SingerController {
+
+    @Autowired
+    TopSingers topSingers;
+
+    @GetMapping("/topsingers/{country}")
+    public String getTopSingers(@PathVariable String country) {
+       return topSingers.getTopSingers(country);
+    }
+}
+
+6. Configure api key in application.properties file
+
+spring.ai.openai.api-key="open ai key"
+
+7. Start the application
+
+8. In Postman, with GET request run http://localhost:8080/chat/topsingers/india 
+
+http://localhost:8080/chat/topsingers/usa
+
+we got response as singers with their details in the form of String, but if we want some structure Json data 
+
+9. To get a response in a structured way, for that we need a model class 
+
+@Data 
+public class Singer {
+     private String name;
+     private int age;
+     private String location;
+     private String country;
+}
+
+@Data
+public class Singers {
+    private List<Singer> singers;
+}
+
+we will get a response from the AI as a string only which we have to pass it and we have to tell that in the request itself how we need a response and we have to pass that, so we have to use BeanOutputParser and in promptstring we have to mention placeholder for country and the format 
+
+BeanOutputParser<Singers> parser=new BeanOutputParser<>(Singers.class);
+String promptString="Top singer details of {country} {format}";
+
+    Next we need PromptTemplate and now with the template we will fill the placeholders by using add()
+
+PromptTemplate template=new PromptTemplate(promptString);
+template.add("country",country);
+template.add("format",parser.getFormat()); 
+template.setOutputParser(parser);                                               //it will generate the format for us, so when you're creating the parser object itself we mention we need a format in the form of singers object
+
+- Now our template is ready and now we need a Prompt object, so
+
+Prompt prompt=template.create();  //this will create Prompt object 
+
+- Now in generate() instead of passing a string will pass this prompt and return ChatResponse
+   ChatResponse response=chatClient.call(prompt);
+
+- In order to return String, we call getGeneration().getContent
+    String strResponse=response.getResult().getOutput().getContent();
+
+- Now we need to convert String to Singers object,so return type change to Singers  
+      return parser.parse(strResponse);
+
+
+      public Singers getTopSingers(String country) {
+         BeanOutputParser<Singers> parser=new BeanOutputParser<>(Singers.class);
+         String promptString="Top singer details of {country} {format}";
+
+         PromptTemplate template=new PromptTemplate(promptString);
+         template.add("country",country);
+         template.add("format",parser.getFormat()); 
+         template.setOutputParser(parser); 
+
+         Prompt prompt=template.create();  
+         
+         ChatResponse response=chatClient.call(prompt);
+         String strResponse=response.getResult().getOutput().getContent();
+         return parser.parse(strResponse);
+      }
+
+10. In controller also we change return type to Singers 
+
+@GetMapping("/topsingers/{country}")
+    public Singers getTopSingers(@PathVariable String country) {
+       return topSingers.getTopSingers(country);
+    }
+
+11. Start the application
+
+In Postman, with GET request run http://localhost:8080/chat/topsingers/india 
+
+Now we get response in JSON of Singers object 
+
+
+2. Build generative AI applications using SpringBoot and Java
+     https://www.youtube.com/watch?v=QWKs0aOZaVQ&list=PLO66QfE8gWT3L3SCxIhXxVnKY8153kZJB&index=5
+     https://github.com/PraveenKS30/GenerativeAI/tree/main/springai
+
+
+
+Prompt Engineering
+    Generative AI turns English into a new programming language that's because it's the new syntax of generate AI, similar to how optimized code generates efficient applications, well-crafted prompts enable AI models to produce accurate output, so designing a prompt is more of an art than science, prompts influence the models to generate the right output without explicitly training or fine tuning them.
+    So prompt engineering is the practice of carefully designing and
+fine-tuning input prompts to guide an AI model's response in a designed
+direction, it can be especially useful when dealing with large language models
+like GPT where the quality and nature of the output can be significantly
+influenced by the wording and structure of your input prompt. 
+   Prompt engineering involves both an understanding of how the model
+processes the input and a creative approach to designing prompts that guide
+the model towards the desired output. It is often used to fine-tune the
+performance of an AI system without really changing the underlying model or
+the training data. Prompt engineering essentially influences the model to respond based on a specific requirement. Lack of prompt engineering leads to
+inaccurate and factually incorrect responses which is often called as
+hallucinations 
+    So it's important to understand the significance of prompt Engineering
+in the context of generative AI, essentially what you ask is what you get
+so the more detailed you are with your prompt and more crisp with your prompt
+the better the output 
+
+Types of promts used with llms 
+    So there are a variety of techniques obviously we are discussing with some of the important types prompt engineering 
+
+1. Explicit Prompt
+     There is an explicit prompt something like "write a short story about
+a young girl who discovers a magical key that unlocks a hidden door to another world" and so on, now here if you carefully notice we are explicitly asking the llm to write a short story and the theme is unlocking a hidden door to another world, so this basically drives the llm towards generating an output that matches your desired outcome, so the more explicit you are the better the output
+
+2. Conversational Prompt
+      Prompts which you typically ask when you're dealing with a chatbot, now in this case we are actually interacting with a chatbot as if we are talking to a human, so "can you tell me a funny joke about cats" now this is a conversational prompt and this can continue it can actually tell you a joke and you can ask something more about it and the conversation just goes on and on, such prompts are called con conversational prompts 
+
+3. Instructional Prompts
+      Prompts which will generate more useful content something like a blog post, now in this prompt we are literally instructing the llm to write a detailed blog post discussing the benefits and drawbacks of renewable energy and the outline should be structured as follows and we also Define what are the section of this blog post now this is being very instructional or prescriptive with your prompt so you are essentially handholding the llm and leading it towards the outcome that is expected that is what is called instructional prompt 
+
+4. Context-Based Prompts
+      It will provide sufficient context text and the backstory to the llm before you ask a specific question, so it's a combination of two things, one is the context the other one is a conversational prompt, so in this case  I'm actually asking to suggest the tourist attractions and local restaurants based on my plan  trip to Paris next month, so if you see I have given sufficient context which is plan trip to Paris next month and then it is going to come back to Me based on the prompt that follows the context, so here the context is the trip to Paris and the prompt itself is the recommendations about  restaurants and tourist attractions and so on 
+
+5. Open-Ended Prompts
+      Prompts which are very very broad and they don't really have any context, they don't have any conversational style prompt, they are very open-ended and they force the llm to be creative and come back with  typically a pretty large answer, so in this case we are asking "about the impact of AI" which is a very broad topic and notice that we are not adding any context and we are not instructing the llm, we are simply asking a very open-ended question about the impact of AI on society 
+
+6. Bias-Mitigating Prompts
+     As you understand llms are trained on large corpora which includes publicly available data sets and obviously the publicly available data sets are biased, because they are ultimately generated by humans and humans tend to have biases in their thinking and in their writing, so when you train an llm on the public data in the public domain, you obviously see certain bias. 
+    So to avoid that you can steer the llm towards bias mitigation, now in this example I am picking up a very sensitive topic which is "cast based reservations in India" now while I pick this topic as an input to the llm, I also provide additional instruction that says avoid favoring any particular group ideology or opinion and focus on factual information supported by reliable sources and also strive for inclusivity and fairness,
+    Now this is a pretty detailed prompt and it very clearly instructs the llm to stay away from any bias or any opinion that is skewed towards a specific group ideology opinion or a community. So when you are crafting a prompt on any any topic where you know there are biases and there are highly skewed opinions, this could be one of the ways to avoid lLm's response being biased by specifically mentioning what to filter and what to avoid when you're actually generating this 
+
+7. Code Generation Prompts
+      Now llms have been trained on not just the textual data that is available in the public domain, but they're also trained on various coding Snippets and coding reports, so  obviously that makes them capable of
+responding to prompts that deal with code. Now in this example I'm asking GPT
+to write a python function that takes in a list of integers as input and returns the sum of all the even numbers in the list, now this is a slightly complex code snippet, GPT is smart enough to come back with the code snippet that you can literally copy paste and see for yourself. So this is a very
+very helpful mechanism to generate code that can go into your applications 
+
+Key Techniques of Prompt Engineering
+    When you are crafting a prompt it can be one of these three techniques 
+
+1. Zero shot prompting
+2. one shot prompting 
+3. Few shot prompting 
+
+Zero Shot Prompting
+    It is a technique that allows an llm to perform a task without being explicitly trained on that task, so this is done by providing the llm with a prompt that describes the task and the llm uses its knowledge of the world to generate the response, now obviously this is based on the pre-training data that was used to train this model 
+   For example you could give an llm the Prompt to "write a poem about love" and the llm would be able to generate a poem about love, even though it was never explicitly trained on the task of writing poems, this is again derived from the pre-training data. Zero shot prompting is made possible by the fact that llms are trained on massive data sets of text and code, these data sets contain a wide variety of information, including information about different tasks and how to perform them, so this allows llm to learn the general principles of how to perform in task, even if it has never seen such a task before. 
+   So zero shot prompting is basically asking a direct question without any examples or without any additional context. so these are some of the examples 
+  1. translate the sentence from English to French 
+  2. summarize this article in 100 words 
+  3. answer the following question. What is capital of France
+  4. Write a code to generate Fibonnaci series
+
+2. One shot prompting 
+          It is  slightly advanced technique, now this allows a large
+language model to perform a task after being trained on a single example, this is done by providing the llm with a prompt that describes the task and llm uses the example to learn, how to perform the task. So you give at
+least one example to the llm and it uses that as a reference to finish the output
+         So oneshot prompting is made possible by the fact that llms are able
+to learn from very small amounts of data, essentially that's the context or the examples that you provide, this is because llms are trained on massive data sets and they have the ability to look at the previous examples and learn from them, even if they are not completely aware of the domain, so when an llm is given a single example it can use the example to learn the specific details of how to perform the task 
+    Few examples of oneshot prompting technique
+prompt: What are the symptoms and treatment options for seasonal allergies 
+   so this is basically a oneshot prompt where you have the instruction plus an example 
+
+Prompt: Provide a step-by-step guide on how to make classic margherita pizza
+    Now "provide a step-by-step guide" is the instruction, on how to make a classic margarita Pisa and that is a hint 
+
+So if you see the difference between zero shot and one shot, they basically differ in the way the prompt is constructed in one shot prompting we have some hint or an example that the llm can look up to generate the response. But in zero shot  we don't have any examples or we don't have any additional context provided
+
+3. Few-Shot Prompting
+      It is a way of instructing llms where the model is given several
+examples and expected to understand the task based on those examples, so here we expand the one shot to include more examples and then it obviously becomes a few short prompting technique. For example
+so we describe an animal and we give the output of the animal itself, so for the first two we have a explained or or described the animal and then we also called out the animal, but in the third one we describe the characteristics of that animal but we don't really provide the output and we leave it for the llm to fill
+
+
+Basic structure of prompt
+1. Task - Instructing the model what you want  it to do
+    A task is what you want the model to do, it can be anything from summarize, analyze blog post, write me an essay or a Code email 
+
+2. Context - Add information that will help the model to perform its task
+   This is really a crucial part most of the guidance of the model happens  through additional context, context sparking the memory of a model is
+also done through the context and normally the more context we give the better the output will perform
+
+3. Role - capture more and better semantic relationships
+       Role is when you tell the model to act as something and it can be a mathematician, it can be a philosopher, it can be a historian. We don't do this just for the purpose of styling, for example if I tell the model act as a mathematician, now I'm trying to trigger a more analytical approach in
+the generation of the output, if I would tell it act as a philosopher it might
+use more concepts from philosophy when trying to interpret 
+
+4. Format - Desired output to look
+    This can be anything from bullet points essay style to a poem style
+
+5. Tone - style of writing
+
+6. Examples - Additional context in output format
+
+7. Constraints - Remind the model of the boundaries 
+     This is basically setting the boundaries for the model
+
+Chain Of Thoughts
+    Chain of Thought may be one of the most famous and influential papers of
+prompt engineering. The whole progress of generative AI is constantly
+viewed through the length of benchmarking, we get a new model or a new version of the model, somebody maybe the company itself or people from the open source
+Community take that model and they Benchmark it, every new paper that is released is being judged according to those benchmarks.
+    Chain of Thought is a paper that display the following capability, when you ask the model and you can see an example here on the left, Roger has five tennis balls he buy two more cans of tennis ball each can have three how many tennis balls does he have and the answer is 11. You ask another very similar question cafeteria so on and so forth and it gives the answer is 27 which is the wrong answer 
+   When you use Chain of Thought, on the right you can see the same exact prompt only instead of saying the answer is 11, the answer still remains 11 but only I give him the steps in order to reach that solution, I say Roger started with five balls, two cans of three tennis balls, each is six
+tennis balls, 5 plus six is 11, now when I ask the exact same question of the same format he actually gets the answer right why because he's trying to emulate my process and I think some of the Benchmark improve 34% when they use Chain of Thought 
+
+GENAI-BATCH1
+chatgpt account
+username: senthil1418@gmail.com
+password: Birthday12!@
+
+Day 1
+
+So what is ur understanding about GenAI ?
+
+
+Evolution of AI
+     So AI is not new word,it is already there from 1950 actually, it is coined by John McCarthy, though it is available as buzz word from 1950 but not much progress during that time. 
+   From 1980 knowledge based system was evolving 
+   So only from 1990 the rise of machine learning come into place, it talks about the algorithm patterns from data 
+    Then from 2010 deep learning was evolved which is big breakthrough in NLP(National Language Processing) where it creates neural network 
+    In 2020 we can see there are lot of social networking (ie) lot of apps evolved and people are able to communicate very quickly and able to share their views,  posts their comments and blogs. So there is big data there wherein they want to understand and analyze the data in terms of text, not only text previously it was only text, now we have audio files, video files, images etc 
+   So what in future we can expect, it is going to collaborate with human and this is like a forecast thing (ie) in 2030, the human will be doing partially and machine will be doing most of them.
+   So in 2050 its going to mimic the human itself, may be that is where the vision of AI team in the future
+
+So AI is not buzz word, so dont think today u r learning AI, AI is already available as part of previous generation, now we are getting into the different types of era in terms of AI itself
+
+Previously we talk about evolution and generation level, but this what is happening. We already in the multimodel generative AI, so in the future what is that, as I already discuss it is going to mimic the human 
+  So what is this Predictive AI, previously AI was there but we never call as Predictive AI. So what is prediction, so u have a history of data, where if ask a question it will analyze and give the output, again if I ask the same question and I am going to get the same output, so that is the key difference.
+   Tomorrow if we added some data and ask different question then there will be small change in the output. But if no change in the data and keep on asking same question for n number of times we will be getting same output because it is prediction 
+
+Next what is Generative AI? 
+    It is going to generate the data or response as per ur request or prompt. 
+    Previously we are talking about predicitive AI so when we have a set of data where there is no change on data, but if we ask same question multiple times then we get same output. In generative AI it will generate the data based on the data we are given, current contacts etc and there are so many other parameters here, so with that data it will generate same output
+   For eg: ChatGPT it is one of generative AI, here if person A is asking same question, person B also asking same question and the response both are getting it would be different or may be same because it is not prediction here. It is about generation, so during generation if we see same output it is good, and if we didnt see same output because there is change in the way of learning by that particular model 
+   So when we take practical session I will  be providing the prompt, I will be showing the output and I will be saying  that this what be the output. So people what they will do, when they issue the same prompt without any spelling mistake but they will be saying that they are getting different response (ie) it is not working for me and not able to create the code or my code is only partially correct, because it is generating so it will have some kind of limitation.
+    So the response we get from generative AI currently is not 100% correct or 100% success. So when we do practical session, I will give a site for practising and I hope it would be accessible for u guys, if not also u can try in ur personal lap or mobile
+   So when I give the prompt, and u guys issue the same prompt, if u get same output it dosent mean that it is correct output and if u get new output also it dosent mean it is wrong. So human intervention is currently required in the Generative AI because it was generating. So senthil was asking, senthil prompt is like this and his context is like this, his env is like this, so this is the response for his request.
+    Previously I dont know anyone have used Predictive AI, so it will never say it was having trouble. But if u look at generative AI wherever it is possible it will always say, please review as the output is not 100% correct, so that is difference between predictive and generative AI
+    Currently we are into Multimodel Generative AI, so what it is?
+    Predictive AI is text to text (ie) I will be typing a text and i will get the text, Generative AI also it is text to text, so if I ask something it will give in text thats what is happen in ChatGPT, if we type a text it will provide the response but there is small limitation in ChatGPT because the model was trained on certain year and months (ie)dec2022, so if we ask something else it may not respond or it may start hallucinating, it will think I will know the answer but it will give wrong answer 
+    Even we have Generative AI in multimodel so what is that meaning, we can give any kind of structure of data to my model and we can get the different structure, it is not text to text anywhere. So multimodel means it is not text to text we can send any type of structure as input and we can get different structure as an output.
+
+Since we are discussing about multimodel, we quickly discuss a usecase
+   In Unimodel, we say description of orange as prompt and on right side it will say the description of orange in text format
+   But in multimodel, first we are uploading a picture and describe it and on right side we get a defination because we are giving an image and on right side we get text as "An Orange"
+  Next we are sending the text as "Create an animated orange video" and on right side it produce an animated image. Third it will produce an normal image 
+
+Now we will do a quick demo - goto gemini ai in google, I have already logged in. Now we will first describe a picture 
+   So when u deal with AI especially multimodel generative AI, please be careful as the data is submitted from hcl laptop, so dont upload any of ur customer related documents even hcl related document, because we dont have control over the data once we upload
+
+1. Now we select some image and provide some prompt like "can you describe the attached image" 
+   Now it provides some information about the image, so it is able to read this information and again it is going to look at the model how it go trained and then it gives me the response 
+   So this is multimodel, since the structure of input is different and the output is different 
+
+This is going to useful in multiple domains, can anyone think of where we want to upload something and get some output, so where do u think it is very useful
+  1. Medical field
+  2. In amazon we can upload an image or take snapshot of image and I want the product like this, it will go and fetch it. But it is not more of AI there, it was just try to scan the image and try to match the image
+
+Now we come to development side, so when we get ur customer requirements, u r doing an analyzing and having query session with the customer, clarification is done and u have better understanding about the requirements and what is the next step in ur project lifecycle
+    We need to start design phase, first is HLD and LLD in waterfall model, in agile there is no specific documents but u will  be creating the design, for that also we have a model 
+
+In chatgpt.com, Explore GPT's - we search technical solution document generator - start chat - Type "Spring boot framework, if we want to provide any specification as Microservice architecture, we need API Gateway, Authentication service JWT+OAuth2, now we give business requirments like online shopping portal with registration, login, products search, ordering, add to cart,payment
+
+Spring boot framework,Microservice architecture, API Gateway, Authentication service JWT+OAuth2, online shopping portal with registration, login, products search, ordering, add to cart,payment
+
+Before it gives the output, how much time do u think to create the technical document for the specification I gave. 
+   Consider it takes 2 or 3 days, after completing the document what u will happen, another 2 days for review comments, so totally it took 5 days to complete the document 
+
+Now it generate the content of the document but it have another model "IT Architecture Diagram Generator GPT", which help to generate the diagrams 
+
+This is multimodel, so here we have couple of models and some model does not give all the answer we are looking for, some document it might require some more model, so the takeaway here is everything is available as LLM, so we can complete this within half-a-day with good review comments
+  1. I am not talking about requirement perspective, whatever we have given as command or prompt we will get most of data out of that 
+  2. If we have template, we can upload the template and request the model to generate the particular documents with the requirements given(which requires paid subscription for chatgpt)
+
+- There are so many GPT's are available, in Gemini ai we will ask
+
+"Can you create animated online shopping portal with respect to registration, login usecases" 
+
+Actually Gemini AI was little powerful because it dosent want to create a diagram because it takes all the content and give to the model and feels something is missing 
+   What is missing it is asking us whether u want a landing page animation, registration page animation, related to technical stack and asking whatelse u want to create it 
+
+"yes please go ahead with above consideration"
+
+Since we start with technical, it is not allowing so lets create a new chat.
+
+Based on previous one, there are 2 problems
+1. ur prompt, the way u give prompt also important, more u give it would be helpful. 
+2. But the context it took from previous chat request is, it was thinking that I am going for image distribution (ie) cake
+   So context setting is very important for ur model, so if u deviate this 2 things we will ending up in same days as manual effort so only going for new chat 
+
+Goto New chat (or) click + symbol
+
+"Animated logo with girl and butterflies around it"
+
+Now it will display an girl image with butterflies and this is multi model since we give text as input and bring different structure as output data  
+
+Question 1: There are different gpt models are there which one is effective
+
+What is LLM?
+     We have seen lot of models are available like Chat GPT, Gemini ai, google then we have microsoft 
+     Inside teams we have Microsoft copilot, microsoft have acquired copilot in colloboration with open AI, they have developed their own copilot with multimodel which is used to analyze ur videos 
+   - Open a blank presentation - In copilot we give a prompt - "Create a presentation about Large Language Model" - Here we create a text prompt 
+    Github also developed separate copilot for code generation.
+
+A development is not perspective only to the code, so only 1st and 2nd session we have more on other factors of development, wherein we can use this model to bring out a reasonable documents. So if I was creating a presentation for customer this will take again 3 or 4 days and one more day for review comments, finally on 6th day we have very good presentation 
+    In case if we want to add any other extra slide we can give prompt "Add a slide about types of LLM"
+
+- We do have multiple model, choosing the right model with some extra features and we have to spend some time and align the requirement to each model. Currently we can see lot of people are giving lot of features, only thing is the performance is problem, so we have to choose the model correctly 
+  Similarly there are requirment from customer to implement LLM (ie) we try to download any open source because it has base, so u customize them whether u r going to implement RACK or fine tune model, then we train the model with our own data so that atleast the boundry is created here 
+
+Question 2: How frequently models are upgraded?
+   There is no answer even from the company, one thing i realize when I use VS code every fortnight they are releasing the update feature (ie) they have lot of features, as we saw within couple of seconds we are able to get something, so with their LLM's they are able to produce lot of features only thing is that they require more time for testing, because when they launch it should have very good impact on actual enduser 
+
+Day 2
+    In the previous session we have discussed about AI trends that when it is started, what is the future and future will be it is going to mimic the human itself, so it is going to get our human coginitive capabilities, how to act as per the situations and try to achieve it during, in one trend they said 2050 itself and in this trend it is 2060 
+     Then we discuss about Evolution of AI, which is Predictive AI initially and Generative AI and now we are in Multimodel Generative AI. So every request we send it will generate the response based on the data given. Suppose u have already trained or u r adding a training data then u get a new response or the model is again fine tuned (ie) they have added some more capabilities in the model, again we get a new response, so everytime it will generate the response
+   Next we have landscape and we didnt discuss about this is last session, first we have Natural Language Processing and other things are already in place before that like computer vision, pattern recognition and reasoning and optimization, these are based on the historical data. Then we have supervised learning which means there is a requirement which will supervise every training data and categorize it, for example voice to test, if u remember google couple of years back, we have to train that first, it will ask u to speak very big sentence and it will record so they can match it, Senthil speak like this, this word belongs to this sentence, they will try to match it actually and that is called supervised 
+    Unsupervised means there is no explicit help from human actually, it will try to learn by itself depends upon by some QI, if this is question then this is the answer, so it will always build with some data which is unsupervised 
+    Next unsupervised context aware learning this is very important, because in every domain we dont have same meaning in different domain, for example if we take LLM, in case of Generative we say Large Language Model but in terms of some other domain it may be different, so it will differ based on the domain aspect, so we are trying to give a context. For example today we are discuss about Github Copilot which means Github is more of code generation, so if we ask who is the winner of lastweek US debate, they will not able to answer because the context is set to code level
+     Next is self-aware unsupervised learning which is going to mimic the human, so it will understand all ur english grammar and it will train to the model like idiom, sarcasm, nusance articulation, all ur 6 senses they will try to bring it, but not sure every sense will be mimiced in the current, may in the upcoming AI but they try to mimic as much as possible 
+
+Next we talk about LLM, we have lot of LLM's here like gemini, microsoft copilot, claude etc. The advantage of Gemini it has all the clubbed features multimodel it has lot of model inside that, in ChatGPT they have segregated in different model so that u can attack particular model as per the requirement. So we can generate images, we have model where we can load ur medical report where it will analyze and provide u some diagnosis result. So when u deal with LLM please be careful dont upload any of HCL data or customer data
+
+How LLM works?
+    - LLMS works by predicting next word, so LLM is not about generative AI it is about entire stuff (ie) predictive AI also has LLM. Suppose if u typing any word, so it will try to predict what senthil is going to type next, and it has to be very faster based on second word again it has to find the third word, so the way it has to work it should be very faster, thats how we can increase the performance 
+
+How LLM is trained?
+    - It is trained by trillions of word, and for every sentence it will have next word 
+     For example, we say "LLM works by predicting the next word", so now LLM word will be the data in training model and next predicitve word will be "works", like that we have lot of combinations. So if Senthil types LLM and when he types the second word, what will be the next word, so there will be mapping like a linkedlist and keep on predicting the next word 
+
+Introduction to Prompts?
+   - Prompt engineering is very important for the application development related track, for example in Google search if u type some requirment and asking for the result, but that is search based on words, but here term it as prompt.
+    Because LLM requires a kind of input,so prompt is very important because they dont want to give any other words, a prompt has lot of english meanings so u r prompting it (ie) we are ordering it for LLM to perform something. So when we give orders we cant give just generic things, we should be very specific and we get the right output 
+
+What is prompt?
+    - We are giving a instructions to ur LLM's, it has to read and understood the prompt and generate the output, it could be an image or document or audio file or video file and anything could be the output
+
+Elements of prompt - what prompt will contain
+1. Context 
+      As I told you, same LLM expansion would be different for Generative AI or for medical domain or for mathematical domain, so each one have different meaning. So the context is very important, we provide LLM context else what is going to happen, LLM will think something else or hallocinate and give some different answer 
+     Now currently we have 30days trial period by copilot, may be some LLM's say that we can get some 20 prompts, similarly Gemini for per month it will load 5$, so if we utilize within 5$ it is good or else it will ask to reload or recharge another 5$. So if we dont give proper context we keep on wasting the prompt or u will be getting wrong output. Response creating by LLM especially by Generative AI LLM's, we will not get right output, sometimes we get 25% right sometimes 50% right, because the context is very important
+
+2. Task specification 
+        - So we have provide the context but if we dont provide what is ur expectation (ie) in the output of LLM what is that we are expecting, unless it performs the task only we can get the output, so give the task specification perfectly
+
+3. Constraint
+       From today onwards we will be discuss only java related stuff, so there is a restriction that we have java version, if we ask without java version it will provide correct version and when u run on ur java env it will throwing an error since it says it is not supported, so we have to give constraint all what versions
+
+So when u r framing a prompt, u have to bring all this 3 things. For example, we are asking
+
+"What is the weather like?"
+
+So here is a problem, r u talking about today or r u talking about tomorrow or r u talking about yesterday, so u have to specify whether which location, it may think this person is asking from current GPS location, from laptop it can take the current GPS location where that person is present, so that is missing. So we have to specifically say as
+
+"What will be the temperatue in city tomorrow?"
+
+Now it take all element of prompt, "what will be the" is the task, temperature in city is the context and tomorrow is the constraint 
+
+Question: From where it was taking the data and giving the response?
+    Depends on the training model, we are building the model somebody has build the model like ChatGPT, they have build the model so they will take the data from different location, IBM has excellent app is available to fetch weather data so they will tie with that and bring the data. So LLM will be trained by the company or by LLM developers 
+
+How we can say the response is geninue answer?
+     Whenever we go to any model they will always have a disclaimer, you will find mistakes and surprises, the reason is atleast for last 2 yrs they where building it but last 6months is very rapid development,so we get as much data as possible and as much accurate as possible, but still it is a machine where it look for lot of data so it always give some mistakes, unless that LLM is finetuned.
+    Again we cant conclude today we train the LLM it will work for next 20yrs, it cannot be done because every day there is change in the data 
+
+Question: when we are putting same question in google, in the background normally it is webservice call and there are several websites calling the webservices to display temp in city. The same thing we are doing in chatgpt so which website will be prioritize
+      Depending on the training model, so for every response from copilot, there will be a feedback for every response, so when we click like then whatever the model which uses some training data, so against the model it will say this person likes this data, so next time if we ask something it will use same model and same training data. If we give thumbs down then it will give low priority to the particular model and training data 
+    So whenever we get any response whether we like or not provide the feedback, thats how we train the data 
+
+Question: can we finetune the model by prompt eng
+     - We can train the model but we cant finetune the model
+
+Basic Prompt Engineering techniques
+1. Simple instructional prompts
+  eg: "Summarize the following text in one sentence"
+   We are giving the context as "Summarize the following text" and provide a constraint with "one sentence"
+
+2.  Open ended vs close ended prompts
+    eg of open ended: "What are the potential benefits of AI healthcare?"
+    eg of close ended: "List 3 benefits of AI in healthcare"
+      Here in close ended we are limiting with only 3 benefits, open ended is only for testing LLM's 
+
+3. Contextual prompting
+      - We have to give some background, in this example we are specific to particular system (ie) supply chain management
+
+Question: Is there any expiration period for context if we set once
+    - Every context is a request to LLM, every prompt should have context, task and constraint to get proper output 
+    - It is based on per session, so if we look at chatGPT we can go and fetch previous histroy, so that session will have that context. Based on price also, if it is free sometimes they will remove last 30 context, but if we go for paid one, like chat histroy session history will be available with context, we can use specific session to bring the previous context 
+
+Question: LLM following supervised or unsupervised 
+     Both has advantage and disadvantage, in supervised we have a better control because we are reading it so we take a better control. Where we are going to apply supervised and unsupervised is another question, in medical field we cannot apply unsupervised because it cost a life. If we have very sensitive data we cannot use unsupervised, it may get the data and shows to anyone who was asking for, so it is based on appl need
+
+4. Few-shot and zero-shot prompting
+       In future u may want to build a LLM, so how do we train the model based on the prompts, so whichever it is applicable u can go for it
+
+1. Zero shot learning - u will give an instruction (ie) u will train the data and keep it ready, once u give that it will provide the data (ie) no examples is provide in the zero shot, so when we give the prompt we have to give the output 
+
+2. In the few shot we will provide example, if somebody ask "hello how are you", we provide the output 
+   Here we are providing examples to the model, saying that if this input then this is the output and now u try to look at this request and give me the output 
+
+In zero shot if u give the sentence it will give response, so zero shots are very well trained and few shot are now we are keeping it trained or making it train for every data on daily basis 
+
+Question: when we goto some chatgpt when u say give me the picture walking inbetween 2 buildings, now the picture will be generated and if we ask the same question it will generate new picture. But if we change some words and something extra we have added like green trees next to the building etc. So is this somekind of prompt eng and training automatically when we are using the apps and providing the output 
+    Yes, it is building the context so first time it may not have full context, slowly when we give prompt, it will analyze every prompt especially in the same session. If we goto different session again it will think newly, but if we retain the same session and try to give lot of info to that, so it will start understanding ur needs and try to give same answer even if u go and come back after 10 days to same session and ask same question it will same response, because now we train the model and we know what is the need 
+
+So providing prompt also will improve the model
+    - Yes, it is not training the model it is training the data, because we cant train the model as of now, so for example
+
+-"Food in the XYZ resturant is not bad" - Positive
+   So I am training the data stating that excellent means positive 
+
+- This is bad! - so in development ! means not, so not bad again it is positive 
+
+So we are giving some examples now then u r asking the model to give the sentimental analysis for this. So we are providing the data to the model and understand ur need
+
+5. Chain of thought prompting
+       Here u are asking the LLM saying that when u give an answer, I want the calculation or mechanism or justification to it, that is called chain of thought. So we encourage the model to think step by step before giving the answer 
+    Example 25+37, how u calculate the output, it says that, to add this first it takes 10's then add the units, so it explains u how it achieved the output because in supervised learning we want to know whether it is right or not  and we should have proper justification, so chain of thought prompting is going to help.
+   So there are some LLM's are available, if it is supporting chain of thought means, you can ask how do u arrive the output or on what basis u have arrived at this output or what technique u have used to achieve this output, it will  be providing step by step so that u can go through that and if u r happy with that then u can proceed, because sometime long calculations it is very difficult to understand, so we need some steps behind that how to achieve that, for that chain of though prompt would be helpful
+
+Challenges in prompt engineering
+     1. Though we talked about 3 elements still it is very difficult to give the context, sometime we will mix it or we thought we have given it, so ambiguity is always a problem so in the next prompt we can correct it 
+    But make it less prompt dont give more prompt, reason is currently they are free but slowly they will charge it, so now itself u think about prompt engineering how closed we can give it so that we get the correct output 
+   2. Context length - If we ask same question for next 10 prompts to achieve something, but it may get confused, so if the model is not trained on data it will say dont have any info
+   3. Overfitting - too specific then it may reduce generalizability, so we have to train ourself how to give a prompt and get the correct output, not 100% but atleast near to that
+
+Best Practices for Effective prompt eng
+1. Clear instructions - based on ur experience u can gain this, so keep it very simple and first understand the domain
+    For example, in Java we lot of keywords, try to use those keywords and dont mix those keywords with english words it will get confused, so specifically we say these are the technical terms. So if we go for coding it will look for technical terms, similarly if we go for medical it will look for only medical terms, so dont try to combine them it will not give correct output 
+2. Iterative refinement - we should also understand the model, first day we might get the right output, but next day we would have some understanding on the prompt, then based on that we will try to give so that we get some output 
+    Always accept more than 50%, so if we get an output, get that output and then finetune, but the idea here is productivity improvement. If we feel output is more that 50%, may be u try one more iteration, still if we not get it, then the take the output and refine it. Based on output we got some more context, all the elets are available in the context, so now model will have more data (ie) it is already generate the code and now we are going for 2nd iteration it will have better understanding then it will better code than before 
+
+Application of Prompt engineering
+     - Currently it is available all most every industry, they started using LLM with both supervised and unsupervised 
+1. AI Driven customer support - if we talk it will understand ur need and try to help u in different way
+2. Content generation & marketing - consider we want to collect some data, now we talk to multiple training models and generate it 
+3. Educational & training - people can create quizzes, educational material 
+4. Programming assistence - which will discuss using copilot
+5. Data analysis and reporting - BigData is already in place, now with AI it will create lot of reports and forecasting stuff
+6. Healthcare - There is one LLM in GPT itself where we can upload ur medical records and help u with medical condition and suggesting some treatments 
+
+Github Copilot
+     It is AI pair programmer, we will be the pilot here and we have copilot here, we dont need another human being here. The pair programmer is already evolved in Extreme programming before 10 yrs back, but it is not picked up only few companies adapted. Now copilot try to use that technique 
+     So we have 2 people, the copilot will do lot of jobs for us and we have to review them, now we will become a supervisior. So whenever we use any LLM they will asking a feedback thumb up or thumb down, so provide the feedback but dont give wrong feedback 
+
+Question: we are writing code and copilot can review it 
+   - Yes it does, it is new feature added in copilot 
+
+- It will always understand the context of ur code and provide suggestions, it never says solutions, it will always say suggestion or code completion 
+- supports multiple programming lang like Python, JS, Ruby, Typescript etc
+
+Important commands
+    - It also generate multiple suggestions for a problem, so for any problem there will be multiple solution now it try to give multiple suggestion to us, u can take which ever u like as per ur requirement because u r the better person about the requirement so u have to choose accordingly 
+
+Installation of Github copilot
+
+1. Open the vm Remote desktop connection, provide username and pwd
+2. Download JDK17 and set the path in vm
+3. Install vs code
+4. To work with Java, we need to install certain extension
+In vs code - Click Extension - 
+1. Install Extension pack for java - click Install
+2. Install Github copilot - Click Install
+      When we install copilot, it will install 2 extension (ie) copilot and copilot chat 
+
+Github copilot will be support for vs code, visual studio, jetbrains and neovim
+
+5. Sign up with Github and choose free trail and proceed with all payment details
+
+6. In VS code, we click "Create Java project"
+- create spring boot - It will ask to install Spring initilzr
+- Select maven project - 3.3.4 - Java - com.example - demo - jar - 17 - select spring web - press enter - save it in desktop - generate into this folder
+
+It will create the project - click open 
+
+7. Now we create controller prg
+
+package com.example.demo;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HelloController {
+    
+    @GetMapping("/hello")
+    public String hello() {
+        return "Welcome to Spring boot";
+    }
+}
+
+8. Start the main class and run http://localhost:8080/hello
+
+9. In the side we can check chat - it will open github copilot chat 
+          It will display surprises and mistakes, so make sure to verify any generated code and share feedback so that we can learn and improve
+     This chat is only for code generation, so if u provide "who is the winner of last week US debate", now it will say that it will assist only with programming related questions, so this LLM is only for code generation 
+
+Question: client is using azure devops and most of microservice code is in azure repository.    
+     This is like an development env
+
+Question: Is Github copilot is similar to AWS code whisperer 
+    - Yes, openAI has created this copilot, microsoft has acquired Github and it has its own copilot. In Google we have GoogleBot and Gemini
+
+Question: Is it possible to give our code in copilot and ask for review of it
+   - Yes but current version dosent support, even it will generate the test case for the code which is not covered in code coverage 
+
+Question: copilot with intellij - In settings - Plugins - add copilot plugin 
+
+Quiz 1: https://forms.office.com/r/54Vncp4A8V
+
+
+Day 3
+   As we discussed Github Copilot is code suggestion. It is not code completion or code solution. It's going to help us in a faster way, but it'll have some errors because there's are surprise and mistakes are possible in 
+any AI tools, so that is the biggest problem with our copilot. It started early and now it's like it's a lot of improvements.
+     Next very important thing is you have to understand the context, So the copilot has to understand your requirement. So you have to frame in a such a way and it cannot be achieved in a single day, as you practice it will be coming, because you should understand the copilot and it has to understand your context.
+    So once it starts understanding your things, it may be giving the response. But again, the problem is copilot will keep on changing its training data on the model or algorithm will keep on changing, so you cannot expect every time for the same output 
+  Using copilot we can solve multiple programs or we can learn or we can do coding on terms of any multiple lang which are supported by our copilot, that is a very important.
+     If tomorrow customer give this code Vista or  Google bot and ask you to use it, so it may support other languages. Also, it's not about program languages in terms of your AI, so don't tie a language or a framework to your profile, always think in terms of how to generate the code by providing a proper prompt.
+
+Github Copilot Concerns
+1. Github copilot raises concerns about the accuracy of using AI generated code suggestions
+    code accuracy is a common concern against any AI tools. OK, so whether it is going to give me the right data,
+2. Cybersecurity
+3. Criticism and lack of transparency
+       so how the AA models will work?
+so if you go to other than English medicines, like Sidha, so for some medicines they will not expose their combinations, so what is the chemical composition or any herbal composition they will not share it?
+   Same thing, the problem with the AI is they are not transparent about what they provide, they'll provide only based on certain terms and conditions, and we'll try to make sure that your code is not used by others. They not provide what actually used inside AI, at least we  found is a RAG model that it contains.
+
+VS CODE + Github Copilot Integration
+       You can integrate this with VS code, you have an extension where you go and install it and we can correct the code and can enhance the code and we can work with multiple programming (ie) if tomorrow if customer ask that can you learn Python? 
+   yes we can, we don't need any training, you don't need any other websites or any learning platform  because the copilot is going to help you a lot
+
+Github Copilot commands in chat window
+1. forward slash it is going to list out all the commands 
+- @github we can able to get the code from directly from the GitHub itself
+   So now it is integrated with the IDE itself, which means you can ask the code from github directly 
+- terminal means the command line parameters
+@ is a top level command and \ is a second level subcommands.
+- \explain - If you want to understand what the command is going to do or we need more information on the code.
+    So explain present in two ways.
+- under the terminal 
+- under the workspace.
+What is workspace?  
+   Workspace is place where you are going to write your code.
+
+- @vscode means inside the IDE you need some help, if you want change the theme of IDE or there is a setting I want to change the setting but I don't know where to do. I can find that configuration setting from this.
+
+-\runcommand, So usually what happened in previous copilot we have to copy that and move to the terminal and run that command which mean it it involves 2 steps OK. Now I can directly run my command in the terminal using /runcommand
+
+-/search is to find some files OK or to search some text inside the files.
+
+-/explain
+     I have a code base. Customer has given me a huge code base but the problem with GitHub is we cannot give entire code base and ask for 
+explanation actually. I have to ask only for a couple of files or I can give one selected file and ask about what is happening inside this particular code. It will give you like a English explanation saying that,  it is doing this logic, this file is used for this and this file is interacting with this another interface or another class, it is derived from this class, it will give you lot of expl in English
+
+/fix - used in 2 ways
+   1. I already have a code base I gotta change request. I have to do some changes for that we can use fix.
+   2. Next thing is I have a problem or a defect, it could be a logical defect or it could be a component or runtime defect. So either of them we can use fix
+
+- /new - It is like a new project itself we want to build (ie) we can build that entire structure of the project.
+
+-/newNotebook - It is nothing but your Jupiter notebook, so you can create a Jupiter notebook here, and you can upload to the cloud, so every time you don't want to go there and copy the course, from here also we have a direct link to your Jupiter notebook
+
+-/tests -  it is a unit test cases wherein you will select a file and ask  to generate the test for a particular file. It will generate a test and give it to us.
+   No integration system
+
+\help - common help, so suppose you need something on any any of this one and what is the next level of parameters
+
+/clear - clear your history
+
+Mostly Copilot is going to work and provide the code, we are going to just prompt it, we are going to just order what it is going to do?
+   Now this is going to do only for code generation.  So what is code generation like?
+   I have a problem in terms of technical right.
+If you can help me with the particular language 
+or  tools or frameworks? and we cannot use this for chit chat.
+
+Who is the winner of last US debate?
+
+I'm I'm doing a chit chat right? So it says sorry I can assist only with my programming.
+   This is only for code generation, because this LLM is fine-tuned to the code generation. The context is only programming language code generation.
+   Now we ask 
+
+"Can you list out the programming where you can assist with"
+
+It will display certain things but context is little bit wrong, so now we have to provide
+
+"List the programming language, frameworks, tools you can assist with"
+   It keep on listing everything as per it is in the documentations
+   It says that currently it supports Python ,
+Why Python is first means there are lot of code base in terms of Python. OK then JavaScript, TypeScript then 4th is a Java,  because these are the languages, it can help us to generate the code or fix the code. If you already have a code base can help us to do the change request and fix the code
+     Tools are Github, Docker, Kubernetes etc
+If you have a cloud deployment right? But this is not going to do a cloud deployment, but it can assist actually, so allow like to  configure Docker compose configuration files. OK, something is required. 
+
+
+
+Now assume that my capstone project requirement is like we want to develop a ui in react and spring boot is my back end and maybe MySQL is my database, so
+
+1. UI with React framework
+2. Spring boot as backend service
+3. DB as mysql 
+
+Can anyone help me out here? What should be our prompt here?Is a technical stack.
+
+So we will combine all this as prompt
+UI with React framework, Spring boot as backend service,DB as mysql  
+
+But it lacks lot of things. First thing is a task, I never said to create a project so we have a command called new. So maybe  @Workspace automate this'll get populated.
+
+"@workspace /new UI with React framework, Spring boot as backend service,DB as mysql"
+
+Now it'll give you because it will start hallucination, so when you give a a generic statement, it will think this person is asking something. It'll quickly search, which is the very first result in terms of React Framework, Spring Book and MySQL. It will give some code to use.
+
+- Now I have to specifically say to create a project structure and we have to give some description of the project (ie) Online shopping portal, so we are giving a small context.
+
+"@workspace /new Create project structure for online shopping portal - UI with React framework, Spring boot as backend service,DB as mysql"
+
+- Now we have to expand each and every category, first we start with the user registration, user login which is the basic stuff, then we have a a product Catalog for search, add product to CART, then payment, then order tracking, then logout. you can also put dot to separate the two different layers
+
+"@workspace /new Create project structure for online shopping portal - UI with React framework components and models - User Registeration, User Login,Product Catalog for search, Add product to Cart, Payment, Order Tracking, Log Off . Spring boot as backend service.DB as mysql"
+
+- Now still not complete, But you cannot create a project very quickly. First, you learn about framework, the React framework, then only you can provide some context here. 
+  Next we need service layer to interact with back end, and here also we can decide about uri
+
+"@workspace /new Create project structure for online shopping portal - UI with React framework components and models - User Registeration, User Login,Product Catalog for search, Add product to Cart, Payment, Order Tracking, Log Off. React project with service layer to interact with backend http://localhost:1234/abc URI. Spring boot as backend service.DB as mysql"
+
+So it'll add a service layer. Since UI will have also have MVC architecture model view controller, So here we have already defined. I need models,
+I need a component ,So view is also available here. Then I need a interaction, 
+So service I want to have it. So I want to give it like this so it can create it. So when I give like this the more context it can build.
+
+- Now we provide more info on back end Spring boot, now you need a userservice, ,productservice, then you need cartrt service, so maybe for tracking you can have tracking order tracking service, then PaymentService, for security we can add AuthService. Currently I am saying with respect to spring boot so What is the version of Spring boot you need? 
+    So the more you give, this is called constraint. You are saying that don't try to search in terms of others. Try to search in terms of only your 3.2.9 versions.
+    Suppose you want to give some dependency like  dev tools, actuator, then if you need something right spring boot security starters then you can add all the dependency here itself. Now I want to indicate we are going to develop maven project  
+    We also provide Java version, react version
+
+"@workspace /new Create project structure for ABC online shopping portal - UI with React framework 18 version, components and models - User Registeration, User Login,Product Catalog for search, Add product to Cart, Payment, Order Tracking, Log Off. React project with service layer to interact with backend http://localhost:1234/abc URI. Spring boot 3.2.9 version as backend - userservice, productservice, cartservice, ordertrackingservice, paymentservice, authService, loggerservice, configservice.DB as mysql - with schema SQL with realistic data. Maven Project type. Java 17. package com.abc.shopping"
+
+As much as possible, if you add, it'll be good.
+The reason is, it can generate a very good project. How much percentage accurate is a different question.
+
+Question: So is there any structure or format to generate the prompt so that in model can understand our requirement ?
+    So prompt is expecting only three things task, Context and constraints. 
+So what is task? - Create project is my task for it.
+what is the context? - Context is I want to  build online shopping portal, because there are so many domains, so the code will be available. with respect to so many domains, so many applications, so I'm trying to narrow down in terms of you go for online shopping portal 
+what is the constraint - here it represent versions, may be portno, may be package 
+
+So there are three things involved, task, context and consents.The problem is we cannot define the prompt saying that for this kind of project use this prompt. So it's like you have to first enter the prompt and see what kind of response it's giving then fine tune the prompt. So at one point you will have some understanding how the LLM going to work, and the LLM will know how to answer because you are keep on giving the prompt to it,It will going to learn from the way you are prompting it.
+
+When we give the prompt it will give only Java related stuff, we never got a UI, so it says that in UI something is missing. But sometime we will get output for same prompt  because it is generating every time it will generate the response, but it's called generative AI.
+
+Now it will backend and frontend project - Click Create Workspace - Provide parent dir - Now it will download all files into parent dir - Open the workspace
+
+If u goto backend folder, we can see spring boot appl, in pom.xml we have all our dependency and in application.properties it will db info and server port as 1234, because  we have informed to the react, you want to interact with this service layer,
+So it can understand that it is going to create an A rest API in spring boot with this port number only. 
+   If we see schema  it created a user table,
+Order table, payment table.But it doesn't give me the insert.
+    Next is front end,we have components,services etc 
+
+Normally for creating this project, it'll take one week actually, so at least now within 5 minutes I'm able to bring it. But only thing is I was trying to give a lot of commands to get it actually.  So within 5 minutes I'm able to complete my one week of work.  But anyway we have to test it because we cannot assure this solution, unless we test it 
+
+- Now we create a separate core java or console based appl
+-Create new folder corejava - create new file CarApp.java
+
+we are dealing with Chat window previously, and 
+Chat is helpful in terms of like a big picture. 
+So when you use chat, here we have got a back end and front end and almost all the codes. So the chat is very useful for a very high level when more things are involved. But we do have a option inside my editor itself.
+
+ Press control+I to ask a copilot. or we can type command or prompt as per the definition here, it'll generate the code 
+
+So when we type in editor,it will already giving me some information, u have press tab to display. This is called code completion.
+
+//Car Java console app with menu option, add, update,delete,list,search,exit. Exception handling for user inputs,menu valid choices. Car class with id, make, model, year, price, color, mileage,vin and owner. CarService class with CRUD methods. CarRepository class with CRUD methods. CarApp class with main method.  
+ 
+This is my prompt and press enter, first it will create package, press tab and again enter it will create import statement and press tab then again enter it will create entire program
+
+- We also have ctrl+enter, it is going to open lot of suggestions against this prompt.
+
+If you use chat, you will get all this code if you use inline or the the control enter right it's gonna take some time. You will get only partial code OK. Anyway, this is only code suggestion, OK? So unless you verify and test it, only we can assure that it is a solution.
+
+- Now try to run the appl 
+
+Question:
+So are we going to learn how to train the models to get the modified results or something?
+   So copilot is more of only for usage license, so the copilot will be it is using open AI codec LLM, so only Github and  Microsoft team  they'll be training it. So for GitHub copilot we cannot train or we can't add additional data 
+
+- To generate test,so you can use /tests
+
+- In chat window we can provide "Review this code and provide improvements"
+
+- To explain about the code give ctrl A + /explain
+
+- To generate the documentation - use /doc in inline or in chat or right click Copilot - Generate docs
+  Select each class or method - ctrl A +  /doc Add comment 
+
+suppose something is not right or something you need to troubleshoot.
+You cannot fixed it, but at least you want to see what is happening,
+
+Goto View - Output - we can see drop menu with lot of extensions
+
+1. Github Copilot  - It talks about what is API it is using. 
+They're doing a fetch, gives the model deployment ID.
+so you can find the all your requests, what is a endpoint it is calling 
+2. Github copilot chat
+3. Github copilot log 
+
+So from here you can understand what is the call it is making and any problem because sometimes you will have some trouble,you are very 100% sure your prompt is OK and we are given lot of contacts, lot of information for the task we are given it, but still you are not able to get the output right.
+So you can go and visit here and check is there any problem with that like internet connection or endpoint, sometime if the endpoint is down also you cannot get their output. So all the troubleshooting can be done via this actually.
+
+- Next feature is Goto Settings - In search for Copilot - You can see Github Copilot Chat Experimental Code generation Instructions - Edit settings.json
+    So whenever you generate a code, I want code based on coding convention.This will be very useful if you have a base of working on coding conventions
+     For example, So whenever you generate the code I want comment 
+
+"github.copilot.chat.experimental.codeGeneration.instructions": [
+        {
+            "text": "In Java, always add comments "
+        },
+    ]
+
+So if u create any program in Copilot chat only, then by default it will create comment for the code we have generated 
+
+- Now we add one more thing
+
+"github.copilot.chat.experimental.codeGeneration.instructions": [
+        {
+            "text": "In Java, always add comments "
+        },
+        {
+            "text": "In Java, always use underscore between two words in method name "
+        },
+        {
+             "language":"Java",
+             "text":"Always add comments for important logic and flow."
+        },
+        {
+            "text": "In Java, always use Pascal case method names "
+        },
+    ]
+
+So if u create any program in Copilot chat, previously we cant see any underscore for method names, but now u can see methods are created with underscore 
+
+Question: A user or a team level, we can use these settings, but how to share this code standards to the other members of the team 
+    - We can create one file called code-style.md for that and we can share it to everybody.
+
+Content of myProject/code-style.md:
+Always use React functional components.
+Always add comments.
+
+https://code.visualstudio.com/updates/v1_93#_code-generation-instructions
+
+- Now instead of typing each time same prompt,we can give prompt as
+
+"Regenerate using new chat code generation instructions, Generate code as a single class.and other class as inner class"
+
+- Or we can give a prompt as
+
+//@workspace /new Create project structure for Car Java console app with menu option, add, update,delete,list,search,exit. Exception handling for user inputs,menu valid choices. Car class with id, make, model, year, price, color, mileage,vin and owner. CarService class with CRUD methods. CarRepository class with CRUD methods. CarApp class with main method. Use inner class and code in a single file.
+
+Similarly, we can add a lot. This is again pure like a prompt here.OK, so I'm saying only for Java if I generate that Python code I'm not able to find all this stuff.  
+
+So now this is a new functionality that is the latest version. 
+ 
+
+Capstone project
+    So you can use a UI, any UI is fine with me here.I given JavaScript because JavaScript will be very easy. OK if you want to use angular, React if you know, please use it.
+   You Can use any front end framework if you know, if you don't know JavaScript will give  very good code. And the back end service you can use spring boot OK and database any database. 
+
+Quiz: https://forms.office.com/r/c8c1iQSLpz
+
+Day 4
+   So I want to show you today one thing called like small HTML code. So this can be used for any web applications as long as supported by your code, because sometime you may be working as a back end, sometime you may to have work as full stack developers, so maybe that time you see different technology or you might use even our Spring MVC with JSP or Thymeleaf template 
+
+- So in chat we provide a prompt
+"HTML code to display order list of the customer"
+
+- copy the code and paste in new file as orderList.html
+
+- Right click the code and open on live server, it will display the html page with list of orders
+
+Assume that we have just starting my web application with a simple static page, but the expectation is initially we cannot quickly build our UI with lot of styles and formatting, so now we add some prompt for providing good styles
+
+- In index.html, give ctrl+I, then we give
+
+"/fix add bootstrap lib, fix h2 with dark blue and center align. th - bold, dark blue background, white font. td element are black font color. Table - bootstrap style - table, table-primary, alternate row white color, hover. Add header, main and footer division. Header with logo - align left, size 80*40. Header with h1 element as Aspire Online Portal with Indigo font and center align with padding 250px left. Footer with copyright - 2024, HCLTech. Footer text is center align with white font, Indigo background."
+
+- Now it will generate the html pages with all the styling and formatting
+    So this is an example for our UI based prompt from Github copilot 
+
+- Now we check how to work with SQL in Github copilot.  Even you can work with respect to  Oracle SQL or PLSQL, SQL Server, MySQL supports it. It means it is not a technology problem.
+It's about only the learning how to work with the prompts
+
+- create a folder PLSQL - create new file BankApp.sql
+
+- Goto Settings - In search for Copilot - You can see Github Copilot Chat Experimental Code generation Instructions - Edit settings.json. We can add some coding convention for sql 
+
+"github.copilot.chat.experimental.codeGeneration.instructions": [
+        {
+            "text": "In Java, always add comments "
+        },
+        {
+            "text": "In Java, always use underscore between two words in method name "
+        },
+        {
+             "language":"Java",
+             "text":"Always add comments for important logic and flow."
+        },
+        {
+            "text": "In Java, always use Pascal case method names "
+        },
+        {
+            "text":"In SQL, Always add HCL as prefix to add db objects."
+        }
+    ]
+
+So for every db name in SQL it will add HCL as prefix, and this feature is available as part of Copilot chat, but if we want to add in editor, we can give in BankApp.sql as
+
+/*
+In SQL, Always add HCL as prefix to all db objects
+Add IDX as prefix to all indexes
+Add PROC prefix to all procedures
+*/
+
+--Bank database with Bank, Branch, Customer, Account, Transaction, Loan tables with necessary constraints
+
+Now copilot will understand based on prompt given and it will create all tables and indexes for the db schema, each time press enter and press tab. 
+
+* If you want to insert the data then we can give
+--insert record for Bank table - press enter
+
+Now it will create insert stmt - press tab and enter 
+
+* Now consider we want to add email column to bank table
+--alter Bank table with email column - press enter
+
+Now it will add email column to Bank table, and now it will automatically give update prompt for updating the value, but here it wont generate the emails because it is sensitive info, we have few info where it wont generate, in that case it will ask user to enter the email
+
+UPDATE HCLBank SET - press tab, now type Bankemail='Hdfcbank@gmail.com', press tab and press enter, like that it will ask for next row also 
+
+* Next we can insert other data
+--Insert Branch data
+--Insert Customer data
+--Insert Account data 
+
+* Next we can perform some PLSQL operations 
+--Package called bank package with procedures to perform the following operations and functions for calculations - press enter
+
+Now it will create package specification, next it will ask prompt to create package body 
+
+So our copilot is technology neutral so we dont want to worry about tomorrow if any new technology introduces as long as any GEN AI tool is helping us, we have to use that AI tool appropriately with the prompt and we have to get the output 
+
+*Now if we generate any mapping using hibernate, so we create hibernate-cfg.xml, inside that we provide ctrl+I and give prompt
+ <!-- Hibernate mapping for Employee, Department --> - press enter
+It will generate mapping file and it will show error since we dont have dependency 
+
+Question:  Which is better chatgpt or copilot?
+      - It is based on IDE, so eclipse dosent have any copilot so we can use chatgpt or copilot generate the code and import it
+      - We can also generate initial project from chatgpt and then imported in VS code. So for incremental updates VS code is better because it is integrated, but getting initial workspace because chatgpt is better because we can get the errors and we can ask chatgpt to rectify it 
+      - We can also use ChatGpt to create the prompt and use that prompt in VS code 
+      - We have wide developers to support ChatGPT, previously we dont have multiple LLM's or multiple models we have only thing called chatgpt, but right now we have so many models (ie) we can create document, images or videos 
+      - If we want to see different LLM - Goto ChatGPT - Explore GPT's - we can see different models for different domains 
+      - ChatGPT uses GPT(Generative Pretrained Transformer) model, microsoft has got partnership with OpenAI, so to power the model of Microsoft there are using Pink, GPT is powering to Pink chat
+
+Unit test for standalone application
+      Now we create once again car application, because we cannot test user input methods, we can test only business logic in terms of console appl
+
+"@workspace /new Create maven project structure for Car Java console app with junit5 dependency. with menu option, add,update,delete,list,search,exit. Exception handling for user inputs,menu valid choices. Car class with id, make, model, year, price, color, mileage,vin and owner. CarService class with its unit test logic. "
+
+Click Workspace and create the project 
+
+- After that open the project in workspace
+- In CarService.java, give ctrl+I, Use Car class for implementing methods for adding, updating, deleting, listing, and searching car records
+- In CarServiceTest.java, give ctrl+I, Add test cases for CarService methods
+- Select Testing - Expand Car folder - Select CarServiceTest 
+- Now we have to "Run with Code coverage"
+         It will display the code coverage for the testcases  
+
+App.java it is difficult to achieve since it includes user input 
+      
+Creating repository in Github using Github Copilot
+1. Create repository in github
+2. Open terminal in vs code
+3. >git init
+4. >git remote add origin https://github.com/senthil1418/genAI.git
+5. >git add .
+6. >git commit -m "Initial message"
+7. >git push -u origin master
+
+Testing in Spring boot
+1. Create a project with test case in spring boot
+
+"@workspace /new Create project structure for Movie Registeration portal. Spring boot 3.2.9 version as backend - with controller, service, repository to add new movie, get movie by id. Create test case for controller, service.DB as mysql - with schema SQL with realistic data. Maven Project type. Java 17. package com.abc.movie"
+
+2. Click Workspace and add the project
+
+3. Select test file - Click Testing - Select MovieControllerTest - Run code with test coverage, similarly run MovieServiceTest also 
+
+Github copilot
+
+What is Github Copilot?
+GitHub Copilot is a AI pair programmer that can work with any programming language, DevOps scripts, or even help you with commands from the command line.
+
+Developed in collaboration with OpenAI, it is powered by OpenAI Codex.
+
+Codex is a generative AI model trained on massive dataset with code on the internet, and also natural language text.
+
+It integrates into most of the popular IDEs today.
+
+When we start coding using these IDE's where copilot is enabled, it will understand the context of the code by looking at the class function and variables, and provide auto completions and code suggestions.
+
+It can generate code snippets or entire functions based on our comment, or just by looking at the function name.
+
+It can also document the code and explain complex code for you, which is very helpful when you are working on an existing project or dealing with a new library.
+
+Copilot chat works just like ChatGPT, but it is specialized in answering coding related issues.
+
+It can help you debug a issue, or give you steps to solve a particular problem, or even generate a complete program given the prompt.
+
+Limitations
+
+1. Code quality and reliability.
+        Since Copilot generates code based on the patterns it has learned from different types of code bases, it might not always follow best practices or patterns.
+
+2. Understanding Context and requirements
+       It might not get the context right sometimes, which might result in code which is not in line with our requirements or intentions.
+
+3. Dependency  on internet connection
+      It needs active internet connection to access the AI models.
+
+4. Learning Curve and Misinterpretations
+      We have certain learning curve in how to best use and direct copilot.
+So this is where our prompt engineering skills come in.
+
+5. Ethical and Licensing concerns
+     Since copilot is trained on publicly available code, it raises concerns about the intellectual property and licensing on the generated code.
+
+Setting Github copilot in VS code
+
+1. Login to github.com, go to your profile, click on copilot and you can get an individual subscription.
+
+2. Go to Visual Studio Code. Click on extensions on the left.
+Search for GitHub Copilot - Install the extension
+search for GitHub Copilot chat - Install the extension
+
+Once installed, if required, restart the IDE. It will prompt you for logging in into your GitHub account. Enter the GitHub login details
+
+3. For using Java, Click on extensions on the left - Search for Java - Install
+- Language support for Java from Red hat
+- Extension pack for Java
+- Debugger for Java
+- Test runner for Java
+- Project manager for Java
+- Maven for Java
+
+4. For using Springboot, Click on extensions on the left - Search for Spring - Install
+- Spring Initializer Java support 
+- Spring Boot dashboard
+- Spring Boot tools
+
+GitHub copilot is a generative AI model or it's a generative AI tool developed by GitHub open Ai and Microsoft, so generative AI is basically a generative artificial intelligence model which works in a way that there is a training set data and it generates a new data based on that training set data. There are various tools that are based on generative artificial intelligence concept chatGPT, GitHub co-pilot all these are alsoet
+   You know generative AI models developed by open AI initially but later
+on Microsoft also invested into all the Chat GPT tools, so that's the reason I said that it's also developed by Microsoft. It is based on GitHub you have to link the GitHub account with your  GitHub co-pilot tool to use it in the
+IDE's. Here I am going to use an IDE Visual Studio code because this was the IDE which was initially used when GitHub co-pilot was being developed 
+
+1. Install Github copilot in VS Code - Click Extension - Search Github Copilot - Click Install 
+
+2. Search Extension for Java (JDK for VSCode)- Install
+
+3. Click Settings - Command Pallette - Create Java Project - No build tool - Create New folder - Rename as EmployeeManagement - Selection Project Selection 
+
+4. It will ask for name of project: EmployeeSystem
+            It will create java project with dummy code in App.java, we can remove it and start write the code 
