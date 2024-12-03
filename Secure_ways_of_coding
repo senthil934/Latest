@@ -1,0 +1,2324 @@
+SQL Injection attack
+   SQL is used to query, operate and administer database systems such as microsoft sql server, oracle and so on. One of the most common sql
+attacks is the sql injection attack, a successful sql injection exploit can read sensitive data from the backend database, it can also modify or delete data or execute administration operations, sometimes it can even issue commands to the operating systems
+   For example a web page might authenticate requesting a username and password, once the user provides the information it is passed to the backend database to validate the credentials in order to permit access, this is where the threat actor can supply specially crafted data in the sql injection attack which has a malicious code, instead of authenticating the user it may cause the application to display the contents of the user database
+  Sql injection attacks can be used to bypass authentication, disclose confidential information and distribute malicious code,in fact
+the open web application security project(owasp) lists it as the number one
+threat to web applications, now let's look at some various sql injection attacks 
+1. authentication bypass - here it allows an attacker to log onto an application without supplying a valid username and password
+2. information disclosure - here it is used to obtain sensitive information
+from a database 
+3. compromise availability of data - here the compromised data integrity
+involves altering the contents of a database to either deface a web page or insert malicious content. Compromised availability of data allows an attacker to delete information to either cause harm or delete log and audit information
+4. remote command execution - here it allows an attacker to compromise the host operating system
+
+1. Create Springboot with web, spring data jpa, lombok, h2 database dependency
+
+2. Configure db info in application.properties
+
+3. Create entity class
+
+@Data
+@Entity
+@Table(name = "Employee")
+@AllArgsConstructor
+@NoArgsConstructor
+public class Employee {
+    @Id
+    private int empId;
+    private String empName;
+    private double empSalary;
+    private String phoneNumber;
+}
+
+4. Create repo interface
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
+
+//Custom JPA Method
+ List<Employee> findByEmpName(String empName);
+
+//JPAQL
+    @Query("select e from Employee as e where e.empName = :empName")
+    List<Employee> findAllEmployeeByEmpName(@Param("empName") String empName);
+
+//Native query 
+    @Query(value = "select * from Employee where emp_name = :empName", nativeQuery = true)
+    List<Employee> findAllEmployeeByEmpNameNative(@Param("empName") String  empName);
+
+}
+
+5. Create Controller prg
+
+@RestController
+@RequestMapping("/sqlInjection")
+public class EmployeeController {
+
+    @Autowired
+    EmployeeService employeeService;
+
+
+    @PostMapping
+    public List<Employee> getEmpDetails(@RequestBody Input input){
+        return employeeService.findByEmpName(input.getEmpName());
+    }
+
+    @PostMapping("/jpa")
+    public List<Employee> findByEmpDetails(@RequestBody Input input){
+        return employeeService.findByEmpDetails(input.getEmpName());
+    }
+
+    @PostMapping("/jpa/native")
+    public List<Employee> findByNativeEmpDetails(@RequestBody Input input){
+        return employeeService.findByNativeEmpDetails(input.getEmpName());
+    }
+
+    @PostMapping("/native")
+    public List<Employee> findByNativeEmployee(@RequestBody Input input){
+        return employeeService.findByNativeEmployee(input.getEmpName());
+    }
+}
+
+6. Create service program
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    EmployeeRepository employeeRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+
+    public List<Employee> findByEmpName(String empName){
+
+        return employeeRepository.findByEmpName(empName);
+    }
+
+    public List<Employee> findByEmpDetails(String empName){
+
+        return employeeRepository.findAllEmployeeByEmpName(empName);
+    }
+
+    public List<Employee> findByNativeEmpDetails(String empName){
+
+        return employeeRepository.findAllEmployeeByEmpNameNative(empName);
+    }
+
+    public List<Employee> findByNativeEmployee(String empName){
+
+        // sql injection attack
+      //  Query query=entityManager.createNativeQuery("SELECT * FROM EMPLOYEE WHERE EMP_NAME ='"+empName+"'",Employee.class);
+
+        Query query=entityManager.createNativeQuery("SELECT * FROM EMPLOYEE WHERE EMP_NAME = :empName ",Employee.class);
+        query.setParameter("empName", empName);
+
+        return query.getResultList();
+    }
+
+}
+
+In service class we have three method that automatically call the repository and another one is EntityManager which also used to fetch the employee details by passing
+through employee name 
+
+7. In main class, we added some data
+
+@Autowired
+	EmployeeRepository employeeRepository;
+
+	@PostConstruct
+	public void initEmpDetails(){
+
+		List<Employee> employeeList=new ArrayList<>();
+		employeeList.add(new Employee(1,"AAA",10000,"123455678"));
+		employeeList.add(new Employee(2,"BBB",20000,"235677"));
+		employeeList.add(new Employee(3,"CCC",30000,"7757456535"));
+		employeeList.add(new Employee(4,"AAA",40000,"34467858"));
+		employeeList.add(new Employee(5,"DDD",50000,"3575668"));
+		employeeList.add(new Employee(6,"AAA",60000,"36758754"));
+
+		employeeRepository.saveAll(employeeList);
+	}
+
+8. Start the appl,  since we have created four ways so we created the 4 endpoints
+
+In Postman, with POST request - http://localhost:8000/sqlInjection - Body - Raw -JSON
+{
+   "empName":"AAA"
+}
+It will display 3 rows, if we pass invalid we get empty 
+{
+   "empName":"aaaaaa"
+}
+
+Now we can all 4 api will give same response for given empName
+
+9. Now we do sql injection,  suppose I don't know the employee name but we want to see all employee name, so I will put like
+{
+  "empName":"' or '1'='1"
+}
+Here it will first check for empName as 'XYZ' it is not there and we have provide OR condition and now it will check next condition where 1=1 which is true, so in this case we need to fetch all employee details
+
+First we are trying sql injection in http://localhost:8000/sqlInjection, it is not succeed, because this way of implementation is correct
+Next we are try using http://localhost:8000/sqlInjection/jpa, it is not succeed, because this way of implementation is correct
+Next we are try using http://localhost:8000/sqlInjection/jpa/native, it will succeed and leads to sql injection
+
+We cannot perform the SQL injection attack in this way of implementation, because it is jpa implementation which internally using the hibernate implementation where all inputs are treated assingle value and assigned to particular employee name, so in EntityManager only we can able to attack
+
+10. Next we have 
+{
+  "empName":'XYZ' ; DELETE FROM EMPLOYEE WHERE '1'='1'
+}
+First we assign the value then treat as two different SQL statement, so we can run one by one so in this case first we run this query selection from employee where employee name is 'XYZ' then  delete. So in single start we can run two SQL queries so we can delete entire table so I will
+
+First we are trying with http://localhost:8000/sqlInjection, it is succeed, since entire value treated as a single value and assigned to employee name, so these kind  value is not present in employee so returned empty
+
+This is one of sql injection attack. 
+
+Hibernate Security Annotations: Use annotations (like @Access and @Filter) to enforce security policies directly on entity classes.
+
+
+
+SELECT * FROM EMPLOYEE WHERE EMP_NAME ='AAA' ; DELETE FROM EMPLOYEE WHERE '1'='1'
+
+
+
+XSS (Cross Site Scripting) attack
+    you have a static website that's made of only html and css and when you visit the website, the browser renders that html and css and that's what you see on your screen. But nowadays most websites also include dynamic elements,
+for example data gets pulled from a database, or it asks for user input and uses that user input to do something
+    So we can see an input form where the user submits information and the application sends that information to another page via the url, that other page grabs that url and parses the information in it to grab what the user submitted
+   Now we have to modify the code on this page that we need to add a script to this page in order to enhance functionality, usually to follow best practices we would either add the script in the header or the footer of the page, but technically speaking the script can be added anywhere in this page, in fact we could add our script in url and the browser would load it when the web page gets rendered, this means an attacker can send a script payload via this
+vulnerable input and then modify the application to do something that it wasn't intended to do. 
+    Cross-site scripting(XSS) is a type of injection attack where
+malicious scripts are injected in trusted websites and executed by the visitors browser 
+    So we need to scan every API request input body, request mapping and the
+path variable, so if suppose we found any vulnerability (ie) some kind of different variables, some kind of scripting attacks or some kind of bad words so we need to throw the error 
+
+XSS (Cross Site Scripting) attack
+    you have a static website that's made of only html and css and when you visit the website, the browser renders that html and css and that's what you see on your screen. But nowadays most websites also include dynamic elements,
+for example data gets pulled from a database, or it asks for user input and uses that user input to do something
+    So we can see an input form where the user submits information and the application sends that information to another page via the url, that other page grabs that url and parses the information in it to grab what the user submitted
+   Now we have to modify the code on this page that we need to add a script to this page in order to enhance functionality, usually to follow best practices we would either add the script in the header or the footer of the page, but technically speaking the script can be added anywhere in this page, in fact we could add our script in url and the browser would load it when the web page gets rendered, this means an attacker can send a script payload via this
+vulnerable input and then modify the application to do something that it wasn't intended to do. 
+    Cross-site scripting(XSS) is a type of injection attack where
+malicious scripts are injected in trusted websites and executed by the visitors browser 
+    So we need to scan every API request input body, request mapping and the
+path variable, so if suppose we found any vulnerability (ie) some kind of different variables, some kind of scripting attacks or some kind of bad words so we need to throw the error 
+
+1. Create project with web, lombok, data jpa, h2, thymeleaf and owasp java santizer
+
+<dependency>
+			<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+			<artifactId>owasp-java-html-sanitizer</artifactId>
+			<version>20211018.1</version>
+		</dependency>
+
+2. Configure db info in application.properties
+
+server.port=1111
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+3. Create entity class
+
+@Entity
+@Data
+public class Comment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String content;
+}
+
+4. Create repo intf
+
+public interface CommentRepository extends JpaRepository<Comment, Long> {
+}
+
+5. Create controller prg
+
+@Controller
+public class CommentController {
+
+    @Autowired
+    private CommentService commentService;
+
+    @GetMapping("/comments")
+    public String viewComments(Model model) {
+        List<Comment> comments = commentService.getAllComments();
+        model.addAttribute("comments", comments);
+        return "comments";
+    }
+
+    @PostMapping("/addComment")
+    public String addComment(@RequestParam("content") String content) {
+        commentService.saveComment(content);
+        return "redirect:/comments";
+    }
+}
+
+
+6. Create service prg
+
+@Service
+public class CommentService {
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    private final PolicyFactory sanitizer = Sanitizers.FORMATTING.and(Sanitizers.LINKS);
+
+    public Comment saveComment(String content) {
+        String sanitizedContent = sanitizer.sanitize(content);
+        Comment comment = new Comment();
+        comment.setContent(sanitizedContent);
+        return commentRepository.save(comment);
+    }
+
+    public List<Comment> getAllComments() {
+        return commentRepository.findAll();
+    }
+}
+
+7. Create html file in resources/template/comments.html
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+    <title>Comments</title>
+</head>
+<body>
+    <h1>Comments</h1>
+    <form action="/addComment" method="post">
+        <textarea name="content" rows="4" cols="50" required></textarea>
+        <button type="submit">Submit</button>
+    </form>
+    <ul>
+        <li th:each="comment : ${comments}" th:text="${comment.content}"></li>
+    </ul>
+</body>
+</html>
+
+8. Start the appl, run in browser http://localhost:1111/comments
+
+Submit a comment, including potential XSS payloads like <script>alert('XSS')</script>.
+The input is sanitized, and the script will not execute.
+
+Key Features to Prevent XSS
+Sanitization: Input is sanitized using OWASP Java HTML Sanitizer.
+Output Encoding: Thymeleaf automatically escapes dangerous characters when using th:text.
+Content Security Policy (CSP): Restricts the execution of inline scripts.
+
+
+
+Cryptography Algorithm
+
+1. AES (Advanced Encryption Standard) https://github.com/vks-tech/EntityEncryption
+        It is an alternative to Des which is not a secured encryption standard and AES was published by the National Institute of Standards and technology in the year 2001 
+       AES is like a symmetric block Cipher, so symmetric means obviously the same key is used for both encryption and decryption. AES is not only a symmetric Cipher, it is also a block Cipher where it is going to
+take a group of bits as the input and produces a group of bits as the output,
+so it's not going to take one by one bit or one byte at a time rather it is going to take a group of bits as 128 bits as the input and 128 bits as the output which is the ciphertext size
+
+We have an entity in our spring boot application, for example we have an employee entity with some fields like id, name and salary and our spring boot application is connected to a database. So in a normal scenario data will be stored as plain text in the database in case of saving the data, for example the employee name is Ram and stored in the form of plain text and this same data is stored inside the database and when we retrieve it the same plain text will again travel through network and reach to the application 
+    Now we provide some encryption technique called AES encryption and
+decryption for this purpose, we will use something called as attribute converter which converts the entity attributes based on some logic before saving it into the database. Hence we will be adding the aes encryption and decryption logic inside our attribute converter, there will also be a secret key that will be provided to this conversion logic, this key will help in the
+encryption and decryption process
+   So while saving the plain text the data passes through our attribute converter and based on the encryption logic the data is converted into encrypted text, for example the employee name Ram first passes through attribute converter then based on aes encryption it gets converted into abc123 and then this abc123 gets saved into the database, in case of retrieving the data this encrypted text abc123 gets fetched from database and again it passes through attribute converter now based on the decryption logic it again gets converted into Ram
+
+1. Create spring boot project with spring web, spring data jpa, lombok, mysql dependency
+
+2. Create encryption logic
+        Create a class as AESEncrypter with @Configuration annotation, this class will implement the AttributeConverter interface where we need to
+provide two data types, first denotes what type of data we will be storing in
+database we provide object, since we want to save every type of object and second type denotes how the data will be stored in the database we add as string because we'll be converting every type of object into encrypted string
+        We override two methods first one is convertToDatabaseColumn() which  will be used to convert our plain text object into encrypted text, and the second one is convertToEntityAttribute() which used to decrypt the database value back to plain text
+
+- First we will add the aes key required for encryption and decryption, an aes key can be either of these three size 16 bytes, 24 bytes or 32 bytes and since in java one character takes two bytes of memory therefore the aes key can be of 8 or 12 or 16 characters long
+     private String encryptionKey = "this-is-test-key";
+
+- We specify the encryption cipher which we are using 
+     private final String encryptionCipher = "AES";
+
+- We need two more objects first one is key object which will use our
+encryption key string and second one is cipher object which will use our encryption cipher string
+         private Key key;
+    private Cipher cipher;
+
+- Now let's initialize these two objects for this we will create getters for them, 
+   So inside the getkey() we check whether the key is null or not, if it is
+null then we will assign a new SecretKeySpec object which accepts two fields in the constructor, first is byte value for the encryption key string and second is the encryption cipher
+    private Key getKey() {
+        if (key == null)
+            key = new SecretKeySpec(encryptionKey.getBytes(), encryptionCipher);
+        return key;
+    }
+
+- Similarly in the getCipher() we will check if cipher is null or not, so if it is null then we'll assign cipher.getInstance() and pass the encryptioncipher string value here
+   private Cipher getCipher() throws GeneralSecurityException {
+        if (cipher == null)
+            cipher = Cipher.getInstance(encryptionCipher);
+        return cipher;
+    }
+
+- Create a initCipher() method which will be used to initialize the
+cipher into the memory, this method will have an integer parameter which describes the encryption mode in other words it describes whether we want to encrypt or decrypt the data with the cipher. Here just call the getCipher()method and call init() method on it, pass the encryption mode and specify the
+encryption key
+    private void initCipher(int encryptMode) throws GeneralSecurityException {
+        getCipher().init(encryptMode, getKey());
+    }
+
+- Now we provide the implementation for convertToDatabaseColumn(), first step is to check if the attribute value is null or not, if it is then simply return null, then call the initCipher() method and pass the mode, annotate it with @SneakyThrows to simply throw the exception if it occurs.
+    Next we need to write some conversion logic, so first we need to get byte array by calling SerializationUtils.serialize() on attribute value. Now we will just return the value we get by calling base64.getEncoder().encodeToString() and passing our getCipher().doFinal on
+the byte[] which we got from above line
+
+@SneakyThrows
+    @Override
+    public String convertToDatabaseColumn(Object attribute) {
+        if (attribute == null)
+            return null;
+        initCipher(Cipher.ENCRYPT_MODE);
+        byte[] bytes = SerializationUtils.serialize(attribute);
+        return Base64.getEncoder().encodeToString(getCipher().doFinal(bytes));
+    }
+
+- Similarly in convertToEntityAttribute() method, first check if db data is null or not, if it is then simply return null, again call the initCipher() method but this time we will pass decryption mode, because we want to
+decrypt the data
+    @SneakyThrows
+    @Override
+    public Object convertToEntityAttribute(String dbData) {
+        if (dbData == null)
+            return null;
+        initCipher(Cipher.DECRYPT_MODE);
+        byte[] bytes = getCipher().doFinal(Base64.getDecoder().decode(dbData));
+        return SerializationUtils.deserialize(bytes);
+    }
+
+3. Create entity class 
+       We will add @Convert annotation on the fields which we want to encrypt and specify AESEncryptor as the converter
+
+@Entity
+@Data
+@NoArgsConstructor
+public class CardDetail {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Convert(converter = AesEncryptor.class)
+    private String cardHolderName;
+
+    @Convert(converter = AesEncryptor.class)
+    private Integer cvv;
+
+    @Convert(converter = AesEncryptor.class)
+    private Double amount;
+
+    @Convert(converter = AesEncryptor.class)
+    private Boolean isActive;
+}
+
+4. Create repository intf
+
+@Repository
+public interface CardDetailRepository extends JpaRepository<CardDetail, Integer> {
+
+}
+
+5. Create commandlinerunner to perform the task, so when we insert the data, the data will be inserted in encrypted format in db
+   When we fetch the data, it will decrypt the data and display the output 
+
+void insertData() {
+        CardDetail cardDetail = new CardDetail();
+        cardDetail.setCardHolderName("VKSTECH");
+        cardDetail.setCvv(123);
+        cardDetail.setAmount(100.0);
+        cardDetail.setIsActive(false);
+
+        cardDetailRepository.save(cardDetail);
+    }
+
+void insertBatchData() {
+        CardDetail cardDetail1 = new CardDetail();
+        cardDetail1.setCardHolderName("Tom");
+        cardDetail1.setCvv(456);
+        cardDetail1.setAmount(200.0);
+        cardDetail1.setIsActive(true);
+
+        CardDetail cardDetail2 = new CardDetail();
+        cardDetail2.setCardHolderName("Nick");
+        cardDetail2.setCvv(789);
+        cardDetail2.setAmount(300.0);
+        cardDetail2.setIsActive(true);
+
+        CardDetail cardDetail3 = new CardDetail();
+        cardDetail3.setCardHolderName("Harry");
+        cardDetail3.setCvv(901);
+        cardDetail3.setAmount(400.0);
+        cardDetail3.setIsActive(false);
+
+        List<CardDetail> cardDetails = new ArrayList<>();
+        cardDetails.add(cardDetail1);
+        cardDetails.add(cardDetail2);
+        cardDetails.add(cardDetail3);
+
+        cardDetailRepository.saveAll(cardDetails);
+    }
+
+    void retrieveData() {
+        CardDetail cardDetail = cardDetailRepository.findById(1).get();
+        System.out.println(cardDetail);
+    } 
+
+6. Now we query results from these data
+
+@Repository
+public interface CardDetailRepository extends JpaRepository<CardDetail, Integer> {
+
+    // query using JPA methods
+    List<CardDetail> findByCardHolderName(String cardHolderName);
+
+    // query using JPQL
+    @Query("select c from CardDetail c where c.cardHolderName = ?1")
+    List<CardDetail> findUsingJpql(String name);
+
+    // query using native queries
+    @Query(value = "select * from card_detail where card_holder_name = ?1", nativeQuery = true)
+    List<CardDetail> findUsingNativeQuery(String name);
+}
+
+1. we will query using jpa methods
+
+List<CardDetail> cardDetails = cardDetailRepository
+                .findByCardHolderName("Tom");
+        System.out.println(cardDetails.get(0));
+
+- It has printed the decrypted value in the console
+
+2. Using JPQL
+
+List<CardDetail> cardDetails = cardDetailRepository.findUsingJpql("Tom");
+        System.out.println(cardDetails.get(0));
+- It has printed the decrypted value in the console
+
+3. Using Native SQL Query 
+       Here in the parameter we will not pass Tom as a plain text, this is because unlike the jpa method, jpql, the native queries does not use
+attributeconverter to transform the plain text into encrypted text before matching. So to make native queries work we need to pass the encrypted string as the parameter so we will be using our AESEncrptor method convertToDatabaseColumn()
+
+List<CardDetail> cardDetails = cardDetailRepository
+                .findUsingNativeQuery(aesEncryptor.convertToDatabaseColumn("Tom"));
+        System.out.println(cardDetails.get(0));
+
+- It has printed the decrypted value in the console
+
+Encryption decryption using RSA algorithm -https://github.com/dkambale/encrypt-decrypt
+       RSA(Rivest-Shamir-Adleman) is a asymmetric algorithm which is used for encryption decryption,
+why it is asymmetric because it is using a two-keys for encryption and
+decryption,  one is private key and second is public key. So when you want to send message you will encrypt message using public key and at receiver side you will decrypt that message using your private key, so this is a
+two key algorithms 
+
+1. Create spring boot project with spring web dependency
+
+2. Create Service program with @Service
+
+- create one map which will be used to store the public and private
+key in our cache, string will be private or public and object will be of
+those keys
+   public static Map<String, Object> map = new HashMap<>();
+
+- Now create a method  createKeys() which will create private and public key, for that we will using a KeyPairGenerator class which is factory class which will return as object of key generation whenever we pass RSA and returning rsa key pair generator
+
+KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+
+- In keyPairGenerator we are initializing key size as 4096 bit, and it will return as a key pair and from keyPair we will get a public and
+private key and those i am storing it to map
+
+public void createKeys() {
+    try {
+      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+      keyPairGenerator.initialize(4096);
+      KeyPair keyPair = keyPairGenerator.generateKeyPair();
+      PublicKey publicKey = keyPair.getPublic();
+      PrivateKey privateKey = keyPair.getPrivate();
+      map.put("publicKey", publicKey);
+      map.put("privateKey", privateKey);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+3. Now create a encrypt method which will take a plain text and return encrypted message
+     We create encryptMessage() method which is accepting a plain text as argument and in plain text we are creating a cipher, cipher will act as a
+the value  which will mix with your plain text and create a different value which is not readable so your data will get secured, so we are creating cipher 
+
+ Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-512ANDMGF1PADDING");
+
+- Now we are getting the public key from my map and that public key we are passing to the cipher for initialization with encrypt mode, because we are encrypting my plain text into our secret message
+
+ PublicKey publicKey = (PublicKey) map.get("publicKey");
+      cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+
+- Once that initialization happen we call a doFinal() which will return encrypted byte array 
+      byte[] encrypt = cipher.doFinal(plainText.getBytes());
+
+- That byte array we are converting into stream using a base64 encoder which will give us a data in thereadable form and that data we are returning to our
+controller
+     return new String(Base64.getEncoder().encodeToString(encrypt));
+
+public String encryptMessage(String plainText) {
+
+    try {
+      Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-512ANDMGF1PADDING");
+      PublicKey publicKey = (PublicKey) map.get("publicKey");
+      cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+      byte[] encrypt = cipher.doFinal(plainText.getBytes());
+      return new String(Base64.getEncoder().encodeToString(encrypt));
+    } catch (Exception e) {
+
+    }
+    return "";
+  }
+
+4. Next we have to write a decryptMessage() which will pass us on the encrypted message and we will initialize the cipher for decryption and that will return as a decrypted message which is our original plain text and we will create a cipher
+   Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-512ANDMGF1PADDING");
+
+- We will get a private key and  initialize cipher in a decrypt mode 
+
+PrivateKey privateKey = (PrivateKey) map.get("privateKey");
+      cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+- We will do base64 decoding and that decoded byte array we are passing to the stream which will create original plain text from this array
+     byte[] decrypt = cipher.doFinal(Base64.getDecoder().decode(encryptedMessgae));
+      return new String(decrypt);
+
+public String decryptMessage(String encryptedMessgae) {
+
+    try {
+      Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWITHSHA-512ANDMGF1PADDING");
+      PrivateKey privateKey = (PrivateKey) map.get("privateKey");
+      cipher.init(Cipher.DECRYPT_MODE, privateKey);
+      byte[] decrypt = cipher.doFinal(Base64.getDecoder().decode(encryptedMessgae));
+      return new String(decrypt);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return "";
+  }
+
+5. Create Controller prg and call those methods 
+
+@RestController
+public class EncryptDecryptRSAController {
+
+  @Autowired
+
+  EncryptDecryptService encryptDecryptService;
+
+  @GetMapping("/createKeys")
+  public void createPrivatePublickey() {
+    encryptDecryptService.createKeys();
+  }
+
+  @PostMapping("/encrpyt")
+  public String encryptMessage(@RequestBody String plainString) {
+    return encryptDecryptService.encryptMessage(plainString);
+  }
+
+
+  @PostMapping("/decrpyt")
+  public String decryptMessage(@RequestBody String encryptString) {
+    return encryptDecryptService.decryptMessage(encryptString);
+  }
+}
+
+6. Start the appl, in Postman
+
+- With GET request, run http://localhost:8000/createKeys - Click Send
+     It will create keys in our hash map
+
+- With POST request, run http://localhost:8000/encrypt - In Body - Raw- Text - Hello World - Click Send
+     It will encrypt my message and it will give in the readable form
+
+- With POST request, run http://localhost:8000/decrypt - In Body - Raw- Text - Paste the encrypted message - Click Send
+     It will return message in plain text which was encrypted
+
+
+Logging best practices
+
+How to do a great log inside your java application ? 
+    We should look three aspect inside the application 
+ 1. Make sure that we give you the right information 
+ 2. Be trackable, imagine a scenario that you need to check around a thousand requests, each one belongs to your request 
+ 3. security we need to make sure that no critical information  is on your logs 
+
+
+Consider scenario where we have CreditCardService where I'm doing some log and we have pay() which takes CreditCard class and Product class
+
+import java.util.logging.Logger;
+
+public class CreditCardService {
+    private static final Logger logger=Logger.getLogger(CreditCardService.class.getName());
+
+   public void pay(CreditCard creditCard, Product product) {
+   }
+}
+
+- Create CreditCard and Product class
+
+public class CreditCard {
+    private UUID id;
+    private String name;
+    //getters and setters
+}
+
+public class Product {
+    private UUID id;
+    private String name;
+    //getters and setters, toString
+}
+
+1. The Right Information
+      It's not about only having a lot  of information or no information, it is about the right information. If you put a lot of log information you life become harder to find information, to make this possible you can use level of logs
+   - So in pay(), we create a first log 
+
+    logger.info("Paying with credit card "+creditCard+" for product: "+product);
+
+So you might have a lot information so we put only ID, 
+
+ logger.info("Paying with credit card "+creditCard.getID());
+
+and if I wish to put more details about the product and I can use a different level of logs
+
+  logger.fine("Paying for product:"+product);
+
+and I have the whole product information
+
+- Now we create test case
+
+Class CreditCardServiceTest {
+  private CreditCardService service=new CreditCardService();
+
+   @Test
+   public void testPay() {
+     CreditCard creditCard=new CreditCard();
+     Product product=new Product();
+     service.pay(creditCard,product);
+   }
+}
+
+When we execute we can see it will show the  the payment info on this case my credit card ID as null and fine level is not showed by default
+
+2. Be trackable
+1. info -  I'm putting the ID to make it trackable , so you can use request ID or the  user ID with more detail like fine or debug level, you can put the whole  Json 
+
+Security
+   So you can put Json product with warning where you can advise the the user with  something that is become obsolete or deprecated  or might have performance impact and so on 
+  Naturally the severe that  you can use once payment is failed
+
+ public void pay(CreditCard creditCard, Product product) {
+      logger.info("Paying with credit card "+creditCard.getID());
+      logger.fine("Paying for product:"+product);
+      logger.warning("Payment deprecated this method");
+      logger.severe("Payment failed");
+   }
+
+In this case, info used for some  way to track these request or this information , fine with more details (ie) the whole Json things, warning is  to work as advice so for example if this method is deprecated you can use another one or it's  my impact in performance and  so on,severe is when something goes wrong  when you throw an exception and so on 
+
+
+Why log ?
+  We want to log because we want to have an understanding of production issues that might have gone wrong in the past, in our industry we
+spend a lot of time hunting down defects and looking at problems in production and being good and efficient at doing that is a skill that's very highly valued than being able to write code. So we want to make sure that we're using logging because logging gives us the breadcrumbs that we need to go back and investigate an issue 
+
+Best practices with logging
+1. use logging levels appropriately 
+       when you're logging you can log things at different levels from trace to debug to info to warn all the way up to error and you can even define some custom logging levels
+2. Take advantage of multiple log files/appenders
+      It's important that you're logging at the right level, in other words something that's a common occurrence should not be logged as an error, where an error should not be logged as info because we'll use those severity levels to help us shift through logs and find
+out what's actually important and what might have caused an issue 
+    Now shifting through logs is an important skill, an error will not be logged very frequently in your application, but a trace and a debug might be very verbose. You might be looking through a huge log file just to look for a couple of errors you can do that, but another approach is to have a general log file that logs everything and then a more specific log file that only logs what is severe, that can help you to narrow down an issue without having to search through a set of files
+3. Always log in catch blocks, even if you dont think you need it
+      If you have a try catch block or an exception you should always have a log statement in there,  an exception could occur at any time and you want to be able to see where this exception has occurred, an empty catch block without a log message is throwing away some very important information
+4. Dont show detailed exceptions to user 
+     So if we do have an exception, we don't want to display that exception to the user, for example if we have something like a NullPointerException you don't want to have a message box that says NullPointerException because 
+  1. The user doesn't understand what that means
+  2. Maybe the user does know what it means
+because maybe you have a user who's
+trying to hack into your system 
+
+Logging levels
+1. error - you should only use that if an error actually occurred something like a catch block
+2. warn - it is something that isn't necessarily an error, something like getting zero results from a search might be a warn
+3. info - it is kind of an everyday occurrence, for example this user has logged in we might log that at info
+4. debug - debug we're getting to a much more granular level here because this is something we're typically only going to turn on when we're in development mode and we want to look at steps through our application
+5. trace - it is a very fine grain level where you're essentially looking at entry and exit points
+
+Spring boot logging
+    It gives us logging capabilities by default with a dependency called spring-jcl which is already included with some other dependencies like spring boot starter web or spring boot starter logging 
+    In our application if we're using spring boot starter web, we don't need to import anything extra to get our logging and by default we can use these logs to log to the console
+
+Getting a logger
+Logger log=LoggerFactory.getLogger(this.getClass());
+   Then we use log.debug() or log.info() etc
+
+Centralized logging of all the endpoints
+     Logging plays very important role when our appl is in production and there is any issue coming or anything that we want to analyse. So logs are the only place where we can go and see that how the request is troubling through and what are the inputs and outputs that is happening through our services 
+    So putting effective logging is very much important, it should not be too much logging and too less logging. So we are going to discuss about 
+1. How to log all ur request and response
+2. We can also validate (ie) sometimes we have some sensitive info passed through request and response like credit card number, password etc and we dont want that to expose in the log files  
+3. Filtering request to be logged - we can say filter particular request to be logged not all request and responses 
+
+1. Create springboot project with web, validation, spring data jpa, h2 db,lombok dependency
+
+2. Configure db info in properties file 
+
+3. Create entity class 
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Entity
+@Table(name="pro100")
+public class Product {
+
+    @Id
+    private String id;
+
+    @NotNull(message = "Product name should not be null")
+    private String name;
+
+    @NotNull(message = "Category of the product should not be null")
+    private String category;
+
+    @Min(0)
+    private double price;
+
+    private String currency;
+
+    @Max(100)
+    @Min(0)
+    private double discount;
+    private String discountDescription;
+
+}
+
+public interface ProductRepository extends JpaRepository<Product, String> {
+
+}
+
+
+4. Create controller
+
+@RestController
+@RequestMapping("/v1")
+public class ProductController {
+    private ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    @PostMapping("/addProduct")
+    ResponseEntity<Product> addProduct(@RequestBody @Valid Product product) {
+       String status = productService.addProduct(product);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(product);
+    }
+
+    @GetMapping("/productList")  
+    List<Product> productList() {
+        return productService.listAllProducts();
+    }
+}
+
+6. Create Service
+
+@AllArgsConstructor
+@Slf4j
+@Service
+public class ProductService {
+
+    private ProductRepository productRepository;
+
+    public String addProduct(Product product) {
+        log.info("Inside addProduct service");
+        Product savedProduct = productRepository.save(product);
+
+        return savedProduct.getName() + "added into the system";
+    }
+
+    public List<Product> listAllProducts() {
+        List<Product> products = productRepository.findAll();
+        return products;
+    }
+}
+
+9. In our appl, /addProduct is the entry point of the appl where it was taking product in json format first validating then calling the service
+   So we add logs in controller and service prg
+
+@PostMapping("/addProduct")
+    ResponseEntity<Product> addProduct(@RequestBody @Valid Product product) {
+       String status = productService.addProduct(product);
+
+log.info("Product added status - {}", status);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
+    }
+
+We can add the logs request and response in all endpoints which is cumbersome and it is also not part of business logic directly, so we should avoid doing this at the same time I want the log info 
+
+10. So we put logs in one central place using interceptors or AOP where we have concept of JoinPoint and Aspects, or filters
+    Create class that extends OncePerRequestFilter and override doFilter(), first we try to get request information
+
+@Component
+@Slf4j
+@Order(1)
+public class RequestResponseLoggers  extends OncePerRequestFilter{
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		
+        log.info("Requeust URI: {}", request.getRequestURI());
+        log.info("Requeust Method: {}", request.getMethod());
+        log.info("Requeust Body: {}", request.getInputStream().toString());
+        filterChain.doFilter(request, response);
+  
+	}
+
+}
+
+11. Start the appl, In postman with POST request run http://localhost:8080/v1/addProduct 
+with Body - Raw - Json
+{
+    "id":"100",
+    "name":"Inner engineering",
+    "category":"yoga",
+    "price":20,
+    "currency":"HCD",
+    "discount":10,
+    "discountDescription":"Year end sale"
+}
+
+Now we can see the logs in console with request method, uri and request body which is not in readable format 
+
+12. Inorder to display the data we need to convert InputStream to String so we use ContentCachingRequestWrapper
+
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		
+		ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+		
+        log.info("Requeust URI: {}", request.getRequestURI());
+        log.info("Requeust Method: {}", request.getMethod());
+        filterChain.doFilter(requestWrapper, response);
+        String requestBody = getStringValue(requestWrapper.getContentAsByteArray(),
+				request.getCharacterEncoding());
+       // log.info("Requeust Body: {}", request.getInputStream().toString());
+        log.info("Requeust Body: {}", requestBody);
+
+	}
+
+so when we run we can the see the original body in log. Similarly we can add for the response also
+
+@Component
+@Slf4j
+@Order(1)
+public class RequestResponseLoggers  extends OncePerRequestFilter{
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		
+		ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+		ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
+
+		
+        log.info("Requeust URI: {}", request.getRequestURI());
+        log.info("Requeust Method: {}", request.getMethod());
+        
+        filterChain.doFilter(requestWrapper, responseWrapper);
+        
+        String requestBody = getStringValue(requestWrapper.getContentAsByteArray(),
+				request.getCharacterEncoding());
+        String responseBody = getStringValue(responseWrapper.getContentAsByteArray(),
+				response.getCharacterEncoding());
+      //  log.info("Requeust Body: {}", requestBody);
+       
+       // log.info("Requeust Body: {}", request.getInputStream().toString());
+        log.info(
+				"FINISHED PROCESSING : METHOD={}; REQUESTURI={}; REQUEST PAYLOAD={}; RESPONSE CODE={}; RESPONSE={}; TIM TAKEN={}",
+				request.getMethod(), request.getRequestURI(), requestBody, response.getStatus(), responseBody);
+				
+		responseWrapper.copyBodyToResponse();
+       
+        
+        
+		
+	}
+	
+	private String getStringValue(byte[] contentAsByteArray, String characterEncoding) {
+		try {
+			return new String(contentAsByteArray, 0, contentAsByteArray.length, characterEncoding);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+
+}
+
+13. Now we can see how we can filter the endpoints based on filter, my appl have many endpoints but we want to log only for few endpoints, in that case we have to configure a bean FilterRegistrationBean
+
+@Configuration
+public class FiltersConfig {
+
+
+    @Bean
+    FilterRegistrationBean<RequestResponseLoggers> createLoggers(RequestResponseLoggers requestResponseLoggers){
+        FilterRegistrationBean<RequestResponseLoggers> registrationBean = new FilterRegistrationBean<>();
+
+        registrationBean.setFilter(requestResponseLoggers);
+        registrationBean.addUrlPatterns("/v1/addProduct");
+
+        return registrationBean;
+    }
+}
+
+Here log will be displayed only for /v1/addProduct and not for other endpoints, we can give multiple endpoints with comma
+
+registrationBean.addUrlPatterns("/v1/addProduct","/v1/product/*", "/v1/productList/*");
+
+14. Now we validate and mask the data before logging, so in realtime we will have some password field, creditcard num, pan number so we want to mask those data 
+
+@Component
+@Slf4j
+@Order(1)
+public class RequestResponseLoggers  extends OncePerRequestFilter{
+	
+	@Autowired
+	ObjectMapper objectMapper;
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		
+		ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+		ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
+
+        String uri=request.getRequestURI();		
+        log.info("Requeust URI: {}", request.getRequestURI());
+        log.info("Requeust Method: {}", request.getMethod());
+        
+        filterChain.doFilter(requestWrapper, responseWrapper);
+        
+        String requestBody = getStringValue(requestWrapper.getContentAsByteArray(),
+				request.getCharacterEncoding());
+        String responseBody = getStringValue(responseWrapper.getContentAsByteArray(),
+				response.getCharacterEncoding());
+      
+ if("/v1/addProduct".equalsIgnoreCase(uri)){
+            Product product = objectMapper.readValue(requestBody, Product.class);
+
+            product.setCurrency("****");
+
+            requestBody = objectMapper.writeValueAsString(product);
+        }
+        if("/v1/addProduct".equalsIgnoreCase(uri)){
+            Product product = objectMapper.readValue(responseBody, Product.class);
+
+            product.setCurrency("****");
+
+            responseBody = objectMapper.writeValueAsString(product);
+        }
+        log.info(
+    				"FINISHED PROCESSING : METHOD={}; REQUESTURI={}; REQUEST PAYLOAD={}; RESPONSE CODE={}; RESPONSE={}; TIM TAKEN={}",
+    				request.getMethod(), request.getRequestURI(), requestBody, response.getStatus(), responseBody);
+		responseWrapper.copyBodyToResponse();
+    
+		
+	}
+
+Now when we run the appl, we can see currency property is masked in both request and response 
+
+15. We have seen all logs are created in the console and when we restart all logs will be erased, but this is not in real time scenario. So we should have some file and we have to write logs into it and whether appl is restarted or not the logs will be persisted there 
+   So when we write request and response then log file size will be increasing, so we can set a threshold here so when that size exceeded new file will be created and other file will be backedup automatically 
+
+In application.properties file we configure
+logging.file.name= C:\\logs\\product.log
+#logging.file.path= C:\\logs
+#If we use path, it will have only directory and by default it will create the file called spring.log
+
+logback.rollingpolicy.max-file-size=50MB
+#Size of log file will be 10MB, if it goes above the size it will create new file and old file will be backedup
+
+16. Correlation ID is a unique identifier assigned to a request that allows tracking through various components, we can create correlation id along with logs that can present in logs
+
+Why?
+   1. sometimes it is difficult to trace the request in the distributed system without correlation id. At the same time if we use correlation id we can easily debug and troubleshoot with the help of correlation id
+   For example we have one API, the same api is called by multiple clients, so when the client sends HTTP request so for each HTTP request there will be one correlation id will be created automatically and store in the log file. If multiple clients are sending the request then we can uniquely identify each request with the help of correlation id, because for each http request there with be one correlation id will be created  
+
+- Add micrometer dependency in pom.xml
+
+<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-tracing-bridge-brave</artifactId>
+		</dependency>
+
+- In application.properties we will enable
+management.tracing.enabled=true
+
+- Start the appl, so for each request it will create correlation id and easy to trace and debug the request 
+
+Risks of Java Serialization
+     Oracle is planning to remove serialization from Java language. Serialization was a horrible mistake said by Mark Reinhold who is the chief architect of Java Platform Group at Oracle. Most of the project we use this concept and Oracle things we should remove it but what is Serialization and where do we use it 
+     We use it everywhere in RMI, rest client, JMS we use it everywhere
+     Consider if you have our object structure because object knows something (ie) data, so if you want to transfer this data from one place to another place, of course we cannot transfer objects because those are living things in your JVM 
+    So it transfer in this serialized form of it (ie) so if you have an object we will try to serialize it and we will get a byte stream which will be a simple file or a normal text, then you will send that text to some
+server, on that server you will create an object again using that data, so this concept of creating a byte stream is Serialization and the concept of  again creating the object from a byte stream is called as deserialization
+      JVM has to be smart enough because to serialize it is very simple, but what happens when you deserialize it, that's where the problem starts because when you deserialize your classes, your JVM try to detect which class object we have to create and it tried to matches the pattern and
+that's where it generates object again, it's a very complex process 
+    So your JVM try to guess which class object we have to instantiate and that's where this security issue starts. Most of the servers which are using Java they were vulnerable, because if attackers can attack this thing they may attack lot of servers
+    The main package was Apache Commons collection it's a very common library which we use everywhere and most of the companies they use this library like Google, Apache,Cisco, HP they all are using this library and this library has a flaw of the deserialization issue. 
+     If this company's any of the server caught attacked just imagine how big it would be and that's why this company started providing fixes which was a temporary fix. But ultimately Java was having this security issue because we all claim Java is one of the secured language  but this is where the problem starts so Oracle thinks to remove serialization.
+     If there are some companies - they're just already using serialization, so best tip would be try to recreate your project without that concept and if you are getting a new project, how would you stop serialization we can use a concept called Serialization filter
+
+Security risk associated with Serialization
+1. Deserialization Vulnerabilities
+        It can occur when an attacker sends a malicious serialized object to a Java appl that does not properly validate the serialized input, this can lead to remote code execution, denial of service attacks or other security breaches
+2. Data tampering 
+       Serialization allows objects to be stored and transmitted in a compact and efficient format, however it also makes it easier for attackers to tamper with serialized data to change its contents leading to unauthorized access to sensitive information or the ability to execute malicious code 
+3. Insufficent Input validation
+       Java appl that use serialization may not properly validate user input which can result in buffer overflows injection attacks or other security vulnerabilities 
+
+Best Practices to Mitigate Risks
+Avoid Serialization of Sensitive Data: Refrain from serializing sensitive fields, or mark them as transient to exclude them from serialization.
+
+Use Custom Serialization: Implement custom serialization methods (readObject, writeObject) to validate the state of the object being deserialized.
+
+Implement Serializable Carefully: Be mindful of changes to the class structure and use the serialVersionUID field to handle versioning.
+
+Restrict Deserialization: Use libraries like Jackson or Gson for JSON serialization, which can provide better control and safety over the serialization process.
+
+Validate Input: Always validate incoming data before deserializing to ensure it’s coming from a trusted source.
+
+Keep Libraries Updated: Regularly update libraries and dependencies to benefit from security patches and improvements.
+
+Solution
+    one of the biggest security problems in Java programming  languages is serialization which read a bunch of bytes and convert them to  an object. 
+Do we even need serialization in this day and age?
+    Well. Not always. Ideally if you can  remove serialization entirely from  
+your code and can avoid 3rd party  code that uses serialization, you  
+can just block it. 
+     But sometimes we need a bit of  serialization. In that case we  
+can include only the well known classes  that we need and block everything else out. For that we use Serialization Filters from Java 9 
+     There are two approaches of allowing only  specific serializable objects. Or blocking  specific objects (ie) whitelist and blacklist
+     A whitelist is  a more secure option yet it might break  your code if you missed a class. We can set the filter on the JDK itself by editing  the java.security properties file in command line argument. 
+
+>java "-Djdk.serialFilter=!*" -jar MyJar.jar
+
+This command will block all serialization. The exclamation point means we wish to block  and the star means we block everything.
+
+BlackList:
+>java "-Djdk.serialFilter=!myPackage.*" -jar MyJar.jar
+
+We’re blocking a  specific package
+
+WhileList:
+>java "-Djdk.serialFilter=myPackage.*;!*" -jar MyJar.jar
+
+Here the classes under mypackage are allowed. They can be  serialized. Everything else is blocked.
+
+2. We can write code that can use logic to  determine whether serialization should succeed by using Filters
+
+ObjectInputFilter.Config.setSerialFilter(i->i.depth()>10 ? Status.REJECTED:Status.UNDECIDED);
+
+Notice it can  reject the serialization or leave it undecided.  This is a part of a filter chain where each  stage in the validation process can reject  the serialization or pass it on to the next  stage.
+
+
+Spring boot validation 
+      We would have done an online transaction with your credit or debit cards, there you need to enter details such as card number, expiry date, CVV and name of card holder after entering the details you click submit and then
+further processing happens. But imagine what should happen if any of the above details is incorrect, the application should catch them 
+before the processing starts, so this is the role of validations and they're very important for an application
+
+1. Create spring boot project with web, lombok and validation dependency
+
+2. create a new class that represents the fields of a credit card in the incoming payment request
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Card {
+    private String cardNumber;
+    private String expiry;
+    private Integer cvv;
+    private String cardHolderName;
+}
+
+3. Create controller for exposing endpoint
+
+@RestController
+public class PaymentController {
+    @PostMapping("/process")
+    public ResponseEntity<String> process(@RequestBody Card card) {
+       return ResponseEntity.ok("Payment Successful");
+    }
+}
+
+4. Start the appl, in Postman with POST request run http://localhost:8000/process- Body - Raw - JSON
+{
+   "cardNumber":"1212122111111",
+   "expiry":"02/20",
+   "cvv":"123",
+   "cardHolderName":"Ram"
+}
+
+we got success message which means our application is working
+
+- Suppose we send an incomplete card number, it still works while it should not, make the card number empty it still works, now let's apply
+validations on the fields of our card class so that invalid input is stopped
+
+public class Card {
+    @NotEmpty
+    @Length(min=16, max=16)
+    private String cardNumber;
+    @NotEmpty
+    @Pattern(reqexp="^(0[1-9]|1[0-2])/(\\d{2})$", message="Valid date format is MM/YY")
+    private String expiry;
+    @NotNull
+    @Digits(integer=3, fraction=0, message="Max 3 digits is allowed")
+    private Integer cvv;
+    @NotEmpty
+    @Pattern(reqexp="^[a-zA-Z]+$")
+    private String cardHolderName;
+}
+
+5. To enable these validations over the objects of this class add @Valid annotation along with request body in the controller
+
+ @PostMapping("/process")
+    public ResponseEntity<String> process(@Valid @RequestBody Card card) {
+       return ResponseEntity.ok("Payment Successful");
+    }
+
+6. Start the appl, in Postman with POST request run http://localhost:8000/process- Body - Raw - JSON
+{
+   "cardNumber":"",
+   "expiry":"02/20",
+   "cvv":"123",
+   "cardHolderName":"Ram"
+}
+
+we get HTTP 400 which stands for bad request this is because this request body does not comply with the validations and at the console logs it shows this error message which is not at all user friendly, so we can catch MethodArgumentNotValidException and return a valid response 
+
+@RestControllerAdvice
+public class ValidationHandler {
+    
+     @ResponseStatus(HttpStatus.BAD_REQUEST)
+     @ExceptionHandler(MethodArgumentNotValidException.class)
+     public Map<String,String> handleValidationErrors(MethodArgumentNotValidException e) {
+    Map<String,String> errors=new HashMap<>();
+    List<ObjectError> allErrors=e.getBindingResult().getAllErrors();
+    allErrors.forEach(err -> {
+        FieldError fe=(FieldError)err;
+        errors.put(fe.getField(),fe.getDefaultMessage());
+    });
+    return errors;
+
+     }
+}
+
+7. Start the appl, in Postman with POST request run http://localhost:8000/process- Body - Raw - JSON
+{
+   "cardNumber":"",
+   "expiry":"02/20",
+   "cvv":"123",
+   "cardHolderName":"Ram"
+}
+
+Now it will display the messages are more informative and understandable 
+
+8. Custom validator
+
+   @Author
+	@NotEmpty(message = "Please provide a author")
+	private String author;
+
+- Create an annotation
+
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Constraint(validatedBy = AuthorValidator.class)
+@Documented
+public @interface Author
+{
+	String message() default "Author is not allowed.";
+
+	Class<?>[] groups() default {};
+
+	Class<? extends Payload>[] payload() default {};
+
+}
+
+- Create validator class
+
+public class AuthorValidator implements ConstraintValidator<Author, String>
+{
+	List<String> authors = Arrays.asList("Peter", "John", "Dave", "Ram");
+
+	@Override
+	public boolean isValid(String value, ConstraintValidatorContext context)
+	{
+		return authors.contains(value);
+	}
+}
+
+So if any other author is provided it will show validation error 
+
+    @Past(message = "start shouldn't be before current date")
+    @JsonFormat(pattern = "dd-MM-yyyy")
+    private Date doj;
+    @NotNull(message = "department shouldn't be null")
+    @NotEmpty(message = "department shouldn't be empty")
+    private String dept;
+    @Email(message = "invalid email id")
+    private String email;
+
+    //custom annotation
+    @ValidateEmployeeType
+    private String employeeType; //permanent or vendor or contractual
+
+
+@Target({ElementType.FIELD,ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Constraint(validatedBy = EmployeeTypeValidator.class)
+public @interface ValidateEmployeeType {
+
+    public String message() default "Invalid employeeType: It should be either Permanent Or vendor";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
+
+
+public class EmployeeTypeValidator implements ConstraintValidator<ValidateEmployeeType, String> {
+    @Override
+    public boolean isValid(String employeeType, ConstraintValidatorContext constraintValidatorContext) {
+        List<String> employeeTypes = Arrays.asList("Permanent", "vendor");
+        return employeeTypes.contains(employeeType);
+    }
+}
+
+
+Difference between @Valid and @Validated
+1. Create User class
+
+@Data
+public class User {
+    private String id;
+    @NotEmpty
+    private String login;
+    @Email
+    private String email;
+}
+
+2. Create controller
+
+@RestController
+public class UserController {
+    @PostMapping("/process")
+    public User process(@Valid @RequestBody User user) {
+       String id=UUID.randomUUID().toString();
+       user.setId();
+       return user;
+    }
+}
+
+3. Start the appl, in Postman with POST request run http://localhost:8000/process- Body - Raw - JSON
+{
+   "login":"user1",
+   "email":"user1@gmail.com"
+}
+-It gives the response, but if we give wrong data
+{
+   "login":"",
+   "email":"user1@gmail.com"
+}
+- We get Bad request and in console we get MethodArgumentNotValidException
+
+4. Create Exception class to view the response
+
+@RestControllerAdvice
+public class ConstraintsErrorHandler extends ResponseEntityExceptionHandler {
+    
+     @Override
+     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpHeaders h, HttpStatus s) {
+            return new ResponseEntity<>(e.getBindingResult().getAllErrors(),HttpStatus.BAD_REQUEST);
+     }
+}
+
+5. Start the appl, in Postman with POST request run http://localhost:8000/process- Body - Raw - JSON
+{
+   "login":"",
+   "email":"user1@gmail.com"
+}
+Now we see the error in response
+
+6. Now we change @Valid to @Validated, so when we run the appl we will get the same output 
+      
+What is the difference?
+     Consider we have different model class with one group of fields we need to validate while others not. You can imagine it like on some website we fill first group of fields, then you validate them while press "Next" button, on the next screen you validate next group of fields and so on 
+
+7. Create marker interface
+
+public interface FirstGroup {
+}
+
+public interface SecondGroup {
+}
+
+8. We mark our fields with this interface using "groups" attribute
+
+@Data
+public class User {
+    private String id;
+    @NotEmpty(groups=FirstGroup.class)
+    private String login;
+    @Email(groups=SecondGroup.class)
+    private String email;
+}
+
+9. Now lets divide our controller using this marker interface
+
+@RestController
+public class UserController {
+    @PostMapping("/process")
+    public User process(@Validated(FirstGroup.class) @RequestBody User user) {
+       String id=UUID.randomUUID().toString();
+       user.setId();
+       return user;
+    }
+}
+
+Now this controller will validate only fields marked as "FirstGroup" not other fields 
+
+10. Start the appl, in Postman with POST request run http://localhost:8000/process- Body - Raw - JSON
+{
+   "login":"user1",
+   "email":"user1@gmail.com"
+}
+-It gives the response, but if we give wrong data for login field
+{
+   "login":"",
+   "email":"user1@gmail.com"
+}
+We get one error about login field must not be empty 
+
+- Now we give correct data to login, but wrong data to email
+{
+   "login":"user1",
+   "email":"user1"
+}
+But now it will give outptu, @validate not checking email field
+
+So in controller if we change SecondGroup.class, then only email will be validated and login field will wont. we can create different controller method to validate each group 
+
+@RestController
+public class UserController {
+    @PostMapping("/process")
+    public User process(@Validated(FirstGroup.class) @RequestBody User user) {
+       String id=UUID.randomUUID().toString();
+       user.setId();
+       return user;
+    }
+@PostMapping("/process1")
+    public User process1(@Validated(SecondGroup.class) @RequestBody User user) {
+       String id=UUID.randomUUID().toString();
+       user.setId();
+       return user;
+    }
+}
+
+So the difference is that @Valid do not support group dividing
+
+@NotNull - will check only for null values not for empty values
+- In this case it will give error, since it is null
+{
+
+}
+-In this case it wont give error, since it is not null but empty
+{
+  "name":""
+}
+
+@NotEmpty - will check for null and empty values
+-In this case it give error, since it name is empty
+{
+  "name":""
+}
+
+@NotBlank - But if we pass some space instead of passing the value, it wont show error 
+{
+  "name":"   "
+}
+So we can use @NotBlank
+
+What is OWASP ESAPI ?
+OWASP ESAPI (Enterprise Security API) is a robust security library designed to help developers build secure applications. It provides a set of tools and APIs that address common security challenges, promoting best practices and mitigating vulnerabilities. Here are some key features and components of ESAPI:
+
+Key Features
+Input Validation:
+
+ESAPI helps developers validate user input to ensure that it adheres to specified formats, reducing the risk of injection attacks (e.g., SQL injection, XSS).
+Output Encoding:
+
+The library provides mechanisms for encoding data before displaying it to users, thus preventing issues like Cross-Site Scripting (XSS).
+Authentication and Access Control:
+
+ESAPI includes components for managing user authentication, session management, and enforcing access control policies.
+Cryptography:
+
+ESAPI offers a straightforward API for encryption and hashing, helping developers securely manage sensitive data.
+Logging:
+
+The API includes features for secure logging, enabling developers to record events and errors while preventing sensitive information exposure.
+Error Handling:
+
+ESAPI provides tools for handling exceptions in a secure manner, reducing the risk of information leakage through error messages.
+Configuration:
+
+It allows for centralized security configuration, enabling easy updates and management of security settings across applications.
+Components
+ESAPI Validator: Validates user input against defined rules and patterns.
+ESAPI Encoder: Encodes output for different contexts (HTML, JavaScript, URLs, etc.).
+ESAPI Encryptor: Handles encryption and decryption operations.
+ESAPI Logger: Provides secure logging capabilities.
+ESAPI Access Control: Manages user roles and permissions.
+Purpose
+The primary goal of OWASP ESAPI is to simplify the implementation of security best practices and to reduce the likelihood of vulnerabilities in applications. By using ESAPI, developers can focus on building features without having to worry extensively about security flaws, as many common pitfalls are handled by the library.
+
+
+1. Create Spring boot project with web dependency, esapi dependency (Spring boot version 2.7.9)
+<dependency>
+    <groupId>org.owasp.ESAPI</groupId>
+    <artifactId>esapi</artifactId>
+    <version>2.5.0</version> <!-- Check for the latest version -->
+</dependency>
+
+Step 2: Configure ESAPI
+ESAPI requires a configuration file. Create a file named ESAPI.properties in your classpath (e.g., src/main/resources):
+
+ESAPI.Resource.Encoder = org.owasp.esapi.reference.DefaultEncoder
+ESAPI.Encryptor = org.owasp.esapi.reference.DefaultEncryptor
+ESAPI.Validator = org.owasp.esapi.reference.DefaultValidator
+
+Validator.Alphanumeric = [A-Za-z0-9]{1,30}
+Validator.CreditCard = ^(\\d{4}[- ]?){3}\\d{4}$
+
+ESAPI.Logger=org.owasp.esapi.logging.slf4j.Slf4JLogFactory
+Logger.UserInfo=false
+Logger.ClientInfo=false
+Logger.LogEncodingRequired=true
+Logger.LogApplicationName=true
+Logger.ApplicationName=DemoApplication
+Logger.LogServerIP=true
+
+Encoder.AllowMultipleEncoding=false
+Encoder.AllowMixedEncoding=false
+Encoder.DefaultCodecList=HTMLEntityCodec,PercentCodec,JavaScriptCodec
+
+Step 3: In mail class implements CommandLineRunner 
+Here's a simple example that demonstrates input validation and output encoding using ESAPI:
+
+Canonicalization in the context of OWASP (Open Web Application Security Project) refers to the process of converting data into a standard or normalized format. This is particularly important in security, as it helps prevent various types of attacks, including those based on input manipulation, such as injection attacks or directory traversal.
+
+first one as we expected is John Doe, second one it turns out is a URL as what was buried inside that URL encoded string, the third one is a cross-site scripting attack, the fourth one was a sql injection attack, fifth one was a
+series of unpronounceable ASCII characters. As  you can see no matter what encoding we threw at, it  was able to canonicalize the string into something easily readable and handleable
+
+private void canonizalize() {
+		String input1="John Doe";
+	    String input2="%68%74%74%70%3a%2f%2f%77%77%77%2e%67%6f%6f%67%6c%65%2e%63%6f%6d";
+	    String input3="%41%3c%73%63%72%69%70%74%3e%61%6c%65%72%74%28%31%29%3c%2f%73%63%72%69%70%74%3e";
+	    String input4="&#x31;&#x27;&#x2b;&#x6f;&#x72;&#x2b;&#x31;&#x3d;&#x31;&#x2d;&#x2d;";
+	    String input5="&#x12;&#x34;&#x56;&#x76;&#x3f;&#xab;&#xcd;&#xef;&#x01;&#x3e;&#x7e;";
+
+	     try {
+	         Encoder e=ESAPI.encoder();
+	         input1=e.canonicalize(input1);
+	         System.out.println(input1);
+	         input2=e.canonicalize(input2);
+	         System.out.println(input2);
+	         input3=e.canonicalize(input3);
+	         System.out.println(input3);
+	         input4=e.canonicalize(input4);
+	         System.out.println(input4);
+	         input5=e.canonicalize(input5);
+	         System.out.println(input5);
+	         
+	     }catch(Exception e) {
+	      }
+	}
+------------------------------------------------------------------------------
+
+Input Validation
+
+private void validateInput() {
+		/*String userInput = "exampleUser123";
+
+        // Validate input (for example, ensure it's a valid username)
+        if (ESAPI.validator().isValidInput("username", userInput, "Alphanumeric", 30, false)) {
+            System.out.println("Valid input: " + userInput);
+        } else {
+            System.out.println("Invalid input!");
+        }
+
+        // Encode output to prevent XSS
+        try {
+            String encodedOutput = ESAPI.encoder().encodeForHTML(userInput);
+            System.out.println("Encoded output: " + encodedOutput);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+		
+		String userInput = "Hello world welcome";
+
+        // Validate input (for example, ensure it's a valid username)
+        if (ESAPI.validator().isValidInput("username", userInput, "SafeString", 100, false)) {
+            System.out.println("Valid input: " + userInput);
+        } else {
+            System.out.println("Invalid input!");
+        }
+
+        // Encode output to prevent XSS
+        try {
+            String encodedOutput = ESAPI.encoder().encodeForHTML(userInput);
+            System.out.println("Encoded output: " + encodedOutput);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	}
+
+
+Explanation
+Input: In this example, we simulate user input as exampleUser123.
+Validation: The isValidInput method is called with:
+"username": A unique identifier for the validation context.
+username: The actual input to be validated.
+"Alphanumeric": The validation type indicating that only alphanumeric characters are allowed.
+30: The maximum length for the input.
+false: Indicates that whitespace is not allowed.
+Step 4: Run Your Application
+When you run this code, it will validate the input against the specified criteria. If the input meets the criteria, it will print a success message; otherwise, it will indicate that the input is invalid.
+
+4. Create Custom Validation Patterns and configure in ESAPI.properties 
+Validator.Alphanumeric = [A-Za-z0-9]{1,30}
+#Validator.Alphanumeric = [A-Za-z0-9_-]{1,30}  - username with _ and -
+
+
+Validator.Password=^(?=.*[A-Z].*[A-Z])(?=.*[.:,;-_+"'?!@#$&*])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{8,20}$
+Validator.Digit=^[0-9]{1,20}$
+Validator.Email=^[A-Za-z0-9._%'-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,4}$
+Validator.IPAddress=^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$
+Validator.URL=^(ht|f)tp(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\:\\'\\/\\\\\\+=&amp;%\\$#_]*)?$
+Validator.CreditCard=^(\\d{4}[- ]?){3}\\d{4}$
+Validator.SSN=^(?!000)([0-6]\\d{2}|7([0-6]\\d|7[012]))([ -]?)(?!00)\\d\\d\\3(?!0000)\\d{4}$
+-----------------------------------------------------------------------------
+
+https://github.com/OWASP/EJSF/blob/master/esapi_master_FULL/WebContent/WEB-INF/validation.properties
+
+Input Validation using ESAPI
+      We use two of these ESAPI built-in validation functions called isValidCreditCard(), isValidInteger()
+
+private void inputValidation() {
+		String context="DemoForm";
+		try {
+			Encoder e=ESAPI.encoder();
+			Validator v=ESAPI.validator();
+			
+			String cc="4532-9168-0355-5719S";
+			cc=e.canonicalize(cc);
+			if(v.isValidCreditCard(context, cc, false)) {
+				System.out.println("CC is good");
+			}else {
+				System.out.println("CC is bad");
+			}
+			
+			String zipcode="19999";
+			zipcode=e.canonicalize(zipcode);
+			if(v.isValidInteger(context, zipcode, 1, 99999, false)) {
+				System.out.println("Zipcode is valid");
+			}else {
+				System.out.println("Zipcode is invalid");
+			}
+			
+			String birthDate="10-20-2000";
+			boolean valid=v.isValidDate("birthDate", birthDate, new SimpleDateFormat("yyyy-MM-dd"), false);
+			if(valid) {
+				System.out.println("Date is valid");
+			}else 
+				System.out.println("Date is invalid");
+		}catch(Exception e) {
+			
+		}
+	}
+
+In ESAPI.properties configure
+
+Validator.CreditCard = ^(\\d{4}[- ]?){3}\\d{4}$
+
+------------------------------------------------------------------------------
+Custom Validation
+    ESAPI has no validator for names, so in this class we want to validate people's names using getValidInput()  which define your own regular expression and ESAPI will do the comparison based on that expression, if the input matches the regular expression everything will go normally, if the your input does not match the regular expression it will actually throw an exception
+
+1. In ESAPI.properties configure the reqexp
+
+Validator.Name=^[a-zA-Z\.,\-~\ \'\"\`]{1,255}$
+IntrusionDetector.Disable=true
+
+name can contain lowercase characters, uppercase characters, periods, commas, dashes tilde, spaces, single quotes, double quotes and back ticks and again it can contain anywhere between 1 and 255 characters
+
+2. Create customValidation() in main class
+
+private void customValidation() {
+		String context="DemoForm";
+		try {
+			Encoder e=ESAPI.encoder();
+			Validator v=ESAPI.validator();
+			
+			String name1="Alice B. O'Neal-Smith III";
+			String name2="Alice%20B.%20O%27Neal-Smith%20III";
+			String name3="Alice B. O'Neal-Smith III%25";
+			
+        // String name=e.canonicalize(name1);
+        // String name=e.canonicalize(name2);
+			String name=e.canonicalize(name3);
+			name=v.getValidInput(context, name, "Name", 200, false);
+			System.out.println("String "+name+" looks like a name");
+			
+		}catch(IntrusionException e) {
+			System.out.println("Intrusion");
+			System.out.println("Error message for users: "+e.getMessage());
+		}
+		catch(ValidationException e) {
+			System.out.println("Validation");
+			System.out.println("Error message for users: "+e.getMessage());
+		}
+	}
+
+-If we pass first string name1 which has special characters in it but since
+we said that all those special characters were okay in Name, it matches the regex and print the output
+-If we pass first string name2 which basically the same string except certain
+characters have been URL encoded since we do the canonicalization which  returns the same string as string one and again everything is ok
+-The third string looks very similar to the first one except that one key
+character has been added to the end and that is %25 which is the URL
+encoded value for a percent sign which is not part of the regular expression, so it will throw validationexception
+-----------------------------------------------------------------------------
+Exception in ESAPI
+      We see how ESAPI generates exceptions 
+
+private void generateException() {
+		Scanner sc=new Scanner(System.in);
+		String context="DemoForm";
+		Encoder e=ESAPI.encoder();
+		Validator v=ESAPI.validator();
+		try {
+			String toUse="";
+			System.out.println("Press 1 to enter hacker string and 2 to enter safe string");
+			String input=sc.nextLine();
+			if(input.equals("1"))
+				toUse="123 &lt;sc&#x72;i%70t%253e%61%6c%65rt%28%32%29%3c%2fa%63ri%70t%3e";
+			else
+				toUse="John";
+			
+			toUse=e.canonicalize(toUse);
+			System.out.println("Looks like "+v.getValidPrintable(context, toUse, 255, false));
+		}catch(IntrusionException e1) {
+			System.out.println("Intrusion");
+			System.out.println("Error message for users: "+e1.getMessage());
+		}
+		catch(ValidationException e2) {
+			System.out.println("Validation");
+			System.out.println("Error message for users: "+e2.getMessage());
+		}
+		
+		try {
+			System.out.println("Please enter age");
+			String age=sc.nextLine();
+			int ageInt=v.getValidInteger(context, age, 1, 200, false);
+			System.out.println("The age is "+ageInt);
+		}catch(IntrusionException e1) {
+			System.out.println("Intrusion");
+			System.out.println("Error message for users: "+e1.getMessage());
+		}
+		catch(ValidationException e2) {
+			System.out.println("Validation");
+			System.out.println("Error message for users: "+e2.getMessage());
+		}
+	}
+
+when I run this application we get the option whether I want to pass this complicated hacker string to the canonicalize function or just the safe string, so if I just want to use the safe string obviously it's going to be just fine I pass John, the second thing enter my age so as long as I enter an integer again everything is fine passes validation prints out the result 
+    If i run it again and if i pass that hacker string and it generate an
+intrusion exception because this string included both multiple encodings and
+mixed encoding so it knows that that is a sign of an intrusion and  for the age if I enter some 20X which is obviously not an integer then it too does not pass validation in this case throws a validation exception 
+------------------------------------------------------------------------------
+
+XSS attack using ESAPI 
+
+https://www.computerweekly.com/tip/Using-ESAPI-to-fix-XSS-in-your-Java-code
+
+------------------------------------------------------------------------------
+
+Two Factor Authentication service
+        - To implement the two-factor authentication service in your spring Boot appl and we are going to send the code using email and another one is a SMS, for email we are using Gmail transport layer security and for SMS we are going to use the Twilio 
+
+1. Create SpringBoot-TwoFactor with web, twilo (for
+sending in SMS ) and spring boot starter mail(for
+sending in email), spring data jpa, mysql, lombok dependency
+
+<dependency>
+    <groupId>com.twilio.sdk</groupId>
+    <artifactId>twilio</artifactId>
+    <version>10.5.2</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-mail</artifactId>
+    <version>3.3.4</version>
+</dependency>
+
+2. Configure db info in application.properties
+
+3. Create user entity class
+
+@Entity
+@Table(name="user101")
+public class UserEntity {
+
+	@Entity
+@Table(name="usr100")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	private String id;
+   private String email_id;
+	private String passsword;
+	private String name;
+	private String user_type;
+	private String is_tfa_enabled;
+   private String tfa_code;
+   private long tfa_expire_time;
+	private String tfa_default_type;
+}
+
+4. Create repository interface
+
+public interface UserRepository extends JpaRepository<User, Integer>{
+}
+
+5. Create controller for inserting the user
+
+@RestController
+public class TwoFactorController {
+	
+	@Autowired
+	UserRepository repository;		
+
+	@PostMapping("/new")
+	public String addNewUser(@RequestBody User user) {
+		repository.save(user);
+		return "User added Successfully";
+	}
+	
+}
+
+6. Create endpoint for two factor authentication
+
+   @Autowired
+	EmailService emailService;
+	
+	@Autowired
+	SMSService smsService;
+
+@RequestMapping(value="/users/{userid}/emails/{emailid}/2fa", method=RequestMethod.PUT) 
+	public ResponseEntity<Object> send2faCodeinEmail(@PathVariable("userid") String id, @PathVariable("emailid") String emailid) throws AddressException, MessagingException {
+		String twoFaCode = String.valueOf(new Random().nextInt(9999) + 1000);
+		emailService.sendEmail(emailid, twoFaCode);
+		repository.update2FAProperties(id, twoFaCode);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="/users/{userid}/mobilenumbers/{mobilenumber}/2fa", method=RequestMethod.PUT) 
+	public ResponseEntity<Object> send2faCodeinSMS(@PathVariable("userid") String id, @PathVariable("mobilenumber") String mobile) {
+		String twoFaCode = String.valueOf(new Random().nextInt(9999) + 1000);
+		smsService.send2FaCode(mobile, twoFaCode);
+		repository.update2FAProperties(id, twoFaCode);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+7. Create EmailService
+
+@Service
+public class EmailService {
+
+	private static final String username="senthil1418@gmail.com";
+	private static final String password = "actionform1412";
+	
+	public boolean sendEmail(String emailid, String twoFaCode) throws AddressException, MessagingException {
+		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
+		
+		Session session = Session.getInstance(props,
+				  new javax.mail.Authenticator() {
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(username, password);
+					}
+				  });
+
+		MimeMessage message = new MimeMessage(session);
+		message.setFrom(new InternetAddress(username));
+		message.addRecipient(Message.RecipientType.TO, new InternetAddress(emailid));
+		
+		 message.setSubject("Two Factor Authentication code from our Service");
+         message.setText("Your Two Factor Authentication code is:"+twoFaCode);
+         Transport.send(message);
+         return true;
+	}
+}
+
+Twilio password: BirthDay1980!@#$1418Kirithik
+Recovery code: UZCMUAUEXXAUWA79V29Y41RJ
+
+8. Update two factor code in db table
+-----------------------------------------------
+
+ClassLoader
+     It is a class which is used to load class files in Java. Java code is compiled into class file by javac compiler and JVM executes byte codes written in class file. ClassLoader is responsible for loading class files from file system, network  or any other resources
+     So when we write any java program (ie) source code, so javac will load the source code into class file which contains byte code, this byte code is not machine code so Java interpreter will represent byte code as machine code, so only we call Java as two state system (ie) java code is executed in 2 state, first source code to byte code, but byte code is not machine code so in order to convert into machine code we use Java interpreter
+
+Types of ClassLoader
+1. Bootstrap loader - it is the parent classloader in hiearchy
+2. Extension loader - subclass of Bootstrap loader
+3. Application/System loader - it is child of Extension loader 
+
+Need for classloaders
+    So Java classloaders is the part of Java runtime that dynamically loads Java classes into JVM, so Java classes are not loaded into memory all at once, so whenever class is required or while program execution so at that time classLoader will load class in memory dynamically, this is working of classLoader 
+
+ClassLoader subsystem
+     JVM interacts with classloader and this interact with hierarchy and provide the job to the classloaders, so classloader works accordingly to load the class
+
+ClassLoader Job
+     So if we return the prg in Java language, we have .java file, using javac compiler we will compile the program to .class file which contains byte code and it is platform independent (ie) we can carry this byte code to any OS for execution 
+     So whenever we want to execute the bytecode in any OS we give the command, 
+    >java "classname"
+At that time classLoader will load the class file into the JRE. So ur bytecode will go to JRE for execution, classloader provides bytecode to the JVM, JVM will invoke the verifier which is responsible to check ur bytecode is correct or not. Suppose if the file is any virus or any antibyte code file, so verifier responsible to verify whether it is right byte code or is it for our env or not 
+    Once verifier verified the bytecode, next we initialize our bytecode (ie) initialization means when classloader provides class file to JVM, then JVM gets and byte[] and convert into the object and it provides to the memory. So after initialization ur bytecode will get memory in the memory area, so this class will be part of memory area and JVM provide memory allocation for ur source code. Now execution engine executes the code using set of libraries
+
+Delegation Hierarchy Model
+      It is the algorithm used by classloaders and have 3 principles
+1. Delegation principle
+        As we know we have 3 classloaders, so whenever a request is come to load class file into JVM, this system classloader delegate this request to parent classloader (ie) Extension. Now Extension classloader will delegate this request to parent (ie) Bootstrap classloader which is parent classloader and it is responsible to load ur class and it will check in respective area. 
+        So delegation principle means whenever a request comes to the classloader, classloader will delegate to the parent classloader. If parent classloader is not found then it will again redelegate to the child classloader 
+2. Visibility principle
+        It is will loaded classes that are visible for same or sub classloader not by parent classloaders. If requested by parent classloader then it will throw ClassNotFoundException 
+3. Uniqueness principle
+        Suppose we are request to JVM to execute the class, then JVM ensures that classes are uniquely loaded without any duplication. So for this principle it defines only requested class have unique file in the memory area and ensures that classes are uniquely loaded without any duplication, also ensures the classes loaded by parent classloader not by child classloader 
+
+Now we see how classloader uses this principle?
+     Suppose we have java file and we will compile using
+     >javac Test.java 
+So after compilation if there is no error then it create Test.class file which contains bytecode 
+    Now we execute ur class file we use
+    >java Test 
+So when we execute, JVM will invoke which is a runtime activity and it has some memory area which has number of classes. So when we execute the Test prg, JVM will check memory area using classloader subsystem which will call a method to load this class, it would have 2 response whether class is found or not 
+     Suppose there is no class because this is first time and Test is not present in memory area, then JVM will request to classloader subsystem to invoke classloader and load Test class in JVM memory area, so we can verify and execute Test.class 
+      First we have Application/System loader which loads the classes from classpath, but this is not right time to check inside classpath area. So whenever request comes to load the class it will delegate the request to parent loader (ie) Extension Classloader which loads classes from JDK/lib/ext dir and again this is not right time to check there, so it will delegate the request to parent classloader(ie) Bootstrap loader which is responsible to check Test.class and load from there.
+   So when ur prg execute in JVM there are number of supporting library which required to execute the prg and Bookstrap loader is responsible to load only from JDK/jre/lib/*.jar. Now if Test.class is not found in this path then Bootstrap loader will again delegate to Extension loader. 
+    Now Extension loader will check Test.class in JDK/lib/ext/*.jar,  if Test.class is not found in this path then Extension loader will again delegate to Application loader. Now Application loader is responsible to load Test.class, which is a userdefined class and exists in current directory where ur source code is available or it will take help from env variable which we have set using classpath, so now it will invoke Test.class file in memory area 
+     Now we have 2 option either Test.class file is found or not found, so if Test.class is not found then it will respond to the classloader subsystem that the class is not found and JVM will throw ClassNotFoundException. If Test.class is found then Application loader loads the file into JVM and JVM will verify using verifier, then initializtion, then memory allocation, then JVM will execute
+
+ByteCode Verifier
+     We have java source code and we will compile it, once compiled we will be having bytecode. Now we want to transmit bytecode from one machine to another machine or we keep it in our system. When we get the requirement for the class, we would load the class, after that we use Bytecode verifier
+    Once the class is loaded, it activates the  bytecode verifier which is used to verify the code (ie) whatever bytecode is loaded we have to verify whether it is actual bytecode or not or whether that code contains any error 
+    Bytecode verifier, verify the java code to ensure that classes do not perform operations that may cause the JVM to crash (ie) it will verify ur bytecode so because of that code it should not crash ur JVM or whatever operation performed on the appl should not return invalid result 
+    Consider we have system A and system B, we have compiled the code and generated bytecode in system A, now we want to transmit that bytecode to system B and we are going to interpret that code. Once the bytecode verifier is activate it will verify bytecode one by one and check whether we have received the actual class or whatever operation performed in classes are valid 
+      For example, it also check for uninitialized variables (ie) the variables which is not initialized and it will be checked at compile time itself, then what Byteverifier will do
+     So at compile time the code we have is completely correct where we have initialized variable, we compiled it and generates the bytecode, and everything works fine. But when transmitting from system A to system B, so at time of transmission there is chance that bytecode is changed (ie) bytecode means hexcode so if someone has done some changes in hexcode using 3rd party hexcode tool, where they have made the variable to uninitialized. So it will generate errors or will break the operation
+      So this is the role of bytecode verifier, if any problem occurs by 3rd party in bytecode, so in order to check those problem we use bytecode verifier where it wont send to JVM for interpretation purpose
+
+Checkpoints that verifier perform
+1. Uninitialized variables
+2. Access rules for private data and methods are not violated
+3. Method calls match the object reference
+4. There are no operand stack overflows or underflows
+5. The arguments to all JVM instructions are of valid type
+6. Ensuring that final classes are not subclassed and that final methods are not overridden
+7. Checking that all field references and method references have valid names, valid type descriptor
+
+
+SSL,TLS,HTTPS 
+    So without https the communication between
+the browser and the server is in plain text, this means that the password you enter or the credit card number you send over the internet can be read by anyone, who has the ability to intercept it. Https is designed to solve this problem to make the data sent over the Internet
+unreadable by anyone other than the sender and the receiver
+
+HTTPS
+  HTTPS is an extension of the HTTP protocol so with https data is sending in encrypted form using something called TLS(transport layer security), if the encrypted data gets intercepted by a hacker all they could see is jumbo data
+   Now we see how the TLs handshake works there are several steps
+1. Like HTTP the browser establishes a TCP connection with the server
+2. This is where the TLS handshake begins, the process sends a hello to the server, in this Hello message the browser tells the server the following things
+   a. what TLS version it can support it could be TLS 1.2, TLS 1.3 etc
+   b. what cyper suite it supports, a cyper suite is a set of encryption algorithms use to encrypt data. After receiving hello, the server gets to choose the Cyber suite and the TLs version to use based on the options it got from the client, it sends those in the server Hello message back to the client
+     The server then sends the certificate to the client, the certificate includes a lot of different things and one is the public key for the server, the client uses the public key in something called asymmetric encryption. In asymmetric encryption a piece of data that is encrypted by a public key can only be decrypted by the private key
+   This concludes step two the hello phase of the TLs handshake, at this point the client has a service certificate, and the client and server have agreed on the TLs version and the Cyber Suite to use
+
+3. This is the step where the client and the server come up with a share encryption key to use to encrypt data and this is where the asymmetric encryption come into the picture again.
+    With asymmetric encryption the data encrypted on the client side using the public key from the server can only be decrypted by the server. This is how the client sends an encryption key safely to the server over the wide open internet
+     All this is done in the client key exchange message, the exact detail varies depending on the Cyber Suite used, here we use RSA as an example since it is the easiest to understand
+     With RSA the client generates an encryption key also called a session key, encrypts it with the server public key and sends encrypted session key to the server over the Internet, the server receives the encrypted session key and decrypts it with its private key, now both sides hold the session key 
+
+4. They use the session key and agree upon cyber Suite to send encrypted data back and forth in a secure bi-directional Channel.
+    Now you may ask why don't we just use asymmetric encryption for everything, whyswitch to symmetric encryption. The main reason is that asymmetric encryption is computationally expensive, it is not really suitable for bulk data transmission
+
+
+Spring boot in SSL mode
+       When we say SSL mode that is https, so http is the protocol where all the internet communication happens, https means a secure socket layer so it is a technology that establishes a secure communication between a web server and a browser 
+      So assume you have a bank account with some bank and you are on a open publicly available Wi-Fi, so let's say that bank server has not encrypted and not implemented SSL in any way, so whatever information we pass
+from the client like username and password to the server, server will validate it and then
+it will give me access to the bank account and transfer the amount to another account, since data is available in internet anyone can access the bank account so SSL comes into picture
+    So in SSL, before transferring any information between client and server, first thing that is happens is a TLS handshake, in this process it establishes the secure communication between the client and server when that is clear, so then they will start transferring the username password and further other information, so whatever information client will pass that will be encrypted.
+
+SSL(Secured Socket Layer)
+   - used for keeping the internet connection secure and safeguarding any sensitive data that is being sent between two systems. 
+    HTTP is used to transfer the resources between two machines, so the information that is travelling is unsecure (ie) anyone can hack this data. So if ur website is SSL enabled then the connection is secured 
+ It uses encryption algorithm to scramble data in transit, so whatever the data is transmit through this protocol will be scrambled so that 3rd party is not able to understand 
+
+SSL certificate
+     - It is a small data files that digitally bind a cryptographic key to an organization details. It is a file which contain few details like organization details to which that certificate belongs, so these details are encrypted by some algorithm 
+     - When these certificates are installed on web server, it will enables https protocol which means secure communication between client and server 
+
+TLS(Transport Layer Security)
+     - It is just updated and more secure version of SSL. Nowadays only TLS is only in use, so when u goto any website or certificate providers and if we ask for SSL certificate but actually they are providing you TLS certificate
+
+Truststore and Keystore 
+    - Both are used to store SSL certificates in Java 
+    - Truststore is used to store public certificate which is visual to everyone and keystore is used to store private certificate of client or server 
+
+Selfsigned SSL certificate
+> keytool -genkey -alias local_sslcert_selfsigned -keyalg RSA -keysize 2048 -validity 700 -keypass abcd -storepass abcd -keystore ssl_server.jks
+
+This is command to sign the SSL certificate to keep the details of ur organization using keytool comes with JDK 
+    
+
+1. Create Springboot project with web dependency
+
+2. Create key for SSL using KeyTool from JDK
+
+>keytool -genkey -alias my_ssl_key -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore ssl_server.jks -validity 3650
+Enter keystore password:  senthil1418
+Reenter new password: senthil1418
+What is ur first and last name: senthil
+What is the name of organizational usint: HCL
+What is the name of organization: HCL
+What is the name of your city ir locality: Chennai
+What is the name of your state or Province? Tamilnadu
+What is the two-letter country code for this unit? IN
+Is correct? Yes
+
+Now it will create the key as ssl_server.jks 
+
+To view the content of ssl certificate we can use
+>keytool -list -keystore ssl_server.jks
+Enter keystore password: senthil1418
+
+3. Cut and paste ssl_server.jks inside resource folder 
+
+4. Create controller prg
+
+@RestController
+public class HelloController {
+
+      @GetMapping("/hi")
+      public String hello() {
+          return "Hello world";
+      }
+}
+
+5. Start the appl and run http://localhost:8080/hi
+    It will print the output, but if we try to run https://localhost:8080/hi it will say this site can't provide a secure connection because your my browser tried to connect with a service which use https, but on the server side it is not implemented SSL protocol 
+
+6. So we put SSL configuration in application.yml file
+
+server:
+   port: 8081
+   ssl:
+     enabled: true
+     key-store: classpath:ssl_server.jks
+     key-store-password: senthil1418
+     key-store-type: PKCS12
+     key-alias: my_ssl_key 
+
+7. Start the application, now we can see in the console that tomcat has been initialized with HTTPS protocol, now run
+
+https://localhost:8081/hi 
+
+So now it connected with server which is HTTPS enabled but that server is not able to identify this client information, but initial handshake had just happened in that handshake it has found that the information that you were sending is going to be plain text 
+
+8. Now if we run http://localhost:8081/hi, it is giving me that bad request, so we need to configure if we run with http then it has redirect to https.
+    So we create a Connector in main class
+
+private Connector connector() {
+    Connector c=new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
+    c.setPort(8080);
+    c.setSecure(false);
+    c.setScheme("http");
+    return c;
+}
+
+@Bean
+public ServletWebServerFactory servletWebServerFactory() {
+   TomcatServletWebServerFactory factory=new TomcatServletWebServerFactory();
+   factory.addAdditionalTomcatConnectors(connector());
+    return factory;
+}
+
+Here we set additional Tomcat connector in this way it will make sure that on Port 8080 it is
+running on the HTTP  
+
+9. Start the appl, now we can run in the console the appl will be started in both port number https(8081) and http(8080)
+http://localhost:8080/hi
+https://localhost:8081/hi
+
+ Let's say we have a another microservice that is trying to connect to our application since it is running on the SSL mode so that service won't be able to call it directly, it has to pass some secure information that is where truststore comes into picture which will have information about all the services that connect with this service
+
+10. Now we see how we can access HTTPS enabled REST services using RestTemplate which is a library used to invoke 3rd party services. So we are accessing services which are running in HTTPS mode which provides security while transferring the data throughout the network 
+
+3 ways
+1. Bypass SSL validation
+2. Provide SSL validation in RestTemplate
+3. Provide SSL validation in JVM itself 
+ 
+The difference between providing the credentials between RestTemplate and JVM is 
+RestTemplate object where it is used that will be validated against the credential that we given, but in JVM it will be applicable throughout where the appl is running 
+
+11. Create Springboot project with web and httpclient dependency
+<dependency>
+    <groupId>org.apache.httpcomponents.client5</groupId>
+    <artifactId>httpclient5</artifactId>
+</dependency>
+
+
+12. Create controller 
+
+@RestController
+public class ExampleController {
+    @Autowired
+    RestTemplate restTemplate;
+
+    @GetMapping("/hello")
+    public String getInfo() {
+        return restTemplate.getForObject("https://localhost:8086/hi", String.class);
+    }
+
+}
+
+13. Now we create RestTemplate bean
+
+@Configuration
+public class RestConfig {
+
+   @Bean
+    RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return new RestTemplate();
+    }
+}
+
+14. Start the appl, run http://localhost:8085/hello, it will throw an error 
+
+15. First using bypass SSL validation, so in RestConfig class
+       - So we create disableSSL() which will bypass SSL, first we create object for TrustStrategy which override isTrusted() which returns always true. In actual cases we can perform some logic to validate those certificates, but here we want to disable those validation so we return true
+   TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                return true;
+            }
+        };
+
+     - Next we created SSLContext and call loadTrustMaterial() and we are not passing any truststore because we want to bypass everything, acceptingTrustStrategy which returns by default as true
+
+ SSLContext sslContext = null;
+        try {
+            sslContext = new SSLContextBuilder().loadTrustMaterial(null, acceptingTrustStrategy).build();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+
+- Using sslContext we will create SSLConnectionSocketFactory with NoopHostnameVerifier it is also not verifying anything and by default returns true
+SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
+
+- Using SSLConnectionSocketFactory we created HttpClientConnectionManager 
+
+HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                .setSSLSocketFactory(csf)
+                .build();
+
+- Using connectionManager we created HttpClient by setting connectionmanager
+
+ CloseableHttpClient httpClient = HttpClients.custom()
+        		.setConnectionManager(connectionManager)
+        		.evictExpiredConnections()
+        		.build();
+
+- Next we create ClientHttpRequestFactory, inside which we have set httpclient and returning requestFactory
+
+HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setHttpClient(httpClient);
+
+        return requestFactory;
+
+
+private HttpComponentsClientHttpRequestFactory disableSSl(){
+        TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                return true;
+            }
+        };
+        SSLContext sslContext = null;
+        try {
+            sslContext = new SSLContextBuilder().loadTrustMaterial(null, acceptingTrustStrategy).build();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+        SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
+        HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                .setSSLSocketFactory(csf)
+                .build();
+        CloseableHttpClient httpClient = HttpClients.custom()
+        		.setConnectionManager(connectionManager)
+        		.evictExpiredConnections()
+        		.build();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setHttpClient(httpClient);
+
+        return requestFactory;
+    }
+
+16. Now we have set requestFactory to the builder 
+
+@Bean
+    RestTemplate restTemplate(RestTemplateBuilder builder) {
+    	return new RestTemplate(disableSSl());
+    }
+
+Now disableSSL() will return new requestFactory which contains the sslContext which use to bypass SSL validation 
+
+17. Start the appl, run http://localhost:8085/hello, it will return the value from another microservice appl
+
+This is not recommended approach as we are bypassing SSL validation
+
+18. Next we write method for ssl validation by using their truststore and password 
+    First we have to create sslContext and call loadTrustMaterial(), and now we call keystore file from the location along with password
+
+ String location = "C:\\SpringBoot\\SSLDemo1\\src\\main\\resources\\ssl_server.jks";
+        String pass = "senthil1418";
+        SSLContext sslContext = null;
+        try{
+            sslContext = SSLContextBuilder
+                    .create()
+                    .loadTrustMaterial(ResourceUtils.getFile(location), pass.toCharArray())
+                    .build();
+        }catch (Exception e){
+
+        }
+
+- We create socketFactory by passing SSLContext and next we provide LocalHostnameVerifier, previously we use NoopHostnameVerifier which by default returns true, 
+
+SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext,new LocalHostnameVerifier());
+
+but in this case we can write our own logic and since our appl is running in localhost we have to write that logic.
+   So we create class LocalHostnameVerifier which implements HostnameVerifier and override verify() method, and check whether it is localhost or 127.0.0.1, it should return true 
+
+private class LocalHostnameVerifier implements HostnameVerifier {
+        @Override
+        public boolean verify(String s, SSLSession sslSession) {
+            return "localhost".equalsIgnoreCase(s) || "127.0.0.1".equals(s);
+        }
+    }
+
+In actual scenario when we get certificate from signing authority then we have to use proper certificateverifier like CertificateHostnameVerifier to verify which api is there 
+
+- Using SSLConnectionSocketFactory we created connectionManager by setting socketfactory
+
+ HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                .setSSLSocketFactory(csf)
+                .build();
+- Using connectionManager we created HttpClient
+
+ CloseableHttpClient httpClient = HttpClients.custom()
+        		.setConnectionManager(connectionManager)
+        		.evictExpiredConnections()
+        		.build();
+
+- Next we create ClientHttpRequestFactory, inside which we have set httpclient and returning requestFactory
+
+   HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        return requestFactory;
+
+19. Now we have set requestFactory to the builder and we validate properly
+
+@Bean
+    RestTemplate restTemplate(RestTemplateBuilder builder) {
+        //return new RestTemplate();
+    	//return new RestTemplate(disableSSl());
+    	return new RestTemplate(validateSSL());
+    }
+
+20. Start the appl, run http://localhost:8085/hello, it will return the value from another microservice appl since pwd are working properly, so no need to disable the validation, we can pass truststore and pwd to validate the ssl properly
+
+21. Next we validate SSL using JVM itself, so first we dont need to worry about the validation using RestTemplate or not, so we have to uncomment disableSSL() and validateSSL(). Now this will return RestTemplate where we are not validating ssl or disabling ssl 
+
+@Bean
+    RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder
+         //.requestFactory(()->disableSSL())
+          // .requestFactory(()->validateSSL())
+         .build();
+    }
+
+22. In main class, we will set the properties for JVM to validate the truststore 
+
+ public static void main(String[] args) {
+        System.setProperty("javax.net.ssl.trustStore","D:\\ssl_server.jks");
+        System.setProperty("javax.net.ssl.trustStorePassword","greenlearner");
+        SpringApplication.run(OrderManagementAppApplication.class, args);
+    }
+
+23. Start the appl, run http://localhost:8085/hello, it will throw an exception that "certificate for localhost dosent match", because javax library is trying to validate self signed certificate that have on first appl that is running, but it is not able to do that because localhost is not added as secured host, but if it is provided by proper signing authority which is in actual prod then we wont get this issue 
+
+
