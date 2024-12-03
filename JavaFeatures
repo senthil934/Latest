@@ -7303,6 +7303,19 @@ Suppose we want to search node with value 1, then JVM will first goto 4, since 1
 Why Concurrent Collections?
     1. Traditional collection object like ArrayList, HashMap etc are not thread safe, so it can be accessed by multiple threads simultaneously and there may be a chance of data inconsistency problems and hence these are not thread safe
     - Already existing thread safe collections like Vector, Hashtable, synchronizedList(), synchronizedSet(), synchronizedMap(), performance wise not upto the mark. On this collection at a time only one thread allows to operate, until completing 1st thread other threads have to wait, so for every operation entire collection object is locked by one thread so it increase waiting time and creates performance problem
+
+ArrayList al=new ArrayList();
+ al.add("A");
+ al.add("B");
+ al.add("C");
+Iterator it=al.iterator();
+while(it.hasNext()) {
+    String s=it.next();
+    System.out.println(s);
+    al.add("D");  //Exception
+}
+}
+
      - Another big problem with traditional collections is while one thread iterating collection, the other threads are not allowed to modify collection object simultaneously, if we are trying to modify then we will get ConcurrentModificationException
       Hence these traditional collection objects are not suitable for scalable multi threaded appl. To overcome this problem SUN introduced concurrent collections in 1.5 version 
 
@@ -7312,9 +7325,9 @@ class MyThread extends Thread {
      try {
           Thread.sleep(2000);
      }
-     catch(InterruptedException e){
+     catch(InterruptedException e){ }
       System.out.println("Child thread updating list");
-       l.add("D");
+      l.add("D");
      }
    }
    public static void main(String[] a) throws IE {
@@ -7323,7 +7336,7 @@ class MyThread extends Thread {
        l.add("C"); //main thread adding elt to list
        
        MyThread t=new MyThread();
-       t.start(); //child thread starts and we have 2 threads
+       t.start(); //child thread starts and we have 2 threads, main thread is responsible to execute remaining code and CT is responsible to execute run()
       
        Iterator itr=l.iterator(); //MT try to iterate and CT try to update the list which lead to concurrent modification exception
        while(itr.hasNext()) {
@@ -7361,7 +7374,7 @@ ConcurrentHashMap class
    - Instead of whole map concurrent update achieved by internally dividing Map into smaller portion which is defined by concurrency level
    - Default concurrency level is 16 (ie) ConcurrentHashMap allows simultaneous read operation and simultaneously 16 write operation
    - null is not allowed for both key and values 
-   - ConcurrentHashMap never throw concurrentmodifi cationexception
+   - ConcurrentHashMap never throw concurrentmodificationexception
 
 Constructors
    - ConcurrentHashMap()
@@ -7402,10 +7415,10 @@ class MyThread extends Thread {
      try {
           Thread.sleep(2000);
      }
-     catch(InterruptedException e){
+     catch(InterruptedException e){}
       System.out.println("Child thread updating MAP");
        m.put(103,"C");
-     }
+     
    }
    public static void main(String[] a) throws IE {
        m.put(101,"A");
@@ -7491,7 +7504,7 @@ CopyOnWriteArrayList l1=new CopyOnWriteArrayList();
 l1.add("A");
 l1.add("C");
 SOP(l1); //[A,C]
-l1.addAll(l);
+l1.addAllAbsent(l);
 SOP(l1); //[A,C,A,B]
 
 ArrayList l2=new ArrayList();
@@ -7524,10 +7537,10 @@ class MyThread extends Thread {
      try {
           Thread.sleep(2000);
      }
-     catch(InterruptedException e){
+     catch(InterruptedException e){}
       System.out.println("Child thread updating list");
        l.add("C");
-     }
+     
    }
    public static void main(String[] a) throws IE {
        l.add("A");
@@ -7604,6 +7617,8 @@ When a program is running, many variables are created and these are kept in the 
 What Exactly is a Garbage Collector?
 A garbage collector is a program that does the cleaning job, removing the unwanted variables from memory. In C, C++ we do it manually by writing a method to handle this. But in Java, it is much easier. Java itself does the job for us in the background. There is a background thread running in Java that keeps track of the objects which are eligible for removal from memory. 
 
+
+
 When is an Object Eligible for Garbage Collection in Java?
  We have two types of memory in Java where the objects are stored, namely the Stack and the Heap. The heap memory is large as compared to the stack. Whenever we create an object, it is assigned a memory address in the heap, and stored at that location. A reference to this location is stored in the stack to keep track of the object in the heap.
     Box b=new Box();
@@ -7668,7 +7683,6 @@ public class Demo
 }
 
 Output:
-
 Garbage collector is called
 
 Explanation:
@@ -7734,7 +7748,6 @@ A garbage collector is called
 Finalize() method is called
 
 Explanation:
-
 In this example, when finalize() method is called explicitly it is not destroying the object demo2. But when System.gc() calls finalize() method implicitly, it will release all the resources, and the Garbage collector destroys object created in the first statement.
 
 3. Exceptions in finalize() method:
@@ -7800,7 +7813,6 @@ public class Data
 }
 
 Output:
-
 Running garbage collector by gc() method
 ArithmeticException Occured
 Finalize method is called
@@ -7823,16 +7835,13 @@ public class Data {
     System.gc();
     System.out.println("Again try to run garbage collector by gc() method");
   }
-
   @Override
-  // overriding method
   protected void finalize() {
     System.out.println("Finalize method is called");
   }
 }
 
 Output:
-
 Running garbage collector by gc() method
 Finalize method is called
 Again try to run garbage collector by gc() method
@@ -9171,19 +9180,1051 @@ public class D {
 Here it will be showing an error for myPack2 and myPack3 as it is not visible in myModuleD3, if we comment myPack2.M2 and myPack3.M3 it will be execute properly
 
 
+Object clone()
+1. First we create Student class
+
+public class Student {
+   int rollNo;
+}
+
+2. Create Main class and access Student class by creating an object 
+
+public class Main { PSVM  {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+     SOP(obj1.rollNo);  //1
+}}
+
+- Now we are copying the object and print 
+
+public class Main { PSVM  {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+     Student obj2 = obj1;
+     SOP(obj1.rollNo);  //1
+     SOP(obj2.rollNo);  //1
+}}
+
+- Now we are changing value of obj2 rollNo 
+
+public class Main { PSVM  {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+     Student obj2 = obj1;
+     obj2.rollNo=5;
+     SOP(obj1.rollNo);  //5
+     SOP(obj2.rollNo);  //5
+}}
+
+Now we can see when we change in obj2 it is reflected in obj1 also, because we have copied the reference (ie) whatever object obj1 is referring, the same reference copied to obj2 also . So both obj1 and obj2 refers the same object, so only if we change one reference it is reflected in another reference. This is called reference copy approach where we copy object reference 
+    But if we want both objects to independent (ie) if we change one object it should not reflect other object, in that case we have to use object copy which contains shallow copy and deep copy
+
+Shallow copy
+    In Student class, we have a variable which is primitive datatype, so if we perform shallow copy on this class, where it create new object and copy the value of rollno field  and both object fields are independent (ie) if we change new object rollno so it wont reflect the old object rollno 
+   We use clone() to implement shallow copy and clone() by default uses shallow copy 
+
+1. Implement Cloneable interface 
+2. override clone() of Object class
+
+public class Student implements Cloneable{
+   int rollNo;
+
+   @Override
+   protected Object clone() throws CloneNotSupportedException {
+      return super.clone();
+   }
+}
+
+clone() by default provide shallow copy, using super.clone() we are returning shallow copy of our object 
+
+public class Main { PSVM throws CloneNotSupportedException {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+     Student obj2 = (Student)obj1.clone();
+     obj2.rollNo=5;
+     SOP(obj1.rollNo);  //1
+     SOP(obj2.rollNo);  //5
+}}
+
+Now we can see both rollno fields are independent 
+
+- Student class contains primitive datatype so no problem, in new object value is copied and both are independent. But if we have variable which is reference of another class, in that case we get problem 
+
+public class Address {
+   int addressId;
+}
+
+- Now refer it in Student class
+
+public class Student implements Cloneable{
+   int rollNo;
+   Address address;
+
+   @Override
+   protected Object clone() throws CloneNotSupportedException {
+      return super.clone();
+   }
+}
+
+So in case object type variables, the reference will be copied (ie) if we shallow copy obj1 and generate obj2, then both objects address field will refer same object, since we are copying the reference 
+
+public class Main { PSVM throws CloneNotSupportedException {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+
+     Address address=new Address();
+     address.addressId=22;
+     obj1.address=address;
+
+     Student obj2 = (Student)obj1.clone();
+     obj2.rollNo=5;
+     SOP(obj1.rollNo);  //1
+     SOP(obj2.rollNo);  //5
+     
+     SOP(obj1.address.addressId); //22
+     SOP(obj2.address.addressId);  //22
+}}
+
+We can see both addressId are 22, now if we change
+
+public class Main { PSVM throws CloneNotSupportedException {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+
+     Address address=new Address();
+     address.addressId=22;
+     obj1.address=address;
+
+     Student obj2 = (Student)obj1.clone();
+     obj2.rollNo=5;
+     obj2.address.addressId=39;
+
+     SOP(obj1.rollNo);  //1
+     SOP(obj2.rollNo);  //5
+     
+     SOP(obj1.address.addressId); //39
+     SOP(obj2.address.addressId);  //39
+}}
+
+Now we can see both objects are reflected 
+
+So if we have object type variable in that case it will copy only the reference, it wont copy entire object. In case of rollno we dont have any problem because it is primitive datatype, so when we change rollno so it changed independently. But in address object type it will copy only the reference, so if we change in obj2 it will reflect in obj1 too. 
+   So in case of shallow copy we get this problem and in order to deal with this problem we use deep copy 
+
+Deep copy
+    In case of deep copy, for primitive type and object type it will copy entire objects, so that new object is created and will exist independently 
+    In order to do deep copy, first we use shallow copy of Student class and also clone the object type variables (ie) Address
+
+public class Student implements Cloneable{
+   int rollNo;
+   Address address;
+
+   @Override
+   protected Object clone() throws CloneNotSupportedException {
+      Student student=(Student) super.clone();
+      student.address=(Address) address.clone();
+      return student;
+   }
+}
+
+- Override the clone() in Address class
+
+public class Address implements Cloneable {
+   int addressId;
+
+   @Override
+   protected Object clone() throws CloneNotSupportedException {
+      return super.clone();
+   }
+}
+
+- Now if we run main class, 
+
+public class Main { PSVM throws CloneNotSupportedException {
+     Student obj1=new Student();
+     obj1.rollNo=1;
+
+     Address address=new Address();
+     address.addressId=22;
+     obj1.address=address;
+
+     Student obj2 = (Student)obj1.clone();
+     obj2.rollNo=5;
+     obj2.address.addressId=39;
+
+     SOP(obj1.rollNo);  //1
+     SOP(obj2.rollNo);  //5
+     
+     SOP(obj1.address.addressId); //22
+     SOP(obj2.address.addressId);  //39
+}}
+
+We can see if we change obj2 but it is not reflected in obj1 and both are independent 
+
+Shallow copy
+1. For object  type variables, it copies only the reference of the object
+2. It is not 100% independent of original object
+3. Default implementation of clone() returns a shallow copy of the object
+
+Deep copy                      
+1. For object  type variables, it copies the entire object
+2. It is 100% independent of original object
+3. We need to additionally call the clone() of the object type variable to achieve deep copy 
+
+Object Cloning
+    In C++ we have this concept of copy Constructor you can actually create an object using the existing object, so in Java can you copy an object is it
+possible 
+    Consider we have a class which which has two variables in I and in J
+
+class A {
+  int i;
+  int j;
+}
+
+If we want to create the object of this class and set the value as
+A obj=new A();
+obj.i=5;
+obj.j=6;
+
+Now if we want to have one more object which will have the same value of
+this existing object, because if you don't copy it the values for the new
+object will be 0 
+
+A obj1=new A();
+
+In this scenario the values for obj1.i and obj1.j will be 0 and 0 because we have not initialized it, so this concept of having the values from
+the old object is called as copy. This copy can be of three types
+
+1. shallow copy
+2. deep copy
+3. cloning 
+
+Shallow copy 
+  If you want to copy this object, one way is don't create a new object simply say 
+   A obj1=obj;
+
+Now what we have is obj1 will have the same values as obj, it's because we are not creating two object, we have only one object and two reference 
+
+Heap                   Stack
+  i=5               obj    101
+  j=6               obj1   101
+    101
+
+In your HEAP memory we will be having only one object and inside your stack will be having two reference and both these reference are pointing to the same
+object, so now if we change the value of obj1 it will reflect to the
+values of obj because both are referring to the same object, so we are not
+actually getting two different objects, we are creating only one object and two reference, that is shallow copy
+
+2. Deep copy 
+      You will create a new object, so in total will be having two objects and manually you will copy one one value 
+
+class A {                              Heap
+  int i;                                101   i=5; j=6
+  int j;                                103   i=0; j=0
+}              
+ 
+A obj=new A();                         Stack
+obj.i=5;                                  obj   101
+obj.j=6;                                  obj1  103
+
+A obj1=new A();
+
+so we have two objects and for obj we have set the values as i=5 and j=6. In the next object you can simply say
+obj1.i=obj.i;
+obj1.j=obj.j;
+
+so your manually copying each and every value so that is deep copy 
+
+Stack and Heap memory in Java
+   Now let's try to understand what is there inside the jvm, what happens on when you create a variable, when you store a variable in your memory or inside jvm memory. We can categorize into two parts 
+
+1. Stack where you can store your data and that has a feature which is last in first out
+   Let's say if you send data five six seven, now the first value which entered was five, second value is six, third value is seven now when you
+try to get the value you will get seven first because that is last in first out
+  
+2. Heap
+
+so in the stack you store data in a different sequence and in Heap you have a open space 
+
+-- instance variable stored in object and object are in heap therefore we can say that instance variable created in heap.
+-- method declaration and definition is present in object but actual implementation present in stack frame of stack.
+-- local variable created in stack during call of method.
+-- stack frame of called method is present in stack area.
+-- st is reference variable created inside the current stack frame and it is reference variable store address of student object created in heap area.
+
+class Calculator
+{
+	int num=5;
+	public int add(int n1, int n2)
+	{
+		System.out.println(num);
+		return n1+n2;
+	}
+}
 
 
+public class Demo {
+	public static void main(String[] args) {
+                int data=10;
+		Calculator obj=new Calculator();
+		int r1=obj.add(3,4);
+		System.out.println(r1);
+	}
+}
+
+N1 and N2 are local variables and num is instance variable, every method will have its own stack, it's not just one stack, every method will have its own stack and if you see in this code we have two methods so we will be having
+two stack 
+   First we discuss about main() which has a local variable called data inside the main method, so in main stack we can assign the value 10 because that's the value, so basically your stack will have a key and a value, a key would be name of a variable and value will be 10
+
+Main stack
+
+data  10
+
+    Now coming back to R1 here, let's ignore this obj as of now which was a part of the stack, so data,obj, R1 they all are variable. Now we got R1 variable but what is a value for R1 and that's where it will basically call
+the add() method,so it will call the add method but we don't have our add()
+method in the memory as of now
+    Now we create a new stack out of it so we got another stack and the name for this stack would be add which  have two variables N1 and N2 and the values
+for these two variables we are passing
+
+add stack 
+
+n2  4
+N1  3
+
+Then you are executing add method, so in add method we are just adding those two values which is seven it will return the value, whatever value you have returned it will return the value with this particular method to R1, so we got R1 as 7. Now in main stack we put R1 as 7
+
+Main stack
+
+R1    7
+data  10
 
 
+Now what happens with the object here and what happens to this num variable where do we put num variable in the add stack or in the main stack, we can see num is not a part of add() and  not a part of main().  We can actually use this num inside a method, using a particular variable and the declaring the variable inside a method are two different things at this point we are using it we are not declaring it inside a method, N1 and N2 they are declared inside the add method
+    So where it resides in add stack or main stack, the answer is heap memory. 
+If you see 
+    Calculator obj=new Calculator();
+
+This obj is not an object,it is a reference variable, now it was declared inside main so in main stack we have obj and 
+
+Main stack
+
+obj
+R1    7
+data  10
+
+what will be the value, so when we say new Calculator(), it will simply create a new object inside the Heap memory, which has two sections the first section
+will have all the instance variable not local variable because local variables are part of a stack. But if you talk about the instance variable num they are part of the Heap memory, then this particular object will also have method
+declaration so it will have ADD method, but then it only have the definition
+of it the actual area which add() will consume will be of Stack. Now this particular object will also have its own address like 101
+
+Heap Memory          101
+                    num  5
+                     add()
+                      --
+
+Now this 101 will be stored in the stack, so every time when you say obj.add() the actual execution starts from stack itself 
+
+Main stack
+
+obj   101
+R1    7
+data  10
+
+So when we call obj.add(3,4) that means we are using obj object to call add() method, but it belongs to obj object in stack, so it will simply use this particular address and it will jump to the object in heap and it will call the add() method, so can we say there is a link between stack and heap  because of the address. Every time we say obj.add(), you are looking at the stack then you are jumping towards the Heap to look for the object 
+   We can actually create multiple objects, for example 
+   Calculator obj1=new Calculator();
+we can create another reference which is obj1 and we got a new object here, in total we got two calculator objects, so in heap memory 
+
+Heap Memory          101            105
+                    num=5          num=5
+                    -------        ------
+                     add()          add()
+                      --
+In main stack we have one more declaration of obj1 with address 105 and there's a link between stack and Heap
+
+Main stack
+
+obj1  105
+obj   101
+R1    7
+data  10
 
 
+We have two different objects have two different num variable but they have the same values, so if we change
+    obj.num=8;
+
+We are changing the value of only one object and we can see it is impacting only one object it's because there are two different objects
+
+Java 21 
+     Java 21 is released on 19th September 2023 as the next long-term support LTS release of Oracle standard Java implementation 
+
+1. Virtual Threads
+      Virtual threads were introduced in jdk19 as a preview feature, they  were updated slightly in jdk 20, and then they were refined again in jdk 21 and they are a full  feature now in the language 
+       virtual thread is a lightweight alternative to a thread within Java which is called a platform thread, a platform thread  is defined as a thread that has a thin wrapper  around OS threads, so basically every time when  you kick off a new thread in Java, you kick off  
+a new thread within the operating system 
+       virtual threads are lightweight threads to dramatically reduce  the effort of writing maintaining and observing high throughput concurrent applications (ie) when you want to have a really high performing  system and concurrency is part of that system and  
+you have a lot of throughput to get through then  a virtual thread might be a better alternative  compared to a platform thread. virtual thread you have more opportunities to  potentially parallelize more concurrent actions,  what you don't get is faster execution time you  get more effective use of the CPU
+    So if we are talking about the threads, we are talking about the threads or the cores that we have in our machine, so for example that I have an operating system and based on that operating system I have the JVM, so for every operating system I might be having different threads and those threads will be dependent on my core of the CPU.
+    Suppose I have eight cores so I'll be
+having eight threads and I can execute parallely, so let me just create four threads
+T1, T2, T3 and T4 and virtual threads also uses the same OS threads to execute our task called T1,T2,T3,T4, so for every thread that we have for operating system, jvm will use the same threads to execute our task which is also called as a platform thread.
+
+JVM    T1      T2      T3         T4
+------------------------------------------
+       T1      T2      T3         T4
+
+    Suppose you have eight request coming together and I have eight threads available, so all those eight request will be executed by
+each one of the threads and if another eight request is coming then those eight request has to wait until and unless one of the thread is free and then that thread can pick that task 
+   Suppose if I'm giving 16 requests together, then eight will be executed at a time and eight will be waiting for any of the threads to get it free and then that thread will pick that task, so if I have eight threads available eight will be executed and others will wait until any of the thread is free. 
+    To solve this issue what came into existence is reactive programming, so reactive programming does a non-blocking call (ie) if I have 10 threads available, for all those 10 threads it will do a non-blocking call, it will submit the request and the thread will be completed and it will wait for
+the data to be processed, so it's a non-blocking asynchronous call that we
+do in the reactive programming. But the issue with reactive programming is
+whenever you are working with a legacy application, we have to rewrite our application into reactive programming and it's a tedious task. So what if we can use the same existing application and use something that will help us to scale our application and that will help us to not block our task when there are less threads available, so for that reason virtual thread came into picture 
+   So virtual thread will be created based on the platform thread, so if you have a platform thread then for that platform thread, n number of virtual threads will be created, so all these virtual threads will be tied to a
+platform thread and you can create a lot of resources (ie) if you have
+eight threads available and you are doing 16 requests then all those 16
+requests will be divided across your virtual threads available and there will
+be no waiting time, no threads has to wait until your task is completed,  so all those 16 threads can be simultaneously be executed and you will
+get a better scalability than the platform threads 
+
+Where we can use Virtual thread ?
+   When we create a Java application we use our JVM or our server, so we have our server and based on server, suppose it's an API which will hit our server and we do multiple task like querying DB or access third party API call or
+Kafka publishing etc. 
+   Suppose whenever there is a request we have to do some sets of tasks and for doing all those sets of tasks that is a blocking call, suppose if there is a get request where I have to query the data from DB then there is a blocking call until and unless I get the data my request is blocked.
+   So we have eight threads in my machine, so I have eight request, so eight request will be blocked if I am doing this requests to access database and once that one request is completed, the other request can be executed at that time right so that it's a blocking call. Eventhough my server is able to handle more resources, more request per seconds but due to my machine have only eight threads I cannot do it, so instead of this I can enable virtual threads in my application and rather than eight, I can take n number of request and all those requests will be divided across my virtual threads and all those virtual threads will be calling this database call and whenever there's a blocking call, virtual threads will handle it internally, it will not block it,  it will push the data to the Heap memory and from that heap the task will be executed
+     When the task is executed it will again wait for the threads to be picked
+up by the virtual threads, so whenever there is a blocking call (ie) IO operation a platform thread will wait for io operation to get completed, but if it's a virtual thread whenever there is an IO operation it will convert to the nonblock IO operation internally and the thread will be released for that particular task and the data will be there in the heap, heap will be executed and post that the thread will be in the waiting state to be picked up task by the other virtual threads, so there is no way that virtual threads is getting
+blocked and ideally virtual threads is only used for one operations 
+
+Example 1
+    We have a server services has all sorts of different concurrent requests and how it does that is each time that a  request comes in, it has a new thread that handles the request and then handles the response
+
+public class Main {  PSVM {
+      var begin=Instant.now();
+      try(var executor = Executors.newCachedThreadPool()) {
+   IntStream.range(0,1000).forEach(i->executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1));
+            return i;
+      }));
+     }
+      var end=Instant.now();
+      System.out.println(Duration.between(begin,end));
+}}
+
+We have the time that we start  and the time that we end, then we have this executor service  which has 1,000 different tasks that get submitted to it and we use CachedThreadPool which use platform threads or  operating system resources directly, so this  is going to allocate 1,000 different OS threads 
+    When we run it prints ISO 8601 timestamp  period with time 1.212 seconds, so we are able to allocate about 1000 different OS threads within a reasonable amount of time because each thread is waiting for a second   
+
+- Now if we change this to a newFixedThreadPool(1000) with 1000 OS threads, the difference here is that we are creating all my threads in this first  
+line rather than creating each thread when we make a call
+
+public class Main {  PSVM {
+      var begin=Instant.now();
+      try(var executor = Executors.newFixedThreadPool(1000)) {
+   IntStream.range(0,1000).forEach(i->executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1));
+            return i;
+      }));
+     }
+      var end=Instant.now();
+      System.out.println(Duration.between(begin,end));
+}}
+
+When we run, we can see it will print the seconds 
+
+- Now we want to change this to virtual threads by using static method 
+
+public class Main {  PSVM {
+      var begin=Instant.now();
+      try(var executor = Executors.newVirtualThreadPerTaskExecutor(1000)) {
+   IntStream.range(0,1000).forEach(i->executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1));
+            return i;
+      }));
+     }
+      var end=Instant.now();
+      System.out.println(Duration.between(begin,end));
+}} 
+
+When we run, it basically create the virtual threads whenever we submit new  
+tasks to my executor and running this we can see that our time is slightly faster
+
+- To scale up our application instead of 1000 request we give 100,000 request 
+
+public class Main {  PSVM {
+      var begin=Instant.now();
+      try(var executor = Executors.newVirtualThreadPerTaskExecutor(1000)) {
+   IntStream.range(0,100000).forEach(i->executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1));
+            return i;
+      }));
+     }
+      var end=Instant.now();
+      System.out.println(Duration.between(begin,end));
+}} 
+
+When we run, it will print some 5sec to create 100000 virtual threads
+
+- Now we try 100000 request with OS threads
+
+public class Main {  PSVM {
+      var begin=Instant.now();
+      try(var executor = Executors.newCachedThreadPool()) {
+   IntStream.range(0,100000).forEach(i->executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1));
+            return i;
+      }));
+     }
+      var end=Instant.now();
+      System.out.println(Duration.between(begin,end));
+}} 
+
+When we run it will print some 21sec to create 100000 OS threads, because OS threads are heavy it takes a  lot of operating system resources to create an OS thread, a virtual thread does not tie directly to  an OS thread
+
+Example 2:
+How to find whether the running thread is virtual or not ?
+
+public class Main {  PSVM throws Exception{
+     SOP(Thread.currentThread().isVirtual());  //false
+     Thread.startVirtualThread(() -> {
+         SOP(Thread.currentThread().isVirtual());  //true
+      }).join();
+}}
+
+- Another way to create virtual threads
+
+public class Main {  PSVM throws Exception{
+     SOP(Thread.currentThread().isVirtual());  //false
+     Thread.Builder threadBuilder=Thread.ofVirtual().name("My Thread");
+     Runnable r=()-> {
+        SOP("Hello");
+     }
+     Thread t=threadBuilder.start(r);
+     t.join();
+}}
+
+Virtual threads
+     Virtual threads are managed by JVM and it's lightweight threads that will help us for
+writing High throughput concurrent applications, throughput means like how many units of informations it can process in a given amount of time
+
+What is Platform thread?
+     In Java basically thread is an instance of java.lang.Thread class, so Java has treated the
+platform thread as thin wrappers around
+the operating system threads, creating those
+kind of the platform threads has always
+been costly, so Java has been using the thread pool for avoiding the overhead of thread creations. The number of platform threads also has a limit because this resources are basically depends on the performance of your hardware and the platform threads are mapped
+one to one with the operating system thread 
+
+Issues with Platform thread
+     1. The number of the concurrent request that server can handle is directly depends on
+the server hardware performance, so the number of available thread has to be limited based on the hardware 
+     2. Also latency also big concern, if we see in a microservice world basically a request is fetching or updating data on multiple system and servers, while the applications wait for the informations from other servers the current thread remains in ideal state
+    So for solving this we use asynchronous or reactive programming where it does not wait for the response from other system, rather they walk through the call back kind of mechanism.
+So whenever any thread invoke async API then the platform thread return thread pool until the response come back from the remote system or database. Later when the response arrive the jvm will allocate another thread from the
+pool which will handle the response, so this way multiple thread are handling single async
+request, so in this async programming the latency is removed but the number of
+platform thread is still limited for creating the platform thread 
+     Another issues with this reactive or async programming is, it is very hard to debug the program, suppose we are handling lot of
+things in a multi-threading system and those threads are not dependent with each another it is very difficult to debug in async programming 
+
+Difference between Platform and Virtual thread
+    So virtual thread is also instance of java. lang.Thread package that runs its code underlying this OS thread but the benefit is it
+doesn't block the OS thread, keeping the OS threads free many virtual thread can run in the same OS thread, so high number of virtual
+thread we can create without depending on the number of the platform threads and these virtual threads are basically managed by the JVM
+    Similar to the traditional threads the applications code run in the virtual thread in the entire durations of the request, but the virtual thread also consumes the OS thread
+only when it performs the calculation on the CPU else it will not block the OS thread. 
+    Basically virtual threads are always a
+daemon thread, suppose if we call setDaemon(false) for this virtual thread it will not impact the virtual thread it will not change anything and virtual thread always having a normal priority means the priority
+cannot be also changed. Virtual thread also doesn't support like stop, suspend or resume method 
+
+Example 1: Create new Virtual Thread 
+
+public class Main { PSVM {
+    //First way
+    Runnable r=() -> SOP("Runnable Thread");
+    //var t=Thread.startVirtualThread(r);
+    //t.join();
+    
+    //Second way
+    //Thread t=Thread.ofVirtual().start(r);
+    //t.join();
+
+    //Third way
+    //Thread.Builder t=Thread.ofVirtual().name("V1");
+    //t.start(r);
+
+    //Fourth way
+    final AtomicInteger in=new AtomicInteger();
+     
+    Runnable r1 = () -> {
+       try {
+         Thread.sleep(Duration.ofSeconds(1)));
+       }catch(Exception e) {
+             SOP(e);
+       }
+       SOP("No of Interactions: "+in.incrementAndSet());
+     };
+
+     Instant start=Instant.now()
+     try(var executor=Executors.newFixedThreadPool(100)) {
+        for(int i=0;i<10000;i++) {
+             executor.submit(r1);
+        }
+      }
+      SOP("Time taken:"+Duration.between(start,Instant.now());
+   }
+}
+
+When we run it will time print total time taken now instead of newFixedThreadPool, we use Virtual thread
+
+final AtomicInteger in=new AtomicInteger();
+     
+    Runnable r1 = () -> {
+       try {
+         Thread.sleep(Duration.ofSeconds(1)));
+       }catch(Exception e) {
+             SOP(e);
+       }
+       SOP("No of Interactions: "+in.incrementAndGet());
+     };
+
+     Instant start=Instant.now()
+     try(var executor=Executors.newVirtualThreadPerTaskExecutor()) {
+        for(int i=0;i<10000;i++) {
+             executor.submit(r1);
+        }
+      }
+      SOP("Time taken:"+Duration.between(start,Instant.now());
+    
+When we run, it will comparatively show less time taken 
 
 
+2. New methods in String class
+
+a. An overload of the indexOf() method has been added, that allows you to look for a single character or a substring between a begin index and an end index.
+
+var message="one two three four five six";
+var index=message.indexOf("0",5,15);
+
+b. The Character class saw the addition of several methods to support emojis.
+
+public static boolean isEmoji(int codepoint);
+public static boolean isEmojiPresentation(int codepoint);
+public static boolean isEmojiModifier(int codepoint);
+public static boolean isEmojiModifierBase(int codepoint);
+public static boolean isEmojiComponent(int codepoint);
+
+All these methods take a code point as a parameter, of type int. These methods will tell if the code point you pass as an argument has the corresponding emoji property.
+
+c. In StringBuffer and StringBuilder classes we can now repeat a string of characters a number of times with the repeat() method.
+
+var sb=new StringBuilder();
+sb.repeat("one ",5);
+
+d. One of the biggest addition in this topic, is an update to the regular expression engine,
+that now supports named groups.
+   Named groups allow you to give capturing groups a name, and get them in your code using that name. On the following example, we are analyzing a line with an index, a city name, and a population.
+
+String line="1;New York;8 336817";
+
+- First create a pattern, we want to capture the first group and give it the name index.
+It is just an integer, in a string of characters, followed by a separator.
+Then we have the second group that we want to capture, which is the city name, followed
+by another separator. And then the third group we want to capture, which is an integer, in a string of characters, with internal spaces separators.
+
+Pattern pattern=Pattern.compile("""
+            (?<index>\\d+);\
+            (?<city>[ a-zA-Z]+);\
+            (?<population>[ \\d]+)$""");
+
+- Once the pattern matches the line, you can directly get the three capturing groups: index,
+city, and population.
+
+Matcher matcher=Pattern.matcher(line);
+if(matcher.matches()) {
+    var index=matcher.group("index");
+    var city=matcher.group("city");
+    var population=matcher.group("population");
+}
+
+Note that we used a text block to write our regular expression. This regular expression needs to be on one line, but it's more readable to split it into several lines. So to remove the trailing line feed at the end of each line of your source code, we just add a back slash.
+
+- String templates
+       - String templates are introduced to the Java programming to simplify the process of expressing Strings with values that can be compiled at run time. The most important concept of String templates revolves around template expressions, a new kind of programmable expression in Java which can perform interpolation
+       - 3 components of Template expression
+1. a processor
+2. a template that contains the data with the embedded expressions
+3. a dot (.) character
+       - A template processor is responsible for evaluating the embedded expression (the template), and combining it with the String literal at runtime to produce the final String.
+       - The STR Template Processor performs string interpolation by iteratively replacing each embedded expression of the provided template with the stringified value of that expression.
+
+var username="Ram";
+
+var name=STR."""
+     Hello, \{username}, how r u
+            """;
+SOP(name);
+
+var newJsonTemplate=STR."""
+       {
+          "username":"\{username}",
+          "message":"Hello, \{username}, how r u"
+       }
+       """;
+SOP(newJsonTemplate);
+
+>java --enable-preview --source 21 Test.java
 
 
+e. In the existing collection framework three
+new interfaces added like SequencedCollection, SequencedSet and SequencedMap 
+
+Why?
+   So how do we access the first and last element inside a collection, let's say if we have a list we access it by using list.get(0) and last element we access by list.get(list.size()-1).
+   If we use Deque then we have some methods implemented inside it like deque.getFirst() and deque.getLast() to return first and last element 
+   In SortedSet we have sortedSet.first() and  sortedSet.last(). In LinkedHashSet we don't have a method so we need to get the first element with the iterator, last element we cannot even get and we need to come up with some logic 
+    So there is no uniform method to get the first and last element, so as a developer we have to remember many different method and different implementation of getting first and last element and how we are going to remember that so to address this problem this sequenced collections comes into picture
+
+- First we create Java prg using Java 17
+
+public class Main { PSVM {
+    List<Integer> l=new ArrayList<>();
+    l.add(1);
+    l.add(2);
+    l.add(3);
+    l.add(4);
+    l.add(5);
+    SOP(l.get(0));
+    SOP(l.get(l.size()-1));
+
+    LinkedHashSet ls=new LinkedHashSet();
+    ls.add(1);
+    ls.add(2);
+    ls.add(3);
+    SOP(ls.iterator().next());
+
+    LinkedHashMap m=new LinkedHashMap();
+    m.put(1,1);
+    m.put(2,2);
+    m.put(3,3);
+    SOP(m.get(1));
+   }
+}
+
+- Next we create prg using Java 21
+
+- First we create Java prg using Java 17
+
+public class Main { PSVM {
+    List<Integer> l=new ArrayList<>();
+    l.add(1);
+    l.add(2);
+    l.add(3);
+    l.addFirst(0);
+    l.addLast(4);
+    SOP(l.getFirst());
+    SOP(l.getLast());
+    SOP(l.reversed());
+
+    LinkedHashSet ls=new LinkedHashSet();
+    ls.add(1);
+    ls.add(2);
+    ls.add(3);
+    ls.addFirst(0);
+    ls.addLast(4);
+    SOP(ls.getFirst());
+    SOP(ls.getLast());
+    SOP(ls.reversed());
+
+    LinkedHashMap m=new LinkedHashMap();
+    m.put(1,1);
+    m.put(2,2);
+    m.put(3,3);
+    SOP(m.firstEntry());
+    SOP(m.lastEntry());
+    SOP(m.reversed());
+    SOP(m.sequencedKeySet());
+    SOP(m.sequencedValues());
+    SOP(m.sequencedEntrySet());
+  }
+}
+
+So if the collection is empty then this will
+throw NoSuchElementException, since ArrayList is implementing List interface and List
+interface is implementing SequencedCollections 
+
+3. Unnamed classes and main methods
+         It is a preview feature in JDK21
+         This feature basically allows to use main entry point in an unnamed class file so therefore we don't need to wrap the execution method inside a class declarations
+         Now we can now use a simple non-static main method
+declaration as launch method, this method doesn't require any input parameters as entry point for your class 
+
+Benefits
+   1. No class declaration is required, before Java 21 we need to write the class then inside we need to write 
+public static void main(String[] args) 
+   2. No argument must be passed to the main method 
+
+1. Create Test.java prg inside JDK21/bin folder
+
+void main() {
+   SOP("Hello world");
+}
+
+>javac --release 21 --enable-preview Test.java
+
+>java --enable-preview Test
+
+2. We can declare variable, create an objects 
+
+import java.util.*;
+
+private String msg="Test";
+void main() {
+   List l=new ArrayList();
+   SOP("Hello world "+msg);
+}
+
+We can compile and run the program
+
+Limitations
+1. It is not supporting the package declaration 
+
+package test;
+void main() {
+   SOP("Hello world");
+}
+
+When we compile it will be showing compilation error
+
+2. Declaraing constructor is also not allowed
+
+public Test() {
+
+}
+void main() {
+   SOP("Hello world");
+}
+
+When we compile it will be showing compilation error
+
+4. Record Patterns and Pattern Matching
+
+public class Test { PSVM {
+     switchAndPrint("Duck");
+     switchAndPrint("DonaldDuck");
+     switchAndPrint(42);
+     switchAndPrint(new Date());
+     switchAndPrint(null);
+
+     SOP(typeMe(List.of("a","b","c"));
+  }
+   
+  static void switchAndPrint(Object o) {
+      switch(o) {
+        case String s when s.length() > 5 -> SOP(s.toUpperCase());
+        case String s -> SOP(s.toLowerCase());
+        case Integer i -> SOP(i*i);
+        case null -> SOP("Its null");
+        default -> SOP("Default");
+       }
+   }
+   
+//return value from switch
+   static String typeOf(Object o) {
+       return switch(o) {
+          case List l -> "A list of things:" +l;
+          case Map m -> "A Map of things: "+m;
+          case null -> "null!";
+          default -> "Something else":
+       };
+   }
+ }
+}     
+
+Java 19
+1. Virtual Threads in Java 19 - why and how? - based on Project Loom
+       When java was released in 1995 it already had class called Thread to do parallelize things but it was extremely heavyweight version and since then we had improvements to that model with Executor framework, fork and join framework      
+      Virtual thread is supposed to be a nice approach that allows you with minimal changes, you can use your old code with virtual threads and get even better use out of your hardware, so we would avoid blocking things and we would avoid mapping your threads to operating system heavyweight
+expensive threads 
+
+Runnable r=() -> SOP("Hello Virtual thread");
+Thread t=Thread.startVirtualThread(r);
+
+2. Structured Concurrency in Java 19 - why and how?
+       It is  nice api that's useful for when you want to control your parallel execution in a more kind of
+sophisticated fashion. Imagine a race track and you have 10 runners there, once you start the race, do you want to wait until everybody has finished, or do you want to wait until the first one has finished and do something at that point, or do you want to wait until one of the runners stumbles and fails and you need to interrupt the race
+     So the structured concurrency will fork those tasks and run them in virtual threads or real threads, then you
+are able to wait until all of them have executed or one of them has executed or one of them has failed, so you have some end conditions after which you would be continuing, so you can control the execution of things in many separate threads 
+
+public class Test { PSVM throws InterruptedException, ExecutionException {
+    //Virtual Thread
+    Runnable r=() -> SOP("Hello Virtual thread");
+Thread t=Thread.startVirtualThread(r);
+
+    //Structured Concurrency
+    Callable<String> task2=() -> { return "Hello, Structured Concurrency"; };
+    try { var scope=new StructuredTaskScope<Object>()) {
+           var result=scope.fork(task2);
+           scope.join();
+           SOP(result.get());
+    }
+ }
+}
+
+- Run the program
+>java --enable-preview --source 19 --add-modules jdk.incubator.concurrent Test.java
+
+Example 2:
+    Here we use the old versions of the code so we have a heavyweight old 100000 java threads and will just sleep for five seconds 
+
+public class Test { PSVM throws InterruptedException {
+      var thread=IntStream.range(0,100000)
+        .mapToObj(i -> new Thread(() -> {
+             try {
+                    Thread.sleep(5000);
+             }catch(InterruptedException e){
+                  throw new AssertionError(e);
+             }
+          })).toList();
+      var i=0;
+      for(var t: thread) {
+          SOP(i++);
+          t.start();
+      } 
+      for(var t:thread) {
+          t.join();
+      }
+   }
+}
+
+>java Test.java
+
+Now it will create 100000 thread, sometimes it will create or it will crash because it depends on your memory because each physical thread will reserve some resources and it will also talk with the operating system thread scheduler and it will reserve physical resources
+
+- Now we will create the same using virtual threads      
+
+public class Test { PSVM throws InterruptedException {
+       var counter=new AtomicInteger();
+       var thread=IntStream.range(0,100000)
+        .mapToObj(i -> Thread.ofVirtual().unstarted(() -> {
+             try {
+                    Thread.sleep(5000);
+             }catch(InterruptedException e){
+                  throw new AssertionError(e);
+             }
+             counter.incrementAndGet();
+          })).toList();
+      var i=0;
+      for(var t: thread) {
+          SOP(i++);
+          t.start();
+      } 
+      for(var t:thread) {
+          t.join();
+      }
+   }
+}      
+
+>java --enable-preview --source 19 --add-modules jdk.incubator.concurrent Test.java
+
+It took less seconds to run all 100000 threads since it's
+using virtual threads it's not really blocking the work so i don't really need to create 100000 physical threads to do
+this it's using internal thread pool 
+
+Examples of Structured Concurrency
+    We have task1 and when we call, it just returning an integer. We have task2 where it takes 10 seconds to
+finish and then we get some result of calculation again.
+We have fast task and then we have slow task and instead of just running them all, we want to define wait or  synchronize when they are done 
+
+public class Test { PSVM throws Exception {
+    var task1=new Callable<Integer>() {
+         public Integer call() {
+             return 1;
+         }
+    };
+
+    var task2=new Callable<String>() {
+         public String call() throws Exception{
+             Thread.sleep(10000);
+             return "2";
+         }
+    };
+
+    try(var scope=new StructuredTaskScope<Object>()) {
+        SOP("Creating the tasks and forking them");
+        Future<Integer> future1=scope.fork(task1);
+        Future<String> future2=scope.fork(task2);
+        SOP("Lets wait until both are done");
+        scope.join();
+        SOP("Done, Here are the results");
+        SOP(future1.get());
+        SOP(future2.get());
+     }
+  }
+}
+
+>java --enable-preview --source 19 --add-modules jdk.incubator.concurrent Test.java
+
+So we have one fast task, one 10 second task and when i'm saying join(), i'm waiting that all the tasks are done and they are running parallel and then i get the results of each task, so the idea here is to give you control over execution
+
+3. Java 19 Pattern Matching for switch (JEP 427, third preview from project Amber) 
+     Previously in Java17 pattern matching we use guarded pattern with &&
+
+String obj="TESTING";
+
+switch(obj) {
+    case String s && s.length()>5 -> SOP(s.toUpperCase());
+    case String s                 -> SOP(s.toLowerCase());
+    case Integer i                -> SOP(i*i);
+    default -> {}
+}
+
+only change in java 19 we should use new keyword called "when"
+
+switch(obj) {
+    case String s when s.length()>5 -> SOP(s.toUpperCase());
+    case String s                 -> SOP(s.toLowerCase());
+    case Integer i                -> SOP(i*i);
+    default -> {}
+}
+
+We have an object in case it's a string and when the string length is bigger than 5, then case will be executed.
+If we have already declared a variable called "when" it's not going to show error because this is contextual keyword
+so it only has meaning used with case
+
+4. Java 19 Record Patterns (JEP 405, preview, project Amber)
+
+public class Test {
+    record YoutubeVideo(String title) { }
+
+    PSVM {
+       Object obj=new YoutubeVideo("My Video");
+
+    //Java 17
+    if(obj instanceof YoutubeVideo video) {
+        SOP("Video is "+video.title());
+    }
+
+    switch(obj) {
+        case YoutubeVideo video
+               -> SOP("This was video with title "+video.title());
+        case default -> {}
+    }
+ 
+
+    //Java 19
+    if(obj instanceof YoutubeVideo(String title)) {
+        SOP("Video is "+title());
+    }
+
+    switch(obj) {
+        case YoutubeVideo(String title)
+               -> SOP("This was video with title "+title());
+        case default -> {}
+    }
+  }
+}
 
 
-
-
+Java 21
 
 
