@@ -1,0 +1,228 @@
+IBM MQ vs Kafka
+   Both are utilized for the asynchronous event processing right, so whenever we have to do some processing asynchronously then either we can use IBM mq or Kafka. So we  have to decide that in your application or in your product what kind of capabilities you need so that you able to choose between these two 
+
+1. MQ vs Kafka - send and receive functionality 
+      If you use either mq or Kafka both have the producer and a consumer, the producer is an application that produces the message and put into the Queue or
+topic, so Queue is utilized for the IBM mq and topic is used in the Kafka.
+     So in IBM mq whenever a producer produces a message it sent to the queue and from the queue consumer can read the message and process it, in terms of Kafka producer will produce a message and consumer will going to consume the message from the topic 
+     The key difference here is that in mq the message is read once and destroyed, but in Kafka it is stored or persisted for some time
+
+2. MQ vs Kafka - Broadcasting functionality 
+       Whenever a producer is producing any message and putting into a queue, any
+consumer will be able to pick the message and process it once, that is the broadcasting way in IBM mq. In mq, only one consumer can consume the message, but in Kafka the same message can be consumed by the multiple consumer groups of consumers 
+       We have three consumer groups like one two and three and all of them can read  the same message, so it's not like that only one consumer can process the message only once 
+
+3. MQ vs Kafka - Message Ordering
+        In mq there is no ordering maintain, for example if you have one message sent to the consumer one for processing and it is successful, then suppose you have
+message two sent to the consumer two and something happened and it is failed, whenever message three comes out and it is processed by the consumer three, so you can see that message three has been processed but message two is still pending it might be picked by another consumer and it might processed later but the ordering is not maintained 
+        When we talk about Kafka we have something called partition, so we have topic with two partition and there are two consumers listening to each partition, so any message which is going to be read by the consumer group will be from the partition assigned to it
+
+4. MQ vs Kafka - Replay of messages
+        In mq the message which is produced by producer is just read once by the consumer and it is not stored, so once processing is successful you are not able to again replay the same message. But in kafka you are able to replay because we are storing a message in the topic 
+
+5. MQ vs Kafka - Consumable limit
+        In mq there is no consumer limit, so any number of consumers will be able to
+basically consume messages from the queue. Kafka will be having as many as consumers  same as the partitions, so if we have two partitions so we can have only two consumers, so that is basically limit on the consumers.
+
+🧭 Prerequisites
+IBM MQ is installed.
+IBM MQ Explorer is installed and accessible.
+
+
+🛠️ Step-by-Step Guide in IBM MQ Explorer
+✅ 1. Start IBM MQ Explorer
+Open IBM MQ Explorer from Start Menu or Desktop shortcut.
+
+✅ 2. Create a Queue Manager
+If you don’t already have one.
+
+In the Navigation panel, right-click on Queue Managers.
+
+Click "New > Queue Manager".
+
+Enter a name (e.g., QM1).
+
+Leave other default settings or customize if needed.
+
+Click Finish.
+
+🎉 You have now created a Queue Manager.
+
+✅ 3. Start the Queue Manager
+In the Navigator, right-click the newly created QM1 and choose Start.
+
+✅ 4. Create a Local Queue
+Expand QM1 → Right-click Queues → New > Local Queue.
+
+Set Queue name to e.g., DEV.QUEUE.1.
+
+Click Finish.
+
+✅ 5. Create a Server Connection Channel
+Expand QM1 → Channels → Right-click Server-connection channels → New.
+
+Set Channel Name to DEV.APP.SVRCONN.
+
+Leave CHLTYPE as SVRCONN.
+
+Click Finish.
+
+This channel allows external applications to connect via TCP.
+
+✅ 6. Create and Start a Listener
+Expand QM1 → Listeners → Right-click → New.
+
+Set:
+
+Listener name: LISTENER.TCP
+
+Port: 1414
+
+TRPTYPE: TCP
+
+Click Finish.
+
+Right-click the listener and choose Start.
+
+✅ 8. Put a Test Message into the Queue
+Expand QM1 → Queues → Right-click on DEV.QUEUE.1.
+
+Click "Put Test Message...".
+
+Enter message content (e.g., {"event":"Hello MQ"}).
+
+Click Put Message.
+
+Click Close.
+
+🎉 Your message is now in the queue!
+
+✅ 9. (Optional) Browse or Get Message
+Right-click the queue again → Browse Messages or Get Messages.
+
+
+---------------------------------------------------------------------
+
+1. Download Kafka
+
+2. Download & Install IBM MQ Source Connector
+
+- Clone & Build from GitHub (using Git Bash + Maven):
+
+>git clone https://github.com/ibm-messaging/kafka-connect-mq-source
+>cd kafka-connect-mq-source
+>mvn clean package
+
+- Copy connector JARs to plugin folder:
+
+>mkdir C:\kafka\plugins\mq-source
+
+- Copy  3 jar files from target/ and dependencies into:
+
+C:\kafka\plugins\mq-source
+
+3 Create data folder inside kafka folder. Inside data folder create a file connect.offsets
+
+4. Configure Kafka Connect Plugin Path
+
+Edit C:\kafka\config\connect-standalone.properties:
+
+plugin.path=C:\\Softwares\\kafka\\plugins
+offset.storage.file.filename=C:\\Softwares\\kafka\\data\\connect.offsets
+
+
+5. Create Connector Configuration File
+
+Create C:\kafka\config\ibm-mq-source.properties with the following:
+
+name=ibm-mq-source-connector
+connector.class=com.ibm.eventstreams.connect.mqsource.MQSourceConnector
+tasks.max=1
+
+# Kafka topic to write messages to
+#mq.record.builder=com.ibm.eventstreams.connect.mqsource.builders.DefaultRecordBuilder
+
+mq.record.builder=com.ibm.eventstreams.connect.mqsource.builders.DefaultRecordBuilder
+
+topic=mq-topic
+
+# IBM MQ connection
+mq.hostname=localhost
+mq.port=1414
+mq.queue.manager=QM1
+mq.connection.name.list=localhost(1414)
+mq.channel.name=DEV.APP.SVRCONN
+mq.queue=DEV.QUEUE.1
+mq.connection.mode=client
+
+mq.user=hcltech\senthil.kumart
+mq.password=Birthday1980[]
+
+# Polling and format
+mq.poll.interval=1000
+#mq.message.format=json
+
+mq.message.body.only=true
+key.converter=org.apache.kafka.connect.storage.StringConverter
+value.converter=org.apache.kafka.connect.storage.StringConverter
+
+key.converter.charset=UTF-8
+value.converter.charset=UTF-8
+
+
+6. Start Kafka & Zookeeper (Windows)
+
+> zookeeper-server-start.bat zookeeper.properties
+
+> kafka-server-start.bat server.properties
+
+7. Create kafka topic
+
+>kafka-topics.bat --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic mq-message
+
+8. Start Kafka Connect 
+
+>connect-standalone.bat connect-standalone.properties ibm-mq-source.properties
+
+9. Start kafka consumer
+
+>kafka-console-consumer.bat --bootstrap-server localhost:9092 ^
+  --topic mq-topic --from-beginning
+
+
+10. Right click queue - click Put message
+
+-------------------------------------------------------------------
+
+🔍 Step 1: Find Your Current Windows Username
+Open a new Command Prompt and type:
+
+>whoami
+
+You’ll get something like:
+
+hcltech\senthil.kumart
+
+🛠️ Step 2: Use Full Principal Name in setmqaut
+Now run:
+
+setmqaut -m QM1 -t qmgr -p hcltech\senthil.kumart +connect +inq
+
+📌 Step 3: Give Access to a Queue (optional but likely needed)
+If your queue name is, say, DEV.QUEUE.1, then also run:
+
+setmqaut -m QM1 -n DEV.QUEUE.1 -t queue -p hcltech\senthil.kumart +put +get +inq
+
+---------------------------------------------------------------------------
+
+DefaultRecordBuilder gives you Kafka records with a byte array payload (byte[]).
+
+StringRecordBuilder will convert MQ message bodies into Strings before publishing to Kafka — exactly what you want.
+
+The IBM Event Streams MQ Source Connector does not provide a StringRecordBuilder class out of the box.
+
+The official IBM MQ Source Connector’s default builder is DefaultRecordBuilder which outputs bytes.
+
+The connector does not have a built-in string builder named StringRecordBuilder.
+
+-----------------------------------------------------------------------
