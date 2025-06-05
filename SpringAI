@@ -1,0 +1,1204 @@
+    I don't need to tell you why learning about AI should be important and why you should integrate AI into your production grade applications because in past few years you must have already noticed the rapid advancements that are happening in this field of artificial intelligence, we are seeing a lot of implementations around us, a lot of chatbots and there's a lot going on. So I believe it's the right time that you should know or learn how you can integrate AI into your spring boot based applications 
+
+Introduction to Spring AI
+   Goto spring.io site - Projects - Spring AI 
+
+Spring AI is the project helping Java developers build intelligent applications with artificial intelligence  
+
+      Spring AI is a project by Spring framework work that enables you to integrate AI capabilities into your spring based applications okay so either
+it's a spring boot project or spring framework based project you can integrate spring AI into it
+      - you can see what all chat models this particular project supports
+
+If you're new to this AI world and if you're not aware of what chat model is, so you can think of model as an algorithm that exists in the world of AI and this algorithm is trained to make predictions or decisions and to answer
+your queries based on the input data that is what model is 
+    If you following this world of AI you must have heard of gpt3, GPT3.5, GPT 4 and now we have gpt 4o, so these numbers are nothing but models. Now chat gPt that is quite popular and it is a product by open AI 
+    So if you want to make use of AI into your web applications or any sort of applications apis that you're building then adding the ability of artificial
+intelligence was a little bit complex and this project aims to simplify that
+
+1. Vendor Agnostic
+- Supports all major LLMs with the same code
+       It means you can write your code once and have it connected to any llm that is out there, for example you can find llms from different companies like open AI, Microsoft, Amazon, Google, meta all these have their own llms with its own pros and cons
+      The good thing about spring AI is that it
+provides an abstraction layer on top of which we write the code and this abstraction layer hides all the complexities and differences with these different llms and provides us with a
+standard API, so once we write our code using spring AI we can practically connect to any llm that is small and big. You can connect to one billion parameter model to 451 trillion parameter model without making any changes to your code itself that is the biggest advantage of using spring Ai 
+
+- Supports different models of vendors with the same code 
+    you know that the same companies have different models too, for example with respect to open AI you can find chat GPT 4o, GPT 4o mini
+   So not only it is vendor agnostic it is also like support all these different models from the same companies 
+
+- Vendor agnosic vector store support
+       There is also support for other components of the llm called RAG used to increase the knowledge of the AI system. So these llm models are pre-trained with the data up to a specific date, so after that they don't know what is the recent data, so you can give your own data through these kind of 
+Vector store systems and Rag, and the spring AI is agnostic for that as well so it works with a different Rag and Vector store implementation available 
+
+2. Seamless integration to Spring ecosystem
+- Easy integration of AI into your existing Spring/Spring boot appl
+      you know that spring has been in the market for a very long time, there
+are many experts, many different application, many different libraries, a lot of production systems are running spring applications, so the good thing about spring AI is it integrates seamlessly into your existing spring boot applications or spring applications
+
+- Uses Spring components like beans and services
+   The implementation of spring AI components
+uses the Standard Spring components like beans and services and so on, so you can make use of the existing system and simply add a dependency and do some minimal configuration and make your application work with AI 
+
+- Even simplify AI integration with auto configuration
+     Even though the spring AI provides this
+abstraction layer, it also provides you with auto configuration. So when we start our coding we will be using any AI model and the only configuration we do is to link to that llm from our application 
+     It is just one line of code, just one simple configuration in the application.properties file and rest is autoconfigured so that kind of simplification of AI integration is possible through spring Ai 
+
+3. Multimodality
+- Supports different form of inputs
+       So initially when the first llm models were introduced, only text was there but later image input came, and then more kind of input
+like you can give voice, you can give videos, so spring AI is up to date in that manner 
+
+
+Spring AI 
+    Artificial intelligence is everywhere these days, but what does that mean to us as Java and or spring Developers. So if you wanted to work with machine learning you'd have to use a language like python, this is because python had a rich set of tools and libraries for working with the problems in this space 
+   Now we have llms like open AI gpt4 where the P stands for pre-trained, we can simply call this like any other rest API. Java is everywhere in the enterprise and we need to start thinking about how we can build these capabilities into our applications.
+
+OpenAI
+   We are  going to be working with gpt4 and it  will work with a lot of the llms, so you first need to sign up for an account to work with this 
+   So the first thing that we're going to need is an API key and I just want to mention that this cost money this isn't free 
+     Now what I want to do is just do a little test without java without spring by writing little script, so again this is just a rest API call 
+
+- create hello-open-ai.sh in VS code
+
+echo "Calling open AI...."
+MY_OPENAI_KEY=""
+PROMPT="Tell me a Dad Joke about computers?"
+
+curl https://api.openai.com/v1/chat/completions \
+ -H "Content-Type: application/json" \
+ -H "Authorization: Bearer $MY_OPENAI_KEY" \
+ -d  '{"model":"gpt-4","messages":[{"role":"user", "content":"'"${PROMPT}"'"}]}'
+
+In Git bash run, sh hello-open-ai.sh, it call on open API and then it returns back the response 
+    Now here's the challenges is we just did this from bash, and we got big selection of Json with a whole bunch of things that we may not care about and   what comes back is a content which is a string, so the response is a Java string. Most of the time we need to take that and parse that and put that into an object that we can work.
+   This is a very simple example but think of examples where give me 10
+titles for a presentation that I want to create and we don't want list of strings and then turn that into a Java object, so parsing the the response and actually getting Json back in the response is another challenge, so we need to solve these chanllenges when we start building real world applications using 
+Spring Ai and it might help us to overcome some of these challenges
+
+Spring AI
+   Goto spring.io site - Projects - Spring AI 
+
+Spring AI is the project helping Java developers build intelligent applications with artificial intelligence 
+
+Spring AI is an application framework for AI engineering. Its goal is to apply to the AI domain Spring ecosystem design principles such as portability and modular design and promote using POJOs as the building blocks of an application to the AI domain.
+    We can see different chat models that Spring AI would be talking with like 
+open AI, Azure, Amazon Bedrock, Google Gemini etc
+
+1. Create Spring boot project with web and open AI dependency 
+
+2. In application.properties we configure the api keys
+
+spring.ai.openai.api-key=
+spring.ai.openai.chat.options.model=gpt-4
+
+3. Create ChatController
+
+@RestController
+public class ChatController
+
+     @GetMapping("/dad-jokes")
+     public String generate(@RequestParam(value="message", defaultValue="Tell me a dad joke about computers") String message) {
+     return null;
+}
+
+}
+
+- Now we need to get access to the ChatClient which is going to work with these different
+llms 
+
+   @Autowired
+   private final ChatClient chatClient;
+
+So ChatClient is an interface which extends ModelClient with two methods, one method taking a string call something and return a string, another method  will take in something called a prompt and return a ChatResponse 
+
+- Now we call chatClient method and return the String
+
+@RestController
+public class ChatController
+
+     @Autowired
+   private final ChatClient chatClient;
+
+     @GetMapping("/dad-jokes")
+     public String generate(@RequestParam(value="message", defaultValue="Tell me a dad joke about computers") String message) {
+     return chatClient.call(message);
+}
+
+}
+
+4. Start the appl and run http://localhost:8080/dad-joke
+
+so we just took a simple example and started with open AI gpt4 in this case, and create a simple controller that uses the ChatClient to
+talk to openAI 
+
+
+Working with Prompts in Spring AI
+     Prompts serve as the foundation for the language based inputs that guide an AI model to produce specific outputs. For those of you familiar with chat gpt, a prompt might seem merely like some text you put into a dialogue box and that's sent to the API. In many AI models, the text for the prompt is not just a simple string
+
+prompt means so these inputs that I'm giving to this particular model
+
+Prompt Engineering 
+    It is a very important subject when we talk about building AI applications 
+
+1. Effective communication - it is just learning how to effectively communicate with the AI system
+2. This is the input that is directing the AI model to produce the specific outputs. So if you don't get the output that you're hoping it to produce, you can always adjust that by changing the prompt that we send to the AI 
+3. Model outputs are greatly influenced by the Prompt style and wording
+
+Prompts and Spring 
+    So prompt management relies on a Text Template Engine, so  when we get into prompt templates there's a way to craft a string and then have some type of dynamic variables or templates that we can go ahead and input later.
+     You can think as analogous to the view in Spring MVC, when we are working in a controller we may have a model where we put customer first name, last name and we send that model down to the view, in this case our prompt is really the view to the AI 
+
+- In browser, Prompt class 
+      A Prompt class has a few different constructors, it doesn't just pass a string it actually creates a new UserMessage. You will also see some of these constructors take a message and again UserMessage is a specific type of message. If we look at the implementations of this Message there are a few things like an AssistantMessage, ChatMessage, SystemMessage and UserMessage
+
+1. Create Spring boot project with web and open ai dependency
+
+2. Configure open ai keys in application.properties
+
+spring.ai.openai.api-key=
+spring.ai.openai.chat.options.model=gpt-4
+
+3. Create SimplePromptController
+
+@RestController
+public class SimplePromptController {
+ 
+    @Autowired
+    ChatClient chatClient;
+
+    @GetMapping("/")
+    public String simple() {
+       return chatClient.call(new Prompt("Tell me a joke about computers")).getResult().getOutput().getContent();
+    }
+}
+
+- Now Prompt takes a string which creates a UserMessage
+
+4. Start the appl, run http://localhost:8080/
+
+5. Create PromptController to pass prompt as String and we use PromptTemplate to execute it 
+
+@RestController
+@RequestMapping("/api")
+public class PromptController {
+    
+    @Autowired 
+    ChatClient chatClient;
+
+    @GetMapping("/popular")
+    public String findPopularYouTubersStepOne(@RequestParam(value = "genre", defaultValue = "tech") String genre) {
+        String message = """
+            List 10 of the most popular YouTubers in {genre} along with their current subscriber counts. If you don't know
+            the answer , just say "I don't know".
+            """;
+
+        PromptTemplate promptTemplate=new PromptTemplate(message);
+        Prompt prompt=promptTemplate.create(Map.of("genre",genre));
+      return chatClient.call(prompt).getResult().getOutput().getContent();
+    }
+
+}
+
+6. Start the appl, run http://localhost:8080/api/popular, since default is "tech", it will display 10 most
+popular YouTubers in the tech space along with their subscriber counts
+
+7. Create another endpoint where we pass UserMessage as argument to Prompt instead of String 
+
+@GetMapping("/jokes")
+public String jokes() {
+    var user=new UserMessage("Tell me a joke about cats");
+    Prompt prompt=new Prompt(user);
+    return chatClient.call(prompt).getResult().getOutput().getContent();
+ }
+
+- Start the appl, run http://localhost:8080/api/jokes
+
+But joke is not very specific, so we add a new SystemMessage to basically instruct the AI that this is the type of application
+
+@GetMapping("/jokes")
+public String jokes() {
+    var system=new SystemMessage("Your primary function is to tell Dad jokes. If someone asks you for any other type of joke please tell them you only know Dad jokes");
+    var user=new UserMessage("Tell me a serious joke about universe");
+
+    // Since we have UserMessage and SystemMessage, one of Prompt constructor takes list of messages 
+    Prompt prompt=new Prompt(List.of(system,user));
+    return chatClient.call(prompt).getResult().getOutput().getContent();
+ }
+
+- Start the appl, run http://localhost:8080/api/jokes, it will display the response
+
+So we can kind of instruct the system of what we're actually working with here, instead of letting the user to run wild and just input anything. So we are saying this is specifically what this system is meant to do 
+
+8. In /popular endpoint, we have hardcoded this string message but what if we wanted this in many places, we wouldn't want to repeat this message
+
+- Inside resources folder - create folder called prompts - create file called popular.st for String template, this is something the overall AI
+community uses
+
+List 10 of the most popular YouTubers in {genre} along with their last known subscriber counts. If you don't know the answer , just say "I don't know".
+
+- Now in controller, we give
+
+    @Value("classpath:/prompts/popular.st")
+    private Resource promptResource;
+
+     @GetMapping("/popular")
+    public String findPopularYouTubersStepOne(@RequestParam(value = "genre", defaultValue = "tech") String genre) {
+        PromptTemplate promptTemplate=new PromptTemplate(promptResource);
+        Prompt prompt=promptTemplate.create(Map.of("genre",genre));
+      return chatClient.call(prompt).getResult().getOutput().getContent();
+    }
+
+- When we run the appl we will get the same output
+
+Output Parsers to structure the response from LLMs
+       When we get a response from the LLM how do we turn it into something useful, something that we can work with the response. From a generative llm the response is simply a String, even if you ask for Json that's a Json string so how can we turn this into something useful, well Spring AI provides us a tool or an interface called the OutputParser and there are three
+implementations called BeanOutputParser, MapOutputParser and ListOutputParser
+
+1. Create Spring boot project with web, open AI dependency
+
+2. Configure api keys in application.properties file
+
+3. Create SongsController prg
+
+@RestController
+public class SongsController {
+
+    @Autowired
+    ChatClient chatClient;
+
+    @GetMapping("/songs")
+    public String getSongsByArtist(@RequestParam(value="artist", defaultValue="Taylor Smith") String artist) {
+      var message="""
+           Please give me a list of top 10 songs for the artist {artist}. If you don't know the answer , just say "I don't know".
+            """;
+      PromptTemplate promptTemplate=new PromptTemplate(message,Map.of("artist",artist));
+      Prompt prompt=promptTemplate.create();
+      ChatResponse response=chatClient.call(prompt);
+      return response.getResult().getOutput().getContent();
+   }
+
+}
+
+- Start the appl, run http://localhost:8080/songs, it will display top 10 songs of Taylor smith as big string
+
+4. Now we want a list of strings as response we don't want just a big string that comes, so we have to use OutputParser called ListOutputParser
+
+@GetMapping("/songs")
+    public List<String> getSongsByArtist(@RequestParam(value="artist", defaultValue="Taylor Smith") String artist) {
+      var message="""
+           Please give me a list of top 10 songs for the artist {artist}. If you don't know the answer , just say "I don't know".
+           {format}
+            """;
+
+      ListOutputParser outputParser=new ListOutputParser(new DefaultConversionService());
+      PromptTemplate promptTemplate=new PromptTemplate(message,Map.of("artist",artist, "format",outputParser.getFormat()));
+      Prompt prompt=promptTemplate.create();
+      ChatResponse response=chatClient.call(prompt);
+      return outputParser.parse(response.getResult().getOutput().getContent());
+   }
+
+- Start the appl, run http://localhost:8080/songs, it will display top 10 songs of Taylor smith as list of string
+
+5. Next we will look into MapOutputParser, we create BookController prg
+
+@RestController
+@RequestMapping("/books")
+public class BookController  {
+
+     @Autowired
+     ChatClient chatClient;
+
+     @GetMapping("/author/{author}")
+     public Map<String,Object> getAuthors(@PathVariable("author") String author) {
+        String promptMessage="""
+              Generate a list of links for the author {author}.Include the authors name as the key and any social network links as the value.
+              {format}
+           """;
+        MapOutputParser outputParser=new MapOutputParser();
+        String format=outputParser.getFormat();
+      
+        PromptTemplate pt=new PromptTemplate(promptMessage, Map.of("author",author,"format",format));
+        Prompt prompt=pt.create();
+        Generation generation=chatClient.call(prompt).getResult();
+        return outputParser.parse(generation.getOutput().getContent());
+     }
+
+so again the content what we are getting back from the LM that is in the form of a string or maybe Json string, but the output parser is going to parse that string into Map of string and object 
+
+- Start the appl, run http://localhost:8080/books/author/craig%20walls
+   It will display books so Craig walls is the key and the object is going to include some links from social media 
+
+6. Now we use BeanOutputParser which is just a simple pojo or a simple record 
+
+- Create Author record 
+
+public record Author(String author, List<String> books) { 
+}
+
+- Create an endpoint in BookController
+
+@GetMapping("/by-author")
+public Author getBooksByAuthor(@RequestParam(value="author", defaultValue="Ken Kousen") String author) {
+     String promptMessage="""
+        Generate a list of books written by the authot {author}. If you aren't positive that a book belongs to this author please dont include it.
+       {format}
+       """;
+
+     var outputParser=new BeanOutputParser<>(Author.class);
+     String format=outputParser.getFormat();
+     
+     PromptTemplate pt=new PromptTemplate(promptMessage, Map.of("author",author,"format",format));
+     Prompt p=pt.create();
+     Generation generation=chatClient.call(p).getResult();
+        return outputParser.parse(generation.getOutput().getContent());
+     }
+
+- Start the appl, run http://localhost:8080/books/by-author
+    It will display response as Author object with author name and list of books written by that author
+
+Bring your own data by Stuffing the Prompt
+     There is a need to bring your own data, this is because the llms are trained on a specific set of data and that data runs upto some point. When we
+ask the llm a question or you're going to prompt the llm for some specific information and it's going to come back and either say I don't know or it's
+going to hallucinate and just try to make up some answer 
+     So now we discuss how can we bring our own data if any information not available to the llm, what if you have documentation that's now up to date
+and the llm doesn't have that information so how can we bring our own data 
+
+How to use your own data in AI applications ?
+    1. AI models have limitations
+         - They're trained with public knowledge up to a certain date depending on what llm you're using. They also don't know about your private
+data or corporate data  or product information, documentation etc 
+
+How can we solve this problem ?
+        1. Fine-tune the model 
+              But this isn't the easiest thing,  if we are just developers and we are not in the llm AI space to train a model, this may be a little
+bit complicated 
+        2. "Stuff the prompt" - add your data into prompt
+                 Stuffing the prompt (ie) we're basically adding our
+own data to the context, so the llm is aware of it   
+        3. Function calling 
+                 We can have the llm basically call function and that could
+retrieve a specific set of data 
+        4. RAG(Retrieval Augmented Generation) 
+                How to retrieve relevant data for the user input and add it to your prompt. For example we have huge PDFs of documentation but we
+don't want to entirely stuff the context with a thousand page PDF, we want to do some kind of searches and find the relevant data and send that to the llm 
+
+Stuffing the prompt
+    Consider we write a prompt "what sports are being included in the 2024 Summer Olympics", now this is not something the llm would actually know about because again that training data is up to a certain point. It could try to figure out based on previous Summer Olympics, but there might be new sports added and there might be sports that have been removed 
+    So here we have our prompt 
+
+"use the following pieces of context to answer the question at the end, if you don't know the answer just say I'm sorry but I don't know the answer to that"
+{context}
+Question: {question}
+
+so we have this context and then we have a question, the question is the one we just asked
+
+So without any context the LLM is just going to come back and say I don't know the answer because I don't have training data on that. But what if we
+took a list of all the sports that are being made available in the 2024 Summer
+Olympics and added that as context, as we prompted the llm then it's going to be able to answer that question correctly
+
+1. Create spring boot project with web, open AI dependency
+
+2. Configure api keys in application.properties
+
+3. Create prompts directory inside resources folder and olympic-sport.st
+
+Use the following pieces of context to answer the question at the end. If you don't know the answer just say "I'm sorry but I don't know the answer to that".
+
+{context}
+
+Question: {question}
+
+4. Create docs directory inside resources folder with olympic-sports.txt
+
+Archery, athletics, badminton, basketball , basketball 3×3, boxing, canoe slalom, canoe sprint, road cycling, cycling track, mountain biking, BMX freestyle, BMX racing, equestrian, fencing, football, golf, artistic gymnastics, rhythmic gymnastics, trampoline, handball, hockey, judo, modern pentathlon, rowing, rugby, sailing, shooting, table tennis, taekwondo, tennis, triathlon, volleyball, beach volleyball, diving, marathon swimming, artistic swimming, swimming, water polo, weightlifting,wrestling,breaking, sport climbing, skateboarding, and surfing.
+
+4. Create controller prg
+
+@RestController
+@RequestMapping("/olympic")
+public class OlympicController {
+
+     @Autowired
+     ChatClient chatClient;
+
+    @Value("classpath:/prompts/olympic-sports.st")
+    private Resource olympicSportsResource;
+
+    @Value("classpath:/docs/olympic-sports.txt")
+    private Resource docsToStuffResource;
+
+     @GetMapping("/2024")
+     public String get2024OlympicSports(
+            @RequestParam(value = "message", defaultValue = "What sports are being included in the 2024 Summer Olympics?") String message,
+            @RequestParam(value = "stuffit", defaultValue = "false") boolean stuffit
+    ) {
+      
+       PromptTemplate pt=new PromptTemplate(olympicSportsResource);
+       Map<String,Object> map=new HashMap<>();
+       map.put("question",message);
+       
+       if(stuffit) {
+           map.put("context",docsToStuffResource);
+       } else {
+           map.put("context","");
+       }
+
+       Prompt p=pt.create(map);
+       ChatResponse response=chatClient.call(p);
+       return response.getResult().getOutput().getContent();
+     }
+}
+
+- Start the appl and run http://localhost:8080/olympic/2024
+       Now it will say I dont know answer since we didnt pass the content
+
+- Now run http://localhost:8080/olympic/2024?stuffit=true
+       Now it should go and add that context send it to the LLM and then return 2024 Summer Olympic sports
+
+
+RAG(Retrieval Augmented Generation)
+       Previously we just had a little bit of text that we added to the context, what happens if we have a lot of text that we want to add to the context. We know that tokens are the currency of llm so if we had 1000 page PDF, we wouldn't want to stuff the prompt with a thousand pages of a PDF document every single time we made a call to the llm, that is going to get very expensive. Instead we want to find a way to query that PDF based on whatever the prompt or whatever the user's query, we pick the relevant bits of that PDF and send that along as context using RAG or Retrieval Augmented Generation
+      RAG is the ability to take textual documentation or PDF or text files and break them down into a vector database and query that and pull out the relevant data and send that along as context
+
+Goto spring.io - Spring AI - Learn tab - Click Reference Documentation 1.0.0.Snapshot - Vector Database
+
+A vector database is a specialized type of database that plays an essential role in AI applications.
+
+In vector databases, queries differ from traditional relational databases. Instead of exact matches, they perform similarity searches. When given a vector as a query, a vector database returns vectors that are “similar” to the query vector. Vector database stores vectors not text
+
+In the down we can see different VectorStore implementation like Azure Vector Search, Chroma Vector Store etc. We have SimpleVectorStore - A simple implementation of persistent vector storage, good for educational purposes
+
+So Vector stores vectors but we don't have vectors, we have PDFs and texts  and that's where the Embedding API come into picture. 
+   We have EmbeddingClient interface which is to convert text into numerical vectors commonly referred to as embedding. So we have vector database that needs to store vectors and we take our PDFs or our text files and turn them into vectors using embeddings API
+
+1. Create SpringBoot project with web, open AI dependency
+
+2. Configure api keys in application.properties 
+
+3. Now we create document that we are going to query to get some context and send to the llm
+    Create doc directory inside resources folder - create olympic-faq.txt file
+
+4. We create RagConfiguration class to add some context with @Configuration 
+
+@Configuration
+public class RagConfiguration {
+}
+
+- First we need a logger
+
+ private static final Logger log = LoggerFactory.getLogger(RagConfiguration.class);
+
+- Next we need is access to the document that we just created using @Value annotation
+
+@Value("classpath:/docs/olympic-faq.txt")
+    private Resource faq;
+
+- Now we create a bean to use a vector store and there are many implementations of a vector store, one of which is a SimpleVectorStore and then we talked about the EmbeddingsClients which used to split our text or PDFs into vectors to store in our Vector database so we use EmbeddingClient
+
+@Bean
+    SimpleVectorStore simpleVectorStore(EmbeddingClient embeddingClient) throws IOException {
+}
+
+- we need to create a SimpleVectorStore which takes an embedding client
+
+var simpleVectorStore = new SimpleVectorStore(embeddingClient);
+
+- we  need to get our Vector store which is just a Json file, so we create a directory  called data inside resources folder 
+
+- We create a method getVectorStoreFile() and I not going to create this as a resource, because the very first time that we start this up that file may not exist so I don't have access to file. So I'm going to use some Java class to return the vector store file called vectorstore.json
+
+@Value("vectorstore.json")
+    private String vectorStoreName;
+
+private File getVectorStoreFile() {
+        Path path = Paths.get("src", "main", "resources", "data");
+        String absolutePath = path.toFile().getAbsolutePath() + "/" + vectorStoreName;
+        return new File(absolutePath);
+    }
+
+- Now inside simpleVectorStore(), we create a variable to call that Vector store file 
+
+ var vectorStoreFile = getVectorStoreFile();
+
+- Now we have our Vector store file and we want to make sure it exists then we load it 
+
+if (vectorStoreFile.exists()) {
+      log.info("Vector Store File Exists,");        simpleVectorStore.load(vectorStoreFile);
+        }
+
+- If not exists, then first thing that we need is to read that FAQ file using TextReader which takes the Resource as argument and add custom metadata
+
+ TextReader textReader = new TextReader(faq);
+textReader.getCustomMetadata().put("filename", "olympic-faq.txt");
+
+- Next we can use the textReader to basically get the information from the text file which return to us a list of documents
+
+List<Document> documents = textReader.get();
+
+Document from spring framework AI is a container for the content and metadata of a document, it also contains the documents unique ID and an optional embedding
+
+-we have the documents so we need a way to split those documents using TokenTextSplitter
+
+TextSplitter textSplitter = new TokenTextSplitter();
+
+-  using the textSplitter we can apply and pass in our documents which return to us our split documents
+
+List<Document> splitDocuments = textSplitter.apply(documents);
+
+-Now we can say simpleVectorstore to add my documents and save the vector store file
+
+simpleVectorStore.add(splitDocuments);         simpleVectorStore.save(vectorStoreFile);
+
+- Finally return the simpleVectorStore
+        return simpleVectorStore;
+
+@Configuration
+public class RagConfiguration {
+    
+    private static final Logger log = LoggerFactory.getLogger(RagConfiguration.class);
+
+    @Value("vectorstore.json")
+    private String vectorStoreName;
+
+    @Value("classpath:/docs/olympic-faq.txt")
+    private Resource faq;
+
+    @Bean
+    SimpleVectorStore simpleVectorStore(EmbeddingModel embeddingModel) throws IOException {
+        var simpleVectorStore = new SimpleVectorStore(embeddingModel);
+        var vectorStoreFile = getVectorStoreFile();
+        if (vectorStoreFile.exists()) {
+            log.info("Vector Store File Exists,");
+            simpleVectorStore.load(vectorStoreFile);
+        } else {
+            log.info("Vector Store File Does Not Exist, loading documents");
+            TextReader textReader = new TextReader(faq);
+            textReader.getCustomMetadata().put("filename", "olympic-faq.txt");
+            List<Document> documents = textReader.get();
+            TextSplitter textSplitter = new TokenTextSplitter();
+            List<Document> splitDocuments = textSplitter.apply(documents);
+            simpleVectorStore.add(splitDocuments);
+            simpleVectorStore.save(vectorStoreFile);
+        }
+        return simpleVectorStore;
+    }
+
+    private File getVectorStoreFile() {
+        Path path = Paths.get("src", "main", "resources", "data");
+        String absolutePath = path.toFile().getAbsolutePath() + "/" + vectorStoreName;
+        return new File(absolutePath);
+    }
+
+}
+
+So when we launch our application, this is a configuration class which picked up and bean will be created. Next it creates a SimpleVectorStore, the file that we're going to use is in src/main/resources/data 
+Vectorstore.json. 
+     So nothing there now so it does not exist, so it's going to read that text file and going to split them into documents then it's going to save those documents and save it to the vector database which is our SimpleVectorStore 
+
+7. Start the appl, refresh data folder, we can see vectorStore.json file will be created which stores all these embeddings
+    Now we have added our documentation in a vector database and now we can start to query that Vector database to do some searching and find the context that we need and sent to LLM
+
+8. Now we create a prompt inside src/main/resources/prompts folder called rag-prompt-template.st
+
+You are a helpful assistant, conversing with a user about the subjects contained in a set of documents.
+Use the information from the DOCUMENTS section to provide accurate answers. If unsure or if the answer isn't found in the DOCUMENTS section, simply state that you don't know the answer.
+
+QUESTION:
+{input}
+
+DOCUMENTS:
+{documents}
+
+9. Create RagController class 
+
+@RestController
+public class FaqController {
+
+    @Autowired
+    ChatClient chatClient;
+
+    @GetMapping("/faq")
+    public String faq(@RequestParam(value = "message", defaultValue = "How can I buy tickets for the Olympic Games Paris 2024") String message) {
+    }
+}
+
+- First we need to work with is a vector store so we get an instance of a vector store
+
+   @Autowired
+   VectorStore vectorStore;
+
+- Next we need the prompt 
+    @Value("classpath:/prompts/rag-prompt-template.st")
+    private Resource ragPromptTemplate;
+
+-Now using the VectorStoredatabase we're doing something called a similaritySearch which uses the math to find similar vectors based on our query and our query here is the message
+
+List<Document> similarDocuments=vectorStore.similaritySearch(SearchRequest.query(message).withTopK(2));
+
+- From our similarDocuments we can now turn that into a stream and map them based on the documents and get contents to a list 
+
+List<String> contentList=similarDocuments.stream().map(Document::getContent).toList();
+
+- Now we have a list of content basically the context that we want to send with the prompt
+
+PromptTemplate pt=new PromptTemplate(ragPromptTemplate);
+
+- In the prompt template there's an input and  documents so we have to provide, so we
+create a map to provide that 
+
+Map<String,Object> promptParameters=new HashMap<>();
+promptParameters.put("input",message);
+promptParameters.put("documents",Sytring.join("\n",contentList));
+
+- Now we create a prompt from those promptParameters
+
+Prompt p=pt.create(promptParameters);
+
+- We can get the result
+
+return chatClient.call(p).getResult().getOutput().getContent();
+
+
+@RestController
+public class FaqController {
+
+    @Autowired
+    ChatClient chatClient;
+    
+     @Autowired
+     VectorStore vectorStore;
+
+    @Value("classpath:/prompts/rag-prompt-template.st")
+    private Resource ragPromptTemplate;
+
+    @GetMapping("/faq")
+    public String faq(@RequestParam(value = "message", defaultValue = "How can I buy tickets for the Olympic Games Paris 2024") String message) {
+      List<Document> similarDocuments=vectorStore.similaritySearch(SearchRequest.query(message).withTopK(2));
+      List<String> contentList=similarDocuments.stream().map(Document::getContent).toList();
+      PromptTemplate pt=new PromptTemplate(ragPromptTemplate);
+      Map<String,Object> promptParameters=new HashMap<>();
+promptParameters.put("input",message);
+promptParameters.put("documents",Sytring.join("\n",contentList));
+Prompt p=pt.create(promptParameters);
+return chatClient.call(p).getResult().getOutput().getContent();
+    }
+}
+
+10. Start the appl, run http://localhost:8080/faq
+          Now it will return an response
+
+11. Now we provide different question from olympic-faq.txt 
+
+run C:\Users\senthil.kumart>curl http://localhost:2000/faq?message=How%20many%20athletes%20compete%20in%20the%20Olympic%20Games%20Paris%202024?
+
+Spring AI Functions
+     Imagine a scenario where you're building out an AI assistant that can answer questions or give you facts about cities around the world. 
+     I'm here in India so I might ask what is the largest city in India ? and the answer would come back with Mumbai. What if I followed that up with
+what is the current weather in Mumbai? now we're going to have a problem because LMS don't have access to realtime data, so how do we solve for scenarios like that by using Function calling
+    
+Function calling 
+     In an API call, you can describe functions and have the model intelligently choose to output a Json object containing arguments to call
+one or many functions, so we can declare one function or many functions that the llm will realize that and needs to call to get access to some of real time data 
+    We sent a message to open AI llm "what is the current weather like
+in Mumbai" and it realizes that it can't do that, normally it would just
+say I can't answer that question. But in this scenario we are providing a
+function call back for the LM and it's basically going to say I don't know how to answer this, since we provided a function its going to call it to generate the answer
+
+1. Create Spring boot project with web and open ai dependency
+
+2. Configure api keys in application.properties 
+
+3. Create CityController
+
+@RestController
+public class CityController {
+
+     @Autowired
+     ChatClient chatClient;
+
+     @GetMapping("/cities")
+     public String cities(@RequestParam(value="message") String message) {
+      var systemMessage=new SystemMessage("You are a helpful AI assistant answering questions about cities around the world");
+      var userMessage=new UserMessage(message);
+      ChatResponse response=chatClient.call(new Prompt(List.of(systemMessage,userMessage));
+      return response.getResult().getOutput().getContent();
+   }
+}
+
+4. Start the appl, run 
+C:\Users\senthil.kumart>curl http://localhost:2000/cities?message=What%20is%20the%20largest%20city%20in%20India?
+    Now it will display the output
+
+- Now we run C:\Users\senthil.kumart>curl http://localhost:2000/cities?message=What%20is%20the%20weather%20currently%20in%20Mumbai?"
+    LLM will realize that it don't know how to answer that,sorry as an AI I don't have realtime capabilities to provide current weather updates I would recommend checking a reliable weather website or app for the most accurate upto-date information
+    So we want to provide a way when the AI comes across scenarios where it can't get up to-date information then we can call a function for that
+
+4. we're going to use this weather API(https://www.weatherapi.com/api-explorer.aspx) to get weather details, now you do have to sign up for this to get a key
+
+username: senthil1418@gmail.com
+Password: Birthday12!@
+
+It will display weather details for the location we provided, but it will display many details but  I don't need all of this information, so we grab some of this location data, some of this current data 
+
+- Create WeatherConfigProperties record which hold the API key and the API URL 
+
+@ConfigurationProperties(value = "weather")
+public record WeatherConfigProperties(String apiKey, String apiUrl) {
+}
+
+- In main class, we enable the properties 
+
+@EnableConfigurationProperties(WeatherConfigProperties.class)
+@SpringBootApplication
+public class Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+
+}
+
+- In application.properties we configure the key and url for weather api
+
+weather.api-key=
+weather.api-url=http://api.weatherapi.com/v1
+
+5. We create WeatherService class which has actual functionalities
+
+public class WeatherService {
+}
+
+- First we have a logger for this WeatherService
+
+private static final Logger log = LoggerFactory.getLogger(WeatherService.class);
+
+- We need configuration properties so we call
+ private final WeatherConfigProperties weatherProps;
+
+- We also need RestClient to make a call out to this service 
+private final RestClient restClient;
+
+- Create a constructor
+
+    public WeatherService(WeatherConfigProperties props) {
+        this.weatherProps = props; 
+        this.restClient = RestClient.create(weatherProps.apiUrl());
+    }
+
+Now we have a rest client and we know where we are talking to,  so we can go
+and make a call
+
+- We create certain records for request and response. Request just going to contain the city, Response is going to contain that location and that current data (u can check in weather api about location and current in response body)
+
+    public record Request(String city) {}
+    public record Response(Location location,Current current) {}
+    public record Location(String name, String region, String country, Long lat, Long lon){}
+    public record Current(String temp_f, Condition condition, String wind_mph, String humidity) {}
+    public record Condition(String text){}
+
+- Now WeatherService call will implement Function which takes input and output as WeatherService Request and Response and override apply() where we are making the call, because this is what spring AI is looking for, it's telling us to create our functions taken an input and return an output
+
+public class WeatherService implements Function<WeatherService.Request, WeatherService.Response> {
+
+     @Override
+    public Response apply(WeatherService.Request weatherRequest) {
+        log.info("Weather Request: {}",weatherRequest);
+        Response response = restClient.get()
+                .uri("/current.json?key={key}&q={q}", weatherProps.apiKey(), weatherRequest.city())
+                .retrieve()
+                .body(Response.class);
+        log.info("Weather API Response: {}", response);
+        return response;
+    }
+
+}
+
+So it is a normal service that we'd write to contact the weather API
+
+6. Now we have the function and then we have to tell the chat client about it, so we create FunctionConfiguration class 
+
+@Configuration
+public class FunctionConfiguration {
+
+    @Autowired
+    WeatherConfigProperties props;
+
+    @Bean
+    @Description("Get the current weather conditions for the given city.")
+    public Function<WeatherService.Request,WeatherService.Response> currentWeatherFunction() {
+        return new WeatherService(props);
+    }
+
+} 
+
+7. In CityController we define the function that we want to send to LLM
+
+@GetMapping("/cities")
+     public String cities(@RequestParam(value="message") String message) {
+      var systemMessage=new SystemMessage("You are a helpful AI assistant answering questions about cities around the world");
+      var userMessage=new UserMessage(message);
+
+      OpenAiChatOptions chatOptions=OpenAiChatOptions.builder()
+                             .withFunction("currentWeatherFunction").build();
+      ChatResponse response=chatClient.call(new Prompt(List.of(systemMessage,userMessage),chatOptions);
+      return response.getResult().getOutput().getContent();
+   }
+
+8. Start the appl, run http://localhost:8080/cities?message="What is the largest city in India?"
+    Now it will display the output
+
+- Now we run http://localhost:8080/cities?message="What is the weather currently in Mumbai?"
+    It will display the weather in mumbai 
+
+
+Function Calling
+     We are going to build sample application to get the realtime temperature of a particular location, so a user can come and ask for a weather of a city and he is going to pass his query to our spring AI application. The spring AI application is going to interact with external API and that external API is going to return us the temperature which we have to pass on to a user 
+
+1. Create Spring boot project with web, azure open ai dependency
+
+2. Configure open ai and weather api keys in application.properties
+
+server.port=2001
+spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.endpoint=https://dotnetai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-35-turbo
+
+spring.weather.api.base.uri = https://api.weatherapi.com/v1
+spring.weather.api.key = b7565f85a8924271ae2145425242511
+
+3. We defining something called Request and Response in our Weather class
+
+public class Weather {
+    public record Request(String city){}
+    public record Response(Location location, Current current){}
+    public record Location(String name, String country){}
+    public record Current(String temp_c){}
+}
+
+we want to get the temperature based on the city so city is going to be
+our request parameter and then response what we are going is Location and Current which we can see in the response body in Weather API
+
+4. Create WeatherServiceBuilder
+we are actually making a call to this weather API and trying to get a response out of it based on our Weather class
+
+@Service
+public class WeatherServieBuilder {
+
+//To call this particular weather end point we have to get the base URI
+which we are taking from our properties file and then we have to pass our
+API key 
+    @Value("${spring.weather.api.base.uri}")
+    private String weatherBaseURI ;
+
+    @Value("${spring.weather.api.key}")
+    private String weatherAPIKey ;
+
+ //To call this particular endpoint we are using RestClient service 
+    private RestClient restClient = RestClient.create();
+
+//we have defined a function which is going to getWeather, we just have to pass a city name to get the output 
+    public Weather.Response getWeather(String city){
+// calling get() method to build the URI so we have to take the base URL on top of that we have to add the current.json and then there are certain parameters
+        return restClient.get()
+                .uri(UriComponentsBuilder.fromUriString(weatherBaseURI)
+                        .path("/current.json")
+                        .queryParam("key", weatherAPIKey)
+                        .queryParam("q", city) // Replace with the actual city
+                        .toUriString())
+                .retrieve()
+                .body(Weather.Response.class);
+    }
+
+}
+
+5. To integrate it with llm, first of all we have to take this method what we have defined and then we have to convert it into a function, for that we have used another service called WeatherService which implementing Function functional interface and it takes Request and Response, then we have to override apply() where we call our getWeather()
+    
+ @Service
+public class WeatherService implements Function<Weather.Request, Weather.Response > {
+
+    @Autowired
+    WeatherServieBuilder weatherServieBuilder;
+
+    @Override
+    public Weather.Response apply(Weather.Request request) {
+        return weatherServieBuilder.getWeather(request.city());
+    }
+}  
+
+6. We have created our functions and now we have to register this particular functions, to register this functions so we are going to create this config class
+    We have to defined our bean and we are calling our function as a 
+currentWeather() and to register this functions we are going to utilize Bean annotation and under this Bean annotation then we have to pass our Description for this function like what exactly this function would do or where it is going to be helpful, so this particular @Description is required because based on this only llm would know like which particular function it has to call for which particular query
+
+@Configuration
+public class Config {
+
+    @Bean
+    @Description("Get the weather of the city")
+    Function<Weather.Request, Weather.Response> currentWeather(){
+        return new WeatherService();
+    }
+}
+
+7. Now our function has been registered we just have to utilize it in our llm model now for that we have created another service called AIService
+    we just have to pass a user query using UserMessage
+
+@Service
+public class AIService {
+
+    @Autowired
+    ChatModel chatModel;
+
+    public ChatResponse getWeatherInfo(String query){
+
+        UserMessage userMessage = new UserMessage(query);
+
+//Using chatModel.call() we have to pass our user query and then call our
+functions and let this model know we do have a functions also available 
+        return chatModel.call(new Prompt((userMessage),       		AzureOpenAiChatOptions.builder().withFunction("currentWeather").build()));
+
+    }
+}
+
+so now our llm model is going to be aware of currentWeather which has been defined and it is going to help me to get the weather of the city. Now if
+some user is coming and asking "what is the current weather of a
+particular City" then maybe this model is not aware of that information, but now it has the capability  to call this particular API and get that temperature
+
+8. Create controller
+
+@RestController
+@RequestMapping("/ai")
+public class AIController {
+
+    @Autowired
+    AIService aiService;
+
+    @PostMapping("/query")
+    public Map<String, String> getWeatherDetails(@RequestParam String query){
+        return Map.of("response", aiService.getWeatherInfo(query).getResult().getOutput().getContent());
+    }
+}
+
+9. Start the appl, in Postman with POST request run http://localhost:2001/ai/query, In Params give
+key: query
+value: What's the temperature in London?
+
+----------------------------------------------------------------------------------------
+
+Prompt in Spring AI
+   - It means we provide efficient questions towards AI model, so that it provide the best result
+   - It take different Messages
+1. UserMessage - message coming directly from user to interact with AI
+2. SystemMessage - message from system to provide assistant behaviour
+
+1. Create springboot project with web and azure openAI dependency
+
+2. Configure openai keys in application.properties 
+
+server.port=1111
+
+spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.chat.options.deployment-name=
+
+3. Create controller prg
+
+@RestController
+public class ChatController {
+              
+              @Autowired
+              AzureOpenAiChatModel chatClient;
+
+              @GetMapping("/")
+              public String message() {
+                             //return chatClient.call(new Prompt("Explain Polymorphism in Java")).getResult().getOutput().getText();
+                             return chatClient.call(new Prompt("Tell me a joke about computers")).getResult().getOutput().getText();
+              }
+              
+              //PromptTemplate class where we pass prompt as string
+              @GetMapping("/books")
+              public String message1(@RequestParam(value="genre", defaultValue="Java") String genre) {
+                             String message="""
+                                                          List of {genre} books. If you dont know the answer, just say "I dont know".
+                                                          """;
+                             PromptTemplate pt=new PromptTemplate(message);
+                             Prompt p=pt.create(Map.of("genre",genre));
+                             return chatClient.call(p).getResult().getOutput().getText();
+              }
+              
+              @GetMapping("/jokes")
+              public String jokes() {
+                             var system=new SystemMessage("Your primary function is to tell Dad jokes. If someone asks you for any other type of joke please tell them you only know Dad jokes");
+                             var user=new UserMessage("Tell me a serious joke about universe");
+                             
+                             Prompt p=new Prompt(List.of(system,user));
+                             return chatClient.call(p).getResult().getOutput().getText();
+              }
+}
+
+4. In /books endpoint we have hardcoded the string message, but if we want this message in many place, then we have to repeat this message
+   Inside resources folder - create folder called prompts - create file books.st
+
+
+@Value("classpath:/prompts/books.st")
+              private Resource promptResource;
+              
+              @GetMapping("/books")
+              public String message1(@RequestParam(value="genre", defaultValue="Java") String genre) {
+
+                             PromptTemplate pt=new PromptTemplate(promptResource);
+                             Prompt p=pt.create(Map.of("genre",genre));
+                             return chatClient.call(p).getResult().getOutput().getText();
+              }
+
+5. OutputConverters used to structure the response from LLM - 3 implementations
+1. BeanOutputConverter
+2. MapOutputConverter
+3. ListOutputConverter
+
+public record Author(String author,List<String> books) {
+
+}
+
+
+@GetMapping("/countries")
+              public List<String> getCountries(@RequestParam(value="country",defaultValue="India")String country) {
+                             var message="""
+                                                            Please give me a list of destinations for the country {country}. If you dont know the answer, just say "I dont know".
+                                                            {format}
+                                                          """;
+                             
+                             ListOutputConverter output=new ListOutputConverter(new DefaultConversionService());
+                             PromptTemplate pt=new PromptTemplate(message,Map.of("country",country,"format",output.getFormat()));
+                             Prompt p=pt.create();
+                             ChatResponse response=chatClient.call(p);
+                             return output.convert(response.getResult().getOutput().getText());
+              }
+              
+              @GetMapping("/authors/{author}")
+              public Map<String,Object> getAuthors(@PathVariable("author")String author) {
+                             var message="""
+                                                            Generate list of links for the author {author}. Include the authors name as the key and any social network links as the value.
+                                                            {format}
+                                                          """;
+                             MapOutputConverter output=new MapOutputConverter();
+                             String format=output.getFormat();
+                             PromptTemplate pt=new PromptTemplate(message,Map.of("author",author,"format",format));
+                             Prompt p=pt.create();
+                             Generation g=chatClient.call(p).getResult();
+                             return output.convert(g.getOutput().getText());
+              }
+              
+              @GetMapping("/by-author")
+              public Author getAuthorByBooks(@RequestParam(value="author",defaultValue="Ken Kousen")String author) {
+                             var message="""
+                                                              Generate a list of books written by the author {author}. If you arent positive that the book belong to this author please dont include it.
+                                                              {format}
+                                                          """;
+                             BeanOutputConverter output=new BeanOutputConverter<>(Author.class);
+                             String format=output.getFormat();
+                             PromptTemplate pt=new PromptTemplate(message,Map.of("author",author,"format",format));
+                             Prompt p=pt.create();
+                             Generation g=chatClient.call(p).getResult();
+                             return (Author) output.convert(g.getOutput().getText());
+              }
+
+Function Calling
+     - If we ask question "what is the largest city in India", LLM will answer it correctly, but if we ask "What is the current tempareture in Mumbai", it cant answer correctly because LLM dosent have access to realtime data, we can solve this scenario using function calling
+     - When we give request to get the actual temp, the request goes to Spring AI appl which interact with external API(weatherapi.com) to return realtime temperature 
+
+1. In application.properties, configure external api info
+
+spring.weather.api.base.uri=http://api.weatherapi.com/v1
+spring.weather.api.key=b7565f85a8924271ae2145425242511
+
+2. we define request and respone in our Weather class 
+
+public class Weather {
+    public record Request(String city) {}
+    public record Response(Location  location, Current current) {}
+    public record Location(String name,String country) {}
+    public record Current(String temp_c) {}
+}
+
+3. Create WeatherServiceBuilder which make call to external api called weatherapi.com and get actual response based on Weather class
+
+@Service
+public class WeatherServiceBuilder {
+
+              @Value("${spring.weather.api.base.uri}")
+              private String weatherBaseURI;
+              
+              @Value("${spring.weather.api.key}")
+              private String weatherAPIKey;
+              
+              //To call particular endpoint we use RestClient
+              private RestClient restClient=RestClient.create();
+              
+              public Weather.Response getWeather(String city){
+                             return restClient.get()
+                                                         .uri(UriComponentsBuilder.fromUriString(weatherBaseURI)
+                                                          .path("/current.json")
+                                                          .queryParam("key",weatherAPIKey)
+                                                          .queryParam("q", city)
+                                                          .toUriString())
+                                                          .retrieve()
+                                                          .body(Weather.Response.class);
+              }
+}
+
+4. To integrate it with LLM, we have to create WeatherService class which implements Function functional interface
+
+@Service
+public class WeatherService implements Function<Weather.Request,Weather.Response>{
+
+              @Autowired
+              WeatherServiceBuilder serviceBuilder;
+              
+              @Override
+              public Weather.Response apply(Weather.Request t) {
+                             return serviceBuilder.getWeather(t.city());
+              }
+
+}
+
+5. We have to register this function in config class
+
+@Configuration
+public class Config {
+
+    @Bean
+    @Description("Get the weather of the city")
+              Function<Weather.Request,Weather.Response> currentWeather() {
+                             return new WeatherService();
+              }
+}
+
+6. We have to utilize this function in our llm, for that we create another service
+
+@Service
+public class AIService {
+              
+              @Autowired
+              ChatModel chatModel;
+
+              public ChatResponse getWeatherInfo(String query) {
+                             UserMessage userMessage=new UserMessage(query);
+                             return chatModel.call(new Prompt(userMessage,AzureOpenAiChatOptions.builder().function("currentWeather").build()));
+              }
+}
+
+7. Create controller prg
+
+@RestController
+public class WeatherController {
+              
+              @Autowired
+              AIService service;
+
+              @PostMapping("/query")
+              public Map<String,String> getWeatherDetails(@RequestParam String query) {
+                             return Map.of("response",service.getWeatherInfo(query).getResult().getOutput().getText());
+              }
+}
+
