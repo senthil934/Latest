@@ -27,6 +27,7 @@ So in object based model we are going to make use of the features of the er mode
 5. Network and Hierachrial data model which is widely used in old db by using trees and graphs structure
 
 Super key:
+    - A Super Key is a set of one or more columns in a table that can uniquely identify each record in that table. It can include additional columns that are not necessary to guarantee uniqueness
     - It is like superset which is all possible keys that can be formed from a table. This is a key which basically uniquely identify the records 
 
     - Consider we have employee table with id, name, SSN, salary, phone, email column.
@@ -37,7 +38,7 @@ Super key:
 3. {id},{ssn},{id,name},{id,ssn},{id,phone},{name,phone},{id,email},{name,ssn,phone},{name,email},{id,ssn,phone} etc
 
 Candidate key
-   - So super key is the superset which contains all possible combination of keys keys 
+   - So super key is the superset which contains all possible combination of keys
    - minimal of super key is candidate key, we have lot of super keys  from that we derive candidate key
     - candidate key - {id},{ssn},{name,phone},{email}
      id is candidate key, we can take ssn also candidate key but make sure previously taken key does not have this attribute, the previously choose candidate key is id which is not having SSN with it, so id is separate candidate key and ssn as separate candidate key 
@@ -72,7 +73,7 @@ UTL_FILE Package
     If we want to read data from file and write data to file, oracle provide predefined package called UTL_FILE package, it was introduced from oracle 7.3 version onwards
     This package is used to load data into OS files and also read data from OS files, But SQLLoader also used to retrieve data from flat file into Oracle db, but SQLLoader it works pn both client and server side but utl_file handles only server side files. Using SQLLoader loading data into flat file is impossible but through UTL_File package we can loading data into file and also read data from file 
 
-1. Before writing or reading data from OS file, first we have to create alias directory. Actually PL/SQL program does not directly interact with OS files, if we want to interact with OS files then we must create logical directory, that logica; dir name whenever we specifying in PL/SQL program then automatically through that path OS reference that file only 
+1. Before writing or reading data from OS file, first we have to create alias directory. Actually PL/SQL program does not directly interact with OS files, if we want to interact with OS files then we must create logical directory, that logical dir name whenever we specifying in PL/SQL program then automatically through that path OS reference that file only 
 
 Syntax: Create or replace directory directoryname as 'path';
 
@@ -88,7 +89,7 @@ We try to store data in c:/
 sql>conn sys as sysdba
 password: sys
 
-sql>grant create any directory to scott;
+sql>grant create any directory to system;
 
 2. Now connected as scott
 sql>conn scott
@@ -104,7 +105,7 @@ Syntax: grant read,write on directory 'dirname' to 'username';
 sql>conn sys as sysdba
 password: sys
 
-sql> grant read,write on directory XYZ to scott;
+sql> grant read,write on directory XYZ to system;
 
 sql>conn scott
 password: tiger
@@ -1065,6 +1066,9 @@ round(percent_rank() over(order by price):: numeric * 100, 2)as per_rank
 from product) x
 where x.product_name='Galaxy Z Fold 3';
 
+
+
+
   
 TCL Statement
 The transaction allows us to group a set of related tasks as one logical unit and all of these sets of related tasks are either get committed or get rollback if there is an error.
@@ -1585,7 +1589,7 @@ insert into product_info values('P4','Dell XPS 17','Dell',2000);
 insert into product_info values('P5','iphone 13','Apple',800);
 insert into product_info values('P6','Macbook Pro 16','Apple',5000);  
 
-create table order_detail(ord_id int primary key,prod_id varchar2(20) references product_info(prod_id),quantity int,cust_id varchar2(20) references customer_data(cust_id),disc_percent int, date date);
+create table order_detail(ord_id int primary key,prod_id varchar2(20) references product_info(prod_id),quantity int,cust_id varchar2(20) references customer_data(cust_id),disc_percent int, odate date);
 
 insert into order_detail values(1,'P1',2,'C1',10,'01-Jan-20');
 insert into order_detail values(2,'P2',1,'C2',0,'01-Jan-20');
@@ -2517,6 +2521,7 @@ BEGIN
    DBMS_OUTPUT.put_line (l_total); 
 END;
 
+BULK COLLECT 
 
 Almost every program Oracle Database developers write includes both PL/SQL and SQL statements. PL/SQL statements are run by the PL/SQL statement executor; SQL statements are run by the SQL statement executor. When the PL/SQL runtime engine encounters a SQL statement, it stops and passes the SQL statement over to the SQL engine. The SQL engine executes the SQL statement and returns information back to the PL/SQL engine. This transfer of control is called a context switch, and each one of these switches incurs overhead that slows down the overall performance of your programs.
 
@@ -2528,9 +2533,9 @@ CREATE OR REPLACE PROCEDURE increase_salary (
    department_id_in   IN empl.deptno%TYPE,
    increase_pct_in    IN NUMBER)
 IS
---cursor for loop which by default create loop index as record variable of %rowtype
 BEGIN
-   FOR employee_rec
+--cursor for loop which by default create loop index as record variable of %rowtype
+   FOR employee_rec   
       IN (SELECT empid
             FROM empl
            WHERE deptno =
@@ -2600,5 +2605,2405 @@ END;
 When using BULK COLLECT, you could attempt to retrieve too many rows in one context switch and run out of PGA memory. To help you avoid such errors, Oracle Database offers a LIMIT clause for BULK COLLECT. Indeed, when using BULK COLLECT we recommend that you never or at least rarely use an "unlimited" BULK COLLECT which is what you get with a SELECT BULK COLLECT INTO (an implicit query)
 
 Instead, declare a cursor (or a cursor variable), open that cursor, and then in a loop, retrieve N number of rows with each fetch.
+
+
+FOR UPDATE and WHERE CURRENT OF Clause in Oracle
+
+FOR UPDATE and WHERE CURRENT OF Clause in Oracle -Learn how to perform record level locks while performing DML operations on table using Cursors.
+
+Below table is reference for FOR UPDATE, WHERE CURRENT OF CLause working Examples.
+
+CREATE TABLE EMP (NAME VARCHAR2(40),SALARY NUMBER);
+INSERT INTO EMP VALUES('A',4000);
+INSERT INTO EMP VALUES('B',5000);
+INSERT INTO EMP VALUES('A',3000);
+INSERT INTO EMP VALUES('B',7000);
+INSERT INTO EMP VALUES('C',9000);
+INSERT INTO EMP VALUES('D',6000);
+INSERT INTO EMP VALUES('A',6000);
+
+SELECT * FROM EMP;
+NAME	SALARY
+A	4000
+B	5000
+A	3000
+B	7000
+C	9000
+D	6000
+A	6000
+
+Example program- updating salary of an employee with 1000 RS
+DECLARE
+  CURSOR C1
+  IS
+    SELECT * FROM EMP;
+BEGIN
+  FOR CREC IN C1
+  LOOP
+    UPDATE EMP SET SALARY=SALARY+1000 WHERE NAME=CREC.NAME;
+  END LOOP;
+END;
+To display the output after execution of PL-SQL block use the below select query.
+
+SELECT * FROM EMP;
+Output
+
+NAME	SALARY
+A	7000
+B	7000
+A	6000
+B	9000
+C	10000
+D	7000
+A	9000
+
+In the above example,for every hit in the loop 1000 rs is added to salary of an employee in emp table.
+Like this if we find common names in the emp table 1000 rs updation is affected to all the employees with the same name which leads to improper calulation.
+
+So to avoid  improper results while performing DML commands on cursor values, need to lock the records until the DML operation is completed.
+
+FOR UPDATE and WHERE CURRENT OF Clause in Oracle
+To lock the records on cursor with select query , use FOR UPDATE clause.
+To update or delete only current record in the cursor use WHERE CURRENT OF CLAUSE
+
+FOR UPDATE Clause
+Syntax
+
+CURSOR cursor_name
+IS
+   select_statement
+   FOR UPDATE [OF column_list] [NOWAIT];
+
+NOWAIT
+Optional. The cursor does not wait for resources.
+
+NOTES
+FOR UPDATE clause explicitly locks the records stored in the Context Area.
+The FOR UPDATE Clause in the Cursor query is used to lock the affected rows while the cursor is opened.
+Explicit commit command is not required to release the lock acquired by using the FOR UPDATE Clause.
+
+USING WHERE CURRENT OF Clause
+The WHERE CURRENT OF statement allows you to update or delete the record that was last fetched by the cursor.
+
+Syntax
+
+UPDATE table_name
+  SET set_clause
+  WHERE CURRENT OF cursor_name;
+
+DELETE FROM table_name
+WHERE CURRENT OF cursor_name;
+
+NOTES
+WHERE CURRENT OF Clause is used to refer the current record, that fetch from explicit cursor.
+We need to suffix the name of the explicit cursor with the CURRENT OF clause to refer to current record.
+
+In order to use the WHERE CURRENT OF clause, you need to lock the record fetched from the cursor.
+
+Example program using For Update and Current of Clause.
+DECLARE
+  CURSOR C1
+  IS
+    SELECT * FROM EMP FOR UPDATE OF salary nowait;
+BEGIN
+  FOR CREC IN C1
+  LOOP
+    UPDATE EMP SET SALARY=SALARY+1000 WHERE CURRENT OF C1;
+  END LOOP;
+END;
+SELECT * FROM EMP;
+Output
+
+To display the output after execution of PL-SQL block use the below select query.
+
+NAME	SALARY
+A	5000
+B	6000
+A	4000
+B	8000
+C	10000
+D	7000
+A	7000
+
+FOR UPDATE
+1. >select * from empl
+
+2. Consider we are fetching all empno working in deptno=10 and update their salary by 1000
+   So when open cursorname stmt is executed, empno will be stored in memory location which is called cursor area, and it will point to the first row in memory location, then we call fetch stmt to fetch one by one
+
+>declare
+   cursor emp_name_list is select empid from empl where deptno=10;
+   v_empno int;
+ begin
+    open emp_name_list;
+    loop
+        fetch emp_name_list into v_empno;
+        exit when emp_name_list%notfound;
+        dbms_output.put_line('v_empno='||v_empno);
+        update empl set salary=salary+1000 where empno=v_empno;
+        dbms_output.put_line('No of rows updated = '||sql%rowcount);
+     end loop;
+end;
+/
+
+This is fine as far as no other session is interacting with it 
+
+3. Consider this is happening in session1, so the moment when cursor is opened it stores all empno in memory location
+   In some other session like session2 (ie) someone has logged into some other session and executed
+>delete from empl where deptno=10;
+>commit;
+
+So now all empl working in deptno=10 is deleted, at this stage the cursor memory location is still having empno whereas the base records are already deleted, so 
+   dbms_output.put_line('v_empno='||v_empno);
+ will try to fetch the output from cursor memory location, whereas update stmt will go back to base table to update it, but it will not find the particular record because it is already deleted and committed by another session 
+   This is a problem because we are fetching some set of records for processing or to do DML operation, by the time when we are starting DML operation those records are already deleted and committed by someother session. This is a issue whenever we are working on cursor (ie)specifically on DML operation on the record whatever we have fetched   
+
+4. Using for update
+
+>declare
+   cursor emp_name_list is select empid from empl where deptno=10 for update;
+   v_empno int;
+ begin
+    open emp_name_list;
+    loop
+        fetch emp_name_list into v_empno;
+        exit when emp_name_list%notfound;
+        dbms_output.put_line('v_empno='||v_empno);
+        update empl set salary=salary+1000 where empno=v_empno;
+        dbms_output.put_line('No of rows updated = '||sql%rowcount);
+     end loop;
+end;
+/
+
+so when we say for update as part of cursor query, this for update clause will enforce an lock on this record, it will not  allow anyone else to do DML operation unless session1 completes its transaction 
+
+5. Using Where current of clause
+      Normally we put where condition to update the record, consider if we have no where condition then update stmt will try to update all records 
+      So instead of using where condition we can update specific record 
+
+>declare
+   cursor emp_name_list is select empid from empl where deptno=10 for update;
+   v_empno int;
+ begin
+    open emp_name_list;
+    loop
+        fetch emp_name_list into v_empno;
+        exit when emp_name_list%notfound;
+        dbms_output.put_line('v_empno='||v_empno);
+        update empl set salary=salary+1000 where current of emp_name_list;
+        dbms_output.put_line('No of rows updated = '||sql%rowcount);
+     end loop;
+end;
+/
+
+So every fetch it fetch empno from cursor memory area, so when it fetch first record from cursor, so when we use "where current of", the update stmt try to get value from cursor memory and update the row in base table one by one 
+   where current of clause can be used only with for update clause
+
+
+PLSQL Performance Tuning Introduction to DBMS PROFILER
+
+https://www.youtube.com/watch?v=G67gaP79htE&list=PLb1qVSx1k1VrPd8FT8WI6Btu754TZjqIs
+
+     Let us first understand how to start with the PLSQL tuning because many
+times the requirements comes like, the given procedure is taking more than 1hr
+and you need to start tuning, so the biggest problem of performance tuning
+that is specifically in PLSQL is that you cannot start with a manual
+instruction of code, because the procedure may call another procedure
+which in turn may call another one and it can go for n number of PLSQL call, so literally it is not possible for you to go through each and every line of
+code to check whether that particular line is taking more time or not 
+   So we will understand where to start with the plsql tuning and how
+to identify the potential bottleneck in the PLSQL code, because once you know the place where it is taking time then you can start tuning that particular line. Suppose if that particular line is an SQL code then you can tune the
+particular SQL or if the particular line is an PLSQL code then you can follow
+PLSQL tuning methodologies 
+   To ease the process of PLSQL performance tuning oracle has provided an inbuilt tool called DBMS_profiler 
+
+How to start with PLSQL tuning ?
+1. Manual Inspection of Code
+     Typically what we will do is we'll just start with the manual inspection of code, to check whether a particular line might take more time or not, this will work as far as the number of lines in the plslq code is very less.            Suppose if you are tuning one procedure and it is not calling any other plsql unit and if the number of lines in the plsql code is very less then this
+may work, however this may not work if there is too many PLSQL calls internally
+
+2. Execute the code with multiple log statements and analyze the stmt more time
+    There are another ways to find the potential bottleneck, we can put
+enough log statements to capture the timing of each and every statement so that by analyzing the log statement you can easily identify where exactly the
+time is going or which particular statement is taking more time, so this
+also will work as far as the number of lines in the plsql code is very less
+    But this is not the most efficient way because you need to keep modifying the plsql code to check whether a particular line is take more time or not,
+so instead of doing all these things what we can do, we can use the provided
+tool called DBMS profiler
+
+
+What is DBMS_Profiler
+    DBMS_profiler is a package provided by Oracle to capture the information about the PLSQL code execution and  to identify the performance bottleneck. So DBMS_profiler will captures the information about the code and its runtime information like how much time each line is taking and how many number of time a particular statement is being executed so these informations are captured in a separate set of table, so after execution what we can do, we can analyze this information to find which particular line is taking more time 
+    Once you identify the line then it is up to you,how you want it to tune, suppose if the particular line is sql code obviously you can tune the sql code or if the particular line is a PLSQL code like a looping statement or whatever it may be then you can go ahead with the PLSQL tuning methodologies f
+
+
+How to use DBMS Profiler ?
+   We have to follow four steps and exactly in the same order 
+
+1. Environment setup
+       we need to prepare your environment to use the DBMS_profiler, we need
+to create few predefined tables prescribed by Oracle to capture the profiler informations 
+
+2. Profiler Execution 
+      The first step is just one-time setup only you are just going to prepare your environment only once, after that you don't have to do this environment
+setup for each and every profiler execution. Once the environment setup is
+done you need to execute the profiler, so the profiler execution is as
+per your requirement like any number of times you can execute, for example
+first you can execute a profiler execution on a setup of plsql code to capture its information after analyzing the informations you can tune that
+particular code again, you can execute the profiler to check whether it has
+actually improved or not
+
+3. Analyze profiler data 
+       Once a profiler is executed on a set of PLSQL code, this information populates in the predefined table and we are going to analyze the data, so for every profiler it collects some information into the PLSQL tables then you need to analyze the data collector to identify where exactly the time is going. So this is basically an iterative process you just need to keep running the profiler execution and data analysis for each and every subsequent execution of your profiler. 
+
+4. Optimize the PLSQL
+       So once you run your profiler and once you analyze the line or once you identify the potential line which is taking more time then you can start with
+your optimization, so the optimization may be an SQL optimization or it may be
+a PLSQL optimization 
+
+
+Environment Setup
+  We need to check two things 
+1. whether your user has the privilege to execute DBMS_profile package or not, by default most of the time when we create the user it will have the default privilege to access this DBMS_profiler package, in case if you are not able to access this package login as sys user just give grand privilege to this
+particular package to your schema 
+
+2. we need to create the profiler table in the schema where
+you are going to run the execution
+   To create the table we need to run a particular file called proftab.sql so this particular file will be available in the
+Oracle installation directory 
+
+run in oracle prompt 
+SQL> @ C:\oraclexe\app\oracle\product\10.2.0\server\RDBMS\ADMIN\proftab.sql
+
+It creates three tables called  plsql_profiler_data, plsql_profiler_units and plsql_profiler_runs so these three tables will be hold the profiler information during your profiler execution 
+
+SQL> select table_name from user_tables where table_name like '%PROF%';
+TABLE_NAME
+------------------------------
+SQLPLUS_PRODUCT_PROFILE
+PLSQL_PROFILER_RUNS
+PLSQL_PROFILER_UNITS
+PLSQL_PROFILER_DATA
+
+Profiler Execution
+    Once the environment setup is done the next step is to start with the profiler execution which is a three stage process
+
+1. start the profiler - It is a marker saying that you are
+starting the profiler so that from that particular point of time, Oracle
+captures all the line by line execution information into the profiler table by using dbms_profiler.start_profiler
+
+2. execute all the PLSQL code where you want to collect your informations that
+is where you want to collect the performance related informations 
+
+3. Stop profiler  - after executing all your plsql code you need to stop the profiler by using dbms_profiler.stop_profiler
+
+
+Procedure Execution
+   Create three procedures, procedures C which is having some set of code and this procedure calling from another procedure called procedure B and
+the procedure B is calling from another procedure called procedure A, so basically when we invoke  procedure A, the procedure A will
+internally call procedure B and procedure B will internally called procedure C     So now the question is invoking a procedure A is taking more
+time then you need to identify which particular statement in these three
+procedures are taking more time
+
+>create or replace procedure proc_c as
+   lv_avg_sal number;
+ begin
+   for i in 1..50 loop
+      select avg(salary) into lv_avg_sal from empl;
+   end loop;
+ end;
+/
+
+>create or replace procedure proc_b as
+   lv_date date;
+ begin
+   for i in 1..50 loop
+       proc_c;
+       select sysdate into lv_date from dual;
+   end loop;
+ end;
+/
+
+>create or replace procedure proc_a as
+   lv_count number;
+ begin
+   select count(*) into lv_count from user_tables, all_objects;
+   for i in 1..50 loop
+       proc_b;
+   end loop;
+  end;
+/
+
+
+- Execute the start profiler 
+      Executing the start profiler will start the profiler and it will start collecting the profiler informations of the PLSQL code whatever we
+are going to execute after this point 
+
+>exec dbms_profiler.start_profiler('MY_TEST_PERFORMANCE_RUN');
+
+--------------------------------------------------------------------------------------------
+
+Advanced SQL
+
+1. Table Schema
+We create a table named EMPLOYEE_DETAILS to store employee information, including JSON data.
+
+Table Schema:
+CREATE TABLE EMPLOYEE_DETAILS (
+    EMP_ID NUMBER PRIMARY KEY,
+    NAME VARCHAR2(100),
+    JSON_DATA CLOB CHECK (JSON_DATA IS JSON)
+);
+
+2. Insert Sample Data
+We insert JSON data into the JSON_DATA column.
+
+INSERT INTO EMPLOYEE_DETAILS (EMP_ID, NAME, JSON_DATA) VALUES 
+(101, 'Alice', '{"department": "HR", "skills": ["Recruitment", "Payroll"], "salary": 70000, "location": "NY"}');
+
+INSERT INTO EMPLOYEE_DETAILS (EMP_ID, NAME, JSON_DATA) VALUES 
+(102, 'Bob', '{"department": "IT", "skills": ["Java", "SQL", "Python"], "salary": 85000, "location": "LA"}');
+
+INSERT INTO EMPLOYEE_DETAILS (EMP_ID, NAME, JSON_DATA) VALUES 
+(103, 'Charlie', '{"department": "Finance", "skills": ["Accounting", "Excel"], "salary": 75000, "location": "SF"}');
+
+3. Querying JSON Data
+A. Extracting a Single Value (JSON_VALUE)
+The JSON_VALUE function retrieves scalar values from JSON data.
+
+Query: Get employee names along with their departments.
+
+SELECT 
+    EMP_ID,
+    NAME,
+    JSON_VALUE(JSON_DATA, '$.department') AS DEPARTMENT
+FROM EMPLOYEE_DETAILS;
+
+Output:
+
+EMP_ID	NAME	DEPARTMENT
+101	Alice	HR
+102	Bob	IT
+103	Charlie	Finance
+
+B. Extracting Nested Array Data (JSON_TABLE)
+The JSON_TABLE function extracts data from JSON arrays.
+
+Query: List all skills of each employee.
+
+SELECT 
+    EMP_ID,
+    NAME,
+    jt.skill
+FROM EMPLOYEE_DETAILS,
+    JSON_TABLE(
+        JSON_DATA,
+        '$.skills[*]' COLUMNS(skill VARCHAR2(50) PATH '$')
+    ) jt;
+
+Output:
+
+EMP_ID	NAME	SKILL
+101	Alice	Recruitment
+101	Alice	Payroll
+102	Bob	Java
+102	Bob	SQL
+102	Bob	Python
+103	Charlie	Accounting
+103	Charlie	Excel
+
+C. Checking Key Existence (JSON_EXISTS)
+The JSON_EXISTS function checks if a specific key exists in JSON data.
+
+Query: Find employees with a location key in their JSON data.
+
+SELECT 
+    EMP_ID,
+    NAME
+FROM EMPLOYEE_DETAILS
+WHERE JSON_EXISTS(JSON_DATA, '$.location');
+
+Output:
+
+EMP_ID	NAME
+101	Alice
+102	Bob
+103	Charlie
+
+
+5. Aggregating JSON Data
+A. Create a JSON Array from Rows (JSON_ARRAYAGG)
+The JSON_ARRAYAGG function aggregates rows into a JSON array.
+
+Query: Get a JSON array of all employee names.
+
+SELECT JSON_ARRAYAGG(NAME) AS EMPLOYEE_NAMES
+FROM EMPLOYEE_DETAILS;
+
+Output:
+
+EMPLOYEE_NAMES
+["Alice", "Bob", "Charlie"]
+
+B. Create JSON Objects (JSON_OBJECTAGG)
+The JSON_OBJECTAGG function creates a JSON object from key-value pairs.
+
+Query: Create a JSON object with employee names as keys and their departments as values.
+
+SELECT JSON_OBJECTAGG(NAME VALUE JSON_VALUE(JSON_DATA, '$.department')) AS EMPLOYEE_DEPARTMENTS
+FROM EMPLOYEE_DETAILS;
+
+Output:
+
+EMPLOYEE_DEPARTMENTS
+{"Alice": "HR", "Bob": "IT", "Charlie": "Finance"}
+
+6. Generating JSON from Columns
+A. Generate JSON Object (JSON_OBJECT)
+The JSON_OBJECT function creates JSON objects from column values.
+
+Query: Create a JSON object for each employee.
+
+SELECT 
+    JSON_OBJECT(
+        'EmployeeID' VALUE EMP_ID,
+        'Name' VALUE NAME,
+        'Details' VALUE JSON_DATA
+    ) AS EMPLOYEE_JSON
+FROM EMPLOYEE_DETAILS;
+
+Output:
+
+EMPLOYEE_JSON
+{"EmployeeID": 101, "Name": "Alice", "Details": {"department": "HR", "skills": ["Recruitment"...}
+
+7. Full Example for Complex Data Extraction
+Query: Find employees with a salary above 75000 and list their skills.
+
+SELECT 
+    EMP_ID,
+    NAME,
+    JSON_VALUE(JSON_DATA, '$.salary') AS SALARY,
+    jt.skill
+FROM EMPLOYEE_DETAILS,
+    JSON_TABLE(
+        JSON_DATA,
+        '$.skills[*]' COLUMNS(skill VARCHAR2(50) PATH '$')
+    ) jt
+WHERE JSON_VALUE(JSON_DATA, '$.salary') > 75000;
+
+Output:
+
+EMP_ID	NAME	SALARY	SKILL
+102	Bob	90000	Java
+102	Bob	90000	SQL
+102	Bob	90000	Python
+
+
+8. JSON_MERGE_PATCH in Oracle is a function used to merge two JSON objects by updating the values in the first JSON object with the corresponding keys from the second JSON object. If the key exists in both JSON objects, the value from the second object replaces the value in the first one. If the key exists only in the second JSON object, it is added to the first one. If a key exists only in the first JSON object, it remains unchanged.
+
+Example: JSON_MERGE_PATCH in Oracle
+Let’s create a schema and table to demonstrate how to use JSON_MERGE_PATCH.
+
+Step 1: Create a Table with JSON Column
+
+CREATE TABLE employees (
+    emp_id NUMBER PRIMARY KEY,
+    emp_data CLOB
+);
+
+Step 2: Insert JSON Data into the Table
+Here, we will insert some sample JSON data into the emp_data column.
+
+INSERT INTO employees (emp_id, emp_data)
+VALUES (1, '{"name": "John", "age": 30, "department": "HR"}');
+
+INSERT INTO employees (emp_id, emp_data)
+VALUES (2, '{"name": "Jane", "age": 28, "department": "Finance"}');
+
+Step 3: Merge JSON Data Using JSON_MERGE_PATCH
+Now, let's use the JSON_MERGE_PATCH function to merge two JSON objects. We will merge a new JSON object containing updated information into the existing JSON object stored in the emp_data column.
+
+SELECT emp_id, 
+       JSON_MERGE_PATCH(emp_data, '{"age": 31, "location": "New York"}') AS updated_emp_data
+FROM employees;
+
+Explanation:
+For emp_id = 1, the original JSON is {"name": "John", "age": 30, "department": "HR"}.
+The patch to be applied is {"age": 31, "location": "New York"}.
+After merging, the updated JSON will be:
+
+{"name": "John", "age": 31, "department": "HR", "location": "New York"}
+
+Step 4: Resulting Output
+EMP_ID	UPDATED_EMP_DATA
+1	{"name": "John", "age": 31, "department": "HR", "location": "New York"}
+2	{"name": "Jane", "age": 28, "department": "Finance", "location": "New York"}
+
+For emp_id = 2, since the patch only added a new key location, the original data is updated as:
+
+
+{"name": "Jane", "age": 28, "department": "Finance", "location": "New York"}
+
+Step 5: Handling Non-Existent Keys
+If the patch contains keys that do not exist in the original JSON object, those keys are added to the object.
+
+For example:
+
+SELECT emp_id, 
+       JSON_MERGE_PATCH(emp_data, '{"city": "Los Angeles"}') AS updated_emp_data
+FROM employees;
+
+This will result in adding a new key city for both records.
+
+EMP_ID	UPDATED_EMP_DATA
+1	{"name": "John", "age": 30, "department": "HR", "city": "Los Angeles"}
+2	{"name": "Jane", "age": 28, "department": "Finance", "city": "Los Angeles"}
+
+
+------------------------------------------------------------------------------------------
+1. Complex Table Schema
+We create a table called PROJECTS to store information about projects, team members, and their roles, with a nested JSON structure.
+
+Table Schema:
+CREATE TABLE PROJECTS (
+    PROJECT_ID NUMBER PRIMARY KEY,
+    PROJECT_NAME VARCHAR2(100),
+    DETAILS CLOB CHECK (DETAILS IS JSON)
+);
+
+2. Insert Complex JSON Data
+We insert nested JSON data with information about team members, their roles, tasks, and deadlines.
+
+INSERT INTO PROJECTS (PROJECT_ID, PROJECT_NAME, DETAILS) VALUES 
+(1, 'Apollo Mission', '{
+    "team": [
+        {"membername": "Alice", "role": "Manager", "tasks": [{"task": "Planning", "deadline": "2025-03-01"}, {"task": "Budget Approval", "deadline": "2025-02-15"}]},
+        {"membername": "Bob", "role": "Engineer", "tasks": [{"task": "Design", "deadline": "2025-04-01"}]},
+        {"membername": "Charlie", "role": "QA", "tasks": [{"task": "Testing", "deadline": "2025-05-01"}]}
+    ],
+    "budget": 500000,
+    "status": "In Progress"
+}');
+
+INSERT INTO PROJECTS (PROJECT_ID, PROJECT_NAME, DETAILS) VALUES 
+(2, 'Mars Rover', '{
+    "team": [
+        {"membername": "Diana", "role": "Scientist", "tasks": [{"task": "Research", "deadline": "2025-06-01"}]},
+        {"membername": "Evan", "role": "Engineer", "tasks": [{"task": "Development", "deadline": "2025-07-15"}, {"task": "Integration", "deadline": "2025-08-01"}]},
+        {"membername": "Frank", "role": "Manager", "tasks": [{"task": "Logistics", "deadline": "2025-05-15"}]}
+    ],
+    "budget": 750000,
+    "status": "Planned"
+}');
+
+3. Querying and Transforming Data
+A. Extract Nested Data Using JSON_TABLE
+Query: List all tasks along with their deadlines and the assigned team member for all projects.
+
+SELECT 
+    PROJECT_NAME,
+    jt.membername AS TEAM_MEMBER,
+    jt.task AS TASK_NAME,
+   jt.deadline AS DEADLINE
+FROM PROJECTS,
+    JSON_TABLE(
+        DETAILS,
+        '$.team[*]' 
+        COLUMNS (
+            membername VARCHAR2(100) PATH '$.membername',
+            NESTED PATH '$.tasks[*]' COLUMNS (
+                task VARCHAR2(100) PATH '$.task',
+                deadline DATE PATH '$.deadline'
+            )
+        )
+    ) jt;
+
+Output:
+
+PROJECT_NAME	TEAM_MEMBER	TASK_NAME	DEADLINE
+Apollo Mission	Alice	Planning	2025-03-01
+Apollo Mission	Alice	Budget Approval	2025-02-15
+Apollo Mission	Bob	Design	2025-04-01
+Apollo Mission	Charlie	Testing	2025-05-01
+Mars Rover	Diana	Research	2025-06-01
+Mars Rover	Evan	Development	2025-07-15
+Mars Rover	Evan	Integration	2025-08-01
+Mars Rover	Frank	Logistics	2025-05-15
+
+Explanation of the Changes:
+NESTED PATH: The NESTED PATH clause allows us to process the tasks array for each team member directly within the same JSON_TABLE expression.
+
+We specify the $.tasks[*] path to extract the task and deadline fields from the nested tasks array for each team member.
+
+Breakdown:
+Main JSON_TABLE:
+The outer JSON_TABLE extracts team member information (membername) from the $.team[*] path in the JSON document.
+
+Nested JSON_TABLE:
+The NESTED PATH clause inside the same JSON_TABLE extracts the task and deadline from the $.tasks[*] path.
+
+Output:
+
+PROJECT_NAME	TEAM_MEMBER	TASK_NAME	DEADLINE
+Apollo Mission	Alice	Planning	2025-03-01
+Apollo Mission	Alice	Budget Approval	2025-02-15
+Apollo Mission	Bob	Design	2025-04-01
+Apollo Mission	Charlie	Testing	2025-05-01
+Mars Rover	Diana	Research	2025-06-01
+Mars Rover	Evan	Development	2025-07-15
+Mars Rover	Evan	Integration	2025-08-01
+Mars Rover	Frank	Logistics	2025-05-15
+
+B. Aggregate Data Using JSON_ARRAYAGG and JSON_OBJECTAGG
+Query: Create a JSON array of all project names and their statuses.
+
+SELECT JSON_ARRAYAGG(
+    JSON_OBJECT(
+        'ProjectName' VALUE PROJECT_NAME,
+        'Status' VALUE JSON_VALUE(DETAILS, '$.status')
+    )
+) AS PROJECT_SUMMARY
+FROM PROJECTS;
+
+Output:
+
+PROJECT_SUMMARY
+[{"ProjectName":"Apollo Mission","Status":"In Progress"},{"ProjectName":"Mars Rover","Status":"Planned"}]
+
+C. Filter Data Using JSON_EXISTS
+Query: Find all projects where at least one team member has a task deadline in 2025-05.
+
+SELECT PROJECT_NAME
+FROM PROJECTS
+WHERE JSON_EXISTS(DETAILS, '$.team[*].tasks[*]?(@.deadline like "2025-05%")');
+
+Output:
+
+PROJECT_NAME
+Apollo Mission
+Mars Rover
+
+D. Updating JSON Using JSON_MERGE_PATCH
+Query: Update the budget of "Apollo Mission" to 550000.
+
+UPDATE PROJECTS
+SET DETAILS = JSON_MERGE_PATCH(DETAILS, '{"budget": 550000}')
+WHERE PROJECT_NAME = 'Apollo Mission';
+
+Resulting JSON for Apollo Mission:
+{
+    "team": [
+        {"name": "Alice", "role": "Manager", "tasks": [{"task": "Planning", "deadline": "2025-03-01"}, {"task": "Budget Approval", "deadline": "2025-02-15"}]},
+        {"name": "Bob", "role": "Engineer", "tasks": [{"task": "Design", "deadline": "2025-04-01"}]},
+        {"name": "Charlie", "role": "QA", "tasks": [{"task": "Testing", "deadline": "2025-05-01"}]}
+    ],
+    "budget": 550000,
+    "status": "In Progress"
+}
+
+E. Deleting Keys Using JSON_REMOVE
+Query: Remove the status key from all projects.
+
+UPDATE PROJECTS
+SET DETAILS = JSON_REMOVE(DETAILS, '$.status');
+
+Resulting JSON for Mars Rover:
+{
+    "team": [
+        {"name": "Diana", "role": "Scientist", "tasks": [{"task": "Research", "deadline": "2025-06-01"}]},
+        {"name": "Evan", "role": "Engineer", "tasks": [{"task": "Development", "deadline": "2025-07-15"}, {"task": "Integration", "deadline": "2025-08-01"}]},
+        {"name": "Frank", "role": "Manager", "tasks": [{"task": "Logistics", "deadline": "2025-05-15"}]}
+    ],
+    "budget": 750000
+}
+
+4. Advanced Query Example
+Query: Find team members assigned to tasks with deadlines in 2025-06 or later.
+
+SELECT 
+    PROJECT_NAME,
+    jt.name AS TEAM_MEMBER,
+    jt.task AS TASK_NAME,
+    jt.deadline AS DEADLINE
+FROM PROJECTS,
+    JSON_TABLE(
+        DETAILS,
+        '$.team[*].tasks[*]'
+        COLUMNS (
+            name VARCHAR2(100) PATH '$.name',
+            task VARCHAR2(100) PATH '$.task',
+            deadline DATE PATH '$.deadline'
+        )
+    ) jt
+WHERE jt.deadline >= TO_DATE('2025-06-01', 'YYYY-MM-DD');
+
+Output:
+
+PROJECT_NAME	TEAM_MEMBER	TASK_NAME	DEADLINE
+Mars Rover	Diana	Research	2025-06-01
+Mars Rover	Evan	Development	2025-07-15
+Mars Rover	Evan	Integration	2025-08-01
+
+
+JSON_SCALAR Function in Oracle
+In Oracle, the JSON_SCALAR function is used to extract a scalar value (such as a string, number, or boolean) from a JSON document stored in a CLOB or BLOB column. The function can be useful when working with JSON data within columns of an Oracle database. It allows you to retrieve specific values from the JSON object or array.
+
+The JSON_SCALAR function has the following syntax:
+
+JSON_SCALAR(json_expression, json_path)
+
+json_expression: The JSON document or column containing JSON data.
+json_path: The JSON path expression used to locate the desired element in the JSON document.
+
+1. Table Schema and Sample Data
+Let's create a table called CUSTOMERS_JSON that contains a JSON column to store customer information in JSON format.
+
+Table Schema: CUSTOMERS_JSON
+
+CREATE TABLE CUSTOMERS_JSON (
+    CUSTOMER_ID NUMBER PRIMARY KEY,
+    CUSTOMER_NAME VARCHAR2(100),
+    CUSTOMER_JSON CLOB
+);
+
+Insert Sample Data into CUSTOMERS_JSON
+We will insert some sample customer data in JSON format into the CUSTOMERS_JSON table.
+
+-- Sample data for CUSTOMERS_JSON table
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (1, 'John Doe', '{"customer_id": 1, "name": "John Doe", "email": "john.doe@example.com", "address": {"street": "123 Main St", "city": "New York"}}');
+
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (2, 'Jane Smith', '{"customer_id": 2, "name": "Jane Smith", "email": "jane.smith@domain.com", "address": {"street": "456 Oak St", "city": "Los Angeles"}}');
+
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (3, 'Michael Johnson', '{"customer_id": 3, "name": "Michael Johnson", "email": "michael.johnson@example.net", "address": {"street": "789 Pine St", "city": "Chicago"}}');
+
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (4, 'Emily Davis', '{"customer_id": 4, "name": "Emily Davis", "email": "emily.davis@domain.org", "address": {"street": "101 Maple St", "city": "San Francisco"}}');
+
+In this case, the CUSTOMER_JSON column stores a JSON document representing each customer's information, including their customer_id, name, email, and address (which itself contains street and city).
+
+2. Using JSON_SCALAR to Extract Data
+Now, let's use the JSON_SCALAR function to extract specific values from the CUSTOMER_JSON column.
+
+Example 1: Extract the Customer Name from JSON
+We will use JSON_SCALAR to extract the name field from the JSON data stored in the CUSTOMER_JSON column.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_SCALAR(CUSTOMER_JSON, '$.name') AS CUSTOMER_NAME_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.name: This is the JSON path expression. The dollar sign ($) represents the root of the JSON document, and .name specifies the name field.
+
+JSON_SCALAR(CUSTOMER_JSON, '$.name'): Extracts the value of the name field from the JSON document.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_NAME_JSON
+1	John Doe	John Doe
+2	Jane Smith	Jane Smith
+3	Michael Johnson	Michael Johnson
+4	Emily Davis	Emily Davis
+
+Example 2: Extract the Customer Email from JSON
+We will use JSON_SCALAR to extract the email field from the JSON data.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_SCALAR(CUSTOMER_JSON, '$.email') AS CUSTOMER_EMAIL_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.email: The JSON path expression to extract the email field from the JSON document.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_EMAIL_JSON
+1	John Doe	john.doe@example.com
+2	Jane Smith	jane.smith@domain.com
+3	Michael Johnson	michael.johnson@example.net
+4	Emily Davis	emily.davis@domain.org
+
+Example 3: Extract Nested JSON Data (Address)
+We will use JSON_SCALAR to extract the street and city fields from the nested address object within the CUSTOMER_JSON column.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_SCALAR(CUSTOMER_JSON, '$.address.street') AS CUSTOMER_STREET_JSON,
+       JSON_SCALAR(CUSTOMER_JSON, '$.address.city') AS CUSTOMER_CITY_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.address.street: Extracts the street field from the nested address object.
+$.address.city: Extracts the city field from the nested address object.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_STREET_JSON	CUSTOMER_CITY_JSON
+1	John Doe	123 Main St	New York
+2	Jane Smith	456 Oak St	Los Angeles
+3	Michael Johnson	789 Pine St	Chicago
+4	Emily Davis	101 Maple St	San Francisco
+
+Example 4: Using JSON_SCALAR to Extract Numeric Data
+If we had a numeric value in the JSON, such as customer_id, we could use JSON_SCALAR to extract it as well.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_SCALAR(CUSTOMER_JSON, '$.customer_id') AS CUSTOMER_ID_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.customer_id: Extracts the customer_id field from the JSON document.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_ID_JSON
+1	John Doe	1
+2	Jane Smith	2
+3	Michael Johnson	3
+4	Emily Davis	4
+
+
+ARRAY_AGG Function in Oracle
+The ARRAY_AGG function in Oracle is an analytic function used to aggregate data into a collection (array). It allows you to collect values from multiple rows into a single column as an array (a nested structure), which can then be used in subsequent queries or further processing.
+
+The ARRAY_AGG function is useful when you want to aggregate multiple values into a collection rather than a single value (like SUM, COUNT, etc.).
+
+Syntax
+
+ARRAY_AGG(expression [ORDER BY expression] [LIMIT n]) 
+
+expression: The value you want to aggregate.
+ORDER BY: Optional clause to define the order of the elements in the array.
+LIMIT: Optional clause to limit the number of elements in the array.
+
+1. Table Schema and Sample Data
+Let's create a table called EMPLOYEES that contains employee data.
+
+Table Schema: EMPLOYEES
+
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID NUMBER PRIMARY KEY,
+    EMPLOYEE_NAME VARCHAR2(100),
+    DEPARTMENT_ID NUMBER,
+    SALARY NUMBER
+);
+
+Insert Sample Data into EMPLOYEES
+
+-- Sample data for EMPLOYEES table
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY)
+VALUES (1, 'John Doe', 10, 5000);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY)
+VALUES (2, 'Jane Smith', 10, 5500);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY)
+VALUES (3, 'Michael Johnson', 20, 6000);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY)
+VALUES (4, 'Emily Davis', 20, 6500);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY)
+VALUES (5, 'David Brown', 30, 7000);
+
+In this example, the EMPLOYEES table contains columns for employee ID, name, department ID, and salary.
+
+2. Using ARRAY_AGG to Aggregate Data
+Now, let's use the ARRAY_AGG function to aggregate employee names for each department.
+
+Example 1: Aggregate Employee Names by Department
+This query will use ARRAY_AGG to collect the names of employees in each department into an array.
+
+SELECT DEPARTMENT_ID, ARRAY_AGG(EMPLOYEE_NAME ORDER BY EMPLOYEE_NAME) AS EMPLOYEE_NAMES
+FROM EMPLOYEES
+GROUP BY DEPARTMENT_ID;
+
+Explanation:
+
+ARRAY_AGG(EMPLOYEE_NAME ORDER BY EMPLOYEE_NAME): This will create an array of employee names for each department, ordered alphabetically.
+GROUP BY DEPARTMENT_ID: The aggregation is done by department.
+
+Output:
+
+DEPARTMENT_ID	EMPLOYEE_NAMES
+10	[Jane Smith, John Doe]
+20	[Emily Davis, Michael Johnson]
+30	[David Brown]
+
+In this example, the ARRAY_AGG function creates an array of employee names for each department, with names ordered alphabetically.
+
+Example 2: Aggregate Employee Salaries by Department
+We can also use ARRAY_AGG to aggregate employee salaries for each department.
+
+SELECT DEPARTMENT_ID, ARRAY_AGG(SALARY ORDER BY SALARY) AS SALARIES
+FROM EMPLOYEES
+GROUP BY DEPARTMENT_ID;
+
+Explanation:
+
+ARRAY_AGG(SALARY ORDER BY SALARY): This will create an array of salaries for each department, ordered from lowest to highest.
+GROUP BY DEPARTMENT_ID: The aggregation is done by department.
+
+Output:
+
+DEPARTMENT_ID	SALARIES
+10	[5000, 5500]
+20	[6000, 6500]
+30	[7000]
+
+Example 3: Aggregate Employee IDs by Department with a Limit
+In this example, we will use the LIMIT clause to limit the number of employee IDs aggregated per department.
+
+SELECT DEPARTMENT_ID, ARRAY_AGG(EMPLOYEE_ID ORDER BY EMPLOYEE_ID LIMIT 2) AS EMPLOYEE_IDS
+FROM EMPLOYEES
+GROUP BY DEPARTMENT_ID;
+
+Explanation:
+
+LIMIT 2: This limits the result to the first 2 employee IDs per department.
+ORDER BY EMPLOYEE_ID: The IDs are ordered in ascending order.
+
+Output:
+
+DEPARTMENT_ID	EMPLOYEE_IDS
+10	[1, 2]
+20	[3, 4]
+30	[5]
+
+In this case, the LIMIT clause ensures that only the first two employee IDs are included in the array per department.
+
+3. Example of Handling NULL Values with ARRAY_AGG
+If some employees have NULL values for a column, you can still aggregate them, and they will appear as NULL in the resulting array.
+
+-- Insert data with NULL salary
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY)
+VALUES (6, 'Alice Green', 10, NULL);
+
+SELECT DEPARTMENT_ID, ARRAY_AGG(SALARY ORDER BY SALARY) AS SALARIES
+FROM EMPLOYEES
+GROUP BY DEPARTMENT_ID;
+
+Output:
+
+DEPARTMENT_ID	SALARIES
+10	[5000, 5500, NULL]
+20	[6000, 6500]
+30	[7000]
+
+Here, the NULL value for SALARY is included in the aggregated array.
+
+JSON_QUERY Function in Oracle
+The JSON_QUERY function in Oracle is used to extract an entire JSON object or array from a JSON document. Unlike JSON_SCALAR, which returns scalar values (like strings or numbers), JSON_QUERY can return JSON objects or arrays as a result.
+
+Syntax
+
+JSON_QUERY(json_expression, json_path)
+
+json_expression: The JSON document or column containing JSON data.
+json_path: The JSON path expression used to specify the part of the JSON document you want to extract.
+
+1. Table Schema and Sample Data
+Let's create a table called CUSTOMERS_JSON that contains customer data stored in JSON format.
+
+Table Schema: CUSTOMERS_JSON
+
+CREATE TABLE CUSTOMERS_JSON (
+    CUSTOMER_ID NUMBER PRIMARY KEY,
+    CUSTOMER_NAME VARCHAR2(100),
+    CUSTOMER_JSON CLOB
+);
+
+Insert Sample Data into CUSTOMERS_JSON
+Now, insert sample data with JSON documents that store customer information.
+
+-- Sample data for CUSTOMERS_JSON table
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (1, 'John Doe', '{"customer_id": 1, "name": "John Doe", "email": "john.doe@example.com", "address": {"street": "123 Main St", "city": "New York"}}');
+
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (2, 'Jane Smith', '{"customer_id": 2, "name": "Jane Smith", "email": "jane.smith@domain.com", "address": {"street": "456 Oak St", "city": "Los Angeles"}}');
+
+INSERT INTO CUSTOMERS_JSON (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (3, 'Michael Johnson', '{"customer_id": 3, "name": "Michael Johnson", "email": "michael.johnson@example.net", "address": {"street": "789 Pine St", "city": "Chicago"}}');
+
+The CUSTOMER_JSON column stores the customer information as a JSON document that includes fields like customer_id, name, email, and address (with street and city).
+
+2. Using JSON_QUERY to Extract JSON Data
+Now, let's use JSON_QUERY to extract JSON objects and arrays.
+
+Example 1: Extract the Entire Address Object from JSON
+We will extract the address object from the JSON document using JSON_QUERY.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_QUERY(CUSTOMER_JSON, '$.address') AS CUSTOMER_ADDRESS_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.address: This JSON path expression extracts the entire address object from the JSON document.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_ADDRESS_JSON
+1	John Doe	{"street": "123 Main St", "city": "New York"}
+2	Jane Smith	{"street": "456 Oak St", "city": "Los Angeles"}
+3	Michael Johnson	{"street": "789 Pine St", "city": "Chicago"}
+
+In this query, we used JSON_QUERY to extract the entire address object for each customer.
+
+Example 2: Extract the Customer's Name and Email as a JSON Object
+We can also use JSON_QUERY to extract a subset of the JSON document. For example, we can extract the name and email fields and return them as a JSON object.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_QUERY(CUSTOMER_JSON, '$.{"name": $.name, "email": $.email}') AS CUSTOMER_CONTACT_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.{"name": $.name, "email": $.email}: This JSON path expression creates a new JSON object with the name and email fields.
+The JSON_QUERY function will return the result as a JSON object containing only the name and email.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_CONTACT_JSON
+1	John Doe	{"name": "John Doe", "email": "john.doe@example.com"}
+2	Jane Smith	{"name": "Jane Smith", "email": "jane.smith@domain.com"}
+3	Michael Johnson	{"name": "Michael Johnson", "email": "michael.johnson@example.net"}
+
+In this case, the query extracts a new JSON object that contains only the name and email fields.
+
+Example 3: Extract an Array of Customer Names
+You can use JSON_QUERY to extract arrays from a JSON document. Let's assume the CUSTOMER_JSON column has an array of phone numbers for each customer. We'll create a new version of the JSON data with an array of phone numbers for each customer.
+
+First, let's modify the data and add phone numbers.
+
+-- Adding an array of phone numbers to the customer JSON data
+UPDATE CUSTOMERS_JSON
+SET CUSTOMER_JSON = '{"customer_id": 1, "name": "John Doe", "email": "john.doe@example.com", "address": {"street": "123 Main St", "city": "New York"}, "phone_numbers": ["123-456-7890", "987-654-3210"]}'
+WHERE CUSTOMER_ID = 1;
+
+UPDATE CUSTOMERS_JSON
+SET CUSTOMER_JSON = '{"customer_id": 2, "name": "Jane Smith", "email": "jane.smith@domain.com", "address": {"street": "456 Oak St", "city": "Los Angeles"}, "phone_numbers": ["555-123-4567"]}'
+WHERE CUSTOMER_ID = 2;
+
+UPDATE CUSTOMERS_JSON
+SET CUSTOMER_JSON = '{"customer_id": 3, "name": "Michael Johnson", "email": "michael.johnson@example.net", "address": {"street": "789 Pine St", "city": "Chicago"}, "phone_numbers": ["444-555-6666", "333-444-5555"]}'
+WHERE CUSTOMER_ID = 3;
+
+Now, we will use JSON_QUERY to extract the phone_numbers array.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       JSON_QUERY(CUSTOMER_JSON, '$.phone_numbers') AS CUSTOMER_PHONE_NUMBERS_JSON
+FROM CUSTOMERS_JSON;
+
+Explanation:
+
+$.phone_numbers: This JSON path expression extracts the entire phone_numbers array from the JSON document.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_PHONE_NUMBERS_JSON
+1	John Doe	["123-456-7890", "987-654-3210"]
+2	Jane Smith	["555-123-4567"]
+3	Michael Johnson	["444-555-6666", "333-444-5555"]
+
+In this case, JSON_QUERY returns the phone_numbers array for each customer.
+
+
+ISJSON Function in Oracle
+The ISJSON function in Oracle is used to check if a given string or column contains valid JSON data. It returns a boolean result: TRUE if the input is a valid JSON document and FALSE otherwise.
+
+This function is useful when you need to validate whether a column or string contains well-formed JSON data before performing JSON-related operations.
+
+Syntax
+
+ISJSON(expression)
+
+expression: The input expression (column, string, etc.) to check for valid JSON. This can be a string or a column of type CLOB or VARCHAR.
+
+1. Table Schema and Sample Data
+Let's create a table CUSTOMERS_JSON_VALID that stores customer data in JSON format. We'll add a column that will store JSON data as well as a column to store customer names.
+
+Table Schema: CUSTOMERS_JSON_VALID
+
+CREATE TABLE CUSTOMERS_JSON_VALID (
+    CUSTOMER_ID NUMBER PRIMARY KEY,
+    CUSTOMER_NAME VARCHAR2(100),
+    CUSTOMER_JSON CLOB
+);
+
+Insert Sample Data into CUSTOMERS_JSON_VALID
+We'll insert both valid and invalid JSON data into the CUSTOMER_JSON column.
+
+-- Valid JSON data
+INSERT INTO CUSTOMERS_JSON_VALID (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (1, 'John Doe', '{"customer_id": 1, "name": "John Doe", "email": "john.doe@example.com"}');
+
+-- Invalid JSON data (missing closing brace)
+INSERT INTO CUSTOMERS_JSON_VALID (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (2, 'Jane Smith', '{"customer_id": 2, "name": "Jane Smith", "email": "jane.smith@domain.com"');
+
+-- Valid JSON data
+INSERT INTO CUSTOMERS_JSON_VALID (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (3, 'Michael Johnson', '{"customer_id": 3, "name": "Michael Johnson", "email": "michael.johnson@example.net"}');
+In this example:
+
+Valid JSON: The first and third entries have valid JSON.
+Invalid JSON: The second entry has invalid JSON because it has a missing closing brace.
+
+2. Using ISJSON to Check for Valid JSON
+Now, we will use the ISJSON function to check whether the data in the CUSTOMER_JSON column is valid JSON.
+
+Example 1: Check if CUSTOMER_JSON is Valid JSON
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       ISJSON(CUSTOMER_JSON) AS IS_VALID_JSON
+FROM CUSTOMERS_JSON_VALID;
+
+Explanation:
+
+The query checks each CUSTOMER_JSON value to see if it's valid JSON.
+
+The ISJSON function returns TRUE for valid JSON and FALSE for invalid JSON.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	IS_VALID_JSON
+1	John Doe	TRUE
+2	Jane Smith	FALSE
+3	Michael Johnson	TRUE
+
+In this case, the second row has invalid JSON (missing closing brace), so ISJSON returns FALSE for it.
+
+Example 2: Filter Only Valid JSON Data
+You can use the ISJSON function in a WHERE clause to filter rows that contain valid JSON.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON
+FROM CUSTOMERS_JSON_VALID
+WHERE ISJSON(CUSTOMER_JSON) = TRUE;
+
+Explanation:
+
+The query filters rows where the CUSTOMER_JSON column contains valid JSON.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	CUSTOMER_JSON
+1	John Doe	{"customer_id": 1, "name": "John Doe", "email": "john.doe@example.com"}
+3	Michael Johnson	{"customer_id": 3, "name": "Michael Johnson", "email": "michael.johnson@example.net"}
+
+Only rows with valid JSON are returned in the result.
+
+3. Using ISJSON with Strings
+You can also use the ISJSON function to check if a string is valid JSON. For example:
+
+SELECT ISJSON('{"name": "John", "age": 30}') AS IS_VALID_JSON FROM dual;
+
+Output:
+
+IS_VALID_JSON
+
+TRUE
+
+This query checks if the string '{"name": "John", "age": 30}' is valid JSON and returns TRUE because it is well-formed.
+
+4. Handling NULL Values
+If the CUSTOMER_JSON column contains NULL, the ISJSON function will return FALSE for that row. For example:
+
+
+-- Insert a NULL value into the CUSTOMER_JSON column
+INSERT INTO CUSTOMERS_JSON_VALID (CUSTOMER_ID, CUSTOMER_NAME, CUSTOMER_JSON)
+VALUES (4, 'Alice Green', NULL);
+
+-- Check if the data is valid JSON
+SELECT CUSTOMER_ID, CUSTOMER_NAME,
+       ISJSON(CUSTOMER_JSON) AS IS_VALID_JSON
+FROM CUSTOMERS_JSON_VALID;
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	IS_VALID_JSON
+1	John Doe	TRUE
+2	Jane Smith	FALSE
+3	Michael Johnson	TRUE
+4	Alice Green	FALSE
+
+Since the CUSTOMER_JSON column for Alice Green is NULL, ISJSON returns FALSE.
+
+-----------------------------------------------------------------------------------------------
+
+Oracle Pivot
+
+Why Use Pivot and Unpivot in Oracle?
+Both PIVOT and UNPIVOT are powerful operations in Oracle SQL that help in transforming and restructuring data, allowing for better analysis, reporting, and presentation. Here’s why they are useful:
+
+1. Use Case for PIVOT
+The PIVOT operation is used to transform rows into columns. It's often used when you want to aggregate data and convert unique values from a specific column (usually a categorical value) into individual columns for easier analysis. The main reasons for using PIVOT include:
+
+A. Easier Reporting
+Summary Representation: When you need to summarize data (e.g., sales figures) across multiple categories (e.g., products, years), using a pivot can help turn the data into a more readable, column-based format for reports.
+
+Compare Across Categories: When you're comparing different items (e.g., products, regions) across various time periods or other categories (e.g., sales by month or year), PIVOT can make the data more accessible.
+
+Example:
+Imagine you have sales data in a table like this:
+
+Region	Product	Year	Sales Amount
+North	Laptop	2021	50000
+North	Mobile	2021	30000
+South	Laptop	2021	40000
+South	Mobile	2021	25000
+
+You may want to pivot the data so you can see the sales amount for each product across years. The resulting output would look like this:
+
+Region	Laptop_2021	Mobile_2021
+North	50000	30000
+South	40000	25000
+
+This makes it easy to compare sales for each product across different years.
+
+2. Use Case for UNPIVOT
+The UNPIVOT operation is the reverse of PIVOT. It is used to transform columns into rows. It's useful when you have a wide table (with many columns) and you want to normalize or unroll the data into a more long-format structure for easier processing or analysis.
+
+A. Normalize Data
+Flatten Data: When you have a table where multiple columns represent values for different periods (e.g., monthly data in separate columns), you might need to unpivot it into a single column representing the values with a corresponding period column.
+
+Reorganize Data for Analysis: Unpivoting is also helpful when you need to restructure data for use in tools like data warehouses or reporting platforms that work better with long-format (normalized) data.
+
+Example:
+Assume you have monthly sales data in a table like this:
+
+Product	Jan_Sales	Feb_Sales	Mar_Sales
+Laptop	5000	6000	7000
+Mobile	3000	3500	4000
+
+You might want to unpivot the data so that the sales data for each month is represented as a row instead of a column. After unpivoting, you would get:
+
+Product	Month	Sales
+Laptop	Jan	5000
+Laptop	Feb	6000
+Laptop	Mar	7000
+Mobile	Jan	3000
+Mobile	Feb	3500
+Mobile	Mar	4000
+
+This long-format data is often more useful for time-series analysis, creating reports, or applying statistical models.
+
+3. Why Pivot and Unpivot Are Important
+A. Simplify Data Presentation
+Pivot: Useful for summarizing data across multiple categories in a way that’s easier to present and understand.
+Unpivot: Helps in restructuring wide tables into long format, making it easier to perform analysis or load the data into reporting tools.
+
+B. Data Aggregation
+Pivot allows aggregation of data (such as SUM, AVG, COUNT, etc.) and makes it easy to compare categories across different dimensions (such as sales by year, product, or region).
+Unpivot can be useful in cases where the data is aggregated and needs to be broken down into individual components for more granular analysis.
+
+C. Flexible Reporting
+Pivot is particularly useful for dashboards and reports that need to show a summary of data across multiple variables in columns.
+Unpivot is useful for generating detailed breakdowns of data, especially when dealing with wide data sets with multiple columns for each period, category, or dimension.
+
+D. Data Transformation
+Pivoting and unpivoting are often part of the ETL (Extract, Transform, Load) process when moving data into a different structure or preparing it for analysis.
+They make it possible to reshape data without changing the underlying values, just changing the structure to suit the requirements of a particular analysis.
+
+4. Example of Practical Scenarios
+Scenario 1: Pivoting for Sales by Year
+A company has sales data across regions and wants to see the year-wise total sales for each product.
+Pivoting allows transforming the data such that each year becomes a column, and the total sales for each product in each year becomes the corresponding value.
+
+Scenario 2: Unpivoting for Time-Series Analysis
+A company has monthly sales data in separate columns (Jan_Sales, Feb_Sales, etc.) for each product.
+Unpivoting will help convert these monthly sales columns into rows, allowing for easier analysis and charting of time-series data.
+
+5. Key Differences Between PIVOT and UNPIVOT
+Feature	PIVOT	UNPIVOT
+Operation	Converts rows into columns	     Converts columns into rows
+Use Case	Summarizing and comparing data 	Normalizing data for easier analysis and reporting
+               across categories
+Aggregation 	Often involves aggregation (e.g., SUM, AVG)	No aggregation, just restructuring of data
+Data Orientation	Wide to narrow (more columns)	  Narrow to wide (more rows)
+
+Conclusion
+PIVOT is used when you want to summarize data or transform unique row values into column headers for easier comparison.
+UNPIVOT is used when you need to normalize data, converting multiple columns into rows, which is ideal for time-series analysis or restructuring wide datasets.
+
+1. Table Schema
+We create a table called SALES_DATA to store sales information by region, product, and sales year.
+
+Table Schema:
+
+CREATE TABLE SALES_DATA (
+    REGION VARCHAR2(50),
+    PRODUCT VARCHAR2(50),
+    SALES_YEAR NUMBER,
+    SALES_AMOUNT NUMBER
+);
+
+2. Insert Sample Data
+We insert data for different regions, products, and years.
+
+
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('North', 'Laptop', 2021, 50000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('North', 'Mobile', 2021, 30000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('South', 'Laptop', 2021, 40000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('South', 'Mobile', 2021, 25000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('North', 'Laptop', 2022, 60000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('North', 'Mobile', 2022, 35000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('South', 'Laptop', 2022, 45000);
+INSERT INTO SALES_DATA (REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT) VALUES ('South', 'Mobile', 2022, 28000);
+
+3. Basic Query to View Data
+
+SELECT * FROM SALES_DATA;
+
+Output:
+
+REGION	PRODUCT	SALES_YEAR	SALES_AMOUNT
+North	Laptop	2021	50000
+North	Mobile	2021	30000
+South	Laptop	2021	40000
+South	Mobile	2021	25000
+North	Laptop	2022	60000
+North	Mobile	2022	35000
+South	Laptop	2022	45000
+South	Mobile	2022	28000
+
+4. Pivot Example
+Objective:
+Transform the data to show SALES_YEAR as columns and SALES_AMOUNT as values for each REGION and PRODUCT.
+
+SELECT *
+FROM (
+    SELECT REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT
+    FROM SALES_DATA
+)
+PIVOT (
+    SUM(SALES_AMOUNT) -- Aggregation
+    FOR SALES_YEAR IN (2021 AS "Year_2021", 2022 AS "Year_2022") -- Column transformation
+);
+
+Output:
+
+REGION	PRODUCT	Year_2021	Year_2022
+North	Laptop	50000	60000
+North	Mobile	30000	35000
+South	Laptop	40000	45000
+South	Mobile	25000	28000
+
+5. Explanation of the Query
+Inner Query (SELECT REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT):
+Prepares the data to be transformed, extracting the relevant columns.
+
+PIVOT Clause:
+
+SUM(SALES_AMOUNT): Aggregates the sales amounts.
+FOR SALES_YEAR IN (2021 AS "Year_2021", 2022 AS "Year_2022"): Converts SALES_YEAR values (2021, 2022) into columns.
+
+6. Advanced Pivot Example
+Objective:
+Include totals for each REGION and PRODUCT.
+
+sql
+Copy
+Edit
+SELECT *
+FROM (
+    SELECT REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT
+    FROM SALES_DATA
+)
+PIVOT (
+    SUM(SALES_AMOUNT) 
+    FOR SALES_YEAR IN (2021 AS "Year_2021", 2022 AS "Year_2022", NULL AS "Total")
+);
+
+Output:
+
+REGION	PRODUCT	Year_2021	Year_2022	Total
+North	Laptop	50000	60000	110000
+North	Mobile	30000	35000	65000
+South	Laptop	40000	45000	85000
+South	Mobile	25000	28000	53000
+
+7. Unpivot Example (Optional)
+You can reverse the pivot operation using UNPIVOT to convert columns back into rows.
+
+sql
+Copy
+Edit
+SELECT REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT
+FROM (
+    SELECT REGION, PRODUCT, Year_2021, Year_2022
+    FROM (
+        SELECT REGION, PRODUCT, SALES_YEAR, SALES_AMOUNT
+        FROM SALES_DATA
+    )
+    PIVOT (
+        SUM(SALES_AMOUNT)
+        FOR SALES_YEAR IN (2021 AS "Year_2021", 2022 AS "Year_2022")
+    )
+)
+UNPIVOT (
+    SALES_AMOUNT FOR SALES_YEAR IN (Year_2021 AS 2021, Year_2022 AS 2022)
+);
+
+Output:
+
+REGION	PRODUCT	SALES_YEAR	SALES_AMOUNT
+North	Laptop	2021	50000
+North	Laptop	2022	60000
+North	Mobile	2021	30000
+North	Mobile	2022	35000
+South	Laptop	2021	40000
+South	Laptop	2022	45000
+South	Mobile	2021	25000
+South	Mobile	2022	28000
+
+-----------------------------------------------------------------------------------------
+CTE(Comman Table Expression)
+
+WITH Clause in Oracle (Common Table Expressions - CTEs)
+The WITH clause in Oracle allows you to define Common Table Expressions (CTEs). A CTE is a temporary result set that you can reference within a SELECT, INSERT, UPDATE, or DELETE statement. It is useful for simplifying complex queries and improving readability.
+
+Syntax for WITH Clause
+
+WITH CTE_name AS (
+    -- SQL Query for the CTE
+    SELECT column1, column2, ...
+    FROM table_name
+    WHERE condition
+)
+SELECT column1, column2
+FROM CTE_name
+WHERE condition;
+
+CTE_name: The name of the CTE, which can be referenced in the main query.
+SQL Query for the CTE: The query that defines the CTE. It can be any valid SELECT statement.
+Main Query: The query that uses the CTE result.
+
+Example 1: Basic WITH Clause Usage
+Let's start with a simple example using the EMPLOYEES table.
+
+Table Schema: EMPLOYEES
+
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID NUMBER PRIMARY KEY,
+    EMPLOYEE_NAME VARCHAR2(100),
+    DEPARTMENT_ID NUMBER,
+    SALARY NUMBER
+);
+
+Sample Data
+
+-- Insert sample data into EMPLOYEES table
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY) 
+VALUES (1, 'John Doe', 10, 50000);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY) 
+VALUES (2, 'Jane Smith', 20, 60000);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY) 
+VALUES (3, 'Michael Johnson', 10, 55000);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY) 
+VALUES (4, 'Alice Green', 30, 70000);
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, DEPARTMENT_ID, SALARY) 
+VALUES (5, 'Robert Brown', 10, 45000);
+
+Example 1: Simple WITH Clause
+Let's use the WITH clause to calculate the average salary for each department and then find employees who earn more than the average salary in their respective departments.
+
+WITH DepartmentAvgSalary AS (
+    SELECT DEPARTMENT_ID, AVG(SALARY) AS AVG_SALARY
+    FROM EMPLOYEES
+    GROUP BY DEPARTMENT_ID
+)
+SELECT e.EMPLOYEE_NAME, e.SALARY, e.DEPARTMENT_ID, d.AVG_SALARY
+FROM EMPLOYEES e
+JOIN DepartmentAvgSalary d ON e.DEPARTMENT_ID = d.DEPARTMENT_ID
+WHERE e.SALARY > d.AVG_SALARY;
+
+Explanation:
+
+The WITH clause defines a CTE DepartmentAvgSalary which calculates the average salary for each department.
+The main query selects employees whose salary is greater than the average salary for their department.
+
+Output:
+
+EMPLOYEE_NAME	SALARY	DEPARTMENT_ID	AVG_SALARY
+Jane Smith	60000	20	60000
+Michael Johnson	55000	10	50000
+
+Example 2: Multiple CTEs in the WITH Clause
+You can define multiple CTEs within the same WITH clause. For example, let's calculate the total salary for each department and find departments where the total salary exceeds a threshold.
+
+WITH DepartmentAvgSalary AS (
+    SELECT DEPARTMENT_ID, AVG(SALARY) AS AVG_SALARY
+    FROM EMPLOYEES
+    GROUP BY DEPARTMENT_ID
+),
+DepartmentTotalSalary AS (
+    SELECT DEPARTMENT_ID, SUM(SALARY) AS TOTAL_SALARY
+    FROM EMPLOYEES
+    GROUP BY DEPARTMENT_ID
+)
+SELECT e.DEPARTMENT_ID, e.EMPLOYEE_NAME, e.SALARY, d.AVG_SALARY, t.TOTAL_SALARY
+FROM EMPLOYEES e
+JOIN DepartmentAvgSalary d ON e.DEPARTMENT_ID = d.DEPARTMENT_ID
+JOIN DepartmentTotalSalary t ON e.DEPARTMENT_ID = t.DEPARTMENT_ID
+WHERE t.TOTAL_SALARY > 150000;
+
+Explanation:
+
+The WITH clause defines two CTEs:
+DepartmentAvgSalary: Calculates the average salary for each department.
+DepartmentTotalSalary: Calculates the total salary for each department.
+The main query joins these CTEs and filters departments with total salaries greater than 150,000.
+
+Output:
+
+DEPARTMENT_ID	EMPLOYEE_NAME	SALARY	AVG_SALARY	TOTAL_SALARY
+10	John Doe	50000	50000	160000
+10	Michael Johnson	55000	50000	160000
+10	Robert Brown	45000	50000	160000
+
+Example 3: Recursive WITH Clause (Hierarchical Data)
+The WITH clause can also be used for recursive queries, such as when working with hierarchical data (e.g., organizational structures, bill of materials). A recursive CTE allows you to query data that has a hierarchical relationship.
+
+Table Schema: EMPLOYEES (Hierarchical Example)
+
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID NUMBER PRIMARY KEY,
+    EMPLOYEE_NAME VARCHAR2(100),
+    MANAGER_ID NUMBER
+);
+
+Sample Data
+
+-- Insert sample data into EMPLOYEES table
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID) 
+VALUES (1, 'John Doe', NULL); -- CEO
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID) 
+VALUES (2, 'Jane Smith', 1); -- Reports to John Doe
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID) 
+VALUES (3, 'Michael Johnson', 1); -- Reports to John Doe
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID) 
+VALUES (4, 'Alice Green', 2); -- Reports to Jane Smith
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID) 
+VALUES (5, 'Robert Brown', 3); -- Reports to Michael Johnson
+
+Recursive Query Example: Organizational Hierarchy
+Let’s use a recursive WITH clause to display the organizational hierarchy starting from the CEO (John Doe).
+
+WITH EmployeeHierarchy AS (
+    -- Anchor member: Select the CEO (John Doe)
+    SELECT EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, 1 AS LEVEL
+    FROM EMPLOYEES
+    WHERE EMPLOYEE_NAME = 'John Doe'
+    
+    UNION ALL
+    
+    -- Recursive member: Select employees reporting to the previous level
+    SELECT e.EMPLOYEE_ID, e.EMPLOYEE_NAME, e.MANAGER_ID, eh.LEVEL + 1
+    FROM EMPLOYEES e
+    JOIN EmployeeHierarchy eh ON e.MANAGER_ID = eh.EMPLOYEE_ID
+)
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, LEVEL
+FROM EmployeeHierarchy
+ORDER BY LEVEL;
+
+Explanation:
+
+The WITH clause defines a recursive CTE EmployeeHierarchy:
+The anchor member selects the CEO (John Doe).
+The recursive member selects employees who report to the current employee in the hierarchy.
+The query returns the employee hierarchy with each employee's LEVEL in the organization.
+
+Output:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	LEVEL
+1	John Doe	1
+2	Jane Smith	2
+3	Michael Johnson	2
+4	Alice Green	3
+5	Robert Brown	3
+
+
+
+Recursive and Non-Recursive Expressions in Oracle
+In Oracle, recursive and non-recursive expressions are commonly used with hierarchical queries. These types of queries are often used to handle parent-child relationships in data, such as organizational charts, folder structures, or bill-of-materials relationships. Oracle provides the CONNECT BY clause for hierarchical queries, and within this, there are recursive and non-recursive parts.
+
+Non-Recursive Expression: This is the part of the query that initializes the result set and is evaluated once.
+Recursive Expression: This part defines how to recursively navigate through hierarchical data to generate the results.
+The recursive query continues to run until it can no longer find new rows that satisfy the recursive condition.
+
+1. Example Scenario: Organization Hierarchy
+Let’s create a simple organization structure to demonstrate both recursive and non-recursive queries.
+
+Table Schema
+We’ll create a table called EMPLOYEES to represent an organizational hierarchy, where each employee has a manager (parent-child relationship).
+
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID NUMBER PRIMARY KEY,
+    EMPLOYEE_NAME VARCHAR2(100),
+    MANAGER_ID NUMBER,
+    JOB_TITLE VARCHAR2(100)
+);
+
+Insert Sample Data
+Here’s some sample data for employees, showing who reports to whom:
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, JOB_TITLE) 
+VALUES (1, 'John Doe', NULL, 'CEO');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, JOB_TITLE) 
+VALUES (2, 'Jane Smith', 1, 'VP of Sales');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, JOB_TITLE) 
+VALUES (3, 'Michael Johnson', 1, 'VP of Marketing');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, JOB_TITLE) 
+VALUES (4, 'Emily Davis', 2, 'Sales Manager');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, JOB_TITLE) 
+VALUES (5, 'David Brown', 2, 'Sales Representative');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, JOB_TITLE) 
+VALUES (6, 'Linda Clark', 3, 'Marketing Manager');
+
+Here, John Doe is the CEO (no manager), and other employees have managers represented by MANAGER_ID.
+
+2. Non-Recursive Query
+A non-recursive query returns the initial set of rows from the hierarchical data, usually representing the root node in the hierarchy (e.g., the CEO or the top-level manager).
+
+Non-Recursive Query Example (Get the Root Employees - CEO)
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE
+FROM EMPLOYEES
+WHERE MANAGER_ID IS NULL;
+
+This query will return the root node of the hierarchy:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE
+1	John Doe	CEO
+
+In this case, John Doe is the only employee with no manager, making him the root of the hierarchy.
+
+3. Recursive Query
+A recursive query in Oracle typically uses the CONNECT BY clause, which allows you to navigate through the hierarchical data and return rows in a hierarchical order.
+
+The recursive part of the query defines how to find child rows based on parent rows.
+
+Recursive Query Example (Get the Entire Hierarchy)
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE, MANAGER_ID
+FROM EMPLOYEES
+START WITH MANAGER_ID IS NULL  -- Non-recursive: Starting point (CEO)
+CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;  -- Recursive: Navigate down the hierarchy
+
+Explanation:
+
+Non-Recursive Expression (START WITH): This is where the query starts. In this case, it starts with the employee who has no manager (MANAGER_ID IS NULL), i.e., the CEO.
+
+Recursive Expression (CONNECT BY): This defines how to navigate the hierarchy. The PRIOR keyword refers to the parent row, and CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID means that for each employee, their manager is the prior employee.
+
+Output:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE	MANAGER_ID
+1	John Doe	CEO	NULL
+2	Jane Smith	VP of Sales	1
+4	Emily Davis	Sales Manager	2
+5	David Brown	Sales Representative	2
+3	Michael Johnson	VP of Marketing	1
+6	Linda Clark	Marketing Manager	3
+
+This query returns all employees in a hierarchical structure, starting from the CEO and traversing down the chain of command.
+
+4. Using LEVEL in Recursive Queries
+The LEVEL pseudo column is automatically generated in recursive queries, representing the depth of the current row in the hierarchy.
+
+Recursive Query with LEVEL (Get Hierarchy and Depth Level)
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE, MANAGER_ID, LEVEL
+FROM EMPLOYEES
+START WITH MANAGER_ID IS NULL
+CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;
+
+Output:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE	MANAGER_ID	LEVEL
+1	John Doe	CEO	NULL	1
+2	Jane Smith	VP of Sales	1	2
+4	Emily Davis	Sales Manager	2	3
+5	David Brown	Sales Representative	2	3
+3	Michael Johnson	VP of Marketing	1	2
+6	Linda Clark	Marketing Manager	3	3
+
+In this query, LEVEL shows the depth of each employee in the hierarchy, with the CEO at level 1, the VPs at level 2, and so on.
+
+5. Non-Recursive Query with Recursive Part
+You can also combine non-recursive and recursive queries to handle complex hierarchical structures. For example, you might want to get all employees under a specific manager but also include their details without performing a full hierarchy traversal.
+
+Example: Non-Recursive + Recursive Query (Get Employees under a Specific Manager)
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE, MANAGER_ID
+FROM EMPLOYEES
+START WITH EMPLOYEE_ID = 2  -- Non-recursive: Starting with the employee (Jane Smith)
+CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;  -- Recursive: Find employees under Jane
+
+Output:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE	MANAGER_ID
+2	Jane Smith	VP of Sales	1
+4	Emily Davis	Sales Manager	2
+5	David Brown	Sales Representative	2
+
+This query starts with Jane Smith and recursively finds her subordinates (employees under her).
+
+Conclusion
+Non-Recursive Part: Initializes the query (e.g., starting with the root of the hierarchy like the CEO or a specific manager).
+
+Recursive Part: Defines how to find the child rows and navigate through the hierarchy.
+Using recursive queries with the CONNECT BY clause allows you to efficiently manage hierarchical data, making it easy to query and analyze data such as organizational structures, bill-of-materials, or product hierarchies.
+
+
+
+Recursive and Non-Recursive Expressions in Oracle - Complex Example
+In this example, we'll explore a more complex hierarchical structure using recursive and non-recursive expressions. The structure will represent a company's organizational hierarchy, but we'll add a few more layers, like departments, teams, and employee levels.
+
+Let's imagine a multi-level company hierarchy where each employee reports to a manager. Employees may belong to different departments and teams. Our goal is to create a complex structure and explore how to query it with both recursive and non-recursive expressions.
+
+1. Table Schema and Data
+We will create two tables: one for employees and one for departments.
+
+Table 1: EMPLOYEES
+
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID NUMBER PRIMARY KEY,
+    EMPLOYEE_NAME VARCHAR2(100),
+    MANAGER_ID NUMBER,
+    DEPARTMENT_ID NUMBER,
+    JOB_TITLE VARCHAR2(100)
+);
+
+Table 2: DEPARTMENTS
+
+CREATE TABLE DEPARTMENTS (
+    DEPARTMENT_ID NUMBER PRIMARY KEY,
+    DEPARTMENT_NAME VARCHAR2(100)
+);
+
+Inserting Sample Data into DEPARTMENTS
+
+-- Departments
+INSERT INTO DEPARTMENTS (DEPARTMENT_ID, DEPARTMENT_NAME) VALUES (1, 'Sales');
+INSERT INTO DEPARTMENTS (DEPARTMENT_ID, DEPARTMENT_NAME) VALUES (2, 'Marketing');
+INSERT INTO DEPARTMENTS (DEPARTMENT_ID, DEPARTMENT_NAME) VALUES (3, 'Engineering');
+INSERT INTO DEPARTMENTS (DEPARTMENT_ID, DEPARTMENT_NAME) VALUES (4, 'Human Resources');
+
+Inserting Sample Data into EMPLOYEES
+
+-- Employees: EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (1, 'John Doe', NULL, 1, 'CEO');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (2, 'Jane Smith', 1, 1, 'VP of Sales');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (3, 'Michael Johnson', 1, 2, 'VP of Marketing');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (4, 'Emily Davis', 2, 1, 'Sales Manager');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (5, 'David Brown', 2, 1, 'Sales Representative');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (6, 'Linda Clark', 3, 2, 'Marketing Manager');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (7, 'William White', 3, 2, 'Marketing Specialist');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (8, 'James Taylor', 6, 2, 'Marketing Associate');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (9, 'Sarah Green', 1, 3, 'VP of Engineering');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (10, 'Alice Brown', 9, 3, 'Engineering Manager');
+
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, EMPLOYEE_NAME, MANAGER_ID, DEPARTMENT_ID, JOB_TITLE) 
+VALUES (11, 'Robert Lee', 10, 3, 'Senior Software Engineer');
+
+2. Non-Recursive Query
+A non-recursive query retrieves the root of the hierarchy or the top-level rows in the hierarchy.
+
+For example, to retrieve the top-level managers (in this case, the CEO and VPs), you would use a non-recursive query to find employees who don't have a manager.
+
+Non-Recursive Query Example
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE
+FROM EMPLOYEES
+WHERE MANAGER_ID IS NULL;
+
+This query will return the root employees (those with MANAGER_ID IS NULL):
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE
+1	John Doe	CEO
+2	Jane Smith	VP of Sales
+3	Michael Johnson	VP of Marketing
+9	Sarah Green	VP of Engineering
+
+3. Recursive Query
+A recursive query is used to retrieve hierarchical data by navigating down the tree (e.g., finding all employees who report to a specific manager). The recursive expression helps to traverse through the hierarchy.
+
+Recursive Query Example (Full Hierarchy)
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE, MANAGER_ID, DEPARTMENT_ID, LEVEL
+FROM EMPLOYEES
+START WITH MANAGER_ID IS NULL  -- Non-recursive part: Start from CEO (no manager)
+CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;  -- Recursive part: Navigate the hierarchy
+
+Explanation:
+
+Non-Recursive Expression: The START WITH MANAGER_ID IS NULL expression identifies the top-level employee (CEO) as the starting point.
+
+Recursive Expression: The CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID part defines the recursive relationship, indicating that the query should find employees whose MANAGER_ID matches the EMPLOYEE_ID of the previous row.
+
+Output:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE	MANAGER_ID	DEPARTMENT_ID	LEVEL
+1	John Doe	CEO	NULL	1	1
+2	Jane Smith	VP of Sales	1	1	2
+4	Emily Davis	Sales Manager	2	1	3
+5	David Brown	Sales Representative	2	1	3
+3	Michael Johnson	VP of Marketing	1	2	2
+6	Linda Clark	Marketing Manager	3	2	3
+7	William White	Marketing Specialist	3	2	3
+8	James Taylor	Marketing Associate	6	2	4
+9	Sarah Green	VP of Engineering	1	3	2
+10	Alice Brown	Engineering Manager	9	3	3
+11	Robert Lee	Senior Software Engineer	10	3	4
+
+Explanation of the Output:
+
+The LEVEL column shows the depth of each employee in the hierarchy.
+The hierarchy starts from the CEO (Level 1) and traverses down to the Senior Software Engineer (Level 4).
+
+4. Recursive Query with Additional Criteria
+You can add more filters or conditions to your recursive queries. For instance, to retrieve only employees in the Sales department and their subordinates:
+
+Recursive Query for Sales Department
+
+SELECT EMPLOYEE_ID, EMPLOYEE_NAME, JOB_TITLE, MANAGER_ID, DEPARTMENT_ID, LEVEL
+FROM EMPLOYEES
+WHERE DEPARTMENT_ID = 1  -- Non-recursive: Only Sales department
+START WITH MANAGER_ID IS NULL  -- Non-recursive: Start from CEO
+CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;  -- Recursive: Get subordinates
+
+Output:
+
+EMPLOYEE_ID	EMPLOYEE_NAME	JOB_TITLE	MANAGER_ID	DEPARTMENT_ID	LEVEL
+1	John Doe	CEO	NULL	1	1
+2	Jane Smith	VP of Sales	1	1	2
+4	Emily Davis	Sales Manager	2	1	3
+5	David Brown	Sales Representative	2	1	3
+
+This query returns all employees within the Sales department (Department ID 1) and their subordinates.
+
+--------------------------------------------------------------------------------------------
+
+REGEXP Functions in Oracle
+In Oracle, the REGEXP functions allow you to use regular expressions to search and manipulate strings. These functions are particularly useful for pattern matching, validation, and data extraction. The most commonly used REGEXP functions are:
+
+REGEXP_LIKE: Checks if a string matches a regular expression pattern.
+REGEXP_INSTR: Returns the position of the first match of a regular expression.
+REGEXP_SUBSTR: Extracts the substring that matches a regular expression.
+REGEXP_REPLACE: Replaces the substring that matches a regular expression.
+REGEXP_COUNT: Counts the number of times the regular expression matches a string.
+
+1. Table Schema and Sample Data
+We will use the CUSTOMERS table to demonstrate the REGEXP functions. This table stores customer information, including their phone numbers and email addresses.
+
+Table Schema: CUSTOMERS
+
+CREATE TABLE CUSTOMERS (
+    CUSTOMER_ID NUMBER PRIMARY KEY,
+    CUSTOMER_NAME VARCHAR2(100),
+    PHONE_NUMBER VARCHAR2(15),
+    EMAIL VARCHAR2(100)
+);
+
+Insert Sample Data into CUSTOMERS
+We will insert some sample data into the CUSTOMERS table with phone numbers and emails that we will manipulate and search using REGEXP functions.
+
+-- Sample data for CUSTOMERS table
+INSERT INTO CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER, EMAIL)
+VALUES (1, 'John Doe', '123-456-7890', 'john.doe@example.com');
+
+INSERT INTO CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER, EMAIL)
+VALUES (2, 'Jane Smith', '987-654-3210', 'jane.smith@domain.org');
+
+INSERT INTO CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER, EMAIL)
+VALUES (3, 'Michael Johnson', '555-123-4567', 'michael.johnson@example.net');
+
+INSERT INTO CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER, EMAIL)
+VALUES (4, 'Emily Davis', '444-222-8888', 'emily.davis@domain.edu');
+
+INSERT INTO CUSTOMERS (CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER, EMAIL)
+VALUES (5, 'David Brown', '333-444-5555', 'david.brown@website.com');
+
+2. REGEXP Functions Usage
+Let's explore various REGEXP functions using the CUSTOMERS table data.
+
+Example 1: REGEXP_LIKE
+The REGEXP_LIKE function checks if a string matches a given regular expression pattern. It returns TRUE if the string matches the pattern and FALSE otherwise.
+
+Check if Phone Numbers Follow a Specific Pattern
+We will check if the phone numbers follow the pattern XXX-XXX-XXXX, where X is a digit.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER
+FROM CUSTOMERS
+WHERE REGEXP_LIKE(PHONE_NUMBER, '^\d{3}-\d{3}-\d{4}$');
+
+Explanation:
+
+^\d{3}-\d{3}-\d{4}$: This pattern matches a string that starts (^) and ends ($) with three digits (\d{3}), followed by a hyphen (-), then another three digits, another hyphen, and four digits.
+The REGEXP_LIKE function will return TRUE if the phone number matches this pattern.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	PHONE_NUMBER
+1	John Doe	123-456-7890
+2	Jane Smith	987-654-3210
+3	Michael Johnson	555-123-4567
+4	Emily Davis	444-222-8888
+5	David Brown	333-444-5555
+
+Example 2: REGEXP_INSTR
+The REGEXP_INSTR function returns the position of the first occurrence of a pattern in a string.
+
+Find the Position of the First Digit in Phone Number
+We will use REGEXP_INSTR to find the position of the first digit in the PHONE_NUMBER column.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER,
+       REGEXP_INSTR(PHONE_NUMBER, '\d', 1, 1) AS FIRST_DIGIT_POSITION
+FROM CUSTOMERS;
+
+Explanation:
+
+\d: Represents any digit.
+
+REGEXP_INSTR(PHONE_NUMBER, '\d', 1, 1): Finds the position of the first digit in the PHONE_NUMBER field.
+1 is the starting position for the search.
+The second 1 specifies that we want the position of the first occurrence.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	PHONE_NUMBER	FIRST_DIGIT_POSITION
+1	John Doe	123-456-7890	1
+2	Jane Smith	987-654-3210	1
+3	Michael Johnson	555-123-4567	1
+4	Emily Davis	444-222-8888	1
+5	David Brown	333-444-5555	1
+
+Example 3: REGEXP_SUBSTR
+The REGEXP_SUBSTR function extracts the substring that matches a regular expression pattern.
+
+Extract the First 3 Digits from Phone Number
+We will use REGEXP_SUBSTR to extract the first three digits from the PHONE_NUMBER.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER,
+       REGEXP_SUBSTR(PHONE_NUMBER, '\d{3}', 1, 1) AS FIRST_THREE_DIGITS
+FROM CUSTOMERS;
+Explanation:
+
+\d{3}: This pattern matches exactly three digits.
+REGEXP_SUBSTR(PHONE_NUMBER, '\d{3}', 1, 1): Extracts the first occurrence of three digits from the PHONE_NUMBER.
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	PHONE_NUMBER	FIRST_THREE_DIGITS
+1	John Doe	123-456-7890	123
+2	Jane Smith	987-654-3210	987
+3	Michael Johnson	555-123-4567	555
+4	Emily Davis	444-222-8888	444
+5	David Brown	333-444-5555	333
+
+Example 4: REGEXP_REPLACE
+The REGEXP_REPLACE function replaces substrings that match a regular expression pattern with a specified string.
+
+Remove Non-Digit Characters from Phone Numbers
+We will use REGEXP_REPLACE to remove any non-digit characters from the PHONE_NUMBER field.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER,
+       REGEXP_REPLACE(PHONE_NUMBER, '[^\d]', '') AS CLEANED_PHONE_NUMBER
+FROM CUSTOMERS;
+
+Explanation:
+
+[^\d]: This pattern matches any character that is not a digit.
+REGEXP_REPLACE(PHONE_NUMBER, '[^\d]', ''): Replaces any non-digit character with an empty string (i.e., removes it).
+
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	PHONE_NUMBER	CLEANED_PHONE_NUMBER
+1	John Doe	123-456-7890	1234567890
+2	Jane Smith	987-654-3210	9876543210
+3	Michael Johnson	555-123-4567	5551234567
+4	Emily Davis	444-222-8888	4442228888
+5	David Brown	333-444-5555	3334445555
+
+Example 5: REGEXP_COUNT
+The REGEXP_COUNT function counts the number of occurrences of a pattern in a string.
+
+Count the Number of Digits in the Phone Number
+We will use REGEXP_COUNT to count the number of digits in the PHONE_NUMBER field.
+
+SELECT CUSTOMER_ID, CUSTOMER_NAME, PHONE_NUMBER,
+       REGEXP_COUNT(PHONE_NUMBER, '\d') AS DIGIT_COUNT
+FROM CUSTOMERS;
+
+Explanation:
+
+\d: Matches any digit.
+REGEXP_COUNT(PHONE_NUMBER, '\d'): Counts the number of digits in the PHONE_NUMBER field.
+Output:
+
+CUSTOMER_ID	CUSTOMER_NAME	PHONE_NUMBER	DIGIT_COUNT
+1	John Doe	123-456-7890	10
+2	Jane Smith	987-654-3210	10
+3	Michael Johnson	555-123-4567	10
+4	Emily Davis	444-222-8888	10
+5	David Brown	333-444-5555	10
+
+While Oracle does not have direct functions named REGEXP_CONTAINS, REGEXP_EXTRACT, or REGEXP_EXTRACT_ALL as they exist in other databases, equivalent functionality can be achieved using Oracle's regular expression functions.
+
+1. Table Schema and Sample Data
+Create a Table
+sql
+Copy
+Edit
+CREATE TABLE employees (
+    emp_id NUMBER PRIMARY KEY,
+    emp_name VARCHAR2(100),
+    emp_email VARCHAR2(100)
+);
+Insert Sample Data
+sql
+Copy
+Edit
+INSERT INTO employees (emp_id, emp_name, emp_email)
+VALUES (1, 'Alice Johnson', 'alice.johnson@example.com');
+
+INSERT INTO employees (emp_id, emp_name, emp_email)
+VALUES (2, 'Bob Smith', 'bob_smith@sample.org');
+
+INSERT INTO employees (emp_id, emp_name, emp_email)
+VALUES (3, 'Charlie Brown', 'charlie.brown@workplace.net');
+2. Equivalent of REGEXP_CONTAINS
+Check if a Pattern Exists in a Column
+Use REGEXP_LIKE to determine if a pattern exists in a column. For example, find employees whose email domain is "example.com":
+
+sql
+Copy
+Edit
+SELECT emp_id, emp_name, emp_email
+FROM employees
+WHERE REGEXP_LIKE(emp_email, '@example\.com$');
+Output:
+
+EMP_ID	EMP_NAME	EMP_EMAIL
+1	Alice Johnson	alice.johnson@example.com
+3. Equivalent of REGEXP_EXTRACT
+Extract a Specific Pattern
+Use REGEXP_SUBSTR to extract a part of the text that matches a pattern. For example, extract the domain from email addresses:
+
+sql
+Copy
+Edit
+SELECT emp_id, emp_name, REGEXP_SUBSTR(emp_email, '@[^.]+') AS email_domain
+FROM employees;
+Output:
+
+EMP_ID	EMP_NAME	EMAIL_DOMAIN
+1	Alice Johnson	@example
+2	Bob Smith	@sample
+3	Charlie Brown	@workplace
+4. Equivalent of REGEXP_EXTRACT_ALL
+Extract All Matches of a Pattern
+To extract all matches of a pattern, Oracle doesn’t provide a direct equivalent. However, you can use REGEXP_SUBSTR with a starting position in a loop or recursive query.
+
+For example, extract all words from a name:
+
+sql
+Copy
+Edit
+WITH recursive_matches AS (
+    SELECT 
+        emp_id,
+        emp_name,
+        REGEXP_SUBSTR(emp_name, '[^ ]+', 1, 1) AS word,
+        1 AS match_position
+    FROM employees
+    UNION ALL
+    SELECT 
+        emp_id,
+        emp_name,
+        REGEXP_SUBSTR(emp_name, '[^ ]+', 1, match_position + 1),
+        match_position + 1
+    FROM recursive_matches
+    WHERE REGEXP_SUBSTR(emp_name, '[^ ]+', 1, match_position + 1) IS NOT NULL
+)
+SELECT emp_id, emp_name, word
+FROM recursive_matches
+ORDER BY emp_id, match_position;
+Output:
+
+EMP_ID	EMP_NAME	WORD
+1	Alice Johnson	Alice
+1	Alice Johnson	Johnson
+2	Bob Smith	Bob
+2	Bob Smith	Smith
+3	Charlie Brown	Charlie
+3	Charlie Brown	Brown
+5. Practical Examples
+Scenario 1: Validate Email Addresses
+Find rows with invalid email formats:
+
+sql
+Copy
+Edit
+SELECT emp_id, emp_email
+FROM employees
+WHERE NOT REGEXP_LIKE(emp_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+Scenario 2: Extract Top-Level Domains
+Extract the top-level domain (e.g., .com, .org, .net) from email addresses:
+
+sql
+Copy
+Edit
+SELECT emp_id, emp_email, REGEXP_SUBSTR(emp_email, '\.[a-z]{2,}$') AS top_level_domain
+FROM employees;
+Output:
+
+EMP_ID	EMP_EMAIL	TOP_LEVEL_DOMAIN
+1	alice.johnson@example.com	.com
+2	bob_smith@sample.org	.org
+3	charlie.brown@workplace.net	.net
+------------------------------------------------------------------------------------------------
+In Oracle, metadata refers to the data that describes the structure, constraints, relationships, and properties of the database schema. Oracle maintains a set of system tables (also known as data dictionary tables) that store metadata about the database objects. These system tables are essential for understanding the internal workings of the Oracle database.
+
+1. Common Oracle Metadata Tables (Data Dictionary Views)
+Oracle provides several views in the SYS schema to access metadata about the database. These are often referred to as the data dictionary or system catalog views.
+
+Below are some of the key system tables/views in Oracle:
+
+a. DBA Views (Requires DBA privileges)
+DBA_TABLES: Provides information about all tables in the database.
+
+SELECT * FROM DBA_TABLES WHERE OWNER = 'HR';
+
+DBA_TAB_COLUMNS: Provides information about all columns in all tables in the database.
+
+SELECT * FROM DBA_TAB_COLUMNS WHERE TABLE_NAME = 'EMPLOYEES';
+
+DBA_INDEXES: Provides information about all indexes in the database.
+
+SELECT * FROM DBA_INDEXES WHERE TABLE_NAME = 'EMPLOYEES';
+
+DBA_USERS: Displays information about all users in the database.
+
+SELECT * FROM DBA_USERS;
+
+DBA_OBJECTS: Displays information about all objects (tables, views, indexes, etc.) in the database.
+
+SELECT * FROM DBA_OBJECTS WHERE OBJECT_TYPE = 'TABLE';
+
+DBA_CONSTRAINTS: Displays information about constraints (primary key, foreign key, check, etc.).
+
+SELECT * FROM DBA_CONSTRAINTS WHERE TABLE_NAME = 'EMPLOYEES';
+
+b. ALL Views (Accessible to all users)
+ALL_TABLES: Provides information about all tables the user has access to.
+
+SELECT * FROM ALL_TABLES;
+
+ALL_TAB_COLUMNS: Provides information about columns in all tables the user has access to.
+
+SELECT * FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = 'EMPLOYEES';
+
+ALL_OBJECTS: Displays information about all objects the user has access to.
+
+SELECT * FROM ALL_OBJECTS WHERE OBJECT_TYPE = 'VIEW';
+
+ALL_CONSTRAINTS: Displays information about constraints on tables the user has access to.
+
+SELECT * FROM ALL_CONSTRAINTS WHERE TABLE_NAME = 'EMPLOYEES';
+
+c. USER Views (Accessible to the current user)
+USER_TABLES: Provides information about the tables owned by the current user.
+
+SELECT * FROM USER_TABLES;
+
+USER_TAB_COLUMNS: Provides information about columns in tables owned by the current user.
+
+SELECT * FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'EMPLOYEES';
+
+USER_OBJECTS: Displays information about all objects owned by the current user.
+
+SELECT * FROM USER_OBJECTS WHERE OBJECT_TYPE = 'TABLE';
+
+USER_CONSTRAINTS: Displays information about constraints on tables owned by the current user.
+
+SELECT * FROM USER_CONSTRAINTS WHERE TABLE_NAME = 'EMPLOYEES';
+
+2. Key Metadata Tables (Detailed Overview)
+Here are some of the most useful metadata tables/views in Oracle:
+
+a. ALL_TAB_COLUMNS
+Purpose: Lists all the columns of the tables accessible to the user.
+
+Important columns:
+OWNER: The schema that owns the table.
+TABLE_NAME: The name of the table.
+COLUMN_NAME: The name of the column.
+DATA_TYPE: The data type of the column.
+DATA_LENGTH: The length of the column.
+NULLABLE: Whether the column allows NULL values.
+
+Example:
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE
+FROM ALL_TAB_COLUMNS
+WHERE OWNER = 'HR' AND TABLE_NAME = 'EMPLOYEES';
+
+b. ALL_TABLES
+Purpose: Lists all the tables accessible to the user.
+Important columns:
+OWNER: The schema that owns the table.
+TABLE_NAME: The name of the table.
+TABLESPACE_NAME: The tablespace in which the table resides.
+NUM_ROWS: The number of rows in the table (updated via ANALYZE command).
+
+Example:
+
+SELECT TABLE_NAME, NUM_ROWS
+FROM ALL_TABLES
+WHERE OWNER = 'HR';
+
+c. ALL_INDEXES
+Purpose: Lists all indexes accessible to the user.
+Important columns:
+INDEX_NAME: The name of the index.
+TABLE_NAME: The name of the table associated with the index.
+UNIQUENESS: Indicates whether the index is unique or not.
+
+Example:
+
+SELECT INDEX_NAME, TABLE_NAME, UNIQUENESS
+FROM ALL_INDEXES
+WHERE OWNER = 'HR';
+
+d. DBA_OBJECTS
+Purpose: Displays all objects (tables, views, indexes, etc.) in the database.
+Important columns:
+OBJECT_NAME: The name of the object.
+OBJECT_TYPE: The type of the object (TABLE, VIEW, INDEX, etc.).
+OWNER: The schema that owns the object.
+
+Example:
+
+SELECT OBJECT_NAME, OBJECT_TYPE
+FROM DBA_OBJECTS
+WHERE OWNER = 'HR';
+
+e. DBA_USERS
+Purpose: Provides information about all users in the database.
+Important columns:
+USERNAME: The name of the user.
+USER_ID: The ID of the user.
+ACCOUNT_STATUS: The status of the account (OPEN, LOCKED, etc.).
+
+Example:
+
+SELECT USERNAME, ACCOUNT_STATUS
+FROM DBA_USERS;
+
+f. DBA_CONSTRAINTS
+Purpose: Lists all constraints (primary key, foreign key, check constraints, etc.) in the database.
+
+Important columns:
+CONSTRAINT_NAME: The name of the constraint.
+CONSTRAINT_TYPE: The type of the constraint (P for primary key, R for foreign key, C for check, etc.).
+TABLE_NAME: The table on which the constraint is applied.
+SEARCH_CONDITION: The condition for check constraints.
+
+Example:
+
+SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE, TABLE_NAME
+FROM DBA_CONSTRAINTS
+WHERE TABLE_NAME = 'EMPLOYEES';
+
+g. DBA_TAB_PRIVS
+Purpose: Lists all table privileges granted to users.
+Important columns:
+GRANTEE: The user or role that has been granted the privilege.
+TABLE_NAME: The name of the table.
+PRIVILEGE: The type of privilege (SELECT, INSERT, UPDATE, DELETE).
+
+Example:
+
+SELECT GRANTEE, TABLE_NAME, PRIVILEGE
+FROM DBA_TAB_PRIVS
+WHERE TABLE_NAME = 'EMPLOYEES';
+
+h. DBA_VIEWS
+Purpose: Provides information about views in the database.
+Important columns:
+VIEW_NAME: The name of the view.
+TEXT_LENGTH: The length of the view's defining query.
+TEXT: The SQL query that defines the view.
+
+Example:
+
+SELECT VIEW_NAME, TEXT
+FROM DBA_VIEWS
+WHERE VIEW_NAME = 'EMPLOYEE_VIEW';
+
+3. Querying Metadata Tables
+To effectively query metadata tables, use the following guidelines:
+
+JOIN metadata tables for comprehensive analysis. For example, you can join DBA_TABLES with DBA_TAB_COLUMNS to get a list of columns for each table.
+
+Example (Get column names and data types for all tables):
+
+SELECT T.TABLE_NAME, C.COLUMN_NAME, C.DATA_TYPE
+FROM DBA_TABLES T
+JOIN DBA_TAB_COLUMNS C
+  ON T.TABLE_NAME = C.TABLE_NAME
+WHERE T.OWNER = 'HR';
+
+Use WHERE clauses to filter data by specific schemas, tables, or columns.
+
+Combine GROUP BY and COUNT to analyze the structure and distribution of database objects.
+
+
+
+
+
+
 
 
