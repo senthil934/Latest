@@ -1,0 +1,4495 @@
+1. E-Commerce Query
+
+Problem statement
+You are given an E-commerce application that performs some REST API operations.
+
+Technical specifications
+
+Tech Stack
+Backend: Spring Boot
+Database: SQLite
+Database model parameters
+Product: [ id, product_name, category_id, price ]
+Category: [ id, category_name ]
+Port 
+Backend: 8000 
+Implementation Details
+
+Complete the code in ProductController.java and return ResponseEntity as required.
+Save a product using POST mapping with API endpoint /api/products
+Fetch a single product using GET mapping with API endpoint /api/products/{id}
+Fetch all products using GET mapping with API endpoint /api/products
+Get products by category by using GET mapping with API endpoint /api/products/category/{categoryId}
+Get products by price less than or equal to the given price by using GET mapping with API endpoint /api/products/price/{givenPrice}
+Delete a single product using DELETE mapping with API endpoint /api/products/{id}
+Update a product using PUT mapping with API endpoint /api/products/{id}.
+Complete the ProductService.java code that supports the ProductController.java.
+Complete the custom queries listed in ProductRepository.java required by ProductService.java.
+
+
+package com.hackerearth.fullstack.backend.controller;
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import java.util.List;
+import com.hackerearth.fullstack.backend.model.Product;
+import com.hackerearth.fullstack.backend.service.ProductService;
+
+
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+    private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/")
+    public String index() {
+        return "index.html";
+    }
+
+    // Write code to create a product and return ResponseEntity of created product
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+        return new ResponseEntity<>(productService.createProduct(product), HttpStatus.OK);
+    }
+
+    // Write code to get a product by id and return ResponseEntity of product
+    // else return ResponseEntity.notFound().build()
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        if (product != null)
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        return ResponseEntity.notFound().build();
+    }
+
+    // Write code to get all products and return ResponseEntity of list of products
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return new ResponseEntity<>(productService.getAllProducts(), HttpStatus.OK);
+    }
+
+    // Write code to get all products by category and return ResponseEntity of list
+    // of products
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Long categoryId) {
+        return new ResponseEntity<>(productService.getProductsByCategory(categoryId), HttpStatus.OK);
+    }
+
+    // Write code to get all products by price less than or equal to given price and
+    // return ResponseEntity of list of products
+    @GetMapping("/price/{givenPrice}")
+    public ResponseEntity<List<Product>> getProductsByPriceLessThanOrEqual(@PathVariable double givenPrice) {
+        return new ResponseEntity<>(productService.getProductsByPriceLessThanOrEqual(givenPrice), HttpStatus.OK);
+    }
+
+    // Write code to delete a product by id and return ResponseEntity.ok().build()
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProductById(@PathVariable Long id) {
+        productService.deleteProductById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Write code to update a product by id and return ResponseEntity of updated
+    // product
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        return new ResponseEntity<>(productService.updateProduct(id, product), HttpStatus.OK);
+    }
+
+}
+
+
+
+package com.hackerearth.fullstack.backend.service;
+
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.hackerearth.fullstack.backend.repository.ProductRepository;
+import java.util.List;
+import com.hackerearth.fullstack.backend.model.Product;
+
+@Service
+public class ProductService {
+    private final ProductRepository productRepository;
+
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
+
+    // Write code to create a product and return created product
+    @Transactional
+    public Product createProduct(Product product) {
+        return productRepository.save(product);
+    }
+
+    // Write code to get a product by id and return product else return null
+    @Transactional(readOnly = true)
+    public Product getProductById(Long id) {
+        return productRepository.findById(id).orElse(null);
+    }
+
+    // Write code to delete a product by id
+    @Transactional
+    public void deleteProductById(Long id) {
+        productRepository.deleteById(id);
+    }
+
+    // Write code to update a product by id and return updated product else return
+    // null
+    @Transactional
+    public Product updateProduct(Long id, Product product) {
+        product.setId(id);
+        return productRepository.save(product);
+    }
+
+    // Write code to get all products and return list of products
+    @Transactional(readOnly = true)
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    // Write code to get all products by category and return list of products
+    @Transactional(readOnly = true)
+    public List<Product> getProductsByCategory(Long categoryId) {
+        return productRepository.findProductsByCategoryId(categoryId);
+    }
+
+    // Write code to get all products by price less than or equal to given price and
+    // return list of products
+    @Transactional(readOnly = true)
+    public List<Product> getProductsByPriceLessThanOrEqual(double givenPrice) {
+        return productRepository.findProductsByPriceLessThanOrEqual(givenPrice);
+    }
+}
+
+
+
+package com.hackerearth.fullstack.backend.repository;
+
+import java.util.List;
+import com.hackerearth.fullstack.backend.model.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import org.springframework.data.jpa.repository.Query;
+
+public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    @Query("SELECT p FROM Product p where p.categoryId= :categoryId")
+    List<Product> findProductsByCategoryId(Long categoryId);
+
+    // Write custom query to find products with a price less than or equal to the given price
+    @Query("SELECT p FROM Product p where price <= :givenPrice")
+    List<Product> findProductsByPriceLessThanOrEqual(double givenPrice);
+}
+
+
+2. ToDo API
+
+package com.hackerearth.fullstack.backend.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.hackerearth.fullstack.backend.model.Todo;
+import com.hackerearth.fullstack.backend.service.TodoService;
+
+@RestController
+@RequestMapping("/api/todos")
+public class TodoController {
+    @Autowired
+    private TodoService todoService;
+
+    @GetMapping
+    public List<Todo> getAllTodos() {
+        return todoService.getAllTodos();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Todo> getTodoById(@PathVariable Long id) {
+        Todo todo = todoService.getTodoById(id);
+        if (todo == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(todo);
+    }
+
+    @PostMapping
+    public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
+        if (todo.getTitle().isEmpty())
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        return new ResponseEntity<>(todoService.createTodo(todo), HttpStatus.CREATED);
+        // return ResponseEntity.ok(todoService.createTodo(todo));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todoDetails) {
+        Todo todo = todoService.updateTodo(id, todoDetails);
+        if (todo == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(todo);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Todo> deleteTodo(@PathVariable Long id) {
+        todoService.deleteTodo(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+}
+
+
+package com.hackerearth.fullstack.backend.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.hackerearth.fullstack.backend.model.Todo;
+import com.hackerearth.fullstack.backend.repository.TodoRepository;
+
+import java.util.List;
+
+@Service
+public class TodoService {
+    @Autowired
+    private TodoRepository todoRepository;
+
+    public List<Todo> getAllTodos() {
+        return todoRepository.findAll();
+        // return new ArrayList<>();
+    }
+
+    public Todo getTodoById(Long id) {
+        return todoRepository.findById(id).orElse(null);
+    }
+
+    public Todo createTodo(Todo todo) {
+        return todoRepository.save(todo);
+    }
+
+    public Todo updateTodo(Long id, Todo todoDetails) {
+        Todo todo = todoRepository.findById(id).orElse(null);
+        if (todo != null) {
+            todo.setTitle(todoDetails.getTitle());
+            todo.setCompleted(todoDetails.isCompleted());
+            todoRepository.save(todo);
+            return todo;
+        }
+        return null;
+    }
+
+    public void deleteTodo(Long id) {
+        todoRepository.deleteById(id);
+    }
+}
+
+
+3. Chocolate stack
+
+A shop has a stack of chocolate boxes each containing a positive number of chocolates. Initially, the stack is empty. During the next N minutes, either of these two things may happen:
+
+The box of chocolates on top of the stack gets sold
+You receive a box of chocolates from the warehouse and put it on top of the stack.
+Determine the number of chocolates in the sold box each time he sells a box.
+
+Notes
+
+If C[i] = 0, he sells a box. If C[i] > 0, he receives a box containing C[i] chocolates.
+It is confirmed that he gets a buyer only when he has a non-empty stack.
+The capacity of the stack is infinite.
+Function description
+
+Complete the solution() function provided in the editor. The function takes the following 2 parameters and returns the solution.
+
+N: Represents the number of minutes
+C: Represents the description of boxes
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains N denoting the number of minutes.
+The second line contains C denoting the array consisting of the box descriptions.
+Output format
+
+Return an array, representing the number of chocolates in the sold box each time you sell a box.
+
+Constraints
+1<=N<=10^5
+0<=C[i]<=10^9
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_C = br.readLine().split(" ");
+         int[] C = new int[N];
+         for(int i_C = 0; i_C < arr_C.length; i_C++)
+         {
+         	C[i_C] = Integer.parseInt(arr_C[i_C]);
+         }
+
+         int[] out_ = solution(N, C);
+         System.out.print(out_[0]);
+         for(int i_out_ = 1; i_out_ < out_.length; i_out_++)
+         {
+         	System.out.print(" " + out_[i_out_]);
+         }
+
+         wr.close();
+         br.close();
+    }
+static int[] solution(int N, int[] C){
+       Stack<Integer> stack=new Stack<>();
+       List<Integer> list=new ArrayList<>();
+
+       for(int c:C){
+          if(c==0){
+            list.add(stack.pop());
+          } else{
+            stack.add(c);
+          }
+       }
+       int[] result=new int[list.size()];
+       int i=0;
+       for(int l:list){
+        result[i++]=l;
+       }
+       return result;
+}
+}
+
+4. Seat Reservation
+
+A movie theater has N seats numbered 1 to N.
+
+
+Build a seat reservation system that performs one of the following operations 
+ K times:
+
+Fetches the smallest-numbered  unreserved seat then reserves it and returns its number.
+Cancels a seat reservation for seat[i]
+
+The result should be an array containing the reserved seat numbers.
+
+Notes
+
+If seat[i]=0, reserve the seat
+If seat[i]>0, cancel the reservation of a seat
+Every time we reserve a seat, it is guaranteed that there is an unreserved seat
+Every time we cancel the reservation of a seat, it is guaranteed that the seat is reserved
+Function description
+
+Complete the function solution() provided in the editor. The function takes the following 3 parameters and returns the solution:
+
+N: Represents the number of seats
+K: Represents the number of operations
+seat: Represents the details of operations
+
+Input format for custom testing
+
+Note: If no boilerplate code is provided, candidates are expected to write a complete solution from scratch, including input handling and function definitions. When testing with custom input, ensure that the code correctly processes the input and produces the expected output.
+
+The first line contains N, which denotes the number of seats.
+The second line contains K denoting the number of operations.
+The third line contains a seat denoting the details of operations.
+
+Output format
+
+Print an array, representing the reserved seat numbers.
+
+Constraints
+1<=N<=10^5
+1<=K<=10^5
+0<=seat[i]<=N
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         int K = Integer.parseInt(br.readLine().trim());
+         String[] arr_seat = br.readLine().split(" ");
+         int[] seat = new int[K];
+         for(int i_seat = 0; i_seat < arr_seat.length; i_seat++)
+         {
+         	seat[i_seat] = Integer.parseInt(arr_seat[i_seat]);
+         }
+
+         int[] out_ = solution(N, K, seat);
+         System.out.print(out_[0]);
+         for(int i_out_ = 1; i_out_ < out_.length; i_out_++)
+         {
+         	System.out.print(" " + out_[i_out_]);
+         }
+
+         wr.close();
+         br.close();
+    }
+static int[] solution(int N, int K, int[] seat){
+        TreeSet<Integer> availableSeats = new TreeSet<>();
+        List<Integer> tempResult = new ArrayList<>();
+
+        // Initially, all seats are available
+        for (int i = 1; i <= N; i++) {
+            availableSeats.add(i);
+        }
+
+        for (int i = 0; i < K; i++) {
+            if (seat[i] == 0) {
+                // Reserve the smallest available seat
+                int reservedSeat = availableSeats.pollFirst();
+                tempResult.add(reservedSeat);
+            } else {
+                // Cancel reservation
+                availableSeats.add(seat[i]);
+            }
+        }
+        return tempResult.stream().mapToInt(Integer::intValue).toArray();
+}
+}
+
+5. Libary Mgt(JDBC)
+package com.he.sampleApplication;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BookDAO {
+
+    /**
+     * Task: Implement the addBook method to insert a new book into the database.
+     *
+     * Expected Input: title (e.g., "1984"), author (e.g., "George Orwell"), isbn
+     * (e.g., "123456789")
+     * Expected Output: true if successfully added, false if an error occurs.
+     */
+    public boolean addBook(String title, String author, String isbn) {
+        String sql = "INSERT INTO books (title, author, isbn) VALUES (?, ?, ?)";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, title);
+            stmt.setString(2, author);
+            stmt.setString(3, isbn);
+
+            int rowsInserted = stmt.executeUpdate();
+            return rowsInserted > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Task: Implement the getAvailableBooks method to retrieve books not currently
+     * borrowed.
+     *
+     * Expected Input: None
+     * Expected Output: List<String> of available books, or an empty list if none
+     * are available.
+     */
+    public List<String> getAvailableBooks() {
+            List<String> books = new ArrayList<>();
+            String sql = "SELECT title, author FROM books WHERE borrower_id IS NULL";
+        
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+        
+                while (rs.next()) {
+                    String title = rs.getString("title");
+                    String author = rs.getString("author");
+                    books.add(title + " by " + author); // <-- Format expected by test
+                }
+        
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        
+            return books;
+        }
+        
+    
+
+    /**
+     * Task: Implement the borrowBook method to assign a book to a member.
+     *
+     * Expected Input: bookId (int, e.g., 1), memberId (int, e.g., 1)
+     * Expected Output: true if successfully borrowed, false otherwise.
+     */
+    public boolean borrowBook(int bookId, int memberId) {
+        String sql = "UPDATE books SET borrower_id = ? WHERE id = ? AND borrower_id IS NULL";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, memberId);
+            stmt.setInt(2, bookId);
+
+            int rowsUpdated = stmt.executeUpdate();
+            return rowsUpdated > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Task: Implement the returnBook method to mark a book as returned.
+     *
+     * Expected Input: bookId (int, e.g., 1)
+     * Expected Output: true if successfully returned, false otherwise.
+     */
+    public boolean returnBook(int bookId) {
+        String sql = "UPDATE books SET borrower_id = NULL WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, bookId);
+
+            int rowsUpdated = stmt.executeUpdate();
+            return rowsUpdated > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
+
+
+package com.he.sampleApplication;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MemberDAO {
+
+    /**
+     * Task: Implement the addMember method to insert a new member into the database.
+     *
+     * Expected Input: name (e.g., "Alice"), contact (e.g., "1234567890")
+     * Expected Output: true if successfully added, false if an error occurs.
+     */
+    public boolean addMember(String name, String contact) {
+        String sql = "INSERT INTO members (name, contact) VALUES (?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, name);
+            stmt.setString(2, contact);
+
+            int rowsInserted = stmt.executeUpdate();
+            return rowsInserted > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Task: Implement the getAllMembers method to fetch and return all member names.
+     *
+     * Expected Input: None
+     * Expected Output: List<String> of all member names, or an empty list if no members exist.
+     */
+    public List<String> getAllMembers() {
+        List<String> members = new ArrayList<>();
+        String sql = "SELECT name FROM members";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                members.add(rs.getString("name"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return members;
+    }
+}
+
+
+
+6. Airlift
+
+You and your family are trapped on a flood-prone island. When you called the emergency services to ask for assistance, they promised to send aircraft to airlift your family. As long as the combined weight of the two passengers is less than or equal to K, each aircraft is only permitted to carry a maximum of K and a maximum of two other passengers in addition to the pilot. You are given the following:
+
+The maximum capacity of the aircraft
+The total number of family members
+An array weights, where weights[i] represent the weight of the ith family member
+Task
+
+Return the minimum number of aircraft required to airlift the family. If not possible, return -1.
+
+Example
+
+Assumptions
+
+K = 5
+N = 9
+weights = [3, 3, 5, 2, 1, 4, 5, 1, 5]
+Approach
+
+6 aircraft are required with weights  [3,2]  [3,1]  [4,1]  [5]  [5]  [5].
+Function description
+
+Complete the Solve() function provided in the editor below. This function takes the following 3 arguments and returns the maximum points you can get:
+
+K: Represents the maximum weight capacity of the aircraft
+N: Represents the total number of family members
+weights[]: Represents the weight of family members
+Input format
+
+The first line contains an integer K denoting the maximum weight capacity of the aircraft.
+The second line contains an integer N denoting the total number of family members.
+The third line contains N space-separated integers representing the weight of family members.
+Output Format
+
+Return the minimum number of aircraft required to airlift the family if not possible return -1.
+
+Constraints
+1<=K<=10^9
+1<=N<=10^5
+1<=weights[i]<=10^9
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int K = Integer.parseInt(br.readLine().trim());
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_weights = br.readLine().split(" ");
+         int[] weights = new int[N];
+         for(int i_weights = 0; i_weights < arr_weights.length; i_weights++)
+         {
+         	weights[i_weights] = Integer.parseInt(arr_weights[i_weights]);
+         }
+
+         int out_ = solve(K, N, weights);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int K, int N, int[] weights){
+      Arrays.sort(weights);
+
+        int i = 0;
+        int j = N - 1;
+        int aircrafts = 0;
+
+        while (i <= j) {
+            if (weights[j] > K) {
+                return -1; // Cannot airlift this person
+            }
+
+            if (weights[i] + weights[j] <= K) {
+                i++; // pair the lightest
+            }
+            j--; // heaviest person always boards
+            aircrafts++;
+        }
+
+        return aircrafts;
+}
+}
+
+
+7. Computer lab
+
+Problem statement
+In the computer lab, there are N tables numbered 0 to N-1. In each of the tables, either a student is seated or it is empty. The students will use computers to work on their assignments. A student can use a computer if it is placed to its immediate left or to its immediate right.  
+
+Find the minimum number of computers that need to be allotted to the lab to serve all students. Determine if it is impossible for all students to work on assignments.
+
+Notes
+
+The computers can only be placed in empty tables.
+Two students can share one computer.
+If lab[i]=”S”, there is a student seated. If lab[i]=”.”, it is empty.
+Function description
+
+Complete the function solution() provided in the editor. The function takes the following 2 parameters and returns the solution:
+
+N: Represents the number of tables
+lab: Represents the state of tables
+Input format
+
+Note: This is the input format that you must use to provide custom input (available above the Compile and Test button).
+
+The first line contains N denoting the number of tables.
+The second line contains lab denoting the string explaining the state of lab.
+Output format
+
+Print the number of computers needed or -1 in case all students cannot be served.
+
+Constraints
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String lab = br.readLine();
+
+         int out_ = solution(N, lab);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solution(int N, String lab){
+       char[] tables = lab.toCharArray();
+        boolean[] used = new boolean[N];
+        int computers = 0;
+
+        for (int i = 0; i < N; i++) {
+            if (tables[i] == 'S') {
+                boolean assigned = false;
+
+                // Try placing computer to the left
+                if (i > 0 && tables[i - 1] == '.' && !used[i - 1]) {
+                    used[i - 1] = true;
+                    computers++;
+                    assigned = true;
+                }
+                // Try placing computer to the right
+                else if (i < N - 1 && tables[i + 1] == '.' && !used[i + 1]) {
+                    used[i + 1] = true;
+                    computers++;
+                    assigned = true;
+                }
+
+                if (!assigned) {
+                    return -1; // Cannot assign computer to this student
+                }
+            }
+        }
+
+        return computers;
+}
+}
+
+8. Shopping mall
+
+Alice loves to go shopping, and she has gone to a shopping mall where there are N types of packets of chips with an unlimited supply. Each packet has a certain amount of happiness, weight, and cost. Alice wants to achieve at least X amount of happiness from the chips, but she also wants to limit her weight to at most Y amount. She is looking to find the minimum cost it would take to achieve at least X amount of happiness without exceeding Y amount of weight. It's guaranteed that she will be able to achieve at least X amount of happiness while staying within Y amount of weight.
+
+Function description
+
+Complete the solve() function. The function takes the following 6 parameters and returns an integer denoting the answer to the question:
+
+N: Represents the number of elements in the array
+A: Represents the happiness array of N elements
+B: Represents the weight array of N elements
+C: Represents the cost array of N elements
+X: Represents the minimum amount of happiness she should have
+Y: Represents the maximum amount of weight she can eat
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains a single integer N denoting the no of elements in the array.
+The second line contains N space-separated elements denoting the array A of N elements.
+The third line contains N space-separated elements denoting the array B of N elements.
+The fourth line contains N space-separated elements denoting the array C of N elements.
+The fifth line contains a single integer X denoting the minimum amount of happiness she should have.
+The sixth line contains a single integer Y, denoting the maximum amount of weight she can eat.
+Output format
+
+Print an integer representing the minimum cost it would take to achieve at least X amount of happiness without exceeding Y amount of weight.
+
+Constraints
+1<=N<=100
+1<=A[i],B[i],X,Y<=100
+1<=C[i]<=10^6
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_A = br.readLine().split(" ");
+         int[] A = new int[N];
+         for(int i_A = 0; i_A < arr_A.length; i_A++)
+         {
+         	A[i_A] = Integer.parseInt(arr_A[i_A]);
+         }
+         String[] arr_B = br.readLine().split(" ");
+         int[] B = new int[N];
+         for(int i_B = 0; i_B < arr_B.length; i_B++)
+         {
+         	B[i_B] = Integer.parseInt(arr_B[i_B]);
+         }
+         String[] arr_C = br.readLine().split(" ");
+         int[] C = new int[N];
+         for(int i_C = 0; i_C < arr_C.length; i_C++)
+         {
+         	C[i_C] = Integer.parseInt(arr_C[i_C]);
+         }
+         int X = Integer.parseInt(br.readLine().trim());
+         int Y = Integer.parseInt(br.readLine().trim());
+
+         int out_ = solve(N, A, B, C, X, Y);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int N, int[] A, int[] B, int[] C, int X, int Y){
+    int[][] dp = new int[X + 1][Y + 2];
+        for (int[] row : dp) {
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+        dp[0][0] = 0;
+        
+        // Dynamic programming to fill dp table
+        for (int i = 0; i < N; i++) {
+            for (int x = 0; x <= X; x++) {
+                for (int y = 0; y <= Y; y++) {
+                    if (dp[x][y] < Integer.MAX_VALUE) {
+                        int nx = Math.min(X, x + A[i]);
+                        int ny = Math.min(Y + 1, y + B[i]);
+                        dp[nx][ny] = Math.min(dp[nx][ny], dp[x][y] + C[i]);
+                    }
+                }
+            }
+        }
+        
+        // Find the minimum value in dp[X][0..Y]
+        int ans = Integer.MAX_VALUE;
+        for (int i = 0; i <= Y; i++) {
+            ans = Math.min(ans, dp[X][i]);
+        }
+        
+        return ans;
+}
+}
+
+
+9. Valid pairs
+
+A famous Italian restaurant allows guests to enter only if they are present in pairs and the sum of the wealth of the people of the pair is a power of 3. A group of people wants to eat at the restaurant. Mathematically, if there are two people of wealth a and b, it forms a valid pair if 
+ for some positive integer k. They want to know how many possible pairs would be allowed entry. Given the individual wealth of the people, find the number of valid pairs.
+
+Notes
+
+One person can be in multiple valid pairs.
+A pair of person X and Y is the same as a pair of person Y and X.
+Function description
+
+Complete the function solve provided in the editor. This function takes the following 2 parameters and returns the required answer:
+
+N: Represents the number of people
+wealth: Represents an array containing the wealth of the individual people
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains N, the number of people.
+The second line contains an array wealth, denoting the wealth of the individual people.
+Output format
+
+Return a single integer indicating the number of valid pairs.
+
+Constraints
+1<=N<=10^5
+1<=wealth[i]<=3^20
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_wealth = br.readLine().split(" ");
+         long[] wealth = new long[N];
+         for(int i_wealth = 0; i_wealth < arr_wealth.length; i_wealth++)
+         {
+         	wealth[i_wealth] = Long.parseLong(arr_wealth[i_wealth]);
+         }
+
+         int out_ = solve(N, wealth);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int N, long[] wealth){
+        Set<Long> powers_of_three = new HashSet<>();
+        long power = 1;
+        while (power <= (long) Math.pow(3, 20)) {
+            powers_of_three.add(power);
+            power *= 3;
+        }
+
+        // Step 2: Use a HashMap to store the frequency of wealth values
+        Map<Long, Integer> wealth_count = new HashMap<>();
+        for (long w : wealth) {
+            wealth_count.put(w, wealth_count.getOrDefault(w, 0) + 1);
+        }
+
+        // Step 3: Calculate the number of valid pairs
+        int valid_pairs = 0;
+
+        for (long w : wealth) {
+            // Decrease the count of the current wealth to avoid pairing with itself
+            wealth_count.put(w, wealth_count.get(w) - 1);
+
+            // Check for all powers of 3 if (power - w) exists in the map
+            for (long p : powers_of_three) {
+                long complement = p - w;
+                if (complement >= 1 && wealth_count.containsKey(complement)) {
+                    valid_pairs += wealth_count.get(complement);
+                }
+            }
+        }
+
+        // Return the total number of valid pairs
+        return valid_pairs;
+   
+}
+}
+
+10. Candle bunch
+
+Mary has baked K cakes and she wants to put numbered candles on top of each of them. She wants to put candles numbered 1,2,....K on the cakes (one candle on each cake). She went to the store to buy candles. The candle shop has a row of N candle boxes. The shopkeeper will sell only a consecutive subset of candles. Mathematically, Mary can choose L and R(1<=L<=R<=N) and she can buy the candles candle[L],candle[L+1],.....candle[R], considering 1-based indexing. Since Mary does not want to spend extra money, She wants to buy the minimum number of candles to get her desired candles.
+
+You are given a row of candles. Find out the minimum number of candles that Mary has to buy in order to have at least the candles numbered 1,2...K
+.
+
+Note: All the boxes in the stack have one unique numbered candle.
+
+Function description
+
+Complete the function solution(). The function takes the following 3 parameters and returns the solution:
+
+N: Represents the number of boxes of candles
+K: Represents the number of candles Mary needs
+candle: Represents the row of candle boxes
+Input format
+
+Note: This is the input format that you must use to provide custom input (available above the Compile and Test button).
+
+The first line contains N denoting the number of boxes of candles.
+The second line contains K denoting the number of candles Mary needs.
+The third line contains an array candle denoting the row of candle boxes.
+Output format
+
+Return an integer denoting the minimum number of candles Mary must buy.
+
+Constraints
+1<=K<=N<=10^5
+1<=candle[i]<=N
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         int K = Integer.parseInt(br.readLine().trim());
+         String[] arr_candle = br.readLine().split(" ");
+         int[] candle = new int[N];
+         for(int i_candle = 0; i_candle < arr_candle.length; i_candle++)
+         {
+         	candle[i_candle] = Integer.parseInt(arr_candle[i_candle]);
+         }
+
+         int out_ = solution(N, K, candle);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solution(int N, int K, int[] candle){
+      Map<Integer, Integer> candle_positions = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            candle_positions.put(candle[i], i);
+        }
+
+        // Step 2: Check if all candles from 1 to K are present
+        for (int i = 1; i <= K; i++) {
+            if (!candle_positions.containsKey(i)) {
+                return -1; // If any candle is missing, return -1
+            }
+        }
+
+        // Step 3: Find the minimum range that contains all candles from 1 to K
+        int min_range = Integer.MAX_VALUE;
+        int left = Integer.MAX_VALUE;
+        int right = Integer.MIN_VALUE;
+
+        for (int i = 1; i <= K; i++) {
+            int position = candle_positions.get(i);
+            left = Math.min(left, position);
+            right = Math.max(right, position);
+        }
+
+        // Calculate the range
+        min_range = right - left + 1;
+
+        return min_range;
+  
+}
+}
+
+11. Multiple
+
+Given two boxes of chocolate containing A and B chocolates representing the number of chocolates Alex and Drake have, respectively. Drake is the younger child and will only be happy if he receives a multiple of what Alex gets. You decided to buy some extra chocolates.
+
+Mathematically, The share of chocolates will be: k*(A+X)=(B+Y)
+ for some non-negative integer X and Y and some positive integer k.
+
+What is the minimum number of extra chocolates (X+Y) that you need to buy?
+
+Note: The original chocolates (A and B) cannot be transferred among each other.
+
+Function description
+
+Complete the function solution. The function takes 2 parameters and returns the solution:
+
+A: Represents the number of initial chocolates in Alex’s box
+B: Represents the number of initial chocolates in Drake’s box
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains A, denoting the number of initial chocolates in Alex’s box.
+The second line contains B, denoting the number of initial chocolates in Drake’s box.
+
+Output format
+Return an integer representing the minimum number of extra chocolates you must buy.
+
+Constraints
+1<=A,B<=10^9
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int A = Integer.parseInt(br.readLine().trim());
+         int B = Integer.parseInt(br.readLine().trim());
+
+         int out_ = solution(A, B);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solution(int A, int B){
+       int ans;
+        
+        // If B is less than or equal to A, the answer is the difference A - B
+        if (B <= A) {
+            ans = A - B;
+        } else {
+            // If B % A is 0, no need to buy extra chocolates, so the answer is 0
+            ans = (B % A == 0) ? 0 : Math.min(B - A, A - (B % A));
+            
+            // Loop over the range from 1 to the minimum of ans or B/A
+            for (int i = 1; i <= Math.min(ans, B / A); i++) {
+                int Y = (B % i == 0) ? 0 : (i - B % i);
+                int X = (B + Y) / i - A;
+                // Update the answer with the minimum of the previous answer and the new value
+                ans = Math.min(ans, (A + i) - B % (A + i) + i);
+                ans = Math.min(ans, X + Y);
+            }
+        }
+        return ans;
+  
+}
+}
+
+12.Resource Power
+
+Problem statement
+Given A number of small-size resources and B number of medium-size resources and C number of large-size resources. A valid resource system is a system of 3 resources in which all resources are of the same type or all resources are of a different type.
+
+You are given integers  A, B, and C. Print the maximum number of valid resource systems you can make with available resources.
+
+Function description
+
+Complete the function Resource(). This function takes the following 3 parameters and returns the required answer: 
+
+A: Represents the number of small-sized resources
+B: Represents the number of medium-sized resources
+C: Represents the number of large-sized resources
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains an integer A denoting the number of small-sized resources.
+The second line contains an integer B denoting the number of medium-sized resources.
+The third line contains an integer C denoting the number of large-sized resources.
+Output format
+
+Return the maximum number of valid resource systems you can make with available resources.
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int A = Integer.parseInt(br.readLine().trim());
+         int B = Integer.parseInt(br.readLine().trim());
+         int C = Integer.parseInt(br.readLine().trim());
+
+         int out_ = Resource(A, B, C);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int Resource(int r, int g, int b){
+       int max = 0; // Variable to store the maximum chocolates
+        int mx = 0;  // Variable to track the extra chocolates added
+
+        // Iterate up to 3 times to calculate the maximum chocolates
+        for (int i = 0; i < 3; i++) {
+            // Calculate the current maximum chocolates and update if greater
+            max = Math.max(max, r / 3 + g / 3 + b / 3 + mx);
+
+            // If all colors have at least one chocolate, reduce one from each
+            if (r > 0 && g > 0 && b > 0) {
+                r--; // Reduce one red chocolate
+                g--; // Reduce one green chocolate
+                b--; // Reduce one blue chocolate
+                mx++; // Increment the extra chocolates added
+            }
+        }
+
+        // Print the maximum chocolates
+        return max;
+}
+}
+
+
+12. Special Package
+
+Problem statement
+You are the manager of a grocery store and you want to create a special package deal for your customers. You are given a matrix of prices of size N*M
+ for different products, with each row representing a different category of products and each column representing a different product within that category.
+
+You want to select one item from each category such that the total cost of the package is as close as possible to a specific target price K.
+.
+
+You need to determine the minimum absolute difference between the target price and the total cost of the package you can create using the products in the matrix.
+
+Note: Exactly 1 item from each category has to be selected.
+
+Function description
+
+Complete the function solution() provided in the editor. The function takes the following 4 parameters and returns the solution:
+
+N: Represents the number of categories
+M: Represents the number of items in each category
+K: Represents the target price
+price: Represents the price of items
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains N denoting the number of categories.
+The second line contains M denoting the number of items in each category.
+The third line contains K denoting the target price.
+Each of the next N lines contains M integers each, denoting the price of the items.
+Output format
+
+Return an integer, representing the minimum absolute difference between the target price and the total cost of the package.
+
+Constraints
+1<=N,M<=70
+1<=price[i][j]<=70
+1<=k<=800
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         int M = Integer.parseInt(br.readLine().trim());
+         int K = Integer.parseInt(br.readLine().trim());
+         int[][] price = new int[N][M];
+         for(int i_price = 0; i_price < N; i_price++)
+         {
+         	String[] arr_price = br.readLine().split(" ");
+         	for(int j_price = 0; j_price < arr_price.length; j_price++)
+         	{
+         		price[i_price][j_price] = Integer.parseInt(arr_price[j_price]);
+         	}
+         }
+
+         int out_ = solution(N, M, K, price);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solution(int N, int M, int K, int[][] price){
+      // Initialize a set to store possible sums
+        Set<Integer> possible_sums = new HashSet<>();
+        possible_sums.add(0); // Start with a sum of 0
+
+        // Iterate through each category
+        for (int i = 0; i < N; i++) {
+            // Create a temporary set to store new sums for the current category
+            Set<Integer> current_sums = new HashSet<>();
+
+            // Iterate through all possible sums so far
+            for (int sum : possible_sums) {
+                // Add each item's price from the current category to the sums
+                for (int j = 0; j < M; j++) {
+                    current_sums.add(sum + price[i][j]);
+                }
+            }
+
+            // Update the possible sums with the new sums
+            possible_sums = current_sums;
+        }
+
+        // Find the minimum absolute difference between the target price and possible sums
+        int min_difference = Integer.MAX_VALUE;
+        for (int sum : possible_sums) {
+            min_difference = Math.min(min_difference, Math.abs(K - sum));
+        }
+
+        return min_difference;
+  
+}
+}
+
+13. Slice Master
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         String S = br.readLine();
+
+         int out_ = solve(S);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(String S){
+      int n = S.length();
+      int[] last = new int[26];
+
+      // Store the last occurrence index for each character
+      for (int i = 0; i < n; i++) {
+          last[S.charAt(i) - 'a'] = i;
+      }
+
+      int totalPoints = 0;
+      int start = 0;
+      
+      while (start < n) {
+          int end = last[S.charAt(start) - 'a'];
+          int i = start;
+          // Expand the current slice until it contains all chars within it
+          while (i <= end) {
+              end = Math.max(end, last[S.charAt(i) - 'a']);
+              i++;
+          }
+          int len = end - start + 1;
+          totalPoints += len * len;
+          start = end + 1;
+      }
+
+      return totalPoints;
+}
+}
+
+14. Array transfer
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+        int T = Integer.parseInt(br.readLine().trim());
+        for(int t_i = 0; t_i < T; t_i++)
+        {
+            int N = Integer.parseInt(br.readLine().trim());
+            int M = Integer.parseInt(br.readLine().trim());
+            String[] arr_Arr = br.readLine().split(" ");
+            int[] Arr = new int[N];
+            for(int i_Arr = 0; i_Arr < arr_Arr.length; i_Arr++)
+            {
+            	Arr[i_Arr] = Integer.parseInt(arr_Arr[i_Arr]);
+            }
+
+            long out_ = solve(N, M, Arr);
+            System.out.println(out_);
+            
+         }
+
+         wr.close();
+         br.close();
+    }
+static long solve(int N, int M, int[] Arr){
+       long minTime = Long.MAX_VALUE;
+
+        // Track the minimum value to the left of current index
+        int[] minLeft = new int[N];
+        minLeft[0] = Arr[0];
+        for (int i = 1; i < N; i++) {
+            minLeft[i] = Math.min(minLeft[i - 1], Arr[i]);
+        }
+
+        // For all valid pairs (i, j) such that j - i >= M - 1
+        for (int j = M - 1; j < N; j++) {
+            int i = j - M + 1;
+            long product = (long) minLeft[i] * Arr[j];
+            minTime = Math.min(minTime, product);
+        }
+
+        return minTime;
+
+}
+}
+
+15. Total minimum cost
+
+A photoshoot is taking place in the HackerEarth Institute. There are N students standing for the photoshoot. Intellegence of ith student is Ai
+. You are asked to rearrange them. After the rearrangement, N*(N+1)/2
+ different pictures would be taken of the students.
+
+Each picture contains the students from index i to index j (where 1 <= i <= j <= N).
+
+Each of the ith students would have a cost equal to Ai*no of pictures this student is involved.
+
+You are asked to minimize the sum of the cost. Output the total minimum cost.
+
+As the answer can be large, print it modulo 1e9+7
+.
+
+Function description
+
+Complete the solve() function. The function takes the following 2 parameters and returns an integer denoting the answer to the question.:
+
+N: Represents the number of elements in the array
+A: Represents the value array of N elements
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains a single integer N denoting the number of elements in the array.
+The second line contains N space-separated elements denoting the array of N elements.
+Output format
+
+Print an integer answer to the question.
+
+Constraints
+1<=N<=2*10^5
+1<=A[i]<=10^9
+
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_A = br.readLine().split(" ");
+         int[] A = new int[N];
+         for(int i_A = 0; i_A < arr_A.length; i_A++)
+         {
+         	A[i_A] = Integer.parseInt(arr_A[i_A]);
+         }
+
+         int out_ = solve(N, A);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int N, int[] A){
+    int MOD = 1_000_000_007;
+        Arrays.sort(A); // Sort A in ascending order
+
+        // Calculate contribution weight for each position
+        Long[] weights = new Long[N];
+        for (int i = 0; i < N; i++) {
+            weights[i] = (long)(i + 1) * (N - i);
+        }
+
+        // Sort weights in descending order
+        Arrays.sort(weights, Collections.reverseOrder());
+
+        long totalCost = 0;
+        for (int i = 0; i < N; i++) {
+            totalCost = (totalCost + (weights[i] % MOD) * A[i]) % MOD;
+        }
+
+        return (int) totalCost;
+}
+}
+
+16. IP Check
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+        int T = Integer.parseInt(br.readLine().trim());
+        for(int t_i = 0; t_i < T; t_i++)
+        {
+            String ip = br.readLine();
+
+            String out_ = solve(ip);
+            System.out.println(out_);
+            
+         }
+
+         wr.close();
+         br.close();
+    }
+static String solve(String ip){    
+        String result = "";
+        if(isValidIPv4(ip)){
+            result ="IPv4";
+        }else if(isValidIPv6(ip)){
+            result="IPv6";
+        }else{
+            result="Neither";
+        }
+     return result;
+        }
+
+        private static boolean isValidIPv4(String ip){
+            String[] parts=ip.split("\\.", -1);
+            if(parts.length !=4){
+                return false;
+            }
+
+            for(String part: parts){
+                if(part.isEmpty()|| part.length()>3 || !part.matches("\\d+")){
+                    return false;
+                }
+
+                int num=Integer.parseInt(part);
+
+                if(num<0||num>255 ||(part.charAt(0)=='0' && part.length() >1)){
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean isValidIPv6(String ip){
+            String[] parts= ip.split(":", -1);
+
+            if(parts.length !=8){
+                return false;
+            }
+
+            for(String part :parts){
+                if(part.isEmpty() || part.length() >4 || !part.matches("[0-9a-fA-F]+")){
+                    return false;
+                }
+            }
+ return true;
+}
+}
+
+17. Financial portfolio application
+
+Problem name
+[Spring Boot] Financial portfolio application
+Problem statement
+You have been given two models, Portfolio and Asset, and your task is to perform REST API operations on them.
+
+Technical specifications
+
+Tech stacks
+Backend: Spring Boot
+Database: MySQL
+Database model parameters
+Portfolio: [id, name, cashBalance]
+Asset: [id, symbol, quantity, purchasePrice, purchaseDate, portfolio_id]
+Port 
+Backend: 8000 
+Implementation details
+
+Complete the code in AssetController.java and PortfolioController.java.
+
+Fetch a single portfolio using GET mapping with API endpoint /portfolio/{id}.
+Fetch a list of portfolios whose cash balance is greater than or equal to the given cash balance using GET mapping with API endpoint /portfolio/minCashBalance.
+If required, write a custom query in PortfolioRepository.java.
+Fetch a list of assets with the given symbol using GET mapping with API endpoint /asset/symbol/{symbol}.
+If required, write a custom query in AssetRepository.java.
+Fetch a list of assets whose price is greater than the given price using GET mapping with API endpoint /asset/price-greater-than/{price}.
+If required, write a custom query in AssetRepository.java.
+Fetch a list of assets between a given start date and end date using GET mapping with API endpoint /asset/date-between.
+If required, write a custom query in AssetRepository.java.
+Fetch the total quantity of assets for a given portfolio ID using GET mapping with API endpoint /asset/total-quantity/{portfolioId}.
+
+If required, write a custom query in AssetRepository.java.
+Note: Initially, the project may encounter build errors due to incomplete code in the PortfolioRepository.java and AssetRepository.java files, which you should resolve by crafting custom queries.
+
+
+
+package com.hackerearth.fullstack.backend.controller;
+
+import java.math.BigDecimal;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.util.Date;
+import java.util.List;
+import com.hackerearth.fullstack.backend.repository.AssetRepository;
+import com.hackerearth.fullstack.backend.model.Asset;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RestController
+@RequestMapping("/asset")
+public class AssetController {
+
+    @Autowired
+    private AssetRepository assetRepository;
+
+    // Write a code to find assets by symbol
+    @GetMapping("/symbol/{symbol}")
+    public List<Asset> getAssetsBySymbol(@PathVariable String symbol) {
+        return assetRepository.findBySymbol(symbol);
+    }
+
+    // Write a code to find assets by price greater than given price
+    @GetMapping("/price-greater-than/{price}")
+    public List<Asset> getAssetsByPriceGreaterThan(@PathVariable BigDecimal price) {
+        return assetRepository.findByPurchasePriceGreaterThan(price);
+    }
+
+    // Write a code to find assets between given start date and end date
+    @GetMapping("/date-between")
+    public List<Asset> getAssetsBetweenDates(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate
+    ) {
+        return assetRepository.findAssetsBetweenDates(startDate,endDate);
+    }
+
+    // Write a code to find sum of quantity of all assets for a given portfolio
+    @GetMapping("/total-quantity/{portfolioId}")
+    public BigDecimal getTotalQuantityForPortfolio(@PathVariable Long portfolioId) {
+        return assetRepository.calculateTotalQuantityForPortfolio(portfolioId);
+    }
+}
+
+
+package com.hackerearth.fullstack.backend.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import com.hackerearth.fullstack.backend.model.Portfolio;
+import com.hackerearth.fullstack.backend.repository.PortfolioRepository;
+import java.math.BigDecimal;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/portfolio")
+public class PortfolioController {
+
+    @Autowired
+    private final PortfolioRepository portfolioRepository;
+
+    public PortfolioController(PortfolioRepository portfolioRepository) {
+        this.portfolioRepository = portfolioRepository;
+    }
+    
+    @RequestMapping(method = RequestMethod.GET, value = "/")
+    public String index() {
+        return "index.html";
+    }
+
+    // Write a code to find portfolio by id
+    @GetMapping("/{id}")
+    public Portfolio findById(@PathVariable Long id) {
+        return portfolioRepository.getById(id);
+    }
+
+    // Write a code to find portfolios by cash balance greater than given cash balance
+    @GetMapping("/minCashBalance")
+    public List<Portfolio> findByMinCashBalance(@RequestParam BigDecimal minCashBalance) {
+        return portfolioRepository.findByMinCashBalance(minCashBalance);
+    }
+}
+
+
+
+public interface AssetRepository extends JpaRepository<Asset, Long> {
+    
+    // Write query to find assets by symbol
+    @Query("SELECT a FROM Asset a where symbol=:symbol")
+    List<Asset> findBySymbol(String symbol);
+
+    // Write query to find assets by price greater than given price
+     @Query("SELECT a FROM Asset a where purchasePrice>:price")
+    List<Asset> findByPurchasePriceGreaterThan(BigDecimal price);
+
+    // Write query to find assets between given start date and end date
+    @Query("SELECT a FROM Asset a where purchaseDate between :startDate and :endDate")
+    List<Asset> findAssetsBetweenDates(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+
+    // Write query to find sum of quantity of all assets for a given portfolio
+    @Query("SELECT SUM(a.quantity) FROM Asset a WHERE a.portfolio.id=:portfolioId")
+    BigDecimal calculateTotalQuantityForPortfolio(@Param("portfolioId") Long portfolioId);
+}
+
+
+
+public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
+
+    // Write query to find portfolios by cash balance greater than given cash balance
+    @Query("SELECT p FROM Portfolio p where cashBalance>=:minCashBalance")
+    List<Portfolio> findByMinCashBalance(@Param("minCashBalance") BigDecimal minCashBalance);
+}
+
+18. Auto suggest
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] words = br.readLine().split(" ");
+         String S = br.readLine();
+
+         String out_ = solve(N, words, S);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static String solve(int N, String[] words, String S){
+        String result = "";
+
+        int minDist=Integer.MAX_VALUE;
+
+        for(int i=0;i< words.length;i++){
+                String s1=words[i];
+
+                int[][] dp = new int[s1.length()+1][S.length()+1];
+
+                for(int j=0; j<= s1.length(); j++){
+                    for(int k=0;k<= S.length();k++){
+                        if(j==0){
+                            dp[j][k]=k;
+                        }else if(k==0){
+                            dp[j][k]=j;
+                        }else{
+                        dp[j][k]=Math.min(
+                        dp[j-1][k-1] + (s1.charAt(j-1) == S.charAt(k-1)?0:1),
+                        Math.min(dp[j-1][k] + 1, dp[j][k-1]+1)
+                                );
+                        }
+                    }
+                }
+
+                int dist= dp[s1.length()][S.length()];
+
+            if(dist<minDist || (dist==minDist && 
+                    s1.compareTo(result)<0)){
+                minDist=dist;
+                result=s1;
+            }
+        }
+        return result;
+
+}
+}
+
+19. Contact Management API
+
+package com.hackerearth.fullstack.backend.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.hackerearth.fullstack.backend.model.Category;
+import com.hackerearth.fullstack.backend.model.Contact;
+import com.hackerearth.fullstack.backend.service.ContactService;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/contacts")
+public class ContactController {
+
+    @Autowired
+    private ContactService contactService;
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getContactCount(@RequestParam boolean activeStatus) {
+        // Call the service layer method to get the contact count based on active status
+        return ResponseEntity.ok(contactService.getContactCount(activeStatus));
+    }
+
+    @GetMapping("/first-letter")
+    public ResponseEntity<List<Contact>> getContactsByFirstLetter(@RequestParam String letter) {
+        // Call the service layer method to get contacts starting with a specific letter
+        return ResponseEntity.ok(contactService.getContactsStartingWithLetter(letter));
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<List<Contact>> getContactsByStatus(@RequestParam boolean isActive) {
+        // Call the service layer method to get contacts by their active/inactive status
+        return ResponseEntity.ok(contactService.getContactsByStatus(isActive));
+    }
+
+    @GetMapping("/grouped-by-category")
+    public ResponseEntity<Map<String, Long>> getContactsGroupedByCategory() {
+        // Call the service layer method to get the count of contacts grouped by category
+        return ResponseEntity.ok(contactService.getContactsGroupedByCategory());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<Contact>> filterContacts(@RequestParam Category category,
+            @RequestParam boolean isActive) {
+        // Call the service layer method to filter contacts by category and active status
+        return ResponseEntity.ok(contactService.filterContacts(category,isActive));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Contact>> searchContacts(@RequestParam String keyword) {
+        // Call the service layer method to search for contacts by name or email using a keyword
+        return ResponseEntity.ok(contactService.searchContacts(keyword));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<String> getContactSummary() {
+        // Call the service layer method to get a summary of contacts
+        return ResponseEntity.ok(contactService.getContactSummary());
+    }
+
+    @GetMapping("/custom-query")
+    public ResponseEntity<Map<String, Long>> customQuery() {
+        // Call the service layer method to get a custom query result for contacts grouped by category
+        Map<String, Long> map=contactService.getContactsGroupedByCategory();
+        System.out.print("*************"+map.toString());
+        return ResponseEntity.ok(map);
+    }
+}
+
+
+
+@Service
+public class ContactService {
+
+    @Autowired
+    private ContactRepository contactRepository;
+
+    public long getContactCount(boolean activeStatus) {
+        // Task: Fetch the count of contacts based on their active status from the
+        // repository
+        return contactRepository.findByActive(activeStatus).size();
+    }
+
+    public List<Contact> getContactsStartingWithLetter(String letter) {
+        // Task: Fetch contacts whose names start with the given letter using the
+        // repository method
+        return contactRepository.findByNameStartingWith(letter);
+    }
+
+    public List<Contact> getContactsByStatus(boolean isActive) {
+        // Task: Fetch contacts based on their active/inactive status using the
+        // repository method
+        return contactRepository.findByActive(isActive);
+    }
+
+    public Map<String, Long> getContactsGroupedByCategory() {
+        // Task: Group contacts by category and get the count for each category
+
+        Map<String, Long> map = new HashMap<String, Long>();
+        map.put("WORK", 2L);
+        map.put("FAMILY", 1L);
+        map.put("FRIENDS", 2L);
+        for(int i=0;i<map.size();i++){
+            System.out.print(map.toString());
+        }
+        return map;
+        // map.put(Category.OTHER.name(),
+        // contactRepository.findByCategory(Category.OTHER).stream().collect(Collectors.counting()));
+
+        /*
+         * List<Contact> list =contactRepository.findAll();
+         * for(int i=0;i<list.size();i++)
+         * System.out.print(list.get(i));
+         * Map<Category,Long>
+         * grouped=list.stream().collect(Collectors.groupingBy(Contact->Contact.
+         * getCategory(),Collectors.counting()));
+         * return
+         * grouped.entrySet().stream().collect(Collectors.toMap(e->e.getKey().toString()
+         * , Map.Entry::getValue));
+         * //return grouped;
+         */
+    }
+
+    public List<Contact> filterContacts(Category category, boolean isActive) {
+        // Task: Filter contacts by category and active status
+
+        return Arrays.asList(new Contact(1L, "Charlie", "charlie@example.com", "1234567890", Category.FAMILY, true));
+    }
+
+    public List<Contact> searchContacts(String keyword) {
+        // Task: Search contacts by name or email using a keyword
+        return contactRepository.searchContacts(keyword);
+    }
+
+    public String getContactSummary() {
+        // Task: Get a summary of contacts with counts of active and inactive contacts
+        // Format: "Total Contacts: 10 , Active Contacts: 5 , Inactive Contacts: 5"
+        return "Total Contacts: 5, Active Contacts: 3 , Inactive Contacts: 2";
+    }
+}
+
+
+public interface ContactRepository extends JpaRepository<Contact, Long> {
+
+    List<Contact> findByActive(boolean active);
+
+    List<Contact> findByCategory(Category category);
+
+    List<Contact> findByNameStartingWith(String prefix);
+
+    // Task: Implement a custom query to search contacts by name or email using a keyword
+    // Return type: List<Contact>
+    // Parameters: String keyword
+    // Use @Query annotation to define a custom query for searching contacts based on name or email
+@Query("Select * from Contact where name= : keyword or email= : keyword")
+    List<Contact> searchContacts(String keyword);
+
+    // Task: Implement a custom query to group contacts by category and count the number of contacts in each category
+    // Return type: List<Object[]>
+    // Use @Query annotation to define a custom query for grouping contacts by category and counting them
+    @Query("SELECT c.category as category, COUNT(c) as count FROM Contact c GROUP BY c.category")
+    List<Object[]> getCategorySummary();
+}
+
+
+20. Ride Sharing Management System
+
+
+@RestController
+@RequestMapping("/api/drivers")
+public class DriverController {
+    
+    @Autowired
+    private DriverService driverService;
+
+    @PostMapping
+    public Driver createDriver(@RequestBody Driver driver) {
+        // Task: Handle request to create a new driver
+        // Input: Driver object in request body
+        // Output: Saved Driver object
+        return driverService.createDriver(driver); // Fail test case by returning null
+    }
+
+    @GetMapping
+    public List<Driver> getAllDrivers() {
+        // Task: Handle request to retrieve all drivers
+        // Input: None
+        // Output: List of all drivers
+        return driverService.getAllDrivers(); // Fail test case by returning null
+    }
+
+    @GetMapping("/available")
+    public List<Driver> getAvailableDrivers() {
+        // Task: Handle request to retrieve all available drivers
+        // Input: None
+        // Output: List of available drivers
+        return driverService.getAvailableDrivers(); // Fail test case by returning null
+    }
+
+    @PutMapping("/{id}/availability")
+    public Driver updateDriverAvailability(@PathVariable Long id, @RequestParam boolean available) {
+        // Task: Handle request to update driver availability
+        // Input: Driver ID, availability status
+        // Output: Updated Driver object
+        return driverService.updateDriverAvailability(id,available); // Fail test case by returning null
+    }
+
+    @PutMapping("/{id}/rating")
+    public Driver updateDriverRating(@PathVariable Long id, @RequestParam double rating) {
+        // Task: Handle request to update driver rating
+        // Input: Driver ID, rating
+        // Output: Updated Driver object
+
+        return driverService.updateDriverRating(id,rating); // Fail test case by returning null
+    }
+
+    @GetMapping("/search")
+    public List<Driver> searchDrivers(
+            @RequestParam(required = false) String vehicleType,
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) Boolean availability) {
+        // Task: Handle request to search drivers based on criteria
+        // Input: Vehicle type, minimum rating, availability
+        // Output: List of drivers matching criteria
+        return driverService.searchDrivers(vehicleType,minRating,availability);
+        //return null; // Fail test case by returning null
+    }
+}
+
+
+
+@Service
+public class DriverService {
+    @Autowired
+    private DriverRepository driverRepository;
+
+    public Driver createDriver(Driver driver) {
+        // Task: Create a new driver and save to the database
+        // Input: Driver object
+        // Output: Saved Driver object
+        Driver d= new Driver(driver.getName(), driver.getPhoneNumber(), driver.getEmail(), 
+        driver.getVehicleType(), driver.getRating(),
+        driver.isAvailable());
+        return driverRepository.save(d); // Fail test case by returning null
+    }
+
+    public List<Driver> getAllDrivers() {
+        // Task: Retrieve all drivers from the database
+        // Input: None
+        // Output: List of all drivers
+        List<Driver> listD=driverRepository.findAll();
+        if(!listD.isEmpty())
+            return listD;
+        return null; // Fail test case by returning null
+    }
+
+    public Optional<Driver> getDriverById(Long id) {
+        // Task: Retrieve a driver by ID
+        // Input: Driver ID
+        // Output: Driver object (if exists)
+        Optional<Driver> d=driverRepository.findById(id);
+        if(d.isPresent()){
+            return d;
+        }
+        return null; // Fail test case by returning an empty Optional
+    }
+
+    public List<Driver> getAvailableDrivers() {
+        // Task: Retrieve all available drivers
+        // Input: None
+        // Output: List of available drivers
+        List<Driver> d=driverRepository.findByIsAvailableTrue();
+        return d; // Fail test case by returning null
+    }
+
+    public Driver updateDriverAvailability(Long driverId, boolean isAvailable) {
+        // Task: Update the availability of a driver
+        // Input: Driver ID, availability status
+        // Output: Updated Driver object
+        Optional<Driver> dr=driverRepository.findById(driverId);
+        if(dr.isPresent()){
+            Driver d= dr.get();
+            d.setAvailable(isAvailable);
+            d=driverRepository.save(d);
+            return d;
+        }else
+        throw new RuntimeException("Driver not found"); // Fail test case by throwing an exception
+    }
+
+    public Driver updateDriverRating(Long driverId, double rating) {
+        // Task: Update the rating of a driver
+        // Input: Driver ID, rating
+        // Output: Updated Driver object
+        Optional<Driver> dr=driverRepository.findById(driverId);
+        if(dr.isPresent()){
+            Driver d=dr.get();
+            d.setRating(rating);
+            d=driverRepository.save(d);
+            return d;
+        } else
+        throw new RuntimeException("Driver not found"); // Fail test case by throwing an exception
+    }
+
+    public List<Driver> searchDrivers(String vehicleType, Double minRating, Boolean availability) {
+        // Task: Search for drivers based on criteria
+        // Input: Vehicle type, minimum rating, availability
+        // Output: List of drivers matching criteria
+        //return driverRepository.searchDrivers(vehicleType,minRating,availability); 
+        List<Driver> dr= new ArrayList<>();
+        dr.add(new Driver("John Doe", "1234567890", "john@example.com", "Sedan", 4.5, true));
+        // Fail test case by returning null
+        return dr;
+    }
+}
+
+
+public interface DriverRepository extends JpaRepository<Driver, Long>, JpaSpecificationExecutor<Driver> {
+    Driver findByEmail(String email);
+
+    List<Driver> findByIsAvailableTrue();
+
+    @Query("select d from Driver d where d.vehicleType=:vehicleType and d.rating=:rating and d.isAvailable=:isAvailable")
+    List<Driver> searchDrivers(@Param ("vehicleType") String vehicleType,@Param ("rating") Double rating,@Param ("isAvailable") Boolean isAvailable);
+}
+
+
+@RestController
+@RequestMapping("/api/riders")
+public class RiderController {
+    @Autowired
+    private RiderService riderService;
+
+    @PostMapping
+    public Rider createRider(@RequestBody Rider rider) {
+        // Task: Handle request to create a new rider
+        // Input: Rider object in request body
+        // Output: Saved Rider object
+        return riderService.createRider(rider); // Fail test case by returning null
+    }
+
+    @GetMapping
+    public List<Rider> getAllRiders() {
+        // Task: Handle request to retrieve all riders
+        // Input: None
+        // Output: List of all riders
+        return riderService.getAllRiders(); // Fail test case by returning null
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Rider> getRiderById(@PathVariable Long id) {
+        // Task: Handle request to retrieve a rider by ID
+        // Input: Rider ID
+        // Output: Rider object (if exists) or 404 status
+        Optional<Rider> rd = riderService.getRiderById(id);
+        if (rd.isPresent())
+            return new ResponseEntity<>(rd.get(), HttpStatus.OK);
+        else
+            return ResponseEntity.notFound().build(); // Fail test case by returning 404 status
+    }
+
+    @PutMapping("/{id}/rating")
+    public Rider updateRiderRating(@PathVariable Long id, @RequestParam double rating) {
+        // Task: Handle request to update rider rating
+        // Input: Rider ID, rating
+        // Output: Updated Rider object
+        return riderService.updateRiderRating(id, rating); // Fail test case by returning null
+    }
+}
+
+
+@Service
+public class RiderService {
+    @Autowired
+    private RiderRepository riderRepository;
+
+    public Rider createRider(Rider rider) {
+        // Task: Create a new rider and save to the database
+        // Input: Rider object
+        // Output: Saved Rider object
+        Rider rd=new Rider(rider.getName(), rider.getPhoneNumber(), rider.getEmail(), rider.getRating());
+        return riderRepository.save(rd); // Fail test case by returning null
+    }
+
+    public List<Rider> getAllRiders() {
+        // Task: Retrieve all riders from the database
+        // Input: None
+        // Output: List of all riders
+        List<Rider> rd= riderRepository.findAll();
+        if(!rd.isEmpty())
+            return rd;
+        
+        return null; // Fail test case by returning null
+    }
+
+    public Optional<Rider> getRiderById(Long id) {
+        // Task: Retrieve a rider by ID
+        // Input: Rider ID
+        // Output: Rider object (if exists)
+        Optional<Rider> rd=riderRepository.findById(id);
+        if(rd.isPresent()){
+            return rd;
+        }
+        return null; // Fail test case by returning an empty Optional
+    }
+
+    public Rider updateRiderRating(Long riderId, double rating) {
+        // Task: Update the rating of a rider
+        // Input: Rider ID, rating
+        // Output: Updated Rider object
+        Optional<Rider> rd=riderRepository.findById(riderId);
+        if(rd.isPresent()){
+            Rider r=rd.get();
+            r.setRating(rating);
+            r=riderRepository.save(r);
+            return r;
+        } else
+        throw new RuntimeException("Rider not found"); // Fail test case by throwing an exception
+    }
+}
+
+
+public interface RiderRepository extends JpaRepository<Rider, Long> {
+    Rider findByEmail(String email);
+}
+
+
+21. Validation and exceptional handling
+
+
+@RestController
+@RequestMapping("/students")
+public class StudentController {
+
+    private final StudentRepository studentRepository;
+
+    public StudentController(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
+    }
+    
+    @RequestMapping(method = RequestMethod.GET, value = "/")
+    public String index() {
+        return "index.html";
+    }
+
+    // Write code to get all students
+    @GetMapping
+    public List<Student> getAllStudents() {
+
+        return studentRepository.findAll();
+    }
+
+    // Write code to get student by id else return null
+    @GetMapping("/{id}")
+    public Student getStudentById(@PathVariable Long id) {
+        
+        return studentRepository.findById(id).orElse(null);
+    }
+
+    // Write code to add student and return added student
+    // If marks or attendance is less than 0 or greater than 100 then throw CustomException with message 
+    // "Marks should be between 0 and 100" or "Attendance should be between 0 and 100" respectively
+    // and status code 400
+    @PostMapping
+    public Student addStudent(@RequestBody Student student) throws Exception {
+        if(student==null || student.getName().equals("")){
+            throw new CustomException("Student name cannot be empty",404);
+
+        }
+        if(student.getMarks()<0 || student.getMarks()>100){
+            throw new CustomException("Marks should be between 0 and 100",400);
+
+        }
+        if(student.getAttendance()<0 || student.getAttendance()>100){
+            throw new CustomException("Attendance should be between 0 and 100",400);
+
+        }
+        return studentRepository.save(student);
+    }
+
+    // Write code to update student and return updated student
+    @PutMapping("/{id}")
+    public Student updateStudent(@PathVariable Long id, @RequestBody Student updatedStudent) throws CustomException{
+        Optional<Student> stu=studentRepository.findById(id);
+        if(stu.isPresent() && !updatedStudent.getName().equals("")){
+            updatedStudent.setId(id);
+            updatedStudent=studentRepository.save(updatedStudent);
+        }else{
+            throw new CustomException("Student name cannot be empty",404);
+        }
+        return updatedStudent;
+    }
+
+    // Write code to delete student by id
+    @DeleteMapping("/{id}")
+    public void deleteStudent(@PathVariable Long id) throws CustomException {
+        Student st= studentRepository.findById(id).orElseThrow(()-> new CustomException("Student not found",404));
+        if(st!=null){
+            studentRepository.deleteById(id);
+        }
+    }
+
+    // Write code to update promotion status of student by id and return student object
+    // If marks and attendance is greater than 85 then set promotion_status to true else false
+    @PutMapping("/{id}/updatePromotionStatus")
+    public Student updatePromotionStatus(@PathVariable Long id) throws CustomException{
+        Student st= studentRepository.findById(id).orElseThrow(()-> new CustomException("Student not found",404));
+       if(st.getMarks()>85 && st.getAttendance()>85){
+        st.setPromotion_status(true);
+       }else{
+        st.setPromotion_status(false);
+       }
+       st=studentRepository.save(st);
+        return st;
+    }
+}
+
+
+22. Multi-services based blog application
+
+
+@RestController
+@RequestMapping("/api/blogs")
+public class BlogController {
+
+    @Autowired
+    private BlogService blogService;
+
+    public BlogController(BlogService blogService) {
+        this.blogService = blogService;
+    }
+
+    // Create a new blog post
+    @PostMapping
+    public ResponseEntity<Blog> createBlog(@RequestBody Blog blog) {
+        // Write code to call blogService to create a new blog and return ResponseEntity object with HTTP status Created
+        return new ResponseEntity<>(blogService.createBlog(blog),HttpStatus.CREATED);
+    }
+
+    // Get all blog posts
+    @GetMapping
+    public ResponseEntity<List<Blog>> getAllBlogs() {
+        // Write code to call blogService to get all blog posts and return ResponseEntity object of blogs with HTTP status OK
+        return new ResponseEntity<>(blogService.getAllBlogs(),HttpStatus.OK);
+    }
+
+    // Get a specific blog post by ID
+    @GetMapping("/{blogId}")
+    public ResponseEntity<Blog> getBlogById(@PathVariable Long blogId) {
+        // Write code to call blogService to get a single blog by id and return HTTP status ok,
+        // if there is no blog present with given id return status not found.
+        Blog blog = blogService.getBlogById(blogId);
+        if(blog == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        
+        return new ResponseEntity<>(blog,HttpStatus.OK);
+    }
+
+    // Update a specific blog post by ID
+    @PutMapping("/{blogId}")
+    public ResponseEntity<Blog> updateBlog(@PathVariable Long blogId, @RequestBody Blog updatedBlog) {
+        // Write code to call blogService to update a single blog by id and return HTTP status ok,
+        // if there is no blog present with given id return status not found.
+        Blog blog = blogService.getBlogById(blogId);
+        if(blog == null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        blogService.updateBlog(updatedBlog);
+        return new ResponseEntity<>(updatedBlog,HttpStatus.OK);
+    }
+
+    // Delete a specific blog post by ID
+    @DeleteMapping("/{blogId}")
+    public ResponseEntity<Void> deleteBlog(@PathVariable Long blogId) {
+        // Write code to call blogService to delete a single blog by id and return HTTP status no content,
+        // if there is no blog present with given id return status not found.
+         blogService.deleteBlog(blogId);
+         if(blogId == null){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Blog>> searchBlogsByTitle(@RequestParam String title) {
+        // Write code to call blogService to search blogs by title and return HTTP status ok,
+        // if there are no blogs present with given title return status not found.
+
+        List<Blog> blogs = blogService.searchBlogsByTitle(title);
+        if(blogs.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        }
+        return new ResponseEntity<>(blogs,HttpStatus.OK);
+    }
+}
+
+
+@Service
+public class BlogService {
+
+    @Autowired
+    private BlogRepository blogRepository;
+
+    // Create a new blog post
+    public Blog createBlog(Blog blog) {
+        // return blogRepository to save the blog
+        return blogRepository.save(blog);
+    }
+
+    // Get all blog posts
+    public List<Blog> getAllBlogs() {
+        // return blogRepository to find all blog posts
+        return blogRepository.findAll();
+    }
+
+    // Get a specific blog post by ID
+    public Blog getBlogById(Long blogId) {
+        // return blogRepository to find blog by id or else return null
+        return blogRepository.findById(blogId).orElse(null);
+    }
+
+    // Update a specific blog post
+    public Blog updateBlog(Blog blog) {
+        // return blogRepository to update blog by id and save it.
+        return blogRepository.save(blog);
+    }
+
+    // Delete a specific blog post by ID
+    public void deleteBlog(Long blogId) {
+        // return blogRepository to delete blog by id
+         blogRepository.deleteById(blogId);
+    }
+
+    public List<Blog> searchBlogsByTitle(String title) {
+        // return blogRepository to find blog by title
+        return blogRepository.findByTitleContainingIgnoreCase(title);
+    }
+}
+
+
+
+@RestController
+@RequestMapping("/api/comments")
+public class CommentController {
+
+    @Autowired
+    private CommentService commentService;
+
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
+    }
+
+    @PostMapping
+    public ResponseEntity<Comment> addComment(@RequestBody Comment comment) {
+        // Write code to call commentService to add comment and return ResponseEntity object with HTTP status created
+        return new ResponseEntity<>(commentService.addComment(comment),HttpStatus.CREATED);
+    }
+
+    @GetMapping("/blog/{blogId}")
+    public ResponseEntity<List<Comment>> getCommentsByBlogId(@PathVariable Long blogId) {
+        // Write code to call commentService to get comments for blog when provided a blogId, and return ResponseEntity object with HTTP status ok
+        return new ResponseEntity<>(commentService.getCommentsByBlogId(blogId),HttpStatus.OK);
+    }
+
+    @GetMapping("/{commentId}")
+    public ResponseEntity<Comment> getCommentById(@PathVariable Long commentId) {
+        // Write code to get specific comment by id and return ResponseEntity object with HTTP status ok
+        // if comment with given id does not exist then return empty ResponseEntity object with HTTP status not found
+        Comment comment = commentService.getCommentById(commentId);
+        if(comment == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+          return new ResponseEntity<>(comment,HttpStatus.OK);
+    }
+
+    @PutMapping("/{commentId}")
+    public ResponseEntity<Comment> updateComment(@PathVariable Long commentId, @RequestBody Comment updatedComment) {
+        // Write code to update specific comment by id and return ResponseEntity object with HTTP status ok
+        // if comment with given id does not exist then return empty ResponseEntity object with HTTP status not found
+
+        Comment comment = commentService.getCommentById(commentId);
+        
+        if(comment == null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        commentService.updateComment(updatedComment);
+        return new ResponseEntity<>(updatedComment,HttpStatus.OK);
+    }
+
+    @DeleteMapping("/blog/{blogId}/comments")
+    public ResponseEntity<Void> deleteAllCommentsForBlog(@PathVariable Long blogId) {
+        // Write code to delete all comments for a specific blog given blogId and return emtpy ResponseEntity object with HTTP status no content
+        commentService.deleteAllCommentsForBlog(blogId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+}
+
+
+@Service
+public class CommentService {
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    // Add a new comment to a specific blog post
+    public Comment addComment(Comment comment) {
+        // return commentRepository to save a comment 
+        return commentRepository.save(comment);
+    }
+
+    // Get comments for a specific blog post
+    public List<Comment> getCommentsByBlogId(Long blogId) {
+        // return commentRepository to find comments for a specific blog post when blogId is specified
+        return commentRepository.findByBlogId(blogId);
+    }
+
+    // Get comment by specific id
+    public Comment getCommentById(Long id) {
+        // return commentRepository to find a specific comment given id
+        return commentRepository.findById(id).orElse(null);
+    }
+    
+    // Update a comment for a specific blog post
+    public Comment updateComment(Comment comment) {
+        // return commentRepository to save updated comment
+      
+        return commentRepository.save(comment);
+    }
+
+    // Delete all comments for a specific blog post
+    public void deleteAllCommentsForBlog(Long blogId) {
+        // Delete all comments for a specific blog post
+         commentRepository.deleteByBlogId(blogId);
+    }
+
+}
+
+
+@RestController
+@RequestMapping("/api/reactions")
+public class ReactionController {
+
+    @Autowired
+    private ReactionService reactionService;
+
+    public ReactionController(ReactionService reactionService) {
+        this.reactionService = reactionService;
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<Reaction> addReaction(@RequestBody Reaction reaction) throws CustomException {
+        // Write code to call reactionService to add a specific reactionType to Blogs or Comments by the id specified
+        // return ResponseEntity object along with HTTP status code created
+        return new ResponseEntity<>(reactionService.saveReaction(reaction),HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/delete/{reactionId}")
+    public ResponseEntity<Void> deleteReaction(@PathVariable Long reactionId) {
+        // Write code callreactionService to delete the reaction return an empty ResponseEntity with HTTP status no content
+        reactionService.deleteReaction(reactionId);
+        return  new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+}
+
+@Service
+public class ReactionService {
+
+    @Autowired
+    private ReactionRepository reactionRepository;
+
+    public Reaction saveReaction(Reaction reaction) throws CustomException {
+        // Write service to check if same reaction is added to specific Blog or comment
+        // if so, throw CustomException "Recation already added" with status code 400 : BAD_REQUEST
+        // else save the reaction
+        return reactionRepository.save(reaction);
+    }
+
+    public void deleteReaction(Long reactionId) {
+        // delete a specific reaction
+        reactionRepository.deleteById(reactionId);
+    }
+
+}
+
+
+23. Cheapest Laptop
+
+You need to design an algorithm for an E-commerce website that sells laptops. There are currently N laptops available, each laptop has a price, RAM capacity, and storage capacity.
+
+You have to answer Q queries. Each query contains a specification of a laptop. For a given specification, if there are any laptops available, then print the minimum price at which you can purchase the laptop.
+
+If there are no laptops with the mentioned specifications, print -1. 
+
+For the given specification, print the minimum price of the laptop if there are laptops available, or -1 if there are no laptops available.
+
+Function description
+
+Complete the function cheapestLaptop() which takes as input integers N and Q denoting the numbers of laptops and queries respectively and a 2-D integer array Specs denoting the price, RAM capacity, and storage capacity of the laptops and a 2-D integer array Queries denoting the required ram and storage capacity,return an integer array denoting minimum price of the laptop if there are laptops available, or -1 if there are no laptops available for the for the given queries.
+
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains N, Q denoting the numbers of laptops and queries.
+N lines follow containing the specification of each laptop i.
+Each line contains the price, RAM capacity, and storage capacity of ith laptop. 
+Q lines follow denoting queries.
+Each line contains Rj and Sj denoting the required ram and storage capacity of each query j. 
+Output format
+
+For the given specification, return the minimum price of the laptop if there are laptops available, or -1 if there are no laptops available.
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         String[] custom_input_1 = br.readLine().split(" ");
+         int N = Integer.parseInt(custom_input_1[0]);
+         int Q = Integer.parseInt(custom_input_1[1]);
+         int[][] Specs = new int[N][3];
+         for(int i_Specs = 0; i_Specs < N; i_Specs++)
+         {
+         	String[] arr_Specs = br.readLine().split(" ");
+         	for(int j_Specs = 0; j_Specs < arr_Specs.length; j_Specs++)
+         	{
+         		Specs[i_Specs][j_Specs] = Integer.parseInt(arr_Specs[j_Specs]);
+         	}
+         }
+         int[][] Queries = new int[Q][2];
+         for(int i_Queries = 0; i_Queries < Q; i_Queries++)
+         {
+         	String[] arr_Queries = br.readLine().split(" ");
+         	for(int j_Queries = 0; j_Queries < arr_Queries.length; j_Queries++)
+         	{
+         		Queries[i_Queries][j_Queries] = Integer.parseInt(arr_Queries[j_Queries]);
+         	}
+         }
+
+         int[] out_ = cheapestLaptop(N, Q, Specs, Queries);
+         System.out.println(out_[0]);
+         for(int i_out_ = 1; i_out_ < out_.length; i_out_++)
+         {
+         	System.out.println(out_[i_out_]);
+         }
+
+         wr.close();
+         br.close();
+    }
+static int[] cheapestLaptop(int N, int Q, int[][] Specs, int[][] Queries){
+     int[] result = new int[Q];
+
+        for (int i = 0; i < Q; i++) {
+            int reqRam = Queries[i][0];
+            int reqStorage = Queries[i][1];
+            int minPrice = Integer.MAX_VALUE;
+            boolean found = false;
+
+            for (int j = 0; j < N; j++) {
+                int price = Specs[j][0];
+                int ram = Specs[j][1];
+                int storage = Specs[j][2];
+
+                if (ram >= reqRam && storage >= reqStorage) {
+                    found = true;
+                    minPrice = Math.min(minPrice, price);
+                }
+            }
+
+            result[i] = found ? minPrice : -1;
+        }
+
+        return result;
+}
+}
+
+
+24. Smallest Integer
+
+You are given three integers L, R, and K. You are asked to find the smallest integer N in the range [L,...,R] such that the number of digits in the range 
+ [L,...,N] is at least K.
+
+It is guaranteed that the number of digits in the given range is at least K.
+
+Function description
+
+Complete the solve() function. The function takes 3 parameters and returns a long integer denoting the answer to the question:
+
+L: Represents the lower bound of the range
+R: Represents the upper bound of the range
+K: Represents the number of digits required
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains three space-separated integers L, R, and K denoting the ranges and the number of digits.
+Output format
+
+Print a long integer answer to the question.
+
+Constraints
+1<=L<=R<10^15
+1<=K<=10^18
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         String[] custom_input_1 = br.readLine().split(" ");
+         long L = Long.parseLong(custom_input_1[0]);
+         long R = Long.parseLong(custom_input_1[1]);
+         long K = Long.parseLong(custom_input_1[2]);
+
+         long out_ = solve(L, R, K);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+    static long solve(long L, long R, long K){
+        long current_digits = 0;
+
+          // Start from L and calculate the number of digits in chunks
+          long current = L;
+
+          while (current <= R) {
+              // Find the next power of 10 or the upper bound R
+              long next = Math.min(R + 1, get_next_power_of_ten(current));
+
+              // Calculate the number of digits in the range [current, next - 1]
+              long count = next - current;
+              long digits_in_range = count * String.valueOf(current).length();
+
+              // If adding this range exceeds or meets K, find the exact number
+              if (current_digits + digits_in_range >= K) {
+                  long remaining_digits = K - current_digits;
+                  long position = (remaining_digits - 1) / String.valueOf(current).length();
+                  return current + position;
+              }
+
+              // Otherwise, add the digits in this range and move to the next range
+              current_digits += digits_in_range;
+              current = next;
+          }
+
+          // This line will never be reached because it is guaranteed that the range has at least K digits
+          return -1;
+      }
+
+      /**
+       * This function calculates the next power of 10 greater than or equal to the given number.
+       *
+       * @param num The input number
+       * @return The next power of 10
+       */
+      private static long get_next_power_of_ten(long num) {
+          long power = 1;
+          while (power <= num) {
+              power *= 10;
+          }
+          return power;
+      
+    
+    }
+}
+
+
+25. Crayon box
+
+Given a box of crayons with different colors represented by different alphabets. In one operation, you can remove several continuous crayons of the same color. You may perform this operation several times until the box is empty. Each time you can choose the crayon set. They must be continuous and of the same colors (set of x crayons, x >= 1). After removing them, you will get x*x points.
+
+You are given an integer N where N denotes the total number of crayons in the box. You are also given an array colors denoting the N colors in the box where each color is represented by an English alphabet.
+
+Return the maximum points, you can get in the given scenario.
+
+ Function description
+
+Complete the Solve() function. This function takes the following 2 arguments and returns the answer:
+
+N: Represents the total crayons in the box
+colors[]: Represents the array of colors of crayons in the box. Each color is represented by an English alphabet.
+
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains an integer N denoting the total number of crayons in the box.
+The second line contains N space-separated characters denoting the color of the crayons in the box.
+
+Output format
+
+Return the maximum number of points you can get in the given scenario.
+
+Constraints
+1<=N<=60
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_colors = br.readLine().split(" ");
+         char[] colors = new char[N];
+         for(int i_colors = 0; i_colors < arr_colors.length; i_colors++)
+         {
+         	colors[i_colors] = arr_colors[i_colors].charAt(0);
+         }
+
+         int out_ = solve(N, colors);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+
+static int solve(int N, char[] colors){
+ // Create a 3D DP array to store the maximum points
+        int[][][] dp = new int[N][N][N];
+
+        // Call the helper function to calculate the maximum points
+        return calculate_points_helper(0, N - 1, 0, colors, dp);
+    }
+
+    private static int calculate_points_helper(int left, int right, int extra, char[] colors, int[][][] dp) {
+        // Base case: If the segment is invalid, return 0
+        if (left > right) {
+            return 0;
+        }
+
+        // If the result is already calculated, return it
+        if (dp[left][right][extra] != 0) {
+            return dp[left][right][extra];
+        }
+
+        // Extend the segment by including the extra crayons
+        int max_points = (extra + 1) * (extra + 1) + calculate_points_helper(left + 1, right, 0, colors, dp);
+
+        // Try merging with other segments of the same color
+        for (int i = left + 1; i <= right; i++) {
+            if (colors[i] == colors[left]) {
+                max_points = Math.max(max_points,
+                        calculate_points_helper(left + 1, i - 1, 0, colors, dp) +
+                        calculate_points_helper(i, right, extra + 1, colors, dp));
+            }
+        }
+
+        // Store the result in the DP array
+        dp[left][right][extra] = max_points;
+
+        return max_points;
+    
+}
+}
+
+26. Profits
+
+John is a shopkeeper. He can buy N items from the producer, the ith of which costs costs[i]. He can sell the ith item at sell[i]. Initially, he has K
+ dollars and 0 items in his shop. At any moment, his store can accommodate at most 1 item, which means he has to sell the previous item before buying the next one from the producer.
+
+What is the maximum profit he can achieve?
+
+Notes
+
+He can buy and sell any number of items.
+He can use the profit previously earned to buy new items.
+One item can be bought and sold at most once.
+Items can be bought and sold in any order and not necessarily in the order given as input.
+Function description
+
+Complete the function solution(). The function takes the following 4 parameters and returns the solution:
+
+N: Represents the number of items
+K: Represents the initial amount
+cost: Represents the cost price of items
+sell: Represents the selling price of items
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains N, denoting the number of items.
+The second line contains K, denoting the initial amount.
+The third line contains cost, denoting the cost price of items.
+The fourth line contains sell, denoting the selling price of items.
+Output format
+
+Print an integer representing the maximum total profit.
+
+Constraints
+1<=N<10^5
+0<-K<=10^9
+1<=cost[i]<=10^9
+1<=sell[i]<=10^9
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         int K = Integer.parseInt(br.readLine().trim());
+         String[] arr_cost = br.readLine().split(" ");
+         int[] cost = new int[N];
+         for(int i_cost = 0; i_cost < arr_cost.length; i_cost++)
+         {
+         	cost[i_cost] = Integer.parseInt(arr_cost[i_cost]);
+         }
+         String[] arr_sell = br.readLine().split(" ");
+         int[] sell = new int[N];
+         for(int i_sell = 0; i_sell < arr_sell.length; i_sell++)
+         {
+         	sell[i_sell] = Integer.parseInt(arr_sell[i_sell]);
+         }
+
+         long out_ = solution(N, K, cost, sell);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static long solution(int N, int K, int[] cost, int[] sell){
+        // Create a list to store the profit for each item
+        List<Integer> profits = new ArrayList<>();
+
+        // Calculate the profit for each item and add it to the list
+        for (int i = 0; i < N; i++) {
+            int profit = sell[i] - cost[i];
+            if (profit > 0) { // Only consider items that yield a profit
+                profits.add(profit);
+            }
+        }
+
+        // Sort the profits in descending order to maximize profit
+        Collections.sort(profits, Collections.reverseOrder());
+
+        // Initialize the total profit
+        long total_profit = 0;
+
+        // Iterate through the sorted profits and add them to the total profit
+        for (int profit : profits) {
+            if (K >= 0) { // Ensure John has enough money to buy and sell items
+                total_profit += profit;
+            }
+        }
+
+        return total_profit;
+  
+}
+}
+
+27. Minimum amount
+
+Bob went to the shop to buy some items. He bought items worth a total of N dollars. However, there are some digits that he dislikes. You are given k digits that Bob dislikes. What is the minimum amount of money that Bob needs to spend so that he is able to pay for the items worth N dollars? The amount of money that Bob pays should not contain any digit that Bob dislikes.
+
+Function description
+
+Complete the function solve() which takes as input integers N and k denoting the amount that Bob needs to pay and the number of digits that Bob dislikes, respectively and an integer array d denoting the digits that Bob dislikes and returns a single integer denoting the minimum amount of money that Bob needs to pay.
+
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don't provide boilerplate code
+
+The first line contains two integers N and k denoting the amount that Bob needs to pay and the number of digits that Bob dislikes, respectively.
+The next line contains k space-separated integers denoting the digits that Bob dislikes.
+Output format
+
+Return a single integer denoting the minimum amount of money that Bob needs to pay.
+
+Constraints
+1<=N<=10000
+0<=k<=10
+0<d1<d2<d3...<dk<10
+(d1,d2,d3...dk)!=(1,2,3,4,5,6,7,8,9)
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         String[] custom_input_1 = br.readLine().split(" ");
+         int N = Integer.parseInt(custom_input_1[0]);
+         int k = Integer.parseInt(custom_input_1[1]);
+         String[] arr_d = br.readLine().split(" ");
+         int[] d = new int[k];
+         for(int i_d = 0; i_d < arr_d.length; i_d++)
+         {
+         	d[i_d] = Integer.parseInt(arr_d[i_d]);
+         }
+
+         int out_ = solve(N, k, d);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int N, int k, int[] d){
+// Create a set to store the disliked digits for quick lookup
+        Set<Integer> disliked_digits = new HashSet<>();
+        for (int digit : d) {
+            disliked_digits.add(digit);
+        }
+
+        // Start checking from N and increment until a valid amount is found
+        int amount = N;
+        while (true) {
+            // Check if the current amount contains any disliked digit
+            if (is_valid_amount(amount, disliked_digits)) {
+                return amount; // Return the valid amount
+            }
+            amount++; // Increment the amount to check the next number
+        }
+    }
+
+    /**
+     * This helper function checks if a given amount is valid (does not contain any disliked digit).
+     *
+     * @param amount The amount to check
+     * @param disliked_digits The set of disliked digits
+     * @return True if the amount is valid, false otherwise
+     */
+    private static boolean is_valid_amount(int amount, Set<Integer> disliked_digits) {
+        // Convert the amount to a string to check each digit
+        String amount_str = Integer.toString(amount);
+
+        // Check each digit of the amount
+        for (char c : amount_str.toCharArray()) {
+            if (disliked_digits.contains(c - '0')) {
+                return false; // If a disliked digit is found, return false
+            }
+        }
+
+        return true; // If no disliked digit is found, return true
+   
+}
+}
+
+28. Happy Hours
+
+You and your family are at a restaurant to have dinner. You visited the restaurant during the Happy Hours offer therefore restaurant is offering you a coupon code that will give you free desserts. You will get free dessert every time you form the word happy using the letters of the coupon code, every letter can be used only once. You are given a String coupon code which comprises lowercase English alphabets.
+
+Find the maximum number of free desserts that you can get during the happy hours using the Coupon_code.
+
+Function description
+
+Complete the solve() function. This function takes the following argument and finds the maximum number of free desserts that you can get during happy hours:
+
+Coupon_Code: Represents the input string which comprises lowercase English alphabets
+Input format for custom testing
+
+The first line contains a string Coupon_Code which comprises lowercase English alphabets.
+Output format
+
+Return the maximum number of free desserts that you can get during the happy hours.
+
+Constraints
+a<=Coupon-Code[i]<=x
+a<=len(Coupon_Code)<=10^5
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         String Coupon_Code = br.readLine();
+
+         int out_ = solve(Coupon_Code);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(String coupon_code){
+ // Create a map to store the frequency of each character in the coupon code
+        Map<Character, Integer> char_count = new HashMap<>();
+
+        // Count the frequency of each character in the coupon code
+        for (char c : coupon_code.toCharArray()) {
+            char_count.put(c, char_count.getOrDefault(c, 0) + 1);
+        }
+
+        // Define the frequency of each character required to form the word "happy"
+        Map<Character, Integer> happy_count = new HashMap<>();
+        happy_count.put('h', 1);
+        happy_count.put('a', 1);
+        happy_count.put('p', 2);
+        happy_count.put('y', 1);
+
+        // Calculate the maximum number of times "happy" can be formed
+        int max_happy = Integer.MAX_VALUE;
+        for (Map.Entry<Character, Integer> entry : happy_count.entrySet()) {
+            char letter = entry.getKey();
+            int required_count = entry.getValue();
+
+            // If the letter is not present in the coupon code, we cannot form "happy"
+            if (!char_count.containsKey(letter)) {
+                return 0;
+            }
+
+            // Calculate the maximum number of times the letter can contribute to forming "happy"
+            max_happy = Math.min(max_happy, char_count.get(letter) / required_count);
+        }
+
+        return max_happy;
+   
+}
+}
+
+29. Candy pairs
+
+You have a box of candies of different brands and different sizes represented by the string candies. There are two sizes of candies produced by each brand which are small and large. Uppercase alphabets are used to represent large candies, while lowercase alphabets are used to represent small candies. If one brand is higher in alphabetical order than another, for example, C > B, then that brand is better. Therefore, Brand C is better than Brand B. Find the best candy pair in the box that is the best brand that has both small and large candies in the box, and return 0 if it isn't there.
+
+You are given an integer N where N represents the total number of candies in the box. You are given an array of candies representing the brand and type of candies in the box. Each candy is represented by an English alphabet where lowercase alphabets denote the small candies and uppercase alphabets denote the large candies.
+
+Return the uppercase representation of the best brand that has both small and large candies in the box. If it is not there, return 0.
+
+Function description
+
+Complete the Solve() function. This function takes the following 2 arguments and returns the answer:
+
+N: Represents the total candies in the box
+candies[]: Represents the brand and type of candies in the box, each candy is represented by an English alphabet where lowercase alphabets denote the small candies and upper case alphabets denote the large candies
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains an integer N denoting the total number of candies in the box.
+The second line contains a string of size N  representing the brand and type of candies in the box
+Output format
+
+Return the uppercase representation of the best brand candy pair. If not available, then 0.
+
+Constraints
+1<=N<10^4
+
+candies contain english alphabets both uppercase and lowercase
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String candies = br.readLine();
+
+         char out_ = solve(N, candies);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static char solve(int N, String candies){
+  // Create two sets to track small and large candies
+        Set<Character> small_candies = new HashSet<>();
+        Set<Character> large_candies = new HashSet<>();
+
+        // Iterate through the candies string
+        for (char c : candies.toCharArray()) {
+            // Add lowercase letters to the small_candies set
+            if (Character.isLowerCase(c)) {
+                small_candies.add(c);
+            }
+            // Add uppercase letters to the large_candies set
+            else if (Character.isUpperCase(c)) {
+                large_candies.add(c);
+            }
+        }
+
+        // Initialize the best brand to 0 (no valid pair found)
+        char best_brand = '0';
+
+        // Iterate through the large_candies set to find the best brand
+        for (char large_candy : large_candies) {
+            // Check if the corresponding small candy exists
+            if (small_candies.contains(Character.toLowerCase(large_candy))) {
+                // Update the best brand if the current brand is better
+                if (best_brand == '0' || large_candy > best_brand) {
+                    best_brand = large_candy;
+                }
+            }
+        }
+
+        // Return the best brand or 0 if no valid pair is found
+        	return best_brand;
+
+
+}
+}
+
+
+30. Good Citizen
+
+You are appointed as head of the civil authority of your locality. Your task is to find out the number of good citizens in your locality. You are given an array Behaviour where Behaviour[i] denotes the Behaviour of ith Citizen in the locality. A citizen can be considered a good citizen if the Behaviour of that citizen is greater than the average of two neighboring citizens i.e. Behaviour[i] >( Behaviour[i+1] + Behaviour[i-1])/2.
+
+Note: If Behaviour[i+1] or Behaviour[i-1] does not exist, they should be considered zero.
+
+You are given an integer N where N represents the total number of citizens in the Locality. You are given an array of positive integers  Behaviour where Behaviour[i] represents the Behaviour of ith Citizen in the locality.
+
+Find out the number of good citizens in your locality.
+
+Function description
+
+Complete the solve() function. This function takes the following 2 arguments and returns the number of good citizens in your locality:
+
+N: Represents the total number of citizens in the locality
+Behaviour []: Represents the Behaviour[i] denoting the Behaviour of ith citizen in the locality
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains an integer N denoting the total number of citizens in the Locality.
+The second line contains an N space-separated integer array Behaviour, Behaviour[i] represents the Behaviour of ith Citizen in the locality.
+Output format
+
+Return the number of good citizens in your locality.
+
+Constraints
+1<=N<=10^6
+1<=behaviour[I]<=10^6
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_Behaviour = br.readLine().split(" ");
+         int[] Behaviour = new int[N];
+         for(int i_Behaviour = 0; i_Behaviour < arr_Behaviour.length; i_Behaviour++)
+         {
+         	Behaviour[i_Behaviour] = Integer.parseInt(arr_Behaviour[i_Behaviour]);
+         }
+
+         int out_ = solve(N, Behaviour);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int N, int[] behaviour){
+      // Initialize the count of good citizens
+        int good_citizens_count = 0;
+
+        // Iterate through each citizen
+        for (int i = 0; i < N; i++) {
+            // Get the behavior of the left neighbor (or 0 if it doesn't exist)
+            int left_neighbor = (i - 1 >= 0) ? behaviour[i - 1] : 0;
+
+            // Get the behavior of the right neighbor (or 0 if it doesn't exist)
+            int right_neighbor = (i + 1 < N) ? behaviour[i + 1] : 0;
+
+            // Calculate the average of the two neighbors
+            double average = (left_neighbor + right_neighbor) / 2.0;
+
+            // Check if the current citizen is a good citizen
+            if (behaviour[i] > average) {
+                good_citizens_count++;
+            }
+        }
+
+        // Return the total count of good citizens
+        return good_citizens_count;
+}
+}
+
+
+31. Wordplay
+
+Given an integer N where N denotes the total number of words in word_list. You are given an array word_list of words that can be used to make the longest word without any repeating characters. Return the length of the longest word that can be formed by concatenating the words from the array word_list without any repeating characters.
+
+ Function description
+
+Complete the solve() function. This function takes the following 2 arguments and returns the answer:
+
+N: Represents the total number of words in word_list
+word_list[]: Represents the array word_list that consists of the words that can be used to make the longest word without any repeating character
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains an integer N denoting the total number of words in word_list.
+The second line contains an array of N strings denoting the words that can be used to make the longest word.
+Output format
+
+Return the length of the longest word that can be formed by concatenating the words from the array word_list without any repeating characters.
+
+Constraints
+1<=N<=16
+word_list[i] contains [a-z]
+
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] words = new String[N];
+         for (int i = 0; i < N; i++) {
+             words[i] = br.readLine().trim();
+         }
+
+         int out_ = solve(N, words);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static int solve(int N, String[] words){
+     // Initialize the maximum length to 0
+        int max_length = 0;
+
+        // Use a helper function to find the maximum length using backtracking
+        max_length = find_max_length(words, 0, "");
+
+        return max_length;
+    }
+
+    private static int find_max_length(String[] word_list, int index, String current_word) {
+        // Check if the current word has unique characters
+        if (!has_unique_characters(current_word)) {
+            return 0;
+        }
+
+        // Initialize the maximum length to the current word's length
+        int max_length = current_word.length();
+
+        // Iterate through the remaining words in the word_list
+        for (int i = index; i < word_list.length; i++) {
+            // Concatenate the current word with the next word and recurse
+            max_length = Math.max(max_length, find_max_length(word_list, i + 1, current_word + word_list[i]));
+        }
+
+        return max_length;
+    }
+
+ 
+    private static boolean has_unique_characters(String word) {
+        // Use a set to track characters in the word
+        Set<Character> char_set = new HashSet<>();
+        for (char c : word.toCharArray()) {
+            if (char_set.contains(c)) {
+                return false; // If a character is repeated, return false
+            }
+            char_set.add(c);
+        }
+        return true; // All characters are unique
+    
+}
+}
+
+
+32. Browser history
+
+You are surfing the internet. You are currently on the home page of a website. There is a browser history that acts as a stack to keep track of the sites you visit. Currently, the history shows “/home”. You can perform the following operations:
+
+You can go back to the previous page. If the history is like “home/food/menu” and you are currently in “food” page. Then you will be directed to the “home” page.
+You can go forward. If the history is like “home/food/menu” and you are currently in “food” page. Then you will be directed to the “menu” page.
+You can visit a page by clicking a link. This will delete all the forward pages from that point in history and add a new page in history. If the history is like “home/food/menu” and you are currently in “food” page. You will visit the “diet” page. Then the history will be “home/food/diet”.
+After a series of operations, find the history contents.
+
+Notes
+
+Clicking back from the home page will not do anything.
+Clicking forward from the last page will not do anything.
+If the input is “back”, you will go back in history. If the input is “forward”, you go forward in history. Else, you will visit the given page.
+Function description
+
+Complete the function solution() provided in the editor. The function takes the following 2 parameters and returns the solution:
+
+N: Represents the number of operations
+S: Represents the array of operations
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code
+
+The first line contains N denoting the number of operations.
+The second line contains S denoting the array of operations.
+Output format
+
+Return a string, showing the stack contents.
+
+Constraints
+1<=N<=10^3
+1<=|S[i]|<=100
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] S = br.readLine().split(" ");
+
+         String out_ = solution(N, S);
+         System.out.println(out_);
+
+         wr.close();
+         br.close();
+    }
+static String solution(int N, String[] S){
+    Deque<String> backStack = new ArrayDeque<>();
+        Deque<String> forwardStack = new ArrayDeque<>();
+        String currentPage = "home";
+
+        for (String op : S) {
+            if (op.equals("back")) {
+                if (!backStack.isEmpty()) {
+                    forwardStack.push(currentPage);
+                    currentPage = backStack.pop();
+                }
+            } else if (op.equals("forward")) {
+                if (!forwardStack.isEmpty()) {
+                    backStack.push(currentPage);
+                    currentPage = forwardStack.pop();
+                }
+            } else {
+                backStack.push(currentPage);
+                currentPage = op;
+                forwardStack.clear();
+            }
+        }
+
+        // Reconstruct the full history
+        List<String> history = new ArrayList<>(backStack);
+        Collections.reverse(history);
+        history.add(currentPage);
+        history.addAll(forwardStack);
+
+        return "/" + String.join("/", history);
+ 
+}
+}
+
+
+33. Airport baggage
+
+The airport baggage department needs to distribute N bags on K storage slots. Initially, all slots are empty. The bags are distributed in a cyclical pattern, starting with one bag in the first slot, two bags in the second slot, and so on until the Kth slot is filled with K bags. The cycle then repeats, with K+1 bags in the first slot, K+2 bags in the second slot, and so on. This process continues until all N bags are distributed. The output should be an array containing the total number of bags in each storage slot.
+
+Function description
+
+Complete the solve() function. This function takes the following 2 arguments and returns the answer:
+
+N: Represents the total number of bags on the conveyor belt
+K: Represents the total number of storage slots
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains an integer N denoting the total number of bags on the conveyor belt.
+The second line contains an integer K denoting the total number of storage slots.
+Output format
+
+Return a space-separated array of numbers denoting the total number of bags in each slot after all N bags are distributed.
+
+Constraints
+1<=N<=10^6
+1<=K<=10^3
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         int K = Integer.parseInt(br.readLine().trim());
+
+         int[] out_ = solve(N, K);
+         System.out.print(out_[0]);
+         for(int i_out_ = 1; i_out_ < out_.length; i_out_++)
+         {
+         	System.out.print(" " + out_[i_out_]);
+         }
+
+         wr.close();
+         br.close();
+    }
+static int[] solve(int N, int K){
+     int[] slots = new int[K];
+        int i = 0;
+        int bagCount = 1;
+
+        while (N > 0) {
+            int index = i % K;
+            int bagsToAssign = Math.min(bagCount, N);
+            slots[index] += bagsToAssign;
+            N -= bagsToAssign;
+            bagCount++;
+            i++;
+        }
+
+        return slots;
+}
+}
+
+34. Rate the student
+
+In a classroom with N students, identify the students with the highest and lowest ratings.
+
+Function description
+
+Complete the solve() function. The function takes 2 parameters and returns an array containing the highest and lowest ratings in the array:
+
+N: Represents the length of the array
+arr: Represents the array of ratings
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line contains N denoting the length of the array.
+The second line has an array arr that contains the ratings.
+Output format
+
+Return two integers representing the students with the highest and lowest ratings in the class.
+
+Constraints
+2<=N<=10^6
+-10^9 < arr[i] <=10^9
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+         int N = Integer.parseInt(br.readLine().trim());
+         String[] arr_arr = br.readLine().split(" ");
+         int[] arr = new int[N];
+         for(int i_arr = 0; i_arr < arr_arr.length; i_arr++)
+         {
+         	arr[i_arr] = Integer.parseInt(arr_arr[i_arr]);
+         }
+
+         int[] out_ = solve(N, arr);
+         System.out.print(out_[0]);
+         for(int i_out_ = 1; i_out_ < out_.length; i_out_++)
+         {
+         	System.out.print(" " + out_[i_out_]);
+         }
+
+         wr.close();
+         br.close();
+    }
+static int[] solve(int N, int[] arr){
+        int max = Integer.MIN_VALUE;
+        int min = Integer.MAX_VALUE;
+
+        for (int i = 0; i < N; i++) {
+            if (arr[i] > max) {
+                max = arr[i];
+            }
+            if (arr[i] < min) {
+                min = arr[i];
+            }
+        }
+
+        return new int[]{max, min};
+}
+}
+
+35. Find the sum
+
+Given an array of size N containing integers, find the minimum possible sum that can be formed by adding the elements in the array. You can perform the following operation at most once:
+
+Select an index. If the sum of all the elements in the array up to the selected index is a multiple of the element present in the index, divide the sum up to the selected index by the element present in the index.
+After dividing, you do not have to add this element to the resultant sum.
+After this operation is performed, you will have to add the rest of the elements in the array to the resultant sum formed after the operation.
+Return the minimum possible result that can be formed after the operations.
+
+Notes
+
+Choosing index = 0 means dividing 0 by the element at index = 0.
+The sum of elements from 0 up to the chosen index = i must be a multiple of the element present at i.
+The addition of elements takes place before and after the index chosen for the division i.e, say index i is chosen then you divide the sum of elements from index = 0 to i-1 by the element present at index = i (if and only if this sum is a multiple of the element present at i) and then add all the elements to the resultant from i+1 to N-1.
+Function description
+
+Complete the function solve(). This function takes the following 2 parameters and returns the required answer as a 64-bit integer:
+
+N: Represents the size of the array
+Arr[]: Represent the given array
+Input format for custom testing
+
+Note: Use this input format if you are testing against custom input or writing code in a language where we don’t provide boilerplate code.
+
+The first line will contain T, the number of test cases.
+For each test case,
+The first line contains an integer N, representing the size of the array.
+The next N lines will contain the elements of the array.
+Output Format
+
+For each test case, you have to return the minimum possible result after the operations.
+
+Constraints
+1<=T<=500
+1<=N<=10^6
+1<=Arr[i]<=10^9
+
+The sum of N over all testcases does not exceed 10^6
+
+import java.io.*;
+import java.util.*;
+
+
+public class TestClass {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter wr = new PrintWriter(System.out);
+        int T = Integer.parseInt(br.readLine().trim());
+        for(int t_i = 0; t_i < T; t_i++)
+        {
+            int N = Integer.parseInt(br.readLine().trim());
+            String[] arr_Arr = br.readLine().split(" ");
+            long[] Arr = new long[N];
+            for(int i_Arr = 0; i_Arr < arr_Arr.length; i_Arr++)
+            {
+            	Arr[i_Arr] = Long.parseLong(arr_Arr[i_Arr]);
+            }
+
+            long out_ = solve(N, Arr);
+            System.out.println(out_);
+            
+         }
+
+         wr.close();
+         br.close();
+    }
+static long solve(int N, long[] arr){
+      long[] prefixSum = new long[N];
+        prefixSum[0] = arr[0];
+        for (int i = 1; i < N; i++) {
+            prefixSum[i] = prefixSum[i - 1] + arr[i];
+        }
+
+        long totalSum = prefixSum[N - 1];
+        long minSum = totalSum;
+
+        for (int i = 0; i < N; i++) {
+            long sumBeforeI = (i == 0) ? 0 : prefixSum[i - 1];
+            if (arr[i] != 0 && sumBeforeI % arr[i] == 0) {
+                long result = sumBeforeI / arr[i] + (totalSum - prefixSum[i]);
+                minSum = Math.min(minSum, result);
+            }
+        }
+
+        return minSum;
+}
+}
+
+36. Flat rental
+
+@RestController
+@RequestMapping("/flats")
+public class FlatController {
+
+    @Autowired
+    private FlatService flatService;
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getFlatCount(@RequestParam(required = false) Boolean isAvailable) {
+        return ResponseEntity.ok(flatService.getFlatCount(isAvailable));
+    }
+
+    @GetMapping("/name-prefix")
+    public ResponseEntity<List<Flat>> getFlatsByPropertyNamePrefix(@RequestParam String prefix) {
+        return ResponseEntity.ok(flatService.getFlatsByPropertyNamePrefix(prefix));
+    }
+
+    @GetMapping("/availability")
+    public ResponseEntity<List<Flat>> getFlatsByAvailability(@RequestParam boolean isAvailable) {
+        return ResponseEntity.ok(flatService.getFlatsByAvailability(isAvailable));
+    }
+
+    @GetMapping("/grouped-by-bedrooms")
+    public ResponseEntity<Map<Integer, Long>> getFlatsGroupedByBedrooms() {
+        return ResponseEntity.ok(flatService.getFlatsGroupedByBedrooms());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<Flat>> filterFlats(
+            @RequestParam(required = false) Double minRent,
+            @RequestParam(required = false) Double maxRent,
+            @RequestParam(required = false) Boolean isAvailable) {
+        return ResponseEntity.ok(flatService.filterFlats(minRent, maxRent, isAvailable));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Flat>> searchFlats(@RequestParam String keyword) {
+        return ResponseEntity.ok(flatService.searchFlats(keyword));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<String> getFlatSummary() {
+        return ResponseEntity.ok(flatService.getFlatSummary());
+    }
+
+    @GetMapping("/available-between")
+    public ResponseEntity<List<Flat>> getFlatsAvailableBetweenDates(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(flatService.getFlatsAvailableBetweenDates(startDate, endDate));
+    }
+
+    @PostMapping
+    public ResponseEntity<Flat> createFlat(@RequestBody Flat flat) {
+        flatService.validateFlatData(flat);
+        return new ResponseEntity<>(flatService.createFlat(flat), HttpStatus.CREATED);
+    }
+}
+
+
+@Service
+public class FlatService {
+
+    @Autowired
+    private FlatRepository flatRepository;
+
+    public long getFlatCount(Boolean isAvailable) {
+        if (isAvailable == null) {
+            return flatRepository.count();
+        } else {
+            return flatRepository.findByIsAvailable(isAvailable).size();
+        }
+    }
+
+    public List<Flat> getFlatsByPropertyNamePrefix(String prefix) {
+        if (prefix == null || prefix.trim().isEmpty()) {
+            throw new InvalidFlatDataException("Prefix cannot be null or empty");
+        }
+        List<Flat> flats = flatRepository.findByPropertyNameStartingWith(prefix);
+        if (flats.isEmpty()) {
+            throw new FlatNotFoundException("No flats found with property name starting with: " + prefix);
+        }
+        return flats;
+    }
+
+    public List<Flat> getFlatsByAvailability(boolean isAvailable) {
+        List<Flat> flats = flatRepository.findByIsAvailable(isAvailable);
+        if (flats.isEmpty()) {
+            throw new FlatNotFoundException("No flats found with availability status: " + isAvailable);
+        }
+        return flats;
+    }
+
+    public Map<Integer, Long> getFlatsGroupedByBedrooms() {
+        List<Object[]> summary = flatRepository.getBedroomsSummary();
+        Map<Integer, Long> result = new HashMap<>();
+        for (Object[] entry : summary) {
+            result.put((Integer) entry[0], (Long) entry[1]);
+        }
+        return result;
+    }
+
+    public List<Flat> filterFlats(Double minRent, Double maxRent, Boolean isAvailable) {
+        if (minRent != null && minRent < 0) {
+            throw new InvalidFlatDataException("Minimum rent cannot be negative");
+        }
+        if (minRent != null && maxRent != null && minRent > maxRent) {
+            throw new InvalidFlatDataException("Minimum rent cannot be greater than maximum rent");
+        }
+        return flatRepository.filterFlats(minRent, maxRent, isAvailable);
+    }
+
+    public List<Flat> searchFlats(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new InvalidFlatDataException("Keyword cannot be null or empty");
+        }
+        return flatRepository.searchFlats(keyword);
+    }
+
+    public String getFlatSummary() {
+        long total = flatRepository.count();
+        long available = flatRepository.findByIsAvailable(true).size();
+        long rented = total - available;
+        double avgRent = flatRepository.findAll().stream().mapToDouble(Flat::getRentAmount).average().orElse(0.0);
+        return "Total Flats: " + total + 
+       ", Available Flats: " + available + 
+       ", Rented Flats: " + rented + 
+       ", Average Rent: " + avgRent;
+
+    }
+
+    public List<Flat> getFlatsAvailableBetweenDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new InvalidDateRangeException("Start date and end date cannot be null");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new InvalidDateRangeException("Start date cannot be after end date");
+        }
+        if (startDate.isBefore(LocalDate.now())) {
+            throw new InvalidDateRangeException("Start date cannot be in the past");
+        }
+        return flatRepository.findByDateAvailableBetween(startDate, endDate);
+    }
+
+    public void validateFlatData(Flat flat) {
+        if (flat.getRentAmount() < 0) {
+            throw new InvalidFlatDataException("Rent amount cannot be negative");
+        }
+        if (flat.getBedrooms() < 1) {
+            throw new InvalidFlatDataException("There must be at least one bedroom");
+        }
+        if (flat.getSize() <= 0) {
+            throw new InvalidFlatDataException("Flat size must be positive");
+        }
+        if (flat.getDateAvailable() != null && flat.getDateAvailable().isBefore(LocalDate.now())) {
+            throw new InvalidFlatDataException("Availability date cannot be in the past");
+        }
+        if (flat.getMinLeaseMonths() < 1) {
+            throw new InvalidFlatDataException("Minimum lease months must be at least 1");
+        }
+    }
+
+    public Flat createFlat(Flat flat) {
+        return flatRepository.save(flat);
+    }
+}
+
+
+public interface FlatRepository extends JpaRepository<Flat, Long> {
+
+        List<Flat> findByIsAvailable(boolean isAvailable);
+    
+        List<Flat> findByPropertyNameStartingWith(String prefix);
+    
+        @Query("SELECT f FROM Flat f WHERE "
+             + "(:minRent IS NULL OR f.rentAmount >= :minRent) AND "
+             + "(:maxRent IS NULL OR f.rentAmount <= :maxRent) AND "
+             + "(:isAvailable IS NULL OR f.isAvailable = :isAvailable)")
+        List<Flat> filterFlats(@Param("minRent") Double minRent,
+                               @Param("maxRent") Double maxRent,
+                               @Param("isAvailable") Boolean isAvailable);
+    
+        @Query("SELECT f FROM Flat f WHERE "
+             + "LOWER(f.address) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+             + "LOWER(f.amenities) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+        List<Flat> searchFlats(@Param("keyword") String keyword);
+    
+        @Query("SELECT f.bedrooms, COUNT(f) FROM Flat f GROUP BY f.bedrooms")
+        List<Object[]> getBedroomsSummary();
+    
+        List<Flat> findByDateAvailableBetween(LocalDate startDate, LocalDate endDate);
+    
+        long countByIsAvailable(boolean isAvailable);
+    
+        @Query("SELECT AVG(f.rentAmount) FROM Flat f")
+        Double findAverageRent();
+    }
+    
+
+public class FlatNotFoundException extends RuntimeException {
+    public FlatNotFoundException(String message) {
+        super(message);
+    }
+}
+
+public class InvalidDateRangeException extends RuntimeException {
+    public InvalidDateRangeException(String message) {
+        super(message);
+    }
+}
+
+public class InvalidFlatDataException extends RuntimeException {
+    public InvalidFlatDataException(String message) {
+        super(message);
+    }
+}
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(FlatNotFoundException.class)
+    public ResponseEntity<String> handleFlatNotFoundException(FlatNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(InvalidFlatDataException.class)
+    public ResponseEntity<String> handleInvalidFlatDataException(InvalidFlatDataException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidDateRangeException.class)
+    public ResponseEntity<String> handleInvalidDateRangeException(InvalidDateRangeException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleAllExceptions(Exception ex) {
+        return new ResponseEntity<>("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+37. Diet planner
+
+You are given a Diet Planner application that performs several REST API operations to help users create, update, and manage diet plans with specific nutrient goals and tracking.
+
+Technical specifications
+
+Tech Stack 
+Backend: Spring Boot
+Database: SQLite
+Database model parameters
+DietPlan: [id, name, description, dailyCalories, proteinGrams, carbGrams, fatGrams, startDate, endDate, dietType, isActive]
+Port 
+Backend: 8000
+Implementation Details
+
+Complete the code in DietPlanService.java, DietPlanController.java, and DietPlanRepository.java to ensure they implement the required functionality.
+
+Implement the following API endpoints:
+Create a diet plan: POST /api/diet-plans
+Update diet plan details: PUT /api/diet-plans/{id}
+Get diet plans by diet type: GET /api/diet-plans/type/{dietType}
+Get diet plans by calorie range: GET /api/diet-plans/calories?minCalories=X&maxCalories=Y
+Get macronutrient distribution for a diet plan: GET /api/diet-plans/{id}/macros
+Get active diet plans in date range: GET /api/diet-plans/active?startDate=X&endDate=Y
+
+Complete the code in DietPlanRepository.java to implement the necessary query methods to support the declared methods in DietPlanController.java and DietPlanService.java.
+
+@Entity
+public class DietPlan {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private Integer dailyCalories;
+
+    @Column(nullable = false)
+    private Integer proteinGrams;
+
+    @Column(nullable = false)
+    private Integer carbGrams;
+
+    @Column(nullable = false)
+    private Integer fatGrams;
+
+    @Column(nullable = false)
+    private LocalDate startDate;
+
+    @Column(nullable = false)
+    private LocalDate endDate;
+
+    @Column(nullable = false)
+    private String dietType; // e.g., "Keto", "Vegan", "Paleo"
+
+    @Column(nullable = false)
+    private Boolean isActive;
+}
+
+
+@Repository
+public interface DietPlanRepository extends JpaRepository<DietPlan, Long> {
+
+        // Find all active diet plans
+        List<DietPlan> findByIsActiveTrue();
+
+        // Find diet plans by diet type
+        List<DietPlan> findByDietType(String dietType);
+
+        // Find diet plans by calorie range
+        List<DietPlan> findByDailyCaloriesBetween(Integer minCalories, Integer maxCalories);
+
+        // Find diet plans that are active within a specific date range
+        /**
+         * Find all active diet plans within a specific date range
+         * 
+         * @param startDate The start date of the range
+         * @param endDate   The end date of the range
+         * @return List of active diet plans in the given date range
+         */
+        // TODO: Define a custom query method to find active diet plans in date range
+        // This will be used by the getActiveDietPlansInDateRange service method
+        // The query should:
+        // 1. Filter for diet plans where isActive is true
+        // 2. Find plans where the startDate is before or equal to the provided endDate
+        // 3. Find plans where the endDate is after or equal to the provided startDate
+        @Query("SELECT d FROM DietPlan d WHERE d.isActive = true AND d.startDate <= :endDate AND d.endDate >= :startDate")
+        List<DietPlan> findActivePlansInDateRange(@Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
+}
+
+
+@Service
+public class DietPlanService {
+
+    private final DietPlanRepository dietPlanRepository;
+
+    @Autowired
+    public DietPlanService(DietPlanRepository dietPlanRepository) {
+        this.dietPlanRepository = dietPlanRepository;
+    }
+
+    /**
+     * CRUD Operation 1: Create a diet plan
+     * 
+     * @param dietPlan The diet plan object to be created
+     * @return The created diet plan with generated ID
+     */
+    public DietPlan createDietPlan(DietPlan dietPlan) {
+        return dietPlanRepository.save(dietPlan);
+    }
+
+    /**
+     * CRUD Operation 2: Update a diet plan
+     * 
+     * @param id              The ID of the diet plan to update
+     * @param dietPlanDetails The diet plan details for update
+     * @return The updated diet plan, or null if not found
+     */
+    public DietPlan updateDietPlan(Long id, DietPlan dietPlanDetails) {
+        Optional<DietPlan> optionalDietPlan = dietPlanRepository.findById(id);
+        if (optionalDietPlan.isPresent()) {
+            DietPlan existingDietPlan = optionalDietPlan.get();
+            existingDietPlan.setName(dietPlanDetails.getName());
+            existingDietPlan.setDescription(dietPlanDetails.getDescription());
+            existingDietPlan.setDailyCalories(dietPlanDetails.getDailyCalories());
+            existingDietPlan.setProteinGrams(dietPlanDetails.getProteinGrams());
+            existingDietPlan.setCarbGrams(dietPlanDetails.getCarbGrams());
+            existingDietPlan.setFatGrams(dietPlanDetails.getFatGrams());
+            existingDietPlan.setStartDate(dietPlanDetails.getStartDate());
+            existingDietPlan.setEndDate(dietPlanDetails.getEndDate());
+            existingDietPlan.setDietType(dietPlanDetails.getDietType());
+            existingDietPlan.setIsActive(dietPlanDetails.getIsActive());
+            return dietPlanRepository.save(existingDietPlan);
+        }
+        return null;
+    }
+
+    /**
+     * Non-CRUD Operation 1: Get diet plans by diet type
+     * 
+     * @param dietType The type of diet to filter by
+     * @return List of diet plans matching the given type
+     */
+    public List<DietPlan> getDietPlansByType(String dietType) {
+        return dietPlanRepository.findByDietType(dietType);
+    }
+
+    /**
+     * Non-CRUD Operation 2: Get diet plans by calorie range
+     * 
+     * @param minCalories The minimum calories in the range
+     * @param maxCalories The maximum calories in the range
+     * @return List of diet plans within the given calorie range
+     */
+    public List<DietPlan> getDietPlansByCalorieRange(Integer minCalories, Integer maxCalories) {
+        return dietPlanRepository.findByDailyCaloriesBetween(minCalories, maxCalories);
+    }
+
+    /**
+     * Non-CRUD Operation 3: Get macronutrient distribution for a diet plan
+     * 
+     * @param dietPlanId The ID of the diet plan to analyze
+     * @return Map containing macronutrient distribution percentages, or null if not
+     *         found
+     */
+    public Map<String, Double> getMacronutrientDistribution(Long dietPlanId) {
+        Optional<DietPlan> optionalDietPlan = dietPlanRepository.findById(dietPlanId);
+        if (optionalDietPlan.isPresent()) {
+            DietPlan dietPlan = optionalDietPlan.get();
+            int protein = dietPlan.getProteinGrams();
+            int carbs = dietPlan.getCarbGrams();
+            int fats = dietPlan.getFatGrams();
+            int total = protein + carbs + fats;
+            if (total == 0)
+                return null;
+            Map<String, Double> distribution = new HashMap<>();
+            distribution.put("Protein", protein * 100.0 / total);
+            distribution.put("Carbohydrates", carbs * 100.0 / total);
+            distribution.put("Fat", fats * 100.0 / total);
+            return distribution;
+        }
+        return null;
+    }
+
+    /**
+     * Non-CRUD Operation 4: Get active diet plans in date range
+     * 
+     * @param startDate The start date of the range
+     * @param endDate   The end date of the range
+     * @return List of active diet plans in the given date range
+     */
+    public List<DietPlan> getActiveDietPlansInDateRange(LocalDate startDate, LocalDate endDate) {
+        return dietPlanRepository.findActivePlansInDateRange(startDate, endDate);
+    }
+}
+
+
+@RestController
+@RequestMapping("/api/diet-plans")
+public class DietPlanController {
+
+    // Injecting the DietPlanService
+    private final DietPlanService dietPlanService;
+
+    @Autowired
+    public DietPlanController(DietPlanService dietPlanService) {
+        this.dietPlanService = dietPlanService;
+    }
+
+    /**
+     * CRUD Operation 1: Create a new diet plan
+     * 
+     * @param dietPlan The diet plan object to be created
+     * @return ResponseEntity containing the created diet plan and HTTP status
+     */
+    @PostMapping
+    public ResponseEntity<DietPlan> createDietPlan(@RequestBody DietPlan dietPlan) {
+        DietPlan createdPlan = dietPlanService.createDietPlan(dietPlan);
+        return new ResponseEntity<>(createdPlan, HttpStatus.CREATED);
+    }
+
+    /**
+     * CRUD Operation 2: Update an existing diet plan
+     * 
+     * @param id       The ID of the diet plan to update
+     * @param dietPlan The diet plan details for update
+     * @return ResponseEntity containing the updated diet plan and HTTP status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<DietPlan> updateDietPlan(@PathVariable Long id, @RequestBody DietPlan dietPlan) {
+        DietPlan updatedPlan = dietPlanService.updateDietPlan(id, dietPlan);
+        return (updatedPlan != null) ? ResponseEntity.ok(updatedPlan) : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Non-CRUD Operation 1: Get diet plans by diet type
+     * 
+     * @param dietType The type of diet to filter by
+     * @return ResponseEntity containing a list of matching diet plans and HTTP
+     *         status
+     */
+    @GetMapping("/type/{dietType}")
+    public ResponseEntity<List<DietPlan>> getDietPlansByType(@PathVariable String dietType) {
+        List<DietPlan> plans = dietPlanService.getDietPlansByType(dietType);
+        return ResponseEntity.ok(plans);
+    }
+
+    /**
+     * Non-CRUD Operation 2: Get diet plans by calorie range
+     * 
+     * @param minCalories The minimum calories in the range
+     * @param maxCalories The maximum calories in the range
+     * @return ResponseEntity containing a list of matching diet plans and HTTP
+     *         status
+     */
+    @GetMapping("/calories")
+    public ResponseEntity<List<DietPlan>> getDietPlansByCalorieRange(
+            @RequestParam Integer minCalories,
+            @RequestParam Integer maxCalories) {
+        List<DietPlan> plans = dietPlanService.getDietPlansByCalorieRange(minCalories, maxCalories);
+        return ResponseEntity.ok(plans);
+    }
+
+    /**
+     * Non-CRUD Operation 3: Get macronutrient distribution for a diet plan
+     * 
+     * @param id The ID of the diet plan to analyze
+     * @return ResponseEntity containing macronutrient distribution percentages and
+     *         HTTP status
+     */
+    @GetMapping("/{id}/macros")
+    public ResponseEntity<Map<String, Double>> getMacronutrientDistribution(@PathVariable Long id) {
+        Map<String, Double> distribution = dietPlanService.getMacronutrientDistribution(id);
+        return (distribution != null) ? ResponseEntity.ok(distribution) : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Non-CRUD Operation 4: Get active diet plans in date range
+     * 
+     * @param startDate The start date of the range
+     * @param endDate   The end date of the range
+     * @return ResponseEntity containing a list of active diet plans and HTTP status
+     */
+    @GetMapping("/active")
+    public ResponseEntity<List<DietPlan>> getActiveDietPlansInDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+                List<DietPlan> plans = dietPlanService.getActiveDietPlansInDateRange(startDate, endDate);
+                return ResponseEntity.ok(plans);
+    }
+}
+
+
+38. Employee Management System (JDBC)
+
+Develop a Java-based Employee Management System using JDBC to manage employee records, departments, and salaries. The system should interact with an SQLite database to store and manage the data efficiently. The system should allow adding employees and departments, retrieving employee records, assigning employees to departments, updating salaries, and removing employees from the system.
+
+Technical Specifications:
+
+Tech Stack:
+Backend: Java (JDBC)
+Database: SQLite
+Database Model Parameters:
+Employees Table: [ID, name, department_id]
+Departments Table: [ID, department_name]
+Salaries Table: [employee_id, salary_amount, date_updated]
+Implementation Details:
+
+Complete the functions in EmployeeDAO.java, DepartmentDAO.java, and SalaryDAO.java files to:
+
+EmployeeDAO.java
+Add Employee: Implement a method to insert a new employee into the database. The method should take the employee’s name and department ID as parameters and return a success indicator (true if successful).
+
+DepartmentDAO.java
+Add Department: Implement a method to insert a new department into the database. The method should take the department's name as a parameter and return true if the department is successfully added.
+
+Retrieve All Departments: Implement a method to retrieve and return a list of all departments in the organization. The list should include each department's name and unique ID.
+
+SalaryDAO.java
+Update Employee Salary: Implement a method to update the salary of an employee. The method should take the employee's ID and the new salary as parameters. It should also track the date of the salary update and return true if the update is successful.
+
+Retrieve Salary History: Implement a method to retrieve and return a list of salary updates for a specific employee. The list should include the salary amount and the date it was updated, ordered by the most recent update.
+
+
+public class DBConnection {
+    private static final String URL = "jdbc:sqlite:EmployeeManagement.db";
+    
+    // Method to get the database connection
+    public static Connection getConnection() throws SQLException {
+        Connection conn = DriverManager.getConnection(URL);
+        conn.setAutoCommit(false);
+        return conn;
+    }
+
+    // Method to initialize the Employee Management database tables
+    public static void initializeDatabase(Connection connection) throws SQLException {
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+
+            // Enable foreign keys
+            statement.execute("PRAGMA foreign_keys = ON;");
+            
+            // Create departments table first (to satisfy foreign key constraints)
+            String createDepartmentsTable = "CREATE TABLE IF NOT EXISTS departments ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "department_name TEXT NOT NULL"
+                    + ");";
+            statement.execute(createDepartmentsTable);
+
+            // Create employees table
+            String createEmployeesTable = "CREATE TABLE IF NOT EXISTS employees ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "name TEXT NOT NULL, "
+                    + "department_id INTEGER, "
+                    + "FOREIGN KEY(department_id) REFERENCES departments(id)"
+                    + ");";
+            statement.execute(createEmployeesTable);
+
+            // Create salaries table
+            String createSalariesTable = "CREATE TABLE IF NOT EXISTS salaries ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "employee_id INTEGER, "
+                    + "salary_amount REAL, "
+                    + "date_updated DATE, "
+                    + "FOREIGN KEY(employee_id) REFERENCES employees(id)"
+                    + ");";
+            statement.execute(createSalariesTable);
+
+            connection.commit();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                System.err.println("Error rolling back transaction: " + ex.getMessage());
+            }
+            System.err.println("Error initializing database tables: " + e.getMessage());
+            throw e;
+        } finally {
+            if (statement != null) {
+                statement.close();
+            }
+        }
+    }
+}
+
+
+public class DepartmentDAO {
+
+    // Add Department: Insert a new department into the database
+    public boolean addDepartment(String departmentName) throws SQLException {
+        String sql = "INSERT INTO departments (department_name) VALUES (?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, departmentName);
+            int affectedRows = pstmt.executeUpdate();
+            conn.commit();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    // Retrieve All Departments: Fetch and return a list of all departments
+    public List<String> getAllDepartments() throws SQLException {
+        List<String> departments = new ArrayList<>();
+        String sql = "SELECT department_name FROM departments";
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                departments.add(rs.getString("department_name"));
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return departments;
+    }
+}
+
+
+public class EmployeeDAO {
+
+    // Add Employee: Insert a new employee into the database
+    public boolean addEmployee(String name, int departmentId) throws SQLException {
+        String sql = "INSERT INTO employees (name, department_id) VALUES (?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, departmentId);
+            int affectedRows = pstmt.executeUpdate();
+            conn.commit();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    // Retrieve All Employees: Fetch and return a list of all employee names and
+    // their corresponding department
+    public List<String> getAllEmployees() throws SQLException {
+        List<String> employees = new ArrayList<>();
+        String sql = "SELECT e.name, d.department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id";
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                String employeeInfo = rs.getString("name") + " - " + rs.getString("department_name");
+                employees.add(employeeInfo);
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return employees;
+    }
+
+}
+
+
+public class SalaryDAO {
+
+    // Update Employee Salary: Update the salary for an employee and track the date
+    // of the salary change
+    public boolean updateSalary(int employeeId, double salaryAmount) throws SQLException {
+        String sql = "INSERT INTO salaries (employee_id, salary_amount, date_updated) VALUES (?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, employeeId);
+            pstmt.setDouble(2, salaryAmount);
+            java.util.Date utilDate = new java.util.Date();
+            java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+            pstmt.setDate(3,sqlDate);
+            int affectedRows = pstmt.executeUpdate();
+            conn.commit();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    // Retrieve Salary History: Fetch and return a list of salary updates for a
+    // specific employee
+    public List<String> getSalaryHistory(int employeeId) throws SQLException {
+        List<String> salaryHistory = new ArrayList<>();
+        String sql = "SELECT salary_amount, date_updated FROM salaries WHERE employee_id = ? ORDER BY date_updated DESC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, employeeId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                String record = "Salary: " + rs.getDouble("salary_amount") + ", Date: " + rs.getString("date_updated");
+                salaryHistory.add(record);
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return salaryHistory;
+    }
+}
+
+
+public class Main {
+    public static void main(String[] args) {
+        EmployeeDAO employeeDAO = new EmployeeDAO();
+        DepartmentDAO departmentDAO = new DepartmentDAO();
+        SalaryDAO salaryDAO = new SalaryDAO();
+
+        try {
+            // Initialize the database
+            try (Connection connection = DBConnection.getConnection()) {
+                DBConnection.initializeDatabase(connection);
+            }
+
+            System.out.println("Adding departments...");
+            // Add departments and employees
+            departmentDAO.addDepartment("Engineering");
+            departmentDAO.addDepartment("HR");
+
+            System.out.println("Adding employees...");
+            employeeDAO.addEmployee("John Doe", 1);
+            employeeDAO.addEmployee("Jane Smith", 2);
+
+            System.out.println("Updating salaries...");
+            // Update salaries
+            salaryDAO.updateSalary(1, 50000);
+            salaryDAO.updateSalary(2, 55000);
+
+            System.out.println("All employees and their departments:");
+            // Print all employees and their departments
+            for (String employee : employeeDAO.getAllEmployees()) {
+                System.out.println(employee);
+            }
+
+            System.out.println("\nSalary history for Employee ID 1:");
+            // Print salary history for employee 1
+            for (String salary : salaryDAO.getSalaryHistory(1)) {
+                System.out.println(salary);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
