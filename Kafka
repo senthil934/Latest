@@ -4996,6 +4996,37 @@ GenericRecord is used when you don’t generate Java classes from schemas (.avsc
 
 It's flexible and ideal for dynamic schema-based messaging in Kafka + Schema Registry environments.
 
+-------------------------------------------------------------------------------------------------------------------------------------
+Swagger for Springboot 2.x
 
+1. Add Dependency
+
+<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-boot-starter</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
+2. In application.properties
+
+spring.mvc.pathmatch.matching-strategy = ANT_PATH_MATCHER
+
+3. Swagger configuration
+
+@Configuration
+@EnableSwagger2
+public class SwaggerConfig {
+
+    @Bean
+    public Docket api() {
+        return new Docket(DocumentationType.OAS_30) // OpenAPI 3.0
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.pack.SpringBootAvroProducer")) // adjust to your package
+                .paths(PathSelectors.any())
+                .build();
+    }
+}
+
+4. Run swagger - http://localhost:3000/swagger-ui/
 
 
