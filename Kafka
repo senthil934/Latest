@@ -4681,4 +4681,321 @@ Now we deploy this connector config onto the confluent platform and see how it b
 
 5. We use kafka-avro-console-consumer to check the data which receive from table into the kafka topic
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+Schema Evolution
+    You have different producer producing data for same topic and we have different consumers which are receiving the same data, so how schema can evolve on producers and consumers without affecting each other, so there should some policy to evolve schema without affective each other
+
+Schema Compatibility policy
+     - Defines the rule of how the schema can evolve
+     - Subsequent version updates has to honor the schema's original version
+     - Backward,Forward,Full,None
+
+Backward Compatibility: Meaning
+A new schema version is backward compatible if it can deserialize data produced with the previous schema versions.
+
+🔍 Example (Avro):
+Version 1:
+
+{
+  "type": "record",
+  "name": "User",
+  "fields": [
+    { "name": "name", "type": "string" }
+  ]
+}
+
+Version 2 (backward compatible):
+
+{
+  "type": "record",
+  "name": "User",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": "string", "default": "" }
+  ]
+}
+
+👉 Adding a field with a default value is a backward-compatible change, because old messages can be read by filling in the default value.
+
+✅ Backward-Compatible Changes (Avro-specific):
+Adding a field with a default value ✅
+Removing a field that had a default value ✅
+Changing default value of a field ❌ (not allowed)
+Changing data type (e.g., string → int) ❌
+
+🔁 Use Case for Backward Compatibility
+If your system has long-running consumers, and you want to evolve the schema without breaking those consumers, backward compatibility is crucial.
+
+💡 Best Practices:
+Always add fields with default values when evolving schema.
+Avoid removing or renaming fields unless necessary.
+Enable BACKWARD or FULL compatibility in production environments.
+
+Schema v1 (used by producer):
+
+// user_v1.avsc
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.example",
+  "fields": [
+    { "name": "name", "type": "string" }
+  ]
+}
+
+2️⃣ Schema v2 (used by consumer) — adds a new optional field:
+// user_v2.avsc
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.example",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": "string", "default": "" }
+  ]
+}
+This schema is backward compatible because it adds a field with a default.
+
+
+4️⃣ Kafka Producer (Schema v1 – old)
+
+public class BackwardCompatibleProducer {
+    public static void main(String[] args) throws Exception {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+        props.put("schema.registry.url", http://localhost:8081);
+
+        KafkaProducer<String, GenericRecord> producer = new KafkaProducer<>(props);
+
+        String topic = "user-topic";
+
+        Schema schema = new Schema.Parser().parse(new File("src/main/avro/user_v1.avsc"));
+        GenericRecord user = new GenericData.Record(schema);
+        user.put("name", "Bob");
+
+        ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(topic, "user1", user);
+        producer.send(record, (metadata, exception) -> {
+            if (exception == null)
+                System.out.println("Produced to topic " + metadata.topic());
+            else
+                exception.printStackTrace();
+        });
+
+        producer.flush();
+        producer.close();
+    }
+}
+
+5️⃣ Kafka Consumer (Schema v2 – upgraded)
+
+public class BackwardCompatibleConsumer {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("group.id", "backward-consumer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("schema.registry.url", http://localhost:8081);
+        props.put("specific.avro.reader", "false");
+
+        KafkaConsumer<String, GenericRecord> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList("user-topic"));
+
+        while (true) {
+            ConsumerRecords<String, GenericRecord> records = consumer.poll(Duration.ofMillis(500));
+            for (ConsumerRecord<String, GenericRecord> record : records) {
+                GenericRecord user = record.value();
+                System.out.println("Name = " + user.get("name"));
+                System.out.println("Email = " + user.get("email")); // Will default to ""
+            }
+        }
+    }
+}
+
+✅ Output
+
+Name = Bob
+Email =
+Even though the message was produced without an email field, the consumer using schema v2 was able to read it using the default value — proving backward compatibility.
+
+
+
+🔄 Forward Compatibility in Schema Registry
+Forward compatibility ensures that data written by new schema versions can be read by applications using older schema versions.
+
+✅ What Does Forward Compatibility Mean?
+A new schema version is forward compatible if consumers using the old schema version can successfully read messages produced using the new schema version.
+
+This is useful when:
+
+Producers update schema first, and
+Consumers lag behind or upgrade later.
+
+🔍 Example (Avro):
+Version 1 (old schema used by consumer):
+
+{
+  "type": "record",
+  "name": "User",
+  "fields": [
+    { "name": "name", "type": "string" }
+  ]
+}
+
+Version 2 (new schema used by producer – forward compatible):
+
+{
+  "type": "record",
+  "name": "User",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": "string", "default": "" }
+  ]
+}
+
+
+Change	Forward Compatible?
+Adding a field with default	✅ Yes
+Removing a field without default	❌ No
+Changing data types	❌ No
+Renaming fields	❌ No
+
+🔁 Use Case for Forward Compatibility
+If your architecture upgrades producers first, forward compatibility ensures older consumers can still work correctly with the new data format.
+
+💡 Best Practices
+Avoid changes that break old consumers, like removing fields or changing types.
+Always provide default values when adding new fields.
+Validate schema evolution using tools like Confluent Schema Registry's compatibility API.
+
+
+
+1️⃣ Schema v1 (used by the consumer):
+
+// user_v1.avsc
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.example",
+  "fields": [
+    { "name": "name", "type": "string" }
+  ]
+}
+
+2️⃣ Schema v2 (used by the producer):
+
+
+// user_v2.avsc
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.example",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": "string", "default": "" }
+  ]
+}
+
+4️⃣ Kafka Producer (using Schema v2)
+
+public class ForwardCompatibleProducer {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+        props.put("schema.registry.url", http://localhost:8081);
+
+        KafkaProducer<String, GenericRecord> producer = new KafkaProducer<>(props);
+
+        String topic = "user-topic";
+
+        // Schema v2
+        Schema schema = new Schema.Parser().parse(new File("src/main/avro/user_v2.avsc"));
+        GenericRecord user = new GenericData.Record(schema);
+        user.put("name", "Alice");
+        user.put("email", alice@example.com);
+
+        ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(topic, "user1", user);
+        producer.send(record, (metadata, exception) -> {
+            if (exception == null)
+                System.out.println("Produced to topic " + metadata.topic());
+            else
+                exception.printStackTrace();
+        });
+
+        producer.flush();
+        producer.close();
+    }
+}
+
+5️⃣ Kafka Consumer (using Schema v1)
+
+public class ForwardCompatibleConsumer {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("group.id", "forward-consumer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("schema.registry.url", http://localhost:8081);
+        props.put("specific.avro.reader", "false");
+
+        KafkaConsumer<String, GenericRecord> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList("user-topic"));
+
+        while (true) {
+            ConsumerRecords<String, GenericRecord> records = consumer.poll(Duration.ofMillis(500));
+            for (ConsumerRecord<String, GenericRecord> record : records) {
+                GenericRecord user = record.value();
+                System.out.println("Received: name = " + user.get("name"));
+                // Note: email is NOT required, consumer only knows Schema v1
+            }
+        }
+    }
+}
+
+✅ Output:
+
+Received: name = Alice
+Even though the producer sent an "email" field (new in Schema v2), the consumer using Schema v1 still works — forward compatibility in action!
+
+3. Full compatibility
+       - New version of schema provides both backward and forward compatibility 
+
+Schema schema = new Schema.Parser().parse(...)
+This part:
+
+Schema schema = new Schema.Parser().parse(new File("src/main/avro/user_v2.avsc"));
+
+Reads an Avro schema from the given .avsc file (e.g., user_v2.avsc).
+Parses it into an in-memory Schema object (from the org.apache.avro.Schema class).
+
+This schema defines:
+
+The structure of your record (field names, types, defaults, etc.)
+What data is valid for producing/consuming with Kafka.
+
+🔹 2. GenericRecord user = new GenericData.Record(schema);
+This part:
+
+GenericRecord user = new GenericData.Record(schema);
+
+Creates a generic, dynamic Avro record (i.e., an object with fields defined by the schema).
+
+You can now populate this object with values:
+
+user.put("name", "Alice");
+user.put("email", alice@example.com);
+This record can then be serialized and sent to Kafka using the schema you loaded.
+
+📌 Why Use GenericRecord?
+GenericRecord is used when you don’t generate Java classes from schemas (.avsc) ahead of time.
+
+It's flexible and ideal for dynamic schema-based messaging in Kafka + Schema Registry environments.
+
+
+
 
