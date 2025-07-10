@@ -1,0 +1,2901 @@
+Saga Orchestration design pattern
+     In traditional monolithic applications, transactions are managed by a single database and following the ACID properties, an example of a transaction is the transfer of money between a current account to a savings account. We need to perform two operations (ie) deduct the amount from the checking account and credit the amount to the savings account
+   Atomicity ensure that the transaction is treated as a single unit of work either fully completed or not at all, if any part of the transaction fails the entire transaction is rolled back to its previous date.
+   Consistency ensures that the database remains in a valid state after a transaction (ie) any
+constraints or rules defined for the database are not violated 
+   Isolation ensures that concurrent transactions do not interfere with each other and that
+each transactions sees the database as if it were the only one accessing it
+   Durability ensures that once a transaction is committed its changes are permanent and will survive any subsequent failures such as power outages or system crashes 
+   Unfortunately things are more complicated in a microservices architecture, consider a scenario where we have one microservice responsible for the current accounts and another responsible for the savings accounts. Since each microservice manages its own bounded context in a separate database, we cannot leverage a single database transaction this is where the Saga comes into picture
+
+What is SAGA pattern ? 
+     Saga is a design pattern that decomposes a long live transaction into a series of smaller
+transactions distributed across multiple processes, it also guarantees that either all transaction in a Saga successfully completed or transaction are run to partial execution, so the transaction
+proceeds from one step to the next until completion 
+     In the case of a step failure the Saga performs compensating actions in order to take the system back to its original state, for example we fail to credit the target account, we
+will perform a credit of the source account to compensate the initial debit operation 
+     Sagas are not specific to microservices you can also use them in a monolith. 
+
+Orchestration vs Choreography
+   There are 2 ways to implement sagas we can use choreography or orchestration.
+   - In the choreography approach, the execution flow control is distributed among services. Each service is responsible to trigger if there are continuation step or a compensation step, this is usually done with events to maximize the decoupling between services. Our simple money transfer scenario would be a perfect example for this approach, however more complex sagas with many participating services are difficult to manage with choreography 
+
+Choreography risks
+   1. Readability - the scope of the entire Saga is not immediately evident but requires opening from one microservices code base to the next
+   2. Cyclic dependency - series of cyclic dependency between services 
+   3. Integration testing is difficult because we need all services in place to simulate a transaction 
+
+   - In these scenarios we can implement orchestration where the execution flow control is centralized, a service is responsible for the invocation of all continuation or compensation steps. In this approach the orchestrator is unilaterally dependent on the Saga participants, while the participants are fully decoupled between themselves. The workflow is more readable and
+predictable since it's defined entirely in the orchestrator's code base 
+    The only drawback of this approach is that it introduces a new service which needs to
+be designed and implemented 
+
+
+What is the problem with the micro Services transaction ?
+          When we are going to write any kind of microservices then obviously there are certain scenarios come like managing the transactions, so microservices comes with their own advantage and disadvantage, one such disadvantage is managing the distributed transactions 
+        Consider our transactions having four different microservices like orderservices, payment
+microservice, stock and the delivery. So order micro service is responsible to managing the order
+related things, payment service is responsible for payment related things, stock micro Services related to stock managing and delivery microservice is used for storing the address and other kind of details. Each microservice having different type of databases 
+        Let's say we are having different transactions for each service but how do you ensure that our transactions either commit successfully with all the 4 tasks succeeding or fail successfully if any of the task is not completed. The completed ones will be roll back in case of failure
+scenarios, so in this scenario if we are going to manage those kind of transactions, spring boot provides the annotations called @Transactional to manage transactions, but this works only within a single transaction (ie) if we are having some kind of monolith applications. 
+
+What is the solution?
+      We hava Saga design pattern which solves the issue with distributed transaction in microservices 
+      Let's say we are having four transactions, so for four tasks we need to create compensating tasks for each tasks except the last one, so if any task fail then we can just run the compensating task of the previous tasks to roll back the original effect. 
+      For example if there are four tasks like T1, T2, T3 and T4 then we are having three corresponding compensating tasks like C1, C2, C3. So if T1 transaction and T2 transaction succeeded but T3 transaction fails, then we need to run the compensating tasks C2 and C1 to 
+rollback the effect of transaction T1 and T2 in LIFO order. So the sequence of the transaction goes like T1 then T2 then T3, if T3 has failed then we are calling C2, and then from the C2 it calling C1, so if the last task fails we just need to rollback the previous stocks this is called the backward recovery mechanism
+    Now to implement this we are having this Saga pattern and Saga pattern can be achieved in two ways choreography and the orchestration 
+   - Choreography means the tasks execute independently. Once one task is completed it invokes the next tasks in the sequence, in case if the next task fails then it invokes the compensating tax for the previous tasks
+   - Orchestration means the tasks are invoked by the another parent tasks. It calls each tasks in sequence and based on their response decides whether to call the next task or compensating tasks
+
+Use case
+    So a customer can place an order and the order gets delivered to the customer. Let's say there are four microservices to take care of the flow and Order microservice which actually handles the
+customer order, a payment microservice which actually handles the payments for the order, stock microservice which actually update the stock once order are placed and a delivery microservice which actually deals with the delivers of the order okay 
+   When a customer place an order, for example order microservice having the createOrder(), payment microservice having the processPayment(), stock microservice having the updateStock() method and the delivery microservice is having the deliveryOrder(). 
+   When customer place an order then createOrder(), processPayment() methods succeed and updateStock() fails then the system will have wrong inventory information and the customer wont get the order delivered
+    So all these tasks have to be part of single transaction, we will use SAGA pattern to implement distributed transaction. 
+    To resolve the above issue, we need to rollback the entire transaction using backward recovery, we need to implement a compensation task for each of the task like 
+reverseOrder() for the order microservice, reversePayment() for the payment microservice and reverseStock() for the stock microservice 
+    If a new customer want to place an order then it will call the orders API it will place the order and it will actually push the data into the Kafka and from the Kafka we read data from the other microservices like payment then payment to stock then from stock to delivery 
+
+
+1. Create OrderService with web, spring data jpa, lombok, h2, kafka,swagger dependency
+	<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+
+2. Configure db info and Kafka properties in application.properties file 
+
+server.port=1000
+spring.datasource.url=jdbc:h2:mem:ordersdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+ 
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=orders-group
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+3. Create CustomerOrder dto class where we provide the input 
+
+@Data
+public class CustomerOrder {
+	private String item;
+	private int quantity;
+	private double amount;
+	private String paymentMode;
+	private long orderId;
+	private String address;
+}
+
+4. Create Order entity class
+
+@Data
+@Entity
+public class Order {
+	@Id
+	@GeneratedValue
+	private long id;
+	@Column
+	private String item;
+	@Column
+	private int quantity;
+	@Column
+	private double amount;
+	@Column
+	private String status;
+}
+
+5. Create OrderEvent class for managing the event, we need to send some data into the Kafka for that we need to create some events
+
+@Data
+public class OrderEvent {
+	private String type;
+	private CustomerOrder order;
+}
+
+6. Create repo intf
+
+public interface OrderRepository extends CrudRepository<Order, Long> {
+
+}
+
+7. Create controller prg where we create the order and pass the info to Kafka 
+
+@RestController
+@RequestMapping("/api")
+public class OrderController {
+
+	@Autowired
+	private OrderRepository repository;
+
+	@Autowired
+	private KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+	@PostMapping("/orders")
+	public void createOrder(@RequestBody CustomerOrder customerOrder) {
+		Order order = new Order();
+
+		try {
+			order.setAmount(customerOrder.getAmount());
+			order.setItem(customerOrder.getItem());
+			order.setQuantity(customerOrder.getQuantity());
+			order.setStatus("CREATED");
+			order = repository.save(order);
+
+			customerOrder.setOrderId(order.getId());
+
+			OrderEvent event = new OrderEvent();
+			event.setOrder(customerOrder);
+			event.setType("ORDER_CREATED");
+			kafkaTemplate.send("new-orders", event);
+		} catch (Exception e) {
+			order.setStatus("FAILED");
+			repository.save(order);
+		}
+	}
+}
+
+8. Create service class used to reverse the order detail in case of any failure scenarios
+
+@Component
+public class ReverseOrder {
+
+	@Autowired
+	private OrderRepository repository;
+
+	@KafkaListener(topics = "reversed-orders", groupId = "orders-group")
+	public void reverseOrder(String event) {
+		System.out.println("Inside reverse order for order "+event);
+		
+		try {
+			OrderEvent orderEvent = new ObjectMapper().readValue(event, OrderEvent.class);
+
+			Optional<Order> order = repository.findById(orderEvent.getOrder().getOrderId());
+
+			order.ifPresent(o -> {
+				o.setStatus("FAILED");
+				this.repository.save(o);
+			});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+when any kind of reverse order is happening then from payments it will push data into this topic and it will listen by this Kafka listener and after listening it will actually parsing the data from Json to DTO and we will find based on this ID if it is present into the database then it will mark this as a failed and save the data
+
+9. Create PaymentService with web, spring data jpa, lombok, h2, kafka dependency
+
+	<dependency>
+    <groupId>org.springframework.kafka</groupId>
+    <artifactId>spring-kafka</artifactId>
+</dependency>
+
+10. Configure db info and Kafka properties in application.properties file (copy from OrderService)
+
+server.port=1001
+spring.datasource.url=jdbc:h2:mem:paymentsdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+ 
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=payments-group
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+
+11. We will get OrderEvent from kafka topic, in turn it contains CustomerOrder, so we have to create OrderEvent and CustomerOrder dto class (copy from orderService)
+
+12. From the order we need to process the payment and store in database, so we create Payment entity class 
+
+@Entity
+@Data
+public class Payment {
+	@Id
+	@GeneratedValue
+	private Long id;
+	@Column
+	private String mode;
+	@Column
+	private Long orderId;
+	@Column
+	private double amount;
+	@Column
+	private String status;
+}
+
+13. Create repo intf
+public interface PaymentRepository extends CrudRepository<Payment, Long> {
+
+	public List<Payment> findByOrderId(long orderId);
+}
+
+14. Create PaymentEvent to store inside kafka topic
+
+@Data
+@ToString
+public class PaymentEvent {
+	private String type;
+	private CustomerOrder order;
+}
+
+15. Create PaymentController prg
+            In the OrderService we have write code in the controller, if the order is successfully done then we are pushing this particular event into new-order topic, so in the paymentService we will take this event from new-order topic and then we will process the payment and update the payment details 
+            In case of any exception while saving this data then we will update the payment
+status like failed and also we need to call the reverse order means we need to send one notification to the Kafka that order should be reversed 
+
+@Controller
+public class PaymentController {
+
+	@Autowired
+	private PaymentRepository repository;
+
+	@Autowired
+	private KafkaTemplate<String, PaymentEvent> kafkaTemplate;
+
+	@Autowired
+	private KafkaTemplate<String, OrderEvent> kafkaOrderTemplate;
+
+	@KafkaListener(topics = "new-orders", groupId = "orders-group")
+	public void processPayment(String event) throws JsonMappingException, JsonProcessingException {
+		System.out.println("Recieved event for payment " + event);
+		OrderEvent orderEvent = new ObjectMapper().readValue(event, OrderEvent.class);
+
+		CustomerOrder order = orderEvent.getOrder();
+		Payment payment = new Payment();
+		
+		try {
+			payment.setAmount(order.getAmount());
+			payment.setMode(order.getPaymentMode());
+			payment.setOrderId(order.getOrderId());
+			payment.setStatus("SUCCESS");
+			repository.save(payment);
+
+			PaymentEvent paymentEvent = new PaymentEvent();
+			paymentEvent.setOrder(orderEvent.getOrder());
+			paymentEvent.setType("PAYMENT_CREATED");
+			kafkaTemplate.send("new-payments", paymentEvent);
+		} catch (Exception e) {
+			payment.setOrderId(order.getOrderId());
+			payment.setStatus("FAILED");
+			repository.save(payment);
+
+			OrderEvent oe = new OrderEvent();
+			oe.setOrder(order);
+			oe.setType("ORDER_REVERSED");
+			kafkaOrderTemplate.send("reversed-orders", orderEvent);
+		}
+	}
+}
+
+It will listen the data from topic new-orders and once receive then we will read from this event and based on this, we are preparing the payment table data from this event and accordingly we are setting the status as success, then we have saved the data into the table. If there any exception then it will update the payment status as failed and also like send the reverse order request
+
+16. So from the paymentservice actually we are sending the data into the Kafka for updating the stock, now if any failure is occurred from the stockservice it will call the paymentsservice to reverse the payment and from the payment actually is called the order reverse order, for that we have to create ReversePayment service 
+
+@Component
+public class ReversePayment {
+
+	@Autowired
+	private PaymentRepository repository;
+
+	@Autowired
+	private KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+	@KafkaListener(topics = "reversed-payments", groupId = "payments-group")
+	public void reversePayment(String event) {
+		System.out.println("Inside reverse payment for order "+event);
+		
+		try {
+			PaymentEvent paymentEvent = new ObjectMapper().readValue(event, PaymentEvent.class);
+
+			CustomerOrder order = paymentEvent.getOrder();
+
+			Iterable<Payment> payments = this.repository.findByOrderId(order.getOrderId());
+
+			payments.forEach(p -> {
+				p.setStatus("FAILED");
+				repository.save(p);
+			});
+
+			OrderEvent orderEvent = new OrderEvent();
+			orderEvent.setOrder(paymentEvent.getOrder());
+			orderEvent.setType("ORDER_REVERSED");
+			kafkaTemplate.send("reversed-orders", orderEvent);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+It will listen from topic reversed-payment and it is reading the data from PaymentEvent,then finding data using this order ID and it will update the status with failed and it will save the data, next we will also call the orderevent so that order actually reversed so that the order is not successfully placed
+
+17. Create StockService with web, spring data jpa, lombok, h2, kafka dependency
+
+	<dependency>
+    <groupId>org.springframework.kafka</groupId>
+    <artifactId>spring-kafka</artifactId>
+</dependency>
+
+18. Configure db info and Kafka properties in application.properties file (copy from OrderService)
+
+server.port=1002
+spring.datasource.url=jdbc:h2:mem:stocksdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+ 
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=stocks-group
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+
+19. Create entity class and repo to store stock info in db
+
+@Entity
+@Data
+public class WareHouse {
+	@Id
+	@GeneratedValue
+	private long id;
+	@Column
+	private int quantity;
+	@Column
+	private String item;
+}
+
+public interface StockRepository extends CrudRepository<WareHouse, Long> {
+
+	Iterable<WareHouse> findByItem(String item);
+}
+
+20. Create dto class, since we are reading PaymentEvent and from that we need to get CustomerOrder and finally store in DeliveryEvent
+
+@Data
+public class PaymentEvent {
+	private String type;
+	private CustomerOrder order;
+}
+
+@Data
+public class CustomerOrder {
+	private String item;
+	private int quantity;
+	private double amount;
+	private String paymentMode;
+	private Long orderId;
+	private String address;
+}
+
+@Data
+public class DeliveryEvent {
+	private String type;
+	private CustomerOrder order;
+}
+
+21. So whenever new payment comes then it will come into updateStock(), where we are reading the data from PaymentEvent using the objectMapper. From the repo we get the item based on the item we passed, based on that if it is not exist then we can say that stock is not exist and
+then throw the exception, so it will go to catch block where we will reverse the payment if the stock is not exist
+        If it is exists then we are just like updating this quantity and saving the data into the database, we are setting the type and order also and then we are sending the data into the new-stock topic
+
+@RestController
+@RequestMapping("/api")
+public class StockController {
+
+	@Autowired
+	private StockRepository repository;
+
+	@Autowired
+	private KafkaTemplate<String, DeliveryEvent> kafkaTemplate;
+
+	@Autowired
+	private KafkaTemplate<String, PaymentEvent> kafkaPaymentTemplate;
+
+	@KafkaListener(topics = "new-payments", groupId = "payments-group")
+	public void updateStock(String paymentEvent) throws JsonMappingException, JsonProcessingException {
+		System.out.println("Inside update inventory for order "+paymentEvent);
+		
+		DeliveryEvent event = new DeliveryEvent();
+
+		PaymentEvent p = new ObjectMapper().readValue(paymentEvent, PaymentEvent.class);
+		CustomerOrder order = p.getOrder();
+
+		try {
+			Iterable<WareHouse> inventories = repository.findByItv em());
+
+			boolean exists = inventories.iterator().hasNext();
+
+			if (!exists) {
+				System.out.println("Stock not exist so reverting the order");
+				throw new Exception("Stock not available");
+			}
+
+			inventories.forEach(i -> {
+				i.setQuantity(i.getQuantity() - order.getQuantity());
+
+				repository.save(i);
+			});
+
+			event.setType("STOCK_UPDATED");
+			event.setOrder(p.getOrder());
+			kafkaTemplate.send("new-stock", event);
+		} catch (Exception e) {
+			PaymentEvent pe = new PaymentEvent();
+			pe.setOrder(order);
+			pe.setType("PAYMENT_REVERSED");
+			kafkaPaymentTemplate.send("reversed-payments", pe);
+		}
+	}
+
+//create an endpoint to add the items in the like particular  stock table
+	@PostMapping("/addItems")
+	public void addItems(@RequestBody Stock stock) {
+		Iterable<WareHouse> items = repository.findByItem(stock.getItem());
+
+		if (items.iterator().hasNext()) {
+			items.forEach(i -> {
+				i.setQuantity(stock.getQuantity() + i.getQuantity());
+				repository.save(i);
+			});
+		} else {
+			WareHouse i = new WareHouse();
+			i.setItem(stock.getItem());
+			i.setQuantity(stock.getQuantity());
+			repository.save(i);
+		}
+	}
+}
+
+
+21. Create DeliveryService with web, spring data jpa, lombok, h2, kafka dependency
+
+	<dependency>
+    <groupId>org.springframework.kafka</groupId>
+    <artifactId>spring-kafka</artifactId>
+</dependency>
+
+22. Configure db info and Kafka properties in application.properties file (copy from OrderService)
+
+server.port=1003
+spring.datasource.url=jdbc:h2:mem:deliverydb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+ 
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=delivery-group
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+
+23. Create entity and repo intf to store delivery details into db
+
+@Entity
+@Data
+public class Delivery {
+	@Id
+	@GeneratedValue
+	private Long id;
+	@Column
+	private String address;
+	@Column
+	private String status;
+	@Column
+	private long orderId;
+}
+
+public interface DeliveryRepository extends CrudRepository<Delivery, Long> {
+
+}
+
+24. Create dto class, we are reading data from DeliveryEvent using ObjectMapper, from that we are going to get the order details 
+
+@Data
+public class DeliveryEvent {
+	private String type;
+	private CustomerOrder order;
+}
+
+@Data
+@ToString
+public class CustomerOrder {
+	private String item;
+	private int quantity;
+	private double amount;
+	private String paymentMode;
+	private Long orderId;
+	private String address;
+}
+
+25. Create controller prg,
+         we are listening the data from new-stock topic and using ObjectMapper we wrap the data into DeliveryEvent and  we are getting the order details.
+        If the address is not available then it will throws an exception and goes to catch block where we will mark this status as failed and we are saving the data. Also we will call the reverse-stock topic and it will push data and from there it will goes to StockService reverseStock(), from there it will goes to PaymentService reversePayment, from there it will goes to OrderService reverseOrder()
+       If address is available it will set address, orderid and status and then saved into database 
+
+@Controller
+public class DeliveryController {
+
+	@Autowired
+	private DeliveryRepository repository;
+
+	@Autowired
+	private KafkaTemplate<String, DeliveryEvent> kafkaTemplate;
+
+	@KafkaListener(topics = "new-stock", groupId = "stock-group")
+	public void deliverOrder(String event) throws JsonMappingException, JsonProcessingException {
+		System.out.println("Inside ship order for order "+event);
+		
+		Delivery shipment = new Delivery();
+		DeliveryEvent inventoryEvent = new ObjectMapper().readValue(event, DeliveryEvent.class);
+		CustomerOrder order = inventoryEvent.getOrder();
+
+		try {
+			if (order.getAddress() == null) {
+				throw new Exception("Address not present");
+			}
+
+			shipment.setAddress(order.getAddress());
+			shipment.setOrderId(order.getOrderId());
+
+			shipment.setStatus("success");
+
+			repository.save(shipment);
+		} catch (Exception e) {
+			shipment.setOrderId(order.getOrderId());
+			shipment.setStatus("failed");
+			repository.save(shipment);
+
+			System.out.println(order);
+
+			DeliveryEvent reverseEvent = new DeliveryEvent();
+			reverseEvent.setType("STOCK_REVERSED");
+			reverseEvent.setOrder(order);
+			kafkaTemplate.send("reversed-stock", reverseEvent);
+		}
+	}
+}
+
+26. Start kafka, zookeeper
+
+27. Start all 4 microservices, check h2 db whether tables are created
+
+28. In Postman, with POST request run http://localhost:1111/api/orders - Body - Raw - JSON
+{
+   "item":"books",
+   "quantity":10,
+   "amount":1000,
+   "address":"Chennai",
+   "paymentMode":"Credit card"
+}
+
+29. Check order table whether it is stored into db table but with status failed, payment table also status as failed
+    In stock table no data will be there, if u check in console of stock service, it will print since there is no stock so it will reverse the payment and reverse the order so it was coming as status failed
+
+30. In Postman, with POST request run http://localhost:3333/addItems - Body - Raw - Json
+{
+   "item":"books",
+   "quantity":"100"
+}
+
+- Now check in stocks db, it will be added 100 books
+
+31. Now we purchase books with 10 items, so run with POST request run http://localhost:1111/api/orders - Body - Raw - JSON
+{
+   "item":"books",
+   "quantity":10,
+   "amount":1000,
+   "address":"Chennai",
+   "paymentMode":"Credit card"
+}
+
+32. Now we check order table where status is success, payment table also status will success, stock table quantity will be 90, and in delivery table status is also success
+
+33. If we are not passing any address while ordering, then it will reverse all the thing 
+
+
+Bulk head design pattern
+      used in distributed systems to improve resiliency and prevent cascading failures and create systems which are more fault tolerance
+       It's a ship which has multiple compound pins, so the bulkhead pattern is named
+after the watertight compartments on ships that basically prevent them from sinking if one part of the ship is damaged. Similarly in software systems, the bulkhead pattern involves dividing your
+system into isolated compartments called bulkheads to limit the impact of failures and ensure that
+one part of the system doesn't bring down the whole system altogether 
+       If you look at the bottom of the diagram we can see that the ship was hitted and the water is contained within that one component, that one particular component is an isolated failure but all the remaining compartments are working, so that isolated failure is not impacting the other parts of the ship, so the ship is still able to float 
+
+BulkHead example
+      Let's say we have an application with three services (ie) authentication service, payment
+service and notification service. Consider that these services are deployed in separate containers 
+and since these microservices are in their own container or virtual machine so they basically do
+not share resources, for example each of these services can have their own memory, each of these
+services can have their own network, each of these  services which are deployed in containers will have their own connection pools or thread pools, each of these services will have their own security layer, so each of these micro services that are deployed in different containers
+like for example Docker or something and they basically are isolated
+     So if there is any impact in the authentication service (ie) to any resource or storage or security,it is not going to propagate that impact to other services,the way these are separated these containers basically are called bulkheads so that is how you segregate 
+     you can have another layer of segregation, for example if there is a developer who
+is pushing code, and the code can get deployed through their own code pipelines. Each of the services and each of these containers can have their own code pipeline, so when a developer pushes a code and if there is a bug then that does not impact all the entire system, in case if you have one pipeline then that can basically block the entire application, so that itself also can be
+separated into different pipelines 
+    So this is an example of a bulkhead pattern like basically you are segregating and isolating all the services into their own containers or into their own systems or virtual machines, so that impact to one is not propagated to to other parts of the system
+
+Bulkhead with Resilience4J
+    1. Semaphore - In this approach, we limit the number of concurrent requests to the service. It will reject the incoming requests once the limit is hit
+    2. FixedThreadPoolBulkhead - In this approacvh, we isolate a set of thread pool from system resources, using only that thread pool for the service. We also use a waiting queue apart from the thread pool, if both the thread pool and queue are full then in that case, the request will get rejected with BulkheadFullException
+
+1. Create OrderService with web, actuator, lombok, AOP and resilence4j dependency
+
+<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-spring-boot2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+
+2. Create controller prg, here orderservice is internally calling ItemService using RestTemplate. At invoking if any problem occurs it will invoke bulkhead method
+
+@RestController
+@Slf4j
+public class OrderController {
+
+    private static final String ORDER_SERVICE ="orderService" ;
+
+    @Bean
+    public RestTemplate getRestTemplate() {
+        return new RestTemplate();
+    }
+
+    @Autowired
+    private RestTemplate restTemplate;
+    private int attempts=0;
+
+    @GetMapping("/order")
+    @Bulkhead(name=ORDER_SERVICE,fallbackMethod = "bulkHeadFallback")
+    public ResponseEntity<String> createOrder()
+    {
+        String response = restTemplate.getForObject("http://localhost:8081/item", String.class);
+        logger.info(LocalTime.now() + " Call processing finished = " + Thread.currentThread().getName());
+        return new ResponseEntity<String>(response, HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> bulkHeadFallback(Exception t)
+    {
+        return new ResponseEntity<String>(" orderService is full and does not permit further calls", HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+}
+
+3. Configure bulkhead configuration in application.yml
+
+resilience4j.bulkhead:
+  instances:
+    orderService:
+      maxWaitDuration: 5000
+      maxConcurrentCalls: 5 #max amount of parallel execution allowed by bulkhead is 5
+
+4. In main class, we are calling 10 calls concurrently with help of IntStream, so we are calling order service 10 times 
+
+@SpringBootApplication
+public class SpringResilience4jBulkheadApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringResilience4jBulkheadApplication.class, args);
+		int i=1;
+		IntStream.range(i,10).parallel().forEach(t->{
+			String response = new RestTemplate().getForObject("http://localhost:8080/order", String.class);
+
+		});
+	}
+
+}
+
+5. Create ItemService project with web, lombok dependency
+
+6. Create controller prg
+
+@RestController
+@Slf4j
+public class ItemController {
+
+     @GetMapping("/item")
+     public String getItem() {
+         try {
+            Thread.sleep(4000);
+         }catch(Exception e) {
+            log.error("getItem() call returned: {}",e.printStackTrace());
+         }
+         log.info("getItem() call returned");
+         return "Item selected successfully";
+     }
+}
+
+7. Start ItemService appl
+
+8. Start OrderService appl, we can see 10 calls of ItemService successfully, we did not get any exception because we provide 5000msec and in ItemService we provide sleep of 4000msec, so only it dosent throw any exception
+
+9. If we provide maxWaitDuration: 3000 and if we restart the appl, it will throw an exception since it will allow only 5 concurrent call and other 5 calls it dosent allow so it will call fallback method
+
+10. If we want to work with ThreadPoolBulkHead 
+
+resilience4j.thread-pool-bulkhead:
+  instances:
+    orderService:
+      maxThreadPoolSize: 1
+      coreThreadPoolSize: 1
+      queueCapacity: 1
+
+Until threadpool size and queue capacity is full it wont throw exception 
+
+11. Restart OrderService appl, we will get the output with 10 calls because threadpool size and queue capacity is not full
+
+
+CQRS(Command and Query Responsibility Segregation Pattern)- https://github.com/Java-Techie-jt/cqrs-design-pattern
+       If I simplify the statement further it clearly says that segregate query responsibility which is nothing read operation and command responsibility which is nothing all the write operation in your micros service, so in simple word CQRS suggest to segregate read and write operation to different service rather than mix up in a single microservice
+
+Why CQRS?
+    Let's take an example of flip cart e-commerce application where it has one product microservice with all of features like purchase the product, view the product, update and delete the product. As we know it has a large user base who frequently access the flipcart, now let's say flipcart started to sell on big billion days with a big discount, then at that time out of 100 users 30% users will visit the app to purchase the product and the rest 70% will just search or view the products to make a decision
+    We don't login to Flipkart to only purchase, we also have options to view them and if we like the product we will go for it otherwise we will not. But being a developer if you'll try to figure out the ratio of view product and purchase product it will show something look like this. 
+   In other word flipcart has more read request than write request, so if flipcart would like to handle the high load of read request separately than the low write request, then that's not possible because we have already mixed up both read and write operation in same microservices (ie) product microservice. So here is the problem we can't scale your application independently for read and write request. 
+    Not only e-commerce application, let's think about any social media apps like we used in our day-to-day life like Facebook, Twitter and Instagram, every day we search or view the feeds from these social media rather than add a new post. So here also we have more read request than write request, so now the problem here we cannot independently scale our application, now how we can overcome that in microservice architecture only by using cqrs design pattern
+    The next problem in current architecture is let's assume the above product microservice also integrated with other microservice like user service and purchaseorder service, then all the three microservices should have mapping with a unique field called orderID. When we want to fetch all the order details of an user, then I need to either write multiple join query or I need to do
+multiple rest API call which in turn affect the overall read performance. So if you need to write complex queries to read the data and do this on the same database you write to then this will impact its performance again this is another challenges 
+    Now the next challenges is, let's say you want to add additional security while writing
+the data to the database again you need to compress and decompress your payload for both read and write operation which will definitely lead into performance issue.
+    If we list down all the challenges we found in this current architecture like we cannot handle the high load for a specific requirement, we cannot deal with the complex query and we cannot add the additional security or transaction if you follow this particular architecture
+    We can overcome these challenges using cqrs design pattern 
+
+Solution
+     We need to segregate read and write operations for that we'll create two different microservice, one for read operation and one for write operation. Now we just define all the get or read operation like fetch the product API inside this product microservice which will query to your DB, so all the read operation related stuff will keep inside the product query
+microservices. We define all the write operation in product command microservices like post, put and delete API where you can give commands to modify the data into the database.
+    Since we create two different microservices they both will host to the different server, but if you observe we do all the write operation in product command microservice and it use
+its own database, now in product query microservice if we try to fetch all the products then we won't get any record because our Command and Query microservice are not in sync, they use their own database so basically we need to sync both the microservice to avoid data inconsistency 
+    So for that we can use any messaging system like Kafka or rabbit mq, so we use Kafke in our use case. So whenever you do any write operation in command service then immediately publish that event like either create product event or update product event to the Kafka, so that query service will consume that event and will store those information to its own database, so in that approach going forward your query service have all the upto-date information
+
+1. Create ProductCommandService with web, Spring data JPA, mysql, lombok, kafka dependency
+
+groupid: com.pack
+artifactId: ProductCommandService 
+Package name: com.pack  
+
+- create all program in same package 
+
+2. Configure db info in application.properties
+
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url = jdbc:mysql://localhost:3306/javatechie
+spring.datasource.username = root
+spring.datasource.password = Password
+spring.jpa.show-sql = true
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQLDialect
+server.port=9191
+
+3. Configure kafka properties in application.yml
+
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer:  org.springframework.kafka.support.serializer.JsonSerializer
+
+4. Create entity class 
+
+@Entity
+@Table(name = "PRODUCT_COMMAND")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Product {
+    @Id
+    private Long id;
+    private String name;
+    private String description;
+    private double price;
+}
+
+5. Create repo intf
+
+public interface ProductRepository extends JpaRepository<Product,Long> {
+}
+
+6. Create dto class
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProductEvent {
+
+    private String eventType;
+    private Product product;
+}
+
+7. Create controller prg
+
+@RestController
+@RequestMapping("/products")
+public class ProductCommandController {
+
+    @Autowired
+    private ProductCommandService commandService;
+
+    @PostMapping
+    public Product createProduct(@RequestBody ProductEvent productEvent) {
+        return commandService.createProduct(productEvent);
+    }
+
+    @PutMapping("/{id}")
+    public Product updateProduct(@PathVariable long id, @RequestBody ProductEvent productEvent) {
+        return commandService.updateProduct(id, productEvent);
+    }
+}
+
+8. Create service prg
+
+@Service
+public class ProductCommandService {
+
+    @Autowired
+    private ProductRepository repository;
+
+    @Autowired
+    private KafkaTemplate<String,Object> kafkaTemplate;
+
+    public Product createProduct(ProductEvent productEvent){
+        Product productDO = repository.save(productEvent.getProduct());
+        ProductEvent event=new ProductEvent("CreateProduct", productDO);
+        kafkaTemplate.send("product-event-topic", event);
+        return productDO;
+    }
+
+    public Product updateProduct(long id,ProductEvent productEvent){
+        Product existingProduct = repository.findById(id).get();
+        Product newProduct=productEvent.getProduct();
+        existingProduct.setName(newProduct.getName());
+        existingProduct.setPrice(newProduct.getPrice());
+        existingProduct.setDescription(newProduct.getDescription());
+        Product productDO = repository.save(existingProduct);
+        ProductEvent event=new ProductEvent("UpdateProduct", productDO);
+        kafkaTemplate.send("product-event-topic", event);
+        return productDO;
+    }
+
+}
+
+9. Create ProductQueryService with web, Spring data JPA, mysql, lombok, kafka dependency
+
+10. Configure db info in application.properties
+
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url = jdbc:mysql://localhost:3306/javatechie
+spring.datasource.username = root
+spring.datasource.password = Password
+spring.jpa.show-sql = true
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQLDialect
+server.port=9292
+
+11. Configure kafka properties in application.yml
+
+spring:
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+12. Create entity class 
+
+@Entity
+@Table(name = "PRODUCT_QUERY")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Product {
+    @Id
+    private Long id;
+    private String name;
+    private String description;
+    private double price;
+}
+
+13. Create repo intf
+
+public interface ProductRepository extends JpaRepository<Product,Long> {
+}
+
+14. Create dto class
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProductEvent {
+
+    private String eventType;
+    private Product product;
+}
+
+15. Create controller prg
+
+@RequestMapping("/products")
+@RestController
+public class ProductQueryController {
+
+    @Autowired
+    private ProductQueryService queryService;
+
+    @GetMapping
+    public List<Product> fetchAllProducts(){
+        return queryService.getProducts();
+    }
+
+
+}
+
+16. Create Service prg
+
+@Service
+public class ProductQueryService {
+
+    @Autowired
+    private ProductRepository repository;
+
+    public List<Product> getProducts() {
+        return repository.findAll();
+    }
+
+    @KafkaListener(topics = "product-event-topic",groupId = "product-event-group")
+    public void processProductEvents(ProductEvent productEvent) {
+        Product product = productEvent.getProduct();
+        if (productEvent.getEventType().equals("CreateProduct")) {
+            repository.save(product);
+        }
+        if (productEvent.getEventType().equals("UpdateProduct")) {
+            Product existingProduct = repository.findById(product.getId()).get();
+            existingProduct.setName(product.getName());
+            existingProduct.setPrice(product.getPrice());
+            existingProduct.setDescription(product.getDescription());
+            repository.save(existingProduct);
+        }
+    }
+}
+
+17. Start zookeeper and Kafka server
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic product-event-topic
+Created topic product-event-topic.
+
+18. Start both all appl
+
+19. Run swagger, http://localhost:9191/swagger-ui/index.html
+
+In Postman, with POST request http://localhost:9191/products - Body - Raw - Json
+{
+    "type":"CreateProduct",
+    "product": {
+            "id":100,
+            "name":"watch",
+            "description":"Latest model",
+            "price":23000.0
+       }
+}
+
+- We add another product 
+{
+    "type":"CreateProduct",
+    "product": {
+            "id":101,
+            "name":"earphone",
+            "description":"Samsung",
+            "price":2000.0
+       }
+}
+
+We will sending this particular record to the DB first and then immediately we are publishing the event into kafka topic 
+
+16. Check the product_command table in db
+
+17. Check in kafka topic whether the product is pushed into topic 
+>kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic product-event-topic --from-beginning
+
+18. In Postman, with GET request http://localhost:9292/products, now it will fetch data from product_query, since any data comes to product-event-topic, then kafkalistener will listens to that and stores the data in product_query table
+
+19. In Swagger, with PUT request http://localhost:9191/products/100 - Body - Raw - Json
+{
+    "type":"UpdateProduct",
+    "product": {
+            "id":100,
+            "name":"watch",
+            "description":"Rolex model",
+            "price":35000.0
+       }
+}
+
+First this record will be update in  command service DB, once it will update immediately it will publish the event to the query service, now query service will consume that particular event and it will modify its DB
+
+
+So if you think practically say we are getting more traffic for the search operation or the read request coming more to my application, now since these are the two different microservices I can easily scale this specific microservice which is product query microservice, I mean let's say I want to run it with 20 nodes or 20 parts then I can easily scale it up. 
+
+-------------------------------------------------------------------------------------------------
+What is Splunk?
+    - used to analyze data and logs produced by your application and also Splunk allows you to monitor,search, analyze data and logs through a web interface 
+    - Splunk will provide you one user interface using that you can filter out specific log to
+the microservices or you can set the alerts and you can monitor whole application log directly through this splunk dashboard 
+
+How it helps us in microservices architecture?
+      Let's say we have multiple microservices like orderservice, inventoryservice and paymentservice, now to track any issue from each and every services we must need to generate logs but we see all the logs is capturing by a single log file which is really a bad practice or a bad designing
+      Consider there is an issue occurs in inventoryservice, then we have to debug the whole logs to identify the issue which will take lot of time to filter out specific flow of inventoryservice log data.
+     How to overcome this that is where Splunk helps us to segregate your whole logs by creating an index, now you can create index for each microservices like order-service-index, inventory-service-index and payment-service-index. Now you can forward all orderservice related logs
+to the Splunk using order-service-index, all logs specific to the inventoryservice using inventory-service-index and similarly for paymentservice you can use the payment-service-index and this is where we are able to segregate entire log specific to the each microservices.
+    Now if an issue occurs in any of the services then simply search the logs in splunk with that specific index then you can only get specific service log data which is much easier to develop further.
+
+We are going create a springboot application and then we'll use any logging framework like log4j2 or Java util logger or slf4j to capture the logs of our application, then we will forward it to the Splunk. But how my application will connect to the Splunk because both are running in different server so we need to tell to the spring boot where your Splunk server is running in separate xml file called log4j2-spring.xml for customization and we can provide all the
+necessary information like URL, host, token, index and source 
+  1. URL where your Splunk server will redirect all your application logs 
+  2. host - what is the host where your Splunk server is up and running 
+  3. token will act as a security token between your application and Splunk to make a connection
+  4. index represent in which index we want to push my application log 
+  5. source represent what is your source type (ie) log4j or JSON
+
+Splunk Installation
+1. Goto www.splunk.com - Products - Platform - Splunk Enterprise - Free Trail - Register and u will get links to download software
+
+username: senthil1418@gmail.com
+Pwd: Birthday12!@
+
+2. Install the software, with username: admin, pwd: Birthday12!@. Now it will start splunk dashboard at http://localhost:8000
+
+3. we need to generate token, create the index and we need to specify the source. In Splunk Dash
+Goto Settings - Data Inputs - Http Event Collector (this is the HTTP event we want to push from our application to the Splunk ) - Click Global Settings 
+     All tokens: Enabled
+     Default source type: _JSON
+     Default index: main
+     Enable SSL: uncheck it 
+     HTTP port number: 8088
+Click Save
+
+My Splunk server is running on port 8000 but HTTP port 8088 that is where we want to post my
+application logs 
+
+- Click New token 
+     Name: order-service-logs
+     Source name override: http-event-logs
+Click Next
+
+- We need to select your source type either we can select Json as your Source type or since we are pushing the log from our application to the Splunk through the log4j
+
+Click Select - Select Source type: log4j
+
+-  Next we need to create the index 
+
+Click Create a new index 
+    Index Name: order_api_dev
+Click Save
+
+you can create multiple index specific to the each environment because dev logs should be present in the dev server and QA logs should be present in the QA server, so it's good practice to follow the environment name so that you can filter the log specific to the environment 
+
+Select Allowed Indexes: order_api_dev
+
+Click Review
+
+Click Submit 
+
+- Again Goto Settings - Data Input - Http Event Collector
+
+we can see the token value, source type and the index used to push our application log to the Splunk 
+
+4. Create SpringBootSplunk project with web, lombok dependency with server.port=9090
+
+5. Create dto class
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Data
+public class Order {
+
+    private int id;
+    private String name;
+    private int qty;
+    private double price;
+    private String transactionId;
+    private Date orderPlacedDate;
+}
+
+6. Create controller prg
+
+@RestController
+@RequestMapping("/orders")
+public class SplunkController {
+
+    @Autowired
+    private OrderService service;
+
+    @PostMapping
+    public Order placeOrder(@RequestBody Order order) {
+        Order addOrder = service.addOrder(order);
+        return addOrder;
+    }
+
+    @GetMapping
+    public List<Order> getOrders() {
+        List<Order> orders = service.getOrders();
+        return orders;
+    }
+
+    @GetMapping("/{id}")
+    public Order getOrder(@PathVariable int id) {
+        Order order = service.getOrder(id);
+        return order;
+    }
+}
+
+7. Create Service prg
+
+@Service
+public class OrderService {
+
+    private List<Order> orderList = new ArrayList<>();
+
+    public Order addOrder(Order order) {
+        order.setOrderPlacedDate(new Date());
+       order.setTransactionId(UUID.randomUUID().toString());
+        orderList.add(order);
+        return order;
+    }
+
+    public List<Order> getOrders() {
+        List<Order> list = null;
+        list = orderList;
+        return list;
+    }
+
+    public Order getOrder(int id) {
+        Order order = orderList.stream()
+                .filter(ord -> ord.getId() == id)
+                .findAny().orElseThrow(() -> new RuntimeException("Order not found with id : " + id));
+        return order;
+    }
+}
+
+
+8. Next we need to add the logging statement so that we can push those log statement to the Splunk, so to add the log statement we use the log4j2 which is a third party logging framework, but before we add that spring boot internally use spring-boot-strater-logging so first we need to disable that by excluding from our dependency 
+
+      <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>spring-boot-starter-logging</artifactId>
+					<groupId>org.springframework.boot</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-log4j2</artifactId>
+		</dependency>
+
+9. Now we want to display request and response in JSON format so we use ObjectMapper class which will take the object and it will convert to the string 
+
+public class Mapper {
+    public static String mapToJsonString(Object object) {
+        try {
+            return new ObjectMapper().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
+
+10. Now we add log statement in service prg
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+@Service
+public class OrderService {
+
+    Logger logger= LogManager.getLogger(OrderService.class);
+
+
+    private List<Order> orderList = new ArrayList<>();
+
+    public Order addOrder(Order order) {
+        logger.info("OrderService:addOrder execution started..");
+        logger.info("OrderService:addOrder request payload {} ", Mapper.mapToJsonString(order));
+        order.setOrderPlacedDate(new Date());
+        order.setTransactionId(UUID.randomUUID().toString());
+        orderList.add(order);
+        logger.info("OrderService:addOrder response  {} ", Mapper.mapToJsonString(order));
+        logger.info("OrderService:addOrder execution ended..");
+        return order;
+    }
+
+    public List<Order> getOrders() {
+        logger.info("OrderService:getOrders execution started..");
+        List<Order> list = null;
+        list = orderList;
+        logger.info("OrderService:getOrders response  {} ", Mapper.mapToJsonString(orderList));
+        logger.info("OrderService:getOrders execution ended..");
+        return list;
+    }
+
+    public Order getOrder(int id) {
+        logger.info("OrderService:getOrder execution started..");
+        Order order = orderList.stream()
+                .filter(ord -> ord.getId() == id)
+                .findAny().orElseThrow(() -> new RuntimeException("Order not found with id : " + id));
+        logger.info("OrderService:getOrder execution ended..");
+        return order;
+    }
+}
+
+- Now we add log statement in controller prg
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+@RestController
+@RequestMapping("/orders")
+public class SplunkController {
+
+    Logger logger = LogManager.getLogger(SplunkController.class);
+
+    @Autowired
+    private OrderService service;
+
+    @PostMapping
+    public Order placeOrder(@RequestBody Order order) {
+        logger.info("OrderController:placeOrder persist order request {}", Mapper.mapToJsonString(order));
+        Order addOrder = service.addOrder(order);
+        logger.info("OrderController:placeOrder response from service {}", Mapper.mapToJsonString(addOrder));
+        return addOrder;
+    }
+
+    @GetMapping
+    public List<Order> getOrders() {
+        List<Order> orders = service.getOrders();
+        logger.info("OrderController:getOrders response from service {}", Mapper.mapToJsonString(orders));
+        return orders;
+    }
+
+    @GetMapping("/{id}")
+    public Order getOrder(@PathVariable int id) {
+        logger.info("OrderController:getOrder fetch order by id {}", id);
+        Order order = service.getOrder(id);
+        logger.info("OrderController:getOrder fetch order response {}", Mapper.mapToJsonString(order));
+        return order;
+    }
+}
+
+11. Now we want to push this log statement to the Splunk but in my application, we don't have any Splunk related logging library so you need to add Splunk logging library in your pom.xml 
+
+<repositories>
+		<repository>
+			<id>splunk-artifactory</id>
+			<name>Splunk Releases</name>
+			<url>https://splunk.jfrog.io/artifactory/libs-releases</url>
+		</repository>
+	</repositories>
+
+    <dependency>
+			<groupId>com.splunk.logging</groupId>
+			<artifactId>splunk-library-javalogging</artifactId>
+			<version>1.11.0</version>
+		</dependency>
+
+12. Next we create log4j2-spring.xml file inside resources folder to configure all the Splunk related information to my application
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%style{%d{ISO8601}} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{10}}{bright,yellow}: %msg%n%throwable" />
+        </Console>
+        <SplunkHttp
+                name="splunkhttp"
+                url="http://localhost:8088"
+                token="7f99549c-adfb-482b-af62-c3b3dc103edd"
+                host="localhost"
+                index="order_api_dev"
+                type="raw"
+                source="http-event-logs"
+                sourcetype="log4j"
+                messageFormat="text"
+                disableCertificateValidation="true">
+            <PatternLayout pattern="%m" />
+        </SplunkHttp>
+
+    </Appenders>
+
+    <Loggers>
+        <!-- LOG everything at INFO level -->
+        <Root level="info">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="splunkhttp" />
+        </Root>
+    </Loggers>
+</Configuration>
+
+I am specifying the appender as a console appender and the pattern we want my log to be displayed and splunk configuration where ur appl will connect to ur splunk. We just specify the root level info so that log.info statement can only be displayed as part of my logging
+
+13. Start the appl
+
+14. In Postman, with POST request, run http://localhost:9090/orders - Body - Raw - Json
+
+{
+   "id":101,
+   "name":"Mobile",
+   "qty":1,
+   "price":30000
+}
+
+We can see the log statement being captured in the console
+
+- with GET request, run http://localhost:9090/orders, it will fetch all the orders
+
+- with GET request, run http://localhost:9090/orders/101, it will fetch single order
+
+- with GET request, run http://localhost:9090/orders/102, it will throw an exception
+
+15. Goto Splunk Dashboard - Search & Monitoring 
+         We can search your logs by the index which we created, all the logs from this order service will push to the Splunk with this particular index order_api_dev 
+
+Search: index="order_api_dev" - Last 15 min - click Search icon
+
+It's up to you how many duration logs you want to visualize you can check for the 24 hour
+log or for 7 days or 30 days, but for us let's capture for 15 minutes. We can see lot of logs 
+
+-  If it looks complex, if you want to filter for a specific method then
+
+Search: index="order_api_dev" OrderController:placeOrder - Click Search
+
+you can find only for this particular method 
+
+- Next we want to search for getOrders request 
+
+Search: index="order_api_dev" OrderController:getOrders - Click Search
+
+- Next we want to search for getOrder based on id=101 request, when we tried with the 102
+immediately we find the runtime exception 
+
+Search: index="order_api_dev" OrderController:getOrder - Click Search
+
+- We have just a three endpoint but if we have logs from past 30 days it's very difficult to
+capture or to filter the logsto the specific endpoint or the timestamp, so let's say I just want to filter whether there is any exception or error
+
+Search: index="order_api_dev" AND ( EXCEPTION OR ERROR ) - Click Search
+
+Now we can see only exception and error related logs 
+
+
+Splunk Alerts
+     Previously we just filter the logs based on the index name for 24 hour logs details and
+there are many logs we can see here, but being a developer rather than monitor this splunk dashboard for entire days, so it's not easy for me to keep an eyes on the logs to know if there is any high priorities or not. So how we can overcome this issue or how we can set some alert
+mechanism so that we will auto notify about the error scenario, that is where Splunk provide
+alert features 
+    So we need to tell at what situation or at which scenario you want an alert message, just provide those configuration in splunk dashboard itself, so once that criteria match immediately Splunk will inform you that the criteria is matches now and there are a critical alerts and do
+take the necessary action.
+
+1. In previous appl, create another service called JobService which takes some order object, by taking this order as input you are doing some other rest API call. Since this is just a demo application we are just randomly returning the true or false, to check whether the third party API call what you are doing is success or not, instead of this call you need to do the actual rest call. We just created a private method to just randomly return true and false and based on that result we are just setting the job status
+      But think in the real time scenario you are taking the bunch of order and you are just calling some additional services to evaluate some logic, so in that case if that job status is
+getting failed then it is critical for your application and break down your business logic, so in that scenario when the job status failed immediately Splunk need to notify to the developers that particular job is getting filled and take a look
+
+@Getter
+public enum JobStatus {
+    SUCCESS,FAILED;
+    private String name;
+}
+
+@Service
+public class JobService {
+
+    Logger logger = LogManager.getLogger(JobService.class);
+
+    public JobStatus process(Order order)  {
+        logger.info("JobService:process request {} ", Mapper.mapToJsonString(order));
+        if (otherApiResults()) {
+            //rest call
+            return JobStatus.SUCCESS;
+        } else {
+            return JobStatus.FAILED;
+        }
+    }
+
+    private boolean otherApiResults() {
+        return new Random().nextBoolean();
+    }
+}
+
+2. Create an endpoint to demonstrate the alert mechanism, we just created another method where we
+giving the order object and I am giving the object to just track the request in the log 
+
+ @PostMapping("/job")
+    public JobStatus processOrder(@RequestBody Order order) {
+        logger.info("OrderController:processOrder  order request {}", Mapper.mapToJsonString(order));
+        JobStatus jobStatus = jobService.process(order);
+        logger.info("current job status {}", jobStatus);
+        return jobStatus;
+    }
+
+3. Start the appl
+
+4. In Postman, with POST request, run http://localhost:9090/orders/job - Body - Raw - Json
+
+{
+   "id":101,
+   "name":"Mobile",
+   "qty":1,
+   "price":30000
+}
+
+We hit multiple times and we get jobstatus as success or failed 
+
+5. Goto Splunk Dashboard - Search & Monitoring 
+         
+Search: index="order_api_dev" SUCCESS - Last 15 min - click Search icon - we are filtering success 																						case
+
+Search: index="order_api_dev" FAILED - Last 15 min - click Search icon - we are filtering success 																						case
+
+6. Consider if the job status failed then this might cause some critical issue in my application, so in that case if my status is failed 3 times in a minute or in a two minute or in a 10 minute 
+then we want to trigger an alerts
+   But in real time application you have multiple kind of exception, some exception because of the Kafka or some exception because of some API call, so based on the different  scenario you can set multiple alerts in your Splunk dashboard. 
+    For this demo let me set the alert for this FAILED status, so when the alert will be triggered it will trigger over the email
+
+-Goto Settings - Server Settings - Email Settings
+        Mail host: smtp.gmail.com:587
+        Email security: check "Enable TLS"
+        Username: senthil1418@gmail.com (the mail ID which will send the alerts)
+        Password: 
+
+        Send email as: Splunk
+        Email footer: If you believe you have received this email as error, please see your Splunk 
+                       administrator
+
+Click Save
+
+- Next just set the condition at what situation you are expecting the alerts
+
+Goto Search and Reporting
+
+Search: index="order_api_dev" FAILED - Last 15 minutes - Click Search
+
+Now we have only one failed messages in my Splunk dashboard, so we'll hit couple of time then we'll verify if within a minute there are three job status is getting filled then trigger the alerts 
+
+- To set alert 
+
+Click Save As - Alert 
+      Title: JOB_STATUS_NOT_COMPLETE
+      Description: Job in production is getting failed 
+      Permission: Shared in APP
+      Alert type: Run as Cron Schedule
+      Cron Expression: */2****  (for every 2 min, u can check crontab site)
+      Trigger Alert when: Number of results 
+                          is greater than    3
+      Trigger: once
+
+I just want to set as a alerts, if status is failed and if it is there in my log three times within this two minute then just trigger that as a alert
+
+      Trigger actions (how you want to trigger ): Add to triggered alerts so directly you can
+check in the dashboard
+                            - Send email (will not working)
+             To: manikingsley1418@gmail.com
+             Priority: high
+             Include: select all options
+Click Save
+Click View Alert
+
+
+- Goto Alert menu - we can see alert which we have created 
+
+6. In Postman, with POST request, run http://localhost:9090/orders/job - Body - Raw - Json
+
+{
+   "id":101,
+   "name":"Mobile",
+   "qty":1,
+   "price":30000
+}
+we run multiple times until we get more than 3 Failed status
+
+7. Goto Splunk Dashboard - Search & Monitoring
+
+Search: index="order_api_dev" FAILED
+
+- Goto Alert - Click "Open in Search"
+
+We can see messages
+
+8. Goto Activity - Triggered Alerts 
+      We can see alerts will be triggered for every 2 min
+
+8. Check ur email and next email will be triggered after 2 min 
+
+
+Distributed Tracing 
+     In Monolithic development practicing Agile development was quite the hurdle, the routine involved coding, pushing code updates and patiently waiting through an extensive QA and testing process, finally a new version would emerge in, but this happened only every few months or sometime even years. Deployment was mounted centrally, an auditing tool focus on a single application
+   But today engineering teams have transitioned to developing microservices which has made development and deployment fast. However the distribution of services came with more complexity, a new challenges emerge and how to find the root cause of issues fast. If you are thinking about logging to solve this issue, the answer is no because solution like metrics and logs
+are limited in their abilities. When it comes to microservices they lack important information about the interaction between the services
+   In our application architecture so we have made the internal communication between our services resilient, so whenever our service is down or whenever we are facing a performance issue we can
+be sure that we will have some kind of fallback mechanism. However the question arises how
+can we effectively identify and troubleshoot these issues, reviewing logs is a common approach but it becomes difficult in production environment where services can receive 1000 or even millions of log entries. Therefore a design pattern called distributed tracing used to address this challenge.
+   Distributed tracing allow us to track a request from its initiation to its completion, it
+enable us to trace the entire path of a request, why a request failed and potentially identify where it failed
+   Consider the following example a user books a flight in our system, the request first reaches to API Gateway which then proxies the request to the booking service, the booking service interns make a call to the flight service. To effectively trace the request from API Gateway to the
+flight service, we require a mechanism for tracing this is where the concept of Trace ID comes into play which is a unique identifier assigned to each incoming request in our system. Alongside the trace ID we also have something called as span ID, the span ID represents the number of trips the request tags within our system.
+    In our example there is one trip to the API Gateway, another to the booking service and final to the flight service. Each destination has its own unique identifier known as span ID such as span 1 for API Gateway, span 2 for booking service and so on. Essentially a span ID act as a unique identifier for each request within our individual system, by utilizing this trace and span IDs we can trace the entire life cycle of requests within our services. This allow us to identify any services that are responding slowly or experiencing performance issue by referring to the
+trace ID and span IDs.
+
+Micrometer 
+    It's like having a set of special tool that help us keep eye on our micro services and
+how they are performing, so it's a toolbox for developer or a set of tools that simplifies the way we measure, observe our micro Services. 
+    So micrometer gives a consistent way to measure and observe our code, no matter what tools or platform we are using. Now within the toolkit there's a powerful tool called Observation API use to count those action, measure the rates, keep track of sizes, even measure the time all are crucial aspect when we are developing the micro services
+
+
+1. Create ParentService project with web, lombok dependency 
+   Create ChildService project with web, lombok dependency 
+   Create GrandChildService project with web, lombok dependency 
+
+2. In GrandChildService
+
+- In application.yml we configure 
+
+server:
+  servlet:
+    context-path: "/grandchild-svc"
+  port: 5050
+
+spring:
+  application:
+    name: "Grandchild"
+
+- Create controller prg
+
+@Slf4j
+@RestController
+public class GrandchildController {
+
+    @Autowired
+    GcService service;
+
+    @GetMapping ("/grandchild")
+    public String sayHi(){
+        log.info("Grandchild was called ...");
+        return service.createHi();
+
+    }
+}
+
+- Create service prg
+
+@Service
+public class GcService {
+    public String createHi(){
+        return "Hi! From Grand Child";
+    }
+}
+
+3. In ChildService project
+
+- In application.yml, we configure
+
+server:
+  port: 6060
+  servlet:
+    context-path: "/child-service"
+spring:
+  application:
+    name: "Child"
+
+- Create controller prg
+
+@RestController
+@Slf4j
+public class ChildController {
+    
+    @Autowired 
+    RestTemplate restTemplate;
+   
+    @GetMapping("/child")
+    public String sayHi()
+    {
+        log.info("Child was called ...");
+        log.info("Calling Grandchild now ...");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "http://localhost:5050/grandchild-svc/grandchild",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+        String responseFromGrandChild = response.getBody();
+        return responseFromGrandChild;
+    }
+}
+
+- In main class, create RestTemplate bean
+
+  @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder){
+        return builder.build();
+    }
+
+4. In ParentService project 
+
+- In application.yml, we configure
+
+server:
+  servlet:
+    context-path: "/parent-service"
+  port: 7070
+
+spring:
+  application:
+    name: "Parent"
+
+- Create Controller prg
+
+@RestController
+@Slf4j
+public class ParentController {
+
+    @Autowired
+    RestTemplate restTemplate;
+
+    @GetMapping("/parent")
+    public String sayHi(){
+        log.info("Parent was called ...");
+        log.info("Say Hi to Grandchild ...");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "http://localhost:6060/child-service/child",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        String responseFromChild = response.getBody();
+        return "Grandchild said: " +  responseFromChild;
+
+    }
+
+}
+
+- In main class, create RestTemplate bean
+
+  @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder){
+        return builder.build();
+    }
+
+5. Start all 3 appl
+
+6. In Postman, with GET request, run 
+http://localhost:5050/grandchild-svc/grandchild, we get response back from grandchild
+http://localhost:6060/child-service/child, we get response back from child
+http://localhost:7070/parent-service/parent, we get response back from parent
+
+Now we check the logs in console we can see information is coming at parent was called, say hi to the grandchild same way I can see the information for the child and information from the grandchild
+
+7. Now we are going to hit http://localhost:7070/parent-service/parent, 3 times and we can see the logs coming in for three time for child, parent and grandchild
+   But the problem with this approach is in case of multi-user scenario I would not be able to track this down on whether a particular call is for coming from user1 or user2 or user3.
+
+According to springboot3, spring has moved on to micrometer because they built a new observability API instead of Sleuth, they are now recommending to move to micrometer and that it has built-in support for logging correlation. 
+
+Life cycle of micrometer 
+    It is different events 
+1. start - which tells when the event has started 
+2. stop - when it ended
+3. error - event for error scenario 
+4. scope which keeps track of a scope of an end-to-end event, when the parent Trace
+ID hops over various span ID which is nothing but a unit of work
+
+Each observation in the end to end call has metadata in key value pair which is used to tag to queries for those events
+
+8. To setup we need to add some dependencies like springboot aop, Prometheus Metrix for tracking, Zipkin for tracing and logs dependency 
+   Add all the above dependency in all 3 projects 
+
+<dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-brave</artifactId>
+    <version>1.4.1</version>  1.1.5
+</dependency>
+<dependency>
+    <groupId>io.zipkin.reporter2</groupId>
+    <artifactId>zipkin-reporter-brave</artifactId>
+    <version>3.4.3</version>  2.16.4
+</dependency>
+<dependency>
+    <groupId>com.github.loki4j</groupId>
+    <artifactId>loki-logback-appender</artifactId>
+    <version>1.6.0</version> 1.4.1
+</dependency>
+
+9. Create configuration class in all 3 project, first thing we add a bean for the observability API
+
+
+@Configuration(proxyBeanMethods = false)
+public class ObserverConfig {
+    @Bean
+    ObservedAspect observedAspect(ObservationRegistry observationRegistry) {
+        return new ObservedAspect(observationRegistry);
+    }
+}
+
+10. Now we add prometheus information, the logging pattern in application.yml file for all 3 projects
+
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
+
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+
+
+11. Now we inject observability api in the GrandChildController class
+
+we're going to provide the name "user.name" which basically pull the information from yml file that is present in your spring.application.name, contextualname used for our own purpose to track it in the tracing logs, this is a primary information that you will be looking at the Zipkin dashboard 
+    High cardinality is used when you have more than one or the key value pair(unbounded), low cardinality have bounded number of values, in our case it is low cardinality since we are using get request 
+
+    @GetMapping ("/grandchild")
+    @Observed(
+            name = "user.name",
+            contextualName = "Grandchild-->service",
+            lowCardinalityKeyValues = {"userType", "userType2"}
+    )
+    public String sayHi(){
+        log.info("Grandchild was called ...");
+        return service.createHi();
+
+    }
+
+- Now we create samething in other 2 project  controller class
+
+@GetMapping("/child")
+    @Observed(
+            name = "user.name",
+            contextualName = "child-->Grandchild",
+            lowCardinalityKeyValues = {"userType", "userType2"}
+    )
+    public String sayHi()
+    {
+        log.info("Child was called ...");
+        log.info("Calling Grandchild now ...");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "http://localhost:5050/grandchild-svc/grandchild",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+        String responseFromGrandChild = response.getBody();
+        return responseFromGrandChild;
+    }
+
+
+@GetMapping("/parent")
+    @Observed(
+            name = "user.name",
+            contextualName = "Parent-->child",
+            lowCardinalityKeyValues = {"userType", "userType2"}
+    )
+    public String sayHi(){
+        log.info("Parent was called ...");
+        log.info("Say Hi to Grandchild ...");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "http://localhost:6060/child-service/child",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        String responseFromChild = response.getBody();
+        return "Grandchild said: " +  responseFromChild;
+
+    }
+
+12. Start all 3 appl, In Postman, with GET request, run 
+http://localhost:5050/grandchild-svc/grandchild, we get response back from grandchild
+
+In the console it will show you an error for Zipkin which we haven't started yet, now we'll ignore. Now we take a look at how the log looks in console as the application name, the trace ID and span ID which is basically the amount of work done. So anytime you are making a call OR you are making a DB call or wherever you go to place the value of the observed annotation, it is going to be treated as a span ID (ie) amount of work done
+
+- Now we hit http://localhost:6060/child-service/child, we get response back from child
+
+In console, we see that the trace side is same but the span ID is going to be different for each of the tasks 
+
+- Now we hit http://localhost:7070/parent-service/parent, we get response back from parent
+
+In console, we see that the trace side is same but the span ID is going to be different for each of the tasks 
+
+-  Now once again we hit http://localhost:7070/parent-service/parent, we get response back from parent
+
+13. Install Zipkin and start, run http://localhost:9411 
+       - Copy tracing id and search, we can see all the different entries how the call goes from parent to the child and so on, so for each log info you see the name which is showing up from the @Observed metadata 
+
+14. Now once again we hit http://localhost:7070/parent-service/parent, we can see tracing and span id
+
+- Copy tracing id and search
+
+For the first entry we have got the span ID and parent ID would be none, for next event it is going to pass the parent ID as the tracing ID, so now that span ID becomes the parent ID for the next task and so on
+
+15. Click Dependencies - It will tell you how the call is actually flowing from one microservice to the other, so in here it is parent to child then to grandchild,  this is helpful if you have a really complicated service you want to see the overall picture you can do that
+
+--------------------------------------------------------------------------------------------------
+
+https://www.youtube.com/watch?v=hrvx8Nv9eQA&list=PLJq-63ZRPdBsPWE24vdpmgeRFMRQyjvvj
+
+Event driven architecture
+
+     The event driven architecture or Eda pattern is taking center stage in modern software design with the rise of microservices, big data and real-time processing, so companies need scalable and
+flexible way to handle interactions between different components 
+ 
+Need for EDA 
+   As your application expands and new services are introduced the traditional request response model becomes less efficient, in a simple case serviceA requests data from serviceB which
+processes the request and sends a response. However as more services are introduced managing this interactions become exponentially complex.
+  So for every interaction you need to define a request and response, when there
+are only few services this may seem manageable, but as more services are added each service must
+be aware and capable of handling requests from multiple other services, and this leads to tightly coupled interactions making the system difficult to scale and evolve. Similarly introducing or
+updating a service can disrupt the entire network of connections this is where event driven architecture comes into play 
+   ETA offers a alternative by decoupling services through the use of events allowing for
+more scalable, flexible and efficient system designs. So event driven architecture is a software design pattern where services communicate through the generation propagation and consumption of events. An event is simply a signal that something happened whether it's a user clicking a
+button or a new order being placed or a device sending data.
+ 
+EDA components: Producers and Consumers
+    There are two main components in event driven architecture 
+1. Event producers are the components of services that generate events, for example in an e-commerce application the order service can be an producer (ie) when a new order is placed it
+produces an event like order placed or payment completed 
+2. Event consumers are the components that respond to events, in our example the inventory service might consume the order placed event to reduce the stock of items, while the shipping service might consume the event to start processing the shipment 
+   This model completely decouples the producer and the consumer, they don't need to know
+about each other as long as they are connected through a common messaging
+infrastructure called brokers
+
+Real-world EDA use cases
+    Netflix utilizes Eda, every action you take on Netflix whether it is starting a new
+show, rating a movie or pausing a stream it produces an event. This information is gathered in real time and sent to different services like the recommendation engine, for instance if
+you start watching a new show that event is immediately consumed by the recommendation service which updates your list with similar content  
+   Netflix's architecture continuously monitors every service's health, if a service starts to slow down or fails events are generated and the monitoring service consumes those events
+to alert engineers or trigger automatic recovery processes. So by using Eda Netflix can handle massive amounts of real-time data, scale its services independently and ensure users receives personalized recommendation instantly 
+   Similarly Uber operates on a massive scale handling millions of rides across the globe every day, Uber uses an event driven architecture to manage both real-time data processing and coordination between services 
+   So when a user request a ride, an event like ride requested is produced, this event is
+consumed by multiple services so matching service finds an available drivers based on the user's location, an ETA service estimates the time of arrival, the pricing service calculates the ride cost based on factors like distance and demand. Each of the services consumes the same ride
+requested event but responds in a different way.
+   Uber also has the ability to collect real-time traffic data through Telemetry events from driver's phones, this data is consumed by the routing service which provides optimized
+routes and updates driver apps in real time 
+
+Event Processing: Simple and Complex
+   There are two main styles of Eda, simple event processing and complex event processing
+1. In simple event processing an event triggers a simple reaction, for example an order placed event triggers the inventory service to update stock and the shipping service to prepare an order
+this is straightforward and easy to implement 
+   In more advanced scenarios multiple events are aggregated, for example Uber's pricing system might look at traffic demand and Driver availability to trigger search pricing and this style allows for more advanced decision making based on event data. 
+
+when designing an event driven system there are few components that are crucial, like event producers are the microservices or systems that generate events, an event could represent something like user action for example a purchase or a system change for example a data update.
+   Event broker like Kafka, rabbit mq or azure service bus sits between the producers and consumers, it act as an intermediary that handles events by either queuing or streaming them.
+Producers send events to the broker and the broker forwards these events to consumers. Some systems might have both publisher and subscribers, the Publishers send events and the subscriber receive events from the event broker in a pops up model, this ensures asynchronous communication between services 
+   Event consumers are services or systems that consume the event, they can trigger various actions such as storing data in a database, saving to a file system or interacting with different applications. We also need to define clear event types so that consumers know how to process each event, for instance an order placed event might include field like order ID, product details and payment status
+
+EDA Tooling: Kafka, SQS and RabbitMQ
+   There are several tools available for building an event system.
+1. Apache Kafka is a high scalable messaging platform widely used for real-time data streaming and event driven systems, companies like LinkedIn and Uber uses kafka to handle millions of events
+per second 
+2. Amazon's cloud-based messaging services are ideal for event driven architecture built on AWS 
+3. Rabbit mq which is another lightweight messaging broker that is easy to set up and use
+for smaller scale event driven systems
+
+These tools make it easier to implement event driven architectures that can scale and handle real-time processing efficiently 
+
+
+Event Sourcing
+     Event sourcing is like turning your applications memory into a time machine, it is an architectural pattern, where state changes are represented as events stored in an append only log. Unlike a typical relational database that stores only the current state, event sourcing records every change as an event preserving history and enabling richer context
+    So instead of just remembering the latest state of an object like account balance is $500, we
+store every action that led to that state as an event, these events are immutable records of every change that has ever occurred and they are stored in an append only log. So in a relational database if you are tracking the balance of a bank account you just store the current balance, but with event sourcing every deposit and withdrawal is recorded as an event and you can always replay those events to see how the balance was reached. It's like having a complete history of every change in your system, but why would we choose to store every event rather than just the final State
+
+Why Event Sourcing
+1. Event sourcing gives us a perfect audit Trail, you can trace every action taken in the system, who performed it and when. This is invaluable for compliance, debugging and understanding the business flow. Consider we want to  answer questions like "why was this order cancelled"
+with complete clarity by simply replaying the events that led to the cancellation 
+
+2. Event sourcing allows us to rebuild the state of an entity at any point of time, if you need
+to see what customer account looked like last month, just replay the events upto that date 
+
+Event sourcing naturally support cqrs, imagine an API for sellers managing products on e-commerce site, in a crud applications product changes are directly updated in the database, but with event sourcing every action like product created or Price updated generates an event logged with details like authors and time stamps and this ensures you never lose historical data.
+   However storing only events leaves a challenge determining the current state, this is where sourcing comes
+
+Sourcing
+   In the context of event sourcing, the term sourcing refers to deriving the current state from past events rather than directly storing the state, since the state is not directly stored
+hydration is the mechanism that allows you to rebuild the state from the event log 
+   If you have an e-commerce application that uses event sourcing to manage product pricing and these are the sequence of events so when the product was created price was set to $100, price
+got updated to $120, the discounts card applied to 110 and the price was updated
+again and the price became $115.
+  So in a traditional system you'd simply query the database to get the current price which would be stored as $115 only. However in event sourcing, the current price isn't directly stored, instead we have a log of events, to determine the current price you must replay all the events from the beginning. So when your application needs to know the current price of this product, it
+hydrates the product by replaying these events sequentially.
+   We start with an empty product object and keep applying all the events that happen, after
+hydration the product object reflects the current state with the price $115. But as the number of event grows, hydration can become slow, so if your product has thousands of events replaying all of them to get the current state is inefficient. 
+
+Hydration and replay 
+   They both involve processing events to reconstruct the current state of an entity, but they differ in the context and usage. 
+   Hydration is the process of building or reconstructing an entity's current state by applying all relevant events from the event log, the primary goal of hydration is to prepare
+the current state of entity often on demand or during startup so it can be used by the application. For example when a query is made to get the current price of a product, hydration is triggered to apply all relevant events like product created price, updated etc and generate
+the current product State.
+   Replay refers to processing past events to regenerate the entire state of the system or to redo past operations for specific purposes such as debugging, testing or auditing. So replay is often
+used when you need to rerun events either to validate changes or to migrate data, for example after deploying a new version of your application with a different data model, you need to
+replay all events from the beginning to generate the current state according to the new model. 
+
+Sourcing is the concept that ties hydration and replay together, it emphasizes that instead of storing the latest state directly, you source the state from the events. 
+   The sourcing process is implemented through hydration and replay depending on your needs so when you need to serve a query or load the entity during runtime, you hydrate the entity from the event log and when you need to rebuild the entire state of your system or adjust to a new schema you replay events from beginning to source the state under new conditions.
+
+  In event sourcing, snapshots and materialized views play essential roles in optimizing
+performance and providing quick access to current states derived from event streams. 
+  So instead of replaying every event you can periodically capture the current state as a snapshot, for example after every 100 events you could save snapshot of that product state, then when you need the current state you only replay events from the last snapshot forward, reducing the overhead.
+  We also maintain a materialized view of the current state in a separate database and
+this view is updated in real time as new events occur, allowing you to query the latest State without replaying events.
+  Snapshots enhance performance on the write side which is the rebuilding state side, while materialized view improve performance on the read side, while serving the queries and both
+techniques are essential for making event source systems scalable and efficient 
+
+How Event Sourcing Works ?
+    This pattern focuses on storing state changes as the series of events, so instead of storing the current state directly in a database, event sourcing stores every change that happens like product created, price updated etc as an event and the current state is derived by replaying these events.
+   Event sourcing fits naturally with CQRS, because it is applicable to both the command side and
+the query side in a cqrs architecture. So in cqrs, commands don't directly modify the state ,they generate events, event sourcing stores these events creating a history of all the state changes. For example the update product price command doesn't directly update the product price, instead it generates a price updated event which is stored in the event log. These events represent the
+intent behind the commands and are stored in the event store which is the central component of event sourcing.
+   The query side relies on the event stream to build or update its read models, it listens for relevant events, hydrates the domain objects and keeps the read model in sync. For example the query service listens for the price updated event and updates the product's read model in its
+database, so when a user queries with the product details it retrieves the current price from the read model.
+   So systems using both cqrs and event sourcing, hydration is usually handled by the query side, the command side generates the events and updates the event log.
+
+Consider a scenario where a seller decides to update a product's price from $100 to $120, so
+when the seller decides to update the product price a command like "update product price" is sent to the command service which processes the command, validates the business rules and generates price updated event and stored in the event log.
+   The query side typically subscribes to the event log or listens to the message broker that
+broadcast new events, upon detecting the event the query service processes it. For example it might update the price in the product read model and when a user query's product details, the query service retrieves the data from the read model which now reflects the latest price of $120.
+
+
+Event Sourcing design pattern
+  It is a pattern where state changes are logged or stored as a sequence of immutable events instead of being stored directly in the database 
+
+Consider we are building an online order management system, where each order goes through multiple stages, for example when user send a request to place an order, a new order is created. So what we do in the back end, we create a database with all the order and then we update the order status to "created".
+   Next when the user complete the payment and confirm the order, again we update the state to "confirmed" in our database. Next when dispatch team or third party service initiate the shipment, the status will be again changed to "shipped". After that when user received the order, delivery person will update the order status to "Delivered".
+   So we are keep changing the status of an order, so the order goes through four stage here and
+each time we override the status in the database. But the problem is, we are only storing or updating the latest state of the order which in this case is delivered, this means our system has no record of the previous state of that order such as when the order was created or when the order order was shipped or when the order was confirmed.
+   Consider if a user raise a complaint about their order, we won't be able to backtrack when the order was created or confirmed or shipped, because your system only stored the final status which could cause a huge impact on your business.
+   To overcome this only, event sourcing design pattern came into the picture, instead of updating the actual order entity directly, we create an event log that records every state change like created or confirmed or shipped or delivered with the proper timestamp and with proper information, this way the system can track all order status giving both admin and user a clear history ensuring that there is no confusion or data loss.
+   Consider the image, here the user can track the current state of an order and complete history of that particular order, this is possible through the event sourcing design pattern. If you're are using the ecom platform like flipcart or myntra where we will track our order state and they
+implemented this event sourcing to maintain the state of that particular order
+
+Demo:
+   We create two microservice orderservice and shippingservice, now when orderservice receive the request to place an order, what he will do immediately he will add that particular
+event to the database with the current timestamp saying that the order was created and at the same time it will also publish kafka event, so that shipping service can keep listen to that particular kafka topic to check the status, if the order status is confirmed then he will initiate the shipment process
+   Now once you do the payment and confirm the order, then the state will be changed to "confirmed", now since the shipping service will always look into the order whose status is confirmed, once he got that acknowledgement he will initiate the shipment process and after that once the delivery guy hand over the order to you, then he can update in the system that the order is delivered
+
+
+1. Create OrderService project with web, spring for apache kafka, lombok, mysql, data jpa - create all prg inside com.pack
+
+2. Configure db info and kafka configuration in application.properties file
+
+server.port=1000
+
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url = jdbc:mysql://localhost:3306/fullstackdev
+spring.datasource.username = root
+spring.datasource.password = root
+spring.jpa.show-sql = true
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQLDialect
+
+#Producer configuration
+spring.kafka.producer.bootstrap-servers=localhost:9092
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+
+3. Create orderRequest and OrderResponse
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderRequest {
+    private String orderId;
+    private String name;
+    private int qty;
+    private double price;
+    private String userId;
+
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderResponse {
+    private String orderId;
+    private OrderStatus status;
+}
+
+public enum OrderStatus {
+    CREATED,
+    CONFIRMED,
+    SHIPPED,
+    DELIVERED;
+}
+
+4. Create controller prg
+
+we have two endpoint, place an order and confirm the orde
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    @Autowired
+    private OrderService orderService;
+
+    // Endpoint to place an order
+    @PostMapping("/place")
+    public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest orderRequest) {
+        try {
+            OrderResponse orderResponse = orderService.placeAnOrder(orderRequest);
+            return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Endpoint to confirm an order
+    @PutMapping("/confirm/{orderId}")
+    public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
+        try {
+            OrderResponse orderResponse = orderService.confirmOrder(orderId);
+            return new ResponseEntity<>(orderResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}
+
+once the user create the order, request will come to the order service which will simply create a orderevent entity and will store the current state of order in db and it will also publish the event to Kafka
+
+5. Create OrderEvent entity
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+public class OrderEvent {
+    @Id
+    private String id;
+    private String orderId;
+    private OrderStatus status;  // CREATED, CONFIRMED
+    private String details;
+    private LocalDateTime eventTimestamp;
+}
+
+6. Create repository intf
+
+public interface OrderEventRepository extends JpaRepository<OrderEvent,String> {
+}
+
+7. Now we create service prg where we will store the orderevent in db and publish event to kafka topic
+      
+@Service
+public class OrderService {
+    @Autowired
+    private OrderEventRepository repository;
+
+    @Autowired
+    private OrderEventKafkaPublisher publisher;
+
+
+    // Handle order creation
+    public OrderResponse placeAnOrder(OrderRequest orderRequest) {
+        String orderId = UUID.randomUUID().toString().split("-")[0];
+        orderRequest.setOrderId(orderId);
+        //do request validation and real business logic
+        //save that event and publish kafka messages
+        OrderEvent orderEvent=new OrderEvent(orderId,OrderStatus.CREATED,"Order created successfully", LocalDateTime.now());
+        saveAndPublishEvents(orderEvent);
+        return new OrderResponse(orderId, OrderStatus.CREATED);
+    }
+
+    // Handle order confirmation
+    public OrderResponse confirmOrder(String orderId) {
+        OrderEvent orderEvent=new OrderEvent(orderId,OrderStatus.CONFIRMED,"Order confirmed successfully", LocalDateTime.now());
+        saveAndPublishEvents(orderEvent);
+        return new OrderResponse(orderId, OrderStatus.CONFIRMED);
+    }
+
+    private void saveAndPublishEvents(OrderEvent orderEvent){
+        repository.save(orderEvent);
+        publisher.sendOrderEvent(orderEvent);
+    }
+
+
+}
+
+
+- Create topic
+
+@Configuration
+public class KafkaTopicConfig {
+
+              @Bean
+              public NewTopic kafkaTopic() {
+                             return TopicBuilder.name("order-events")
+                                                                     .partitions(3)
+                                                                     .build();
+              }
+}
+
+
+- Create bean to send msg to kafka topic
+
+@Component
+public class OrderEventKafkaPublisher {
+
+    @Autowired
+    private KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+
+    public void sendOrderEvent(OrderEvent orderEvent) {
+        kafkaTemplate.send("order-events", orderEvent);
+    }
+}
+
+whatever the event is getting published from this order service we will consume that and validate if the state is confirmed then we need to initiate the shipping related processing
+
+8. Create ShippingService project with with web, spring for apache kafka, lombok, mysql, data jpa - create everything in single package com.pack
+
+9. Configure db info and only kafka consumer configuration  because it just consume the event when it is confirmed in application.properties file
+
+
+spring:
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+10. ShippingService will consume OrderEvent, so first we create OrderEvent entity
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+public class OrderEvent {
+    @Id
+    private String id;
+    private String orderId;
+    private OrderStatus status;  // CREATED, CONFIRMED
+    private String details;
+    private LocalDateTime eventTimestamp;
+}
+
+public enum OrderStatus {
+    CREATED,
+    CONFIRMED,
+    SHIPPED,
+    DELIVERED;
+}
+
+11. Create repo intf
+public interface OrderEventRepository extends JpaRepository<OrderEvent,String> {
+}
+
+12. Create controller prg to ship the order and to deliver the order
+
+@RestController
+@RequestMapping("/shipping")
+public class ShippingController {
+
+    @Autowired
+    private ShippingEventService shippingEventService;
+
+    @PostMapping("/{orderId}/ship")
+    public ResponseEntity<String> shipOrder(@PathVariable String orderId) {
+        shippingEventService.shipOrder(orderId);
+        return ResponseEntity.ok("Order shipped successfully.");
+    }
+
+    @PostMapping("/{orderId}/deliver")
+    public ResponseEntity<String> deliverOrder(@PathVariable String orderId) {
+        shippingEventService.deliverOrder(orderId);
+        return ResponseEntity.ok("Order delivered successfully.");
+    }
+}
+
+13. Create service prg, which will consume orderevent and checks if the status is confirmed it will call shipOrder()
+
+@Service
+public class ShippingEventService {
+
+    @Autowired
+    private OrderEventRepository repository;
+
+
+    @KafkaListener(topics = "order-events", groupId = "shipping-service")
+    public void consumeOrderEvent(OrderEvent orderEvent) {
+        if (orderEvent.getStatus().equals(OrderStatus.CONFIRMED)) {
+            // Automatically ship after order confirmation
+            shipOrder(orderEvent.getOrderId());
+        }
+    }
+
+
+    // Ship the order -  once shipping service validate that again you need to update the table as shipped, so we create orderevent
+    public void shipOrder(String orderId) {
+        OrderEvent orderEvent = new OrderEvent(orderId, OrderStatus.SHIPPED, "Order Shipped successfully", LocalDateTime.now());
+        repository.save(orderEvent);
+    }
+
+    // Deliver the order
+    public void deliverOrder(String orderId) {
+        OrderEvent orderEvent = new OrderEvent(orderId, OrderStatus.DELIVERED, "Order delivered successfully", LocalDateTime.now());
+        repository.save(orderEvent);
+    }
+}
+
+Now all the state will be capture in our event log or event store
+
+14. Start zookeeper, kafka server
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic order-events
+Created topic order-events.
+
+15. Start OrderService, ShippingService
+
+16. First we will place the order, with POST request - /api/order/place
+{
+   "orderId":"12345",
+   "name":"Laptop",
+   "qty":2,
+   "price":1200.50,
+   "userId":"user789"
+}
+- Now the order will be created 
+
+17.  So I have place the order next I want to confirm the order - with PUT request - /api/order/confirm/orderId
+    
+Now the status will be changed to confirmed in db and it will publish the kafka messages, the shipping service will check order state is confirmed and initiate the shipment related process and it will just update the DB to "shipped"
+    In the shippingservice, if you see the service it will listen to the orderevent and will check if the state is confirmed then it will immediately ship the order
+
+Now if u check the db, we will have 3 state created, confirmed, shipped for same orderid, we have not triggered the ship endpoint manually, when the request is published with confirmed status the shipping service listen to that and initiate this shipment process
+
+18. Now we deliver the order, so in shipping service swagger, we execute with POST request - /shipping/orderId/deliver
+  - It will say order delivered successfully
+
+Now if u check the db, we will have 4 state created, confirmed, shipped, Delivered for same orderid
+
+We can see the state of a single order, what is the initial State, when it was created, everything you can audit. This will really help in real time, when you want to figure out state of any order it's not only order, but in real time every application you might playing with the object and it state, so you can capture each and every state of that particular object using this event sourcing approach 
+
+19. To just validate we check the kafka whether the message are being produced and consumed. we can see the status is created and confirmed, after that we are not publishing anything.
+  Once the status will be confirmed the request will goes to shipping service and then he will
+initiate the shipment and deliver 
+
+20. Now we repeat step 16, 17, 18, to create a order, confirm it,then ship it and deliver it 
+
+In case if any state is getting failed it won't process further, you can easily figure out by seeing this table, the order is confirmed next to that the order is not shipped or it didn't process further, then in that scenario you can go to that piece of code where it consume the event and you can figure out, what is the issue, why it is not processed, whether there is any validation error on the request
+
+-------------------------------------------------------------------------------------------------
+
+Event modelling
+
+Event Modeling in Microservices — Explained with Example
+Event modeling is a technique used to design systems around business events. It provides a visual and structured way to understand how information flows through a system using events as the primary modeling construct, instead of just entities or APIs.
+
+✅ What is Event Modeling?
+In microservices architecture, event modeling focuses on:
+Capturing state changes as a series of events.
+Designing read and write models based on how data is consumed.
+Modeling user interactions, system reactions, and data evolution over time.
+Enabling event sourcing and CQRS patterns.
+
+📊 Components in Event Modeling
+Events – Something that has happened in the system (e.g., OrderPlaced, PaymentProcessed)
+Commands – Intent to do something (e.g., PlaceOrder, ProcessPayment)
+Views / Read Models – Query-optimized data for UI or consumers
+Timelines / Swimlanes – Visual separation of services or roles
+
+🛒 Example: E-Commerce Order Processing System
+Imagine an online shopping platform with microservices:
+
+Order Service
+Inventory Service
+Payment Service
+Shipping Service
+
+➤ Scenario: A user places an order.
+Step-by-step Event Modeling Flow:
+Time	Command	Event	Read Model Updates	Service Involved
+T1	PlaceOrder	OrderPlaced	Order history	Order Service
+T2		InventoryReserved	Stock dashboard	Inventory Service
+T3		PaymentProcessed	Payment status	Payment Service
+T4		OrderShipped	Shipment tracking	Shipping Service
+
+Visual Representation (Simplified Event Modeling Table):
+
+Timeline →          | Order Service     | Inventory Service | Payment Service   | Shipping Service
+----------------------------------------------------------------------------------------------------
+Command             | PlaceOrder        |                   |                   | 
+Event               | OrderPlaced       | InventoryReserved | PaymentProcessed  | OrderShipped
+Read Model Update   | Order History     | Stock View        | Payment Status    | Shipment View
+
+🔄 Key Benefits of Event Modeling
+Traceability: Every change is captured as an event.
+Consistency: Decoupled services using events for communication.
+Auditability: Easy to replay events to reconstruct state.
+Scalability: Services can evolve independently.
+
+
+📌 Summary
+Event modeling is a powerful technique in microservices that shifts focus from APIs and databases to business events. It helps model the system behavior over time by chaining events, commands, and read models in a visual and understandable way.
+
+🎯 Project Scenario: Online Grocery Delivery Platform
+Your company is building a microservices-based grocery delivery platform. Users can:
+
+Browse products
+Add items to cart
+Place orders
+Make payments
+Track delivery
+
+You break down the system into microservices:
+
+User Service
+Catalog Service
+Cart Service
+Order Service
+Payment Service
+Inventory Service
+Notification Service
+Delivery Service
+
+🧩 Objective
+Model the "Place Order" flow using event modeling.
+
+✅ Actors & Services Involved:
+Actor	Services Triggered
+User	Cart Service → Order Service → Payment Service
+System (automated)	Inventory Service → Delivery Service → Notification Service
+
+🧾 Event Modeling Table
+🕒 Timeline	🧾 Command	📣 Event	📊 Read Model Update	🧩 Service Involved
+T1	PlaceOrder	OrderPlaced	Order status: “Placed”	Order Service
+T2		InventoryReserved	Inventory updated	Inventory Service
+T3		PaymentSuccessful	Payment history updated	Payment Service
+T4		DeliveryScheduled	Delivery status: “Scheduled”	Delivery Service
+T5		UserNotified	Notification log updated	Notification Service
+
+🔁 Event Flow (Inter-service Communication)
+User Service: Authenticates the request
+Order Service: Emits OrderPlaced event
+Inventory Service: Listens to OrderPlaced, reserves stock, emits InventoryReserved
+Payment Service: Listens to InventoryReserved, processes payment, emits PaymentSuccessful
+Delivery Service: Listens to PaymentSuccessful, schedules shipment, emits DeliveryScheduled
+Notification Service: Listens to all major events and sends push/email/SMS notifications
+
+🔧 Event Definitions (Sample)
+
+// Event: OrderPlaced
+{
+  "eventType": "OrderPlaced",
+  "orderId": "ORD123",
+  "userId": "U456",
+  "items": ["itemA", "itemB"],
+  "timestamp": "2025-07-02T14:00:00Z"
+}
+
+// Event: InventoryReserved
+{
+  "eventType": "InventoryReserved",
+  "orderId": "ORD123",
+  "status": "reserved",
+  "timestamp": "2025-07-02T14:00:05Z"
+}
+
+🔐 Why Event Modeling Works Here:
+Decouples services: Order doesn't care how inventory or payment works.
+Easier rollback/compensation: If payment fails, emit OrderCancelled.
+Supports CQRS: Write models emit events, read models stay optimized for queries.
+audit trail: Full history of every user action & system reaction is preserved.
+
+
+
+🚨 Example Edge Case
+What if payment fails?
+
+PaymentFailed event emitted
+InventoryService listens and rolls back stock
+OrderService updates order status to "Failed"
+NotificationService notifies the user
+A compensating RefundIssued event may be triggered
+
+✅ Final Thoughts
+This real-world scenario shows how event modeling:
+
+Reflects actual business processes
+Improves system observability
+Enables modular service design
+Facilitates event sourcing, choreography, and saga patterns
+
+----------------------------------------------------------------------------------------------
+
+Event Choreography vs Orchestration are two different styles of managing communication and workflows between microservices in an event-driven architecture (EDA). Here’s a clear comparison with definitions, differences, and examples:
+
+✅ Event Orchestration
+Definition: A central service (the orchestrator) controls and coordinates the interactions between microservices.
+
+How it works: Each step is explicitly defined by the orchestrator, which tells each service what to do and when.
+
+Analogy: Like a conductor in an orchestra telling each musician when to play.
+
+🧠 Characteristics:
+Centralized control
+Easier to monitor and debug
+Tightly coupled (services rely on orchestrator)
+More complex orchestrator logic
+
+✅ Example:
+Consider an Order Processing System:
+OrderService receives an order and calls the Orchestrator.
+
+Orchestrator:
+Calls PaymentService.
+Once payment is successful, calls InventoryService.
+After inventory is reserved, calls ShippingService.
+Each call is managed and awaited by the orchestrator.
+
+✅ Event Choreography
+Definition: Each service reacts to events and decides what to do next; there's no central controller.
+
+How it works: Services publish and subscribe to events and independently perform actions.
+
+Analogy: Like dancers who follow the rhythm and cues of the music, not a conductor.
+
+🧠 Characteristics:
+Decentralized, loosely coupled
+Each service reacts to events
+Harder to visualize end-to-end flow
+Better for scalability and agility
+
+✅ Example:
+In the same Order Processing System:
+
+OrderService publishes OrderCreated event.
+PaymentService listens to OrderCreated, processes payment, then publishes PaymentSuccessful.
+InventoryService listens to PaymentSuccessful, reserves inventory, then publishes InventoryReserved.
+ShippingService listens to InventoryReserved, and ships the order.
+
+
+// Events flow
+Event: OrderCreated --> triggers PaymentService
+Event: PaymentSuccessful --> triggers InventoryService
+Event: InventoryReserved --> triggers ShippingService
+
+🛠 When to Use Which?
+✅ Use Orchestration when:
+You need full control over the process.
+You have complex sequential dependencies.
+Observability and transactional boundaries are critical.
+
+✅ Use Choreography when:
+Your system needs to scale independently.
+You want loosely coupled services.
+You prioritize resilience and agility.
+
+
+🧪 Scenario: E-commerce Order Workflow (Orchestration Style)
+Services Involved:
+OrderService – receives an order and triggers orchestration.
+OrchestratorService – coordinates the workflow.
+PaymentService – processes payment.
+InventoryService – reserves inventory.
+ShippingService – ships the product.
+
+🔁 Step-by-Step Flow:
+OrderService receives an HTTP request and publishes OrderCreated to order-events topic.
+OrchestratorService listens to order-events, calls PaymentService.
+On PaymentSuccess, orchestrator calls InventoryService, and so on.
+
+1. Create orderservice with web, lombok and spring for apache kafka, swagger dependency - create all in com.pack package
+
+2. Configure kafka info in application. properties 
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: order-group
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+server:
+  port: 1000
+
+
+3. Create OrderEvent Model class
+
+package com.pack.dto;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderEvent {
+    private String orderId;
+    private String status; // CREATED, PAYMENT_SUCCESS, INVENTORY_RESERVED, SHIPPED
+    private String message;
+}
+
+4. Create controller
+
+package com.pack.controller;
+
+@RestController
+@RequestMapping("/orders")
+@RequiredArgsConstructor
+public class OrderController {
+    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+    @PostMapping
+    public ResponseEntity<String> createOrder(@RequestParam String orderId) {
+        OrderEvent event = new OrderEvent(orderId, "CREATED", "Order created");
+        kafkaTemplate.send("order-events", event);
+        return ResponseEntity.ok("Order Created");
+    }
+}
+
+
+5. Create  PaymentService with web, lombok and spring for apache kafka dependency - create all in com.pack package
+
+6. Configure kafka info in application. properties 
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: order-group
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+server:
+  port: 1002
+
+
+7. Create OrderEvent Model class
+
+package com.pack.dto;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderEvent {
+    private String orderId;
+    private String status; // CREATED, PAYMENT_SUCCESS, INVENTORY_RESERVED, SHIPPED
+    private String message;
+}
+
+8. Create PaymentService program
+
+@Component
+@RequiredArgsConstructor
+public class PaymentService {
+
+    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+    @KafkaListener(topics = "payment-events", groupId = "payment-group")
+    public void processPayment(OrderEvent event) {
+        System.out.println("PaymentService: Payment done for " + event.getOrderId());
+        event.setStatus("PAYMENT_SUCCESS");
+        event.setMessage("Payment successful");
+        kafkaTemplate.send("order-events", event);
+    }
+}
+
+9. Create InventoryService with web, lombok and spring for apache kafka dependency - create all in com.pack package
+
+10. Configure kafka info in application. properties 
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: order-group
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+server:
+  port: 1003
+
+
+11. Create OrderEvent Model class
+
+package com.pack.dto;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderEvent {
+    private String orderId;
+    private String status; // CREATED, PAYMENT_SUCCESS, INVENTORY_RESERVED, SHIPPED
+    private String message;
+}
+
+
+12. Create InventoryService program
+
+@Component
+@RequiredArgsConstructor
+public class InventoryService {
+
+    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+    @KafkaListener(topics = "inventory-events", groupId = "inventory-group")
+    public void reserveInventory(OrderEvent event) {
+        System.out.println("InventoryService: Inventory reserved for " + event.getOrderId());
+        event.setStatus("INVENTORY_RESERVED");
+        event.setMessage("Inventory reserved");
+        kafkaTemplate.send("order-events", event);
+    }
+}
+
+13. Create ShippingService with web, lombok and spring for apache kafka dependency - create all in com.pack package
+
+14. Configure kafka info in application. properties 
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: order-group
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+server:
+  port: 1003
+
+
+15. Create OrderEvent Model class
+
+package com.pack.dto;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderEvent {
+    private String orderId;
+    private String status; // CREATED, PAYMENT_SUCCESS, INVENTORY_RESERVED, SHIPPED
+    private String message;
+}
+
+16. Create ShippingService prg
+
+@Component
+@RequiredArgsConstructor
+public class ShippingService {
+
+    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+    @KafkaListener(topics = "shipping-events", groupId = "shipping-group")
+    public void shipOrder(OrderEvent event) {
+        System.out.println("ShippingService: Shipped order " + event.getOrderId());
+        event.setStatus("SHIPPED");
+        event.setMessage("Order shipped");
+        kafkaTemplate.send("order-events", event);
+    }
+}
+
+17. Create Orchestrator Service (central controller) with web, lombok and spring for apache kafka, dependency - create all in com.pack package
+
+18. Configure kafka info in application. properties 
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: order-group
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: com.pack.dto
+
+server:
+  port: 1001
+
+
+19. Create OrderEvent Model class
+
+package com.pack.dto;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OrderEvent {
+    private String orderId;
+    private String status; // CREATED, PAYMENT_SUCCESS, INVENTORY_RESERVED, SHIPPED
+    private String message;
+}
+
+20. Create centralize service program 
+
+@Component
+@RequiredArgsConstructor
+public class OrchestratorService {
+
+    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+    @KafkaListener(topics = "order-events", groupId = "orchestrator-group")
+    public void handleOrder(OrderEvent event) {
+        switch (event.getStatus()) {
+            case "CREATED" -> {
+                System.out.println("Orchestrator: Processing payment...");
+                kafkaTemplate.send("payment-events", event);
+            }
+            case "PAYMENT_SUCCESS" -> {
+                System.out.println("Orchestrator: Reserving inventory...");
+                kafkaTemplate.send("inventory-events", event);
+            }
+            case "INVENTORY_RESERVED" -> {
+                System.out.println("Orchestrator: Initiating shipping...");
+                kafkaTemplate.send("shipping-events", event);
+            }
+            case "SHIPPED" -> {
+                System.out.println("Order completed successfully: " + event.getOrderId());
+            }
+        }
+    }
+}
+
+21. Start zookeeper, kafka server
+
+22. Start all appl
+
+23. Create topics
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic order-events
+Created topic order-events.
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic payments-events
+Created topic payments-events.
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic inventory-events
+Created topic inventory-events.
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic shipping-events
+Created topic shipping-events.
+
+24. Run swagger, http://localhost:1000/swagger-ui/index.html - post the order with orderid=1234, it will give response as order created
+
+25. Check kafka console consumer
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic order-events --from-beginning
+{"orderId":"1234","status":"CREATED","message":"Order created"}
+{"orderId":"1234","status":"PAYMENT_SUCCESS","message":"Payment successful"}
+{"orderId":"1234","status":"INVENTORY_RESERVED","message":"Inventory reserved"}
+{"orderId":"1234","status":"SHIPPED","message":"Order shipped"}
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic payment-events --from-beginning
+{"orderId":"1234","status":"CREATED","message":"Order created"}
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic inventory-events --from-beginning
+{"orderId":"1234","status":"PAYMENT_SUCCESS","message":"Payment successful"}
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic shipping-events --from-beginning
+{"orderId":"1234","status":"INVENTORY_RESERVED","message":"Inventory reserved"}
+
