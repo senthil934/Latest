@@ -4681,7 +4681,8 @@ Now we deploy this connector config onto the confluent platform and see how it b
 
 5. We use kafka-avro-console-consumer to check the data which receive from table into the kafka topic
 
---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------
 Schema Evolution
     You have different producer producing data for same topic and we have different consumers which are receiving the same data, so how schema can evolve on producers and consumers without affecting each other, so there should some policy to evolve schema without affective each other
 
@@ -4996,8 +4997,8 @@ GenericRecord is used when you don’t generate Java classes from schemas (.avsc
 
 It's flexible and ideal for dynamic schema-based messaging in Kafka + Schema Registry environments.
 
--------------------------------------------------------------------------------------------------------------------------------------
-Swagger for Springboot 2.x
+------------------------------------------------------------
+Swagger for Springboot2.X
 
 1. Add Dependency
 
@@ -5029,4 +5030,432 @@ public class SwaggerConfig {
 
 4. Run swagger - http://localhost:3000/swagger-ui/
 
+--------------------------------------------------------------------------------------------
+Schema Compatibility rules
+
+1. Backward compatibility
+
+1. Create user_v1.avsc file
+ 
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.pack",
+  "fields": [
+    { "name": "name", "type": "string" }
+  ]
+}
+ 
+2. Generate java code by mvn clean install
+ 
+3. Create producer appl
+ 
+public class ProducerApp {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+        props.put("schema.registry.url", http://localhost:8081);
+ 
+        KafkaProducer<String, User> producer = new KafkaProducer<>(props);
+ 
+        String topic = "user-topic";
+ 
+        User user=new User();
+        user.setName("Alice");
+       // user.put("email", alice@example.com);
+ 
+        ProducerRecord<String, User> record = new ProducerRecord<>(topic, "user1", user);
+        producer.send(record, (metadata, exception) -> {
+            if (exception == null)
+                System.out.println("Produced to topic " + metadata.topic());
+            else
+                exception.printStackTrace();
+        });
+ 
+        producer.flush();
+        producer.close();
+    }
+}
+ 
+4. Create consumer appl
+ 
+public class ConsumerApp {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("group.id", "forward-consumer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("schema.registry.url", http://localhost:8081);
+        props.put("specific.avro.reader", "true");
+ 
+        KafkaConsumer<String, User> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList("user-topic"));
+ 
+        while (true) {
+            ConsumerRecords<String, User> records = consumer.poll(Duration.ofMillis(500));
+            for (ConsumerRecord<String, User> record : records) {
+               
+                System.out.println("Received: name = " + record.value().getName());
+                // Note: email is NOT required, consumer only knows Schema v1
+            }
+        }
+    }
+}
+ 
+5. Run consumer then producer
+        - Now it will print the name
+ 
+6. Implement backward compatibility the ability of new versions of a schema to read data produced with older versions of the schema without breaking the consumer applications.
+ 
+Backward-Compatible Changes (Avro-specific):
+Adding a field with a default value ✅
+Removing a field that had a default value ✅
+Changing default value of a field ❌ (not allowed)
+Changing data type (e.g., string → int) ❌
+ 
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.pack",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": ["null", "string"], "default": null }
+  ]
+}
+ 
+7. Generate java code by mvn clean install
+ 
+8. To check compatibility, by default it is backward
+ 
+curl -X GET http://localhost:8081/config
+ 
+9. Update consumer prg to print email,
+ 
+public class ConsumerApp {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("group.id", "forward-consumer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("schema.registry.url", http://localhost:8081);
+        props.put("specific.avro.reader", "true");
+ 
+        KafkaConsumer<String, User> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList("user-topic"));
+ 
+        while (true) {
+            ConsumerRecords<String, User> records = consumer.poll(Duration.ofMillis(500));
+            for (ConsumerRecord<String, User> record : records) {
+               
+                System.out.println("Received: name = " + record.value().getName()+" "+record.value().getEmail());
+                // Note: email is NOT required, consumer only knows Schema v1
+            }
+        }
+    }
+}
+ 
+Now it will take default value for email as schema is backward compatibile
+
+10. If we are remove the field with default value then it will showing error 
+
+------------------------------------------------------------------------------------------------
+Other Incompatible Changes That Break Backward Compatibility
+Change	Why It Breaks
+❌ Remove a required or optional field	New schema can't read old data that had that field
+❌ Change field type without proper union/alias	string → int or similar
+❌ Change record name or namespace	Different identity
+❌ Make an optional field required	Old data may not have that field
+
+1. Create topic
+
+C:\Softwares\confluent-windows-5.0.1>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic cust-topic
+Created topic cust-topic.
+
+2. Define and Register custv1.avsc Schema
+
+{
+  "schema": "{\"type\":\"record\",\"name\":\"Customer\",\"namespace\":\"com.pack\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"}]}"
+}
+
+3. Register the schema 
+
+Subject Name - When you register a schema, it's always registered under a subject name.
+
+Subject Name Format = <topic-name>-value
+
+Subjects let Schema Registry manage compatibility (backward/forward/full).
+Multiple versions of schemas can exist under the same subject.
+Compatibility checks are always done within the same subject.
+
+C:\Angular\json>curl -X POST http://localhost:8081/subjects/cust-topic-value/versions -H "Content-Type: application/vnd.schemaregistry.v1+json" -d @custv1.avsc
+{"id":1} -- schema id
+
+4. Set Compatibility to BACKWARD
+
+C:\Angular\json>curl -X PUT http://localhost:8081/config/cust-topic-value -H "Content-Type: application/vnd.schemaregistry.v1+json" -d "{\"compatibility\": \"BACKWARD\"}"
+
+- To check compatibility
+C:\Angular\json> curl -X GET http://localhost:8081/config/cust-topic-value
+
+5. Create a Backward Incompatible Schema (v2)
+Create a file custv2.avsc with a new required field (without default):
+
+{
+  "schema": "{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.pack\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}"
+}
+
+6. Registering v2 Schema
+
+C:\Angular\json>curl -X POST http://localhost:8081/subjects/cust-topic-value/versions -H "Content-Type: application/vnd.schemaregistry.v1+json" -d @custv2.avsc
+
+Expected Output:
+{
+  "error_code": 409,
+  "message": "Schema being registered is incompatible with an earlier schema"
+}
+
+You added a new required field (age) without a default value. So, existing consumers (using v1 schema) cannot deserialize this newer version — hence it's not backward compatible.
+ 
+--------------------------------------------------------------------------------------------------
+2. Forward Compatibility
+    A schema is forward compatible if older consumers can read data produced with a newer schema.
+ 
+That means:
+ 
+New schema (v2) can remove optional fields or add fields with default values, so that old consumers (using v1) can still read it.
+
+Add new optional field with default → ✅	Forward Compatible
+Remove field → ❌	Not Forward Compatible
+Change field type → ❌	Not Compatible
+ 
+1. Enable forward compatibility
+ 
+C:\Spring\AvroSchema>curl -X PUT http://localhost:8081/config -H "Content-Type: application/vnd.schemaregistry.v1+json" -d "{\"compatibility\": \"FORWARD\"}"
+{"compatibility":"FORWARD"}
+ 
+- Check compatibility
+C:\Spring\AvroSchema>curl -X GET http://localhost:8081/config
+{"compatibilityLevel":"FORWARD"}
+ 
+2. Create avsc file
+ 
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.pack",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": "string" }
+  ]
+}
+ 
+3. Generate java file using mvn clean install
+ 
+4. Create producer prg
+ 
+public class ProducerApp {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+        props.put("schema.registry.url", http://localhost:8081);
+ 
+        KafkaProducer<String, User> producer = new KafkaProducer<>(props);
+ 
+        String topic = "user-topic1";
+ 
+        User user=new User();
+        user.setName("Alice");
+        user.setEmail(alice@example.com);
+ 
+        ProducerRecord<String, User> record = new ProducerRecord<>(topic, "user1", user);
+        producer.send(record, (metadata, exception) -> {
+            if (exception == null)
+                System.out.println("Produced to topic " + metadata.topic());
+            else
+                exception.printStackTrace();
+        });
+ 
+        producer.flush();
+        producer.close();
+    }
+}
+ 
+5. Create consumer prg
+ 
+public class ConsumerApp {
+    public static void main(String[] args) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("group.id", "forward-consumer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("schema.registry.url", http://localhost:8081);
+        props.put("specific.avro.reader", "true");
+ 
+        KafkaConsumer<String, User> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList("user-topic1"));
+ 
+        while (true) {
+            ConsumerRecords<String, User> records = consumer.poll(Duration.ofMillis(500));
+            for (ConsumerRecord<String, User> record : records) {
+               
+                System.out.println("Received: name = " + record.value().getName()+" "+record.value().getEmail());
+                // Note: email is NOT required, consumer only knows Schema v1
+            }
+        }
+    }
+}
+ 
+- Create topic 
+C:\Angular\json>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic user-topic1
+Created topic user-topic1.
+
+6. Run consumer
+ 
+7. Run producer
+
+- Now it will display both name and email
+ 
+8. Now update avsc to implement forward compatibility by add new fields with default value
+ 
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.pack",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "email", "type": "string" },
+    { "name": "age", "type": "int", "default": 0 }
+  ]
+}
+ 
+9. Generate java file using mvn clean install
+ 
+10. In producer prg, add user.setAge(20)
+ 
+11. Run consumer
+ 
+12. Run producer
+ 
+Why this is Forward Compatible?
+email is a new field
+It’s marked as optional (with ["null", "string"])
+It has a default value (null)
+
+So, when the new consumer reads old messages (which didn’t have email), it will assume email = null.
+ 
+Breaking forward compatibility
+1. Create and Register Schema custv3.avsc
+
+{
+  "schema": "{\"type\":\"record\",\"name\":\"Customer\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}"
+}
+
+- Create topic
+
+C:\Angular\json>kafka-topics.bat --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --create --topic cust-topic1
+Created topic cust-topic1.
+
+2. Register v1 schema
+
+C:\Angular\json>curl -X POST http://localhost:8081/subjects/cust-topic1-value/versions -H "Content-Type: application/vnd.schemaregistry.v1+json" -d @custv3.avsc
+{"id":4}
+
+3.  Set Compatibility to FORWARD
+ 
+C:\Angular\json>curl -X PUT http://localhost:8081/config/cust-topic1-value -H "Content-Type: application/vnd.schemaregistry.v1+json" -d "{\"compatibility\": \"FORWARD\"}"
+{"compatibility":"FORWARD"}
+
+4. Verify
+
+C:\Angular\json>curl -X GET http://localhost:8081/config/cust-topic1-value
+{"compatibilityLevel":"FORWARD"}
+
+5. Create a Forward Incompatible Schema called custv4.avsc
+
+{
+  "schema": "{\"type\":\"record\",\"name\":\"Customer\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"}]}"
+}
+
+Why this will fail: We’ll remove a field (name) from v1.
+Old consumers expecting the name field will break when they read messages written with this schema.
+
+6.  Try Registering Incompatible Schema
+
+C:\Angular\json>curl -X POST http://localhost:8081/subjects/cust-topic1-value/versions -H "Content-Type: application/vnd.schemaregistry.v1+json" -d @custv4.avsc
+{"error_code":409,"message":"Schema being registered is incompatible with an earlier schema"}
+
+3.  What is Full Compatibility?
+Full Compatibility = Backward + Forward Compatibility
+
+This means:
+
+New schema can read data written by old schema (Forward)
+Old schema can read data written by new schema (Backward)
+
+
+
+
+How Avro Works Internally
+1. 🧾 Avro Schema Definition (JSON format)
+•	You define the schema in JSON, describing fields, types, and structure.
+json
+CopyEdit
+{
+  "type": "record",
+  "name": "User",
+  "fields": [
+    { "name": "name", "type": "string" },
+    { "name": "age", "type": "int" }
+  ]
+}
+________________________________________
+2. 🏗️ Serialization Process (Producer Side)
+Avro uses both the schema and the data to serialize.
+Steps:
+•	Avro Serializer takes your object/data and the associated schema.
+•	It writes:
+1.	A schema ID or the schema itself (if using schema registry).
+2.	Binary-encoded data according to schema.
+Example:
+If {"name": "Senthil", "age": 30} is serialized:
+•	It converts "Senthil" into a binary UTF-8 format.
+•	30 becomes a 4-byte integer.
+•	The final binary will be compact: [schema-id][binary-data].
+With Schema Registry, only the schema ID (e.g., 4 bytes) is sent in the message — not the whole schema. The consumer uses the ID to fetch the actual schema from the registry.
+________________________________________
+3. 📦 Message Format with Schema Registry
+When using Avro with Confluent Schema Registry, the message sent to Kafka has this binary layout:
+css
+CopyEdit
+[Magic Byte][Schema ID][Avro Serialized Data]
+•	Magic Byte (1 byte): Always 0 (used to indicate Avro format).
+•	Schema ID (4 bytes): Refers to the schema in the registry.
+•	Serialized Payload: Avro-encoded binary data.
+________________________________________
+4. 📥 Deserialization Process (Consumer Side)
+•	Consumer reads the magic byte and schema ID.
+•	It contacts the Schema Registry to get the writer's schema.
+•	The consumer uses its reader schema and performs schema resolution if needed (in case of schema evolution).
+•	Data is deserialized into an object or record as per reader's schema.
+________________________________________
+🔄 Schema Resolution (Handling Evolution)
+If the producer and consumer use different versions of the schema:
+Avro supports:
+•	Backward compatibility: New data can be read by older consumers.
+•	Forward compatibility: Older data can be read by newer consumers.
+•	Full compatibility: Both directions.
+Avro compares the writer’s schema (used to serialize) and reader’s schema (used to deserialize) to resolve differences using defined rules (e.g., default values for added fields).
+________________________________________
+🧠 Key Internal Features
+•	Compact: Binary format, no field names in payload.
+•	Self-describing (when schema is embedded).
+•	Supports complex types: unions, arrays, maps, enums, nested records.
+•	Schema evolution: very strong with default values, union types.
 
