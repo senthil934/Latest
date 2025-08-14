@@ -1,0 +1,682 @@
+OpenAPI 
+    - It refers to the specification used to document the api using standardised formats, the formats used are json or yaml.
+    - It contains set of rules or guidelines to define an api
+    - It is language agnostic specification for describing APIs (ie) it can used to describe an api without using any specific language. The apis defined can be use to implement any of the programming language as per the preference of the developer or team
+
+Benefits
+1. Design API
+     - It helps in designing an api, since it is language agnostic we can define api in generic terms and collect feedback from others before implementing. Any feedbacks can be easily incorporate in the design
+
+2. Generate server side stubs
+      - Once api design is fixed, we can use openapi document to generate server side stubs to implement api. It provides a quick template for the developer to start working on the project 
+
+3. Generate client side SDK
+      - Similarly it allows to generate client side SDK by the clients or any 3rd party systems. There are many languages they can use to generate SDK against openapi
+
+4. Testing apis
+      - Also it can be used as test client to test various operation defined in an api,since this api document captures list of operations, their parameters, expected request and response format etc, so it becomes lot easier for various tools to test the api accurately
+
+5. API documentation
+       - In case developer have already implemented an api, then using various openapi tools we can generate api document from the source codes
+
+6. Understand API better
+       - It allows non-technical members to understand the api better without need for programming experience
+
+Swagger vs OpenAPI 
+    In short the term Swagger refers to the tools provided by the smart Beer Company, whereas open API refers to the API specification defined and maintained by the open API initiative. The confusion arises when smart beer renamed Swagger API specification to open API specification,
+until version 2.0.0 it was referred to as Swagger specification, however from 3.0.0 it is referred to as open API specification. 
+   In open API specification you can either use yaml or Json to define an open API document, it
+has got metadata about API such as version, information about API, external document references, tags to group operations, parts that define operations on various resources and so on. The tool
+that was used to create this open API specification is Swagger editor. We have another tool
+from Swagger namely Swagger UI which shows the open API specification in a nice UI format which is easy to understand, it shows the operations defined against various resources also so you can try out the operations defined using the same UI 
+
+- Goto Swagger website, https://swagger.io/ 
+
+we can understand the main purpose of swagger it is primarily used for API development it refers to the set of Open Source and professional tools provided by smart beer 
+
+- Click Tools menu
+
+Swagger has two broad categories of tools Swagger open source and Swagger Pro, among the open source tools we have Swagger codegen, Swagger editor and Swagger UI, these are free to use. Among
+the professional tools we got swaggerhub for teams and Swagger hub for Enterprise, these are paid tools for API Management in the corporate environment however note that we can use
+
+YAML vs JSON
+  - We can write open api defination in 2 format yaml and json, structure of both is almost same, but diffrence lies in the format followed to represent the structure of document
+   - yaml involves fewer keystroke and easier to type and read, in case of yaml no need quotes to define the strings 
+
+How to build an OpenAPI Specification using YAML?
+     Open api specification is a format that is being used to develop an api in a standardized format, so whenever you want to design an api and share it across your teams or other third party teams, we strongly recommend you to create this open api specification document. The advantage of using open api is that since it is a standardized format for defining the apis, all the stakeholders will able to understand it a simpler way.
+    Consider we have college management system wherein we are going to create a simple api that is going to get the list of all courses available in the system
+    To create the open api specification we use one of the popular editor namely swagger editor,
+to access it we use https://editor.swagger.io/, where we can see sample open api specification that has been given by this tool.
+   Let's get started with creating the open api specification for cms using yaml
+
+1. Let's include a comment, so to create a doc comment you use hash in the case of yaml
+
+#CMS OpenAPI
+
+2. Now we create simple key value pair, we use one of the key called openapi that refers to the version of the open api called 3.0.3
+
+openapi: 3.0.3
+
+You can ignore errors that is appearing at the right side, because open api specification requires
+certain mandatory parameters, it is going to validate continuously for the input that has been given and give us the corresponding warnings and the errors, by the end all these errors will be resolved 
+
+3. Next we create a mapping, we create a new entry called "info" which is a key and this is going to contain multiple key value pairs
+   info is considered as a complex type, since it contains one or more key value pairs, it contains the title with a value as open api specification for cms and the second one being the version followed by 1.2 (to specify any string value in yaml we have to use ' ' or " " or !!str)
+
+info:
+  title: OpenAPI Specification for CMS
+  version: '1.2'
+
+4. Next we add a similar key value pair called "externalDocs" that refers to the documentation that is used for the third party people, this comes again with a set of key value pairs called "description" which gives more information about cms api, and it again contains with "url" which
+include a url for this documentation
+
+externalDocs:
+   description: More information about CMS API
+   url: http://mycollege.com/api
+
+5. The open api specification supports another field called "servers" used to define a list of servers available for your api. When you have your web api service, you can host them in multiple services, so open api uses the servers section to
+define the url where your web service is running. Since open api supports more than one service to be defined, in the case of yaml it is considered as a collection type and to represent a collection in yaml we use dash followed by the list of values.
+
+- It shows that our current web service is hosted under url, since it support more than one url, we need to enter the second one as url followed by another url value.
+
+servers:
+   - url: http://localhost:44333/api 
+   - url: http://localhost:{port}/stagingapi             
+ 
+But we want to make the port as configurable, open api supports a concept called "variables" to define or declare the variable called port,  again as per the open api specification it uses a key called variables to define the list of all variables used within this url.
+
+     variables:
+        port:
+          enum:
+            - "44333"
+            - '8990'
+          default: !!str 44333
+
+    This is going to contain an "enum" to define the list of all port numbers in string,  and then it provides one more property called "default" among these two port numbers which want to be considered as the default value, this is considered as int by default to make it as a string we can use single quote or double quote or you can use secondary name space that is represented using
+double exclamation marks,  once you use the double exclamation followed by a specific type namely
+string in this case whatever the value is going to come here is going to consider as a
+string 
+
+servers:
+   - url: http://localhost:44333/api
+   - url: http://localhost:{port}/stagingapi
+     variables:
+        port:
+          enum:
+            - "44333"
+            - '8990'
+          default: !!str 44333
+
+
+6. Next we define "tags" an another collection type which can use to group the list of apis under a specific name
+
+tags:
+  - name: course
+    description: Operation about Courses
+
+
+So when we continuously develop the cms api in the left hand side, in the right side you can see the representation of the api in the ui format on swagger ui 
+
+7. The final and the most important part with respect to the open api specification is defining the actual paths, these paths refers to the actual resources on the list of api endpoints within that resource
+   So for our current api we are going to define a resource as courses with one api endpoint namely getCourses which is going to get all the courses from the system 
+
+- We are going to use the key called "paths" define the actual resource namely /courses in our
+case, this is followed by defining a list of key value pairs to define the endpoints for this courses. So we use a tag called "summary" to give a summary for this specific endpoint
+
+paths:
+  /courses:
+      summary: Operation about course
+
+- Next we define the list of all verbs provided by the http, since we want to get all the courses so we use http "get" and tag it with one or more values that we have defined before called course, again we can give a summary for this specific verb called get all the courses
+
+paths:
+  /courses:
+      summary: Operation about course
+         get:
+           tags:
+              - course
+           summary: Get all the courses
+
+- Next we define the responses for this api using "responses" and we provide different responses like 200, 400 etc and for each response we give some description
+
+paths:
+  /courses:
+      summary: Operation about course
+      get:
+        tags:
+          - course
+        summary: Get all the courses
+        responses:
+           200:
+             description: Success
+           400:
+             description: Incorrect input
+           default:
+             description: Success
+
+On the right hand side we can notice that we have a single get request /courses which gets all the courses and we have the list of responses been defined with code description and corresponding links
+
+
+https://www.youtube.com/watch?v=mViFmjcDOoA&t=479s
+Designing REST API using OpenAPI for student system
+     We have student resource with the operations, to get a specific student based on a query parameter and in the query parameter student name will be passed, we will have a post operation to add a new student and then we will also see that how we can have pass a path parameter with a student ID to get single student
+
+1. First we want to add the basic information (ie) metadata of our API which includes info tag
+
+openapi: 3.0.3
+info:
+  title: Student API
+  description: Student Demo API
+  contact:   #add contact details
+     name: ABC
+     url: http://abc.com
+  version: 1.0.0
+
+#Add multiple servers
+servers:
+  - url: http://devapi.com
+  - url: http://prodapi.com
+
+2. Add the paths where we specify your API resources and then within those resources you will specify your operations like get, post etc
+   First we write path /student for the student resource and inside this we write the description, next we define the operations which are basically the HTTP get operation where user can query
+information about some students based on provided query parameter.
+
+paths:
+   /student:
+       description: Student Resource
+       get:
+
+   To specify parameters we use "parameters" option and inside this we choose whether it's going to be a header parameter or query parameter or what type of parameter, so we will choose "query"
+parameter and then we will write the name of this parameter as studentname and then we specify  "required" as true because we want to keep studentname query parameter as mandatory, and then we want to specify the schema where we are going to specify type of studentname as string and we write the "example" as Ram 
+
+paths:
+   /student:
+       description: Student Resource
+       get:
+         description: Operation to Fetch Student
+         parameters:
+            - in: query
+              name: studentname
+              required: true
+              schema:
+                 type: string
+                 example: Ram
+
+   Next we want to specify the response using "responses" and inside the responses we are going to
+specify which HTTP code we are going to write this response, in the production and the real scenarios you need to make sure we coverall of the response codes and also a default scenario, but in our case we will just go for 200 code which is a response success.
+   We select "content" whether we want json or XML and  define all the details of your response and request payloads within the details of your operation 
+   In the schemas we specify type and in case of this get operation we are expecting an array of students for the same name so we will choose it as an array where we define all the
+details of the student. 
+
+paths:
+   /student:
+       description: Student Resource
+       get:
+         description: Operation to Fetch Student
+         parameters:
+            - in: query
+              name: studentname
+              required: true
+              schema:
+                 type: string
+                 example: Ram
+         responses:
+            200:
+              description: Success Response
+              content:
+                 application/json
+                    schema:
+                       type: array
+                       items:
+                          properties:
+                             StudentID:
+                                type: integer
+                                example: 3
+                             StudentName:
+                                type: string
+                                example: Sam
+                             StudentRemarks:
+                                type: string
+                                example: High Grade Student
+
+we have defined the response structure as the student array which contain student object and each student object will have student ID, student name and student remarks  
+
+3. Now we define post operation using "post" method and now within the post we write the
+"description" 
+   In case of post we have to specify requestbody in a json format with the student object and using "content" and choose what kind of content it's expecting so we write application/json 
+   We have to write the "schema" for student object using "object"  since we are expecting only one object and we provide all the properties 
+   Next we will add the responses with HTTP code 201 with description 
+
+post:
+  description: Add a new Student
+  requestBody:
+     content:
+        application/json:
+           schema:
+              type: object
+              properties:
+                 StudentID:
+                    type: integer
+                    example: 3
+                 StudentName:
+                    type: string
+                    example: Sam
+                 StudentRemarks:
+                    type: string
+                    example: High Grade Student
+  responses:
+     201:
+       description: Record successfully added          
+
+
+4. Next we want to have our student resource with path parameter, so we first write "/student/{id}", first we give "description" after that we want to use "get" operation and in the same way we will add the "parameters" by choosing as "path" because this is going to be a path
+parameter and then the name of this parameter as id, we have to specify as "required" to true,
+and then we have to specify "schema" where we specifiy type  as integer
+   Next we specify "responses" for 200 with description, then we are going to select content as application/json and then inside that we are going specify the schema with all its properties 
+
+/student/{id}:
+   description: Get Student based on Path parameter
+   get:
+      parameters:
+         - in: path
+           name: id
+           required: true
+           schema:
+              type: integer 
+      responses:
+         200:
+           description: Success Response with Path Param
+           content:
+              application/json
+                 schema:
+                    type: array
+                    items:
+                          properties:
+                             StudentID:
+                                type: integer
+                                example: 3
+                             StudentName:
+                                type: string
+                                example: Sam
+                             StudentRemarks:
+                                type: string
+                                example: High Grade Student
+
+
+Now we have all the operations ready, if you see here we have a get operation which is
+expecting student name, we have post operation which is expecting Json as a request body and we have a student with path parameters which is the third operation available.
+
+5. Instead of writing request and response schemas each and every time, we want to write the schemas at our root level and reuse in other operations, for that we have to use "components"
+
+components:
+   schemas:
+      student:
+         type: object
+         properties:
+            StudentID:
+               type: integer
+               example: 3
+            StudentName:
+               type: string
+               example: Sam
+            StudentRemarks:
+               type: string
+               example: High Grade Student
+      students:
+         type: array
+         items:
+            properties:
+               StudentID:
+                  type: integer
+                  example: 3
+               StudentName:
+                  type: string
+                  example: Sam
+               StudentRemarks:
+                  type: string
+                  example: High Grade Student
+ 
+We have created a schema object with the name student and another schema object called students 
+inside components, now we need to refer to these components instead of writing all these schemas within each and every operation using "$ref"
+
+/student:
+       description: Student Resource
+       get:
+         description: Operation to Fetch Student
+         parameters:
+            - in: query
+              name: studentname
+              required: true
+              schema:
+                 type: string
+                 example: Ram
+         responses:
+            200:
+              description: Success Response
+              content:
+                 application/json
+                    schema:
+                       $ref: '#/components/schemas/students'
+
+post:
+  description: Add a new Student
+  requestBody:
+     content:
+        application/json:
+           schema:
+              $ref: '#/components/schemas/student'
+  responses:
+     201:
+       description: Record successfully added 
+
+
+/student/{id}:
+   description: Get Student based on Path parameter
+   get:
+      parameters:
+         - in: path
+           name: id
+           required: true
+           schema:
+              type: integer 
+      responses:
+         200:
+           description: Success Response with Path Param
+           content:
+              application/json
+                 schema:
+                    $ref: '#/components/schemas/students'
+
+
+Now we have all of our operations are referring to respective components which have been defined for our API 
+
+
+Swagger Codegen With Spring Boot Using Maven Plugin
+      We will create 2 api's, one will fetch all students report and 2nd api to insert student data in db
+
+Swagger codegen is a opensource code generator to builds server stubs and client SDK directly from swagger defined RESTful API. Swagger can be integrated in 2 ways
+
+1. Top down approach - first we create API specification in yaml file and then we generate the code
+2. Bottom up approach - If we have already created springboot project but we didnt integrate with swagger ui. Here we integrate existing project with Swagger UI 
+
+Top down approach
+1. Create Springboot StudentApplication project with web, lombok, spring data jpa, mysql, jackson, swagger, validation dependency
+
+Group: com.pack
+Artifact: StudentApplication
+Package name:com.pack.student
+
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.openapitools</groupId>
+			<artifactId>jackson-databind-nullable</artifactId>
+			<version>0.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+
+2. We need to create api specification file inside src/main/resources/student.yml
+
+openapi: 3.0.0
+
+info:
+  version: 0.0.1
+  title: Student Service
+  description: The Student service
+
+tags:
+  - name: "Student"
+
+paths:
+  /add/student:
+    post:
+      summary: Add a new student.
+      tags:
+        - "Student"
+      parameters:
+      - name: correlation-id
+        in: header
+        description: correlationId to track request.
+        required: true
+        schema:
+          type: string
+          format: ""
+      requestBody:
+        $ref: '#/components/requestBodies/StudentBody'
+      operationId: addStudent  (refers the method name that generated in controller class)
+      responses:
+        '201':
+          description: Created
+  /get/students:
+    get:
+      parameters:
+      - name: correlation-id
+        in: header
+        description: ID of pet to fetch
+        required: true
+        schema:
+          type: string
+          format: ""
+         
+      summary: Get all students.
+      tags:
+        - "Student"
+
+      description: This is a Student service description
+      operationId: getAllStudent
+      responses:
+        "200":
+          description: This means its ok.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+components:
+  schemas:
+    Student:
+      description: This is the Student model.
+      type: object
+      properties:
+        id:
+          description: The ID of Student.
+          type: integer
+        first_name:
+          description: The FirstName of student.
+          type: string
+        last_name:
+          description: The LastName of Student.
+          type: string
+        section:
+          description: The Class Section of student.
+          type: string
+        city:
+          description: The City Name of Student.
+          type: string
+        name:
+          description: The Full Name of student.
+          type: string
+  requestBodies:
+    StudentBody:
+      description: A JSON object containing pet information
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Student'
+
+Here we create 2 endpoint for adding the student and getting the student, since we have use tags  to group the displayed operations, so it will group endpoints into the same controller class file:
+
+3. Goto editor.swagger.io, put the api specification and we can see what we create in swagger ui
+
+5. Now goto pom.xml and we need to add plugin that is used to generate our restapi code which we will use in our service implementation
+
+<build>
+        <plugins>
+            <!-- OpenAPI Generator -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.9.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-spring-boot3-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/student.yml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.pack.student.api</apiPackage>
+                            <modelPackage>com.pack.student.model</modelPackage>
+                            <invokerPackage>com.pack.student</invokerPackage>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <swaggerUi>true</swaggerUi>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Spring Boot Maven Plugin -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+openapi-generator-maven-plugin used to generate RESTful api code 
+
+7. Build the project so code will generate automatically
+
+C:\SpringBoot\StudentApplication>mvn clean install
+
+Refresh the project - Goto target - generated-sources - we can see code is generated 
+
+- It will create single model class Student and automatically generate ApiUtil, GetApi and AddApi. Inside GetApi we can see GET based rest endpoints and in AddApi we can see POST based rest endpoints
+
+8. Now we need to provide our own business logic for this, So we configure db info in application.properties file
+
+server.port=1000
+spring.datasource.url=jdbc:mysql://localhost:3306/fullstack
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL8Dialect
+
+9. Create entity class
+
+@Entity
+@Table(name = "student")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class StudentEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer id;
+	private String first_name;
+	private String last_name;
+	private String section;
+	private String city;
+	private String name;
+
+}
+
+
+10. Create repo intf
+
+public interface StudentRepository extends JpaRepository<StudentEntity, Integer>{
+
+}
+
+11. Create StudentController where it implements GetApi, AddApi interface which is generated by codegen
+
+@RestController
+public class StudentController implements GetApi, AddApi{
+
+	@Autowired
+	private StudentService service;
+	
+	
+	@Override
+	public ResponseEntity<Void> addStudentRefersTheMethodNameThatGeneratedInControllerClass(String correlationId,Student student) {
+		return service.addStudent(student);
+	}
+	
+	@Override
+	public ResponseEntity<List<Student>> getAllStudent(String correlationId) {
+		return service.getAllStudent();
+	}
+
+	@Override
+	public Optional<NativeWebRequest> getRequest() {
+		// TODO Auto-generated method stub
+		return AddApi.super.getRequest();
+	}
+}
+
+13. Create service prg
+
+@Service
+public class StudentService{
+
+	@Autowired
+	private StudentRepository repository;
+	
+	public ResponseEntity<Void> addStudent(@Valid Student student) {
+		StudentEntity entity = getStudentEntity(student);
+		repository.save(entity);
+		return new ResponseEntity<Void>(HttpStatus.CREATED);
+	}
+
+	public ResponseEntity<List<Student>> getAllStudent() {
+		List<StudentEntity> students = repository.findAll();
+		List<Student> studentList = students.parallelStream().map(studentEntity -> getStudentModel(studentEntity))
+				.collect(Collectors.toList());
+		return new ResponseEntity<List<Student>>(studentList, HttpStatus.OK);
+	}
+	
+//convert model to entity
+	private StudentEntity getStudentEntity(Student student) {
+		StudentEntity entity = new StudentEntity();
+		entity.setCity(student.getCity());
+		entity.setFirst_name(student.getFirstName());
+		entity.setLast_name(student.getLastName());
+		entity.setName(student.getName());
+		entity.setSection(student.getSection());
+		return entity;
+	}
+
+//convert entity to model
+	private Student getStudentModel(StudentEntity entity) {
+		Student student = new Student();
+		student.setCity(entity.getCity());
+		student.setFirstName(entity.getFirst_name());
+		student.setId(entity.getId());
+		student.setLastName(entity.getLast_name());
+		student.setName(entity.getName());
+		student.setSection(entity.getSection());
+		return student;
+	}
+
+}
+
+
+14. Start StudentApplication appl, run http://localhost:1000/swagger-ui/index.html, now we can see the 2 endpoints where we can add student and get all students
+
+
+
+
