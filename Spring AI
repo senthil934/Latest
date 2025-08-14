@@ -737,7 +737,7 @@ C:\Users\senthil.kumart>curl http://localhost:2000/cities?message=What%20is%20th
 4. we're going to use this weather API(https://www.weatherapi.com/api-explorer.aspx) to get weather details, now you do have to sign up for this to get a key
 
 username: senthil1418@gmail.com
-Password: Birthdat12!@
+Password: Birthday12!@
 
 It will display weather details for the location we provided, but it will display many details but  I don't need all of this information, so we grab some of this location data, some of this current data 
 
@@ -860,7 +860,7 @@ Function Calling
 2. Configure open ai and weather api keys in application.properties
 
 server.port=2001
-spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.api-key=Euz7qflhbK4KmtGvIOjKivGmxJJUg8QnKsRKhANsF1wlMgiC1sUoJQQJ99AJACYeBjFXJ3w3AAABACOGRIHH
 spring.ai.azure.openai.endpoint=https://dotnetai.openai.azure.com/
 spring.ai.azure.openai.chat.options.deployment-name=gpt-35-turbo
 
@@ -982,3 +982,650 @@ public class AIController {
 9. Start the appl, in Postman with POST request run http://localhost:2001/ai/query, In Params give
 key: query
 value: What's the temperature in London?
+
+----------------------------------------------------------------------------------------
+
+Prompt in Spring AI
+   - It means we provide efficient questions towards AI model, so that it provide the best result
+   - It take different Messages
+1. UserMessage - message coming directly from user to interact with AI
+2. SystemMessage - message from system to provide assistant behaviour
+
+1. Create springboot project with web and azure openAI dependency
+
+2. Configure openai keys in application.properties 
+
+server.port=1111
+
+spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.chat.options.deployment-name=
+
+3. Create controller prg
+
+@RestController
+public class ChatController {
+              
+              @Autowired
+              AzureOpenAiChatModel chatClient;
+
+              @GetMapping("/")
+              public String message() {
+                             //return chatClient.call(new Prompt("Explain Polymorphism in Java")).getResult().getOutput().getText();
+                             return chatClient.call(new Prompt("Tell me a joke about computers")).getResult().getOutput().getText();
+              }
+              
+              //PromptTemplate class where we pass prompt as string
+              @GetMapping("/books")
+              public String message1(@RequestParam(value="genre", defaultValue="Java") String genre) {
+                             String message="""
+                                                          List of {genre} books. If you dont know the answer, just say "I dont know".
+                                                          """;
+                             PromptTemplate pt=new PromptTemplate(message);
+                             Prompt p=pt.create(Map.of("genre",genre));
+                             return chatClient.call(p).getResult().getOutput().getText();
+              }
+              
+              @GetMapping("/jokes")
+              public String jokes() {
+                             var system=new SystemMessage("Your primary function is to tell Dad jokes. If someone asks you for any other type of joke please tell them you only know Dad jokes");
+                             var user=new UserMessage("Tell me a serious joke about universe");
+                             
+                             Prompt p=new Prompt(List.of(system,user));
+                             return chatClient.call(p).getResult().getOutput().getText();
+              }
+}
+
+4. In /books endpoint we have hardcoded the string message, but if we want this message in many place, then we have to repeat this message
+   Inside resources folder - create folder called prompts - create file books.st
+
+
+@Value("classpath:/prompts/books.st")
+              private Resource promptResource;
+              
+              @GetMapping("/books")
+              public String message1(@RequestParam(value="genre", defaultValue="Java") String genre) {
+
+                             PromptTemplate pt=new PromptTemplate(promptResource);
+                             Prompt p=pt.create(Map.of("genre",genre));
+                             return chatClient.call(p).getResult().getOutput().getText();
+              }
+
+5. OutputConverters used to structure the response from LLM - 3 implementations
+1. BeanOutputConverter
+2. MapOutputConverter
+3. ListOutputConverter
+
+public record Author(String author,List<String> books) {
+
+}
+
+
+@GetMapping("/countries")
+              public List<String> getCountries(@RequestParam(value="country",defaultValue="India")String country) {
+                             var message="""
+                                                            Please give me a list of destinations for the country {country}. If you dont know the answer, just say "I dont know".
+                                                            {format}
+                                                          """;
+                             
+                             ListOutputConverter output=new ListOutputConverter(new DefaultConversionService());
+                             PromptTemplate pt=new PromptTemplate(message,Map.of("country",country,"format",output.getFormat()));
+                             Prompt p=pt.create();
+                             ChatResponse response=chatClient.call(p);
+                             return output.convert(response.getResult().getOutput().getText());
+              }
+              
+              @GetMapping("/authors/{author}")
+              public Map<String,Object> getAuthors(@PathVariable("author")String author) {
+                             var message="""
+                                                            Generate list of links for the author {author}. Include the authors name as the key and any social network links as the value.
+                                                            {format}
+                                                          """;
+                             MapOutputConverter output=new MapOutputConverter();
+                             String format=output.getFormat();
+                             PromptTemplate pt=new PromptTemplate(message,Map.of("author",author,"format",format));
+                             Prompt p=pt.create();
+                             Generation g=chatClient.call(p).getResult();
+                             return output.convert(g.getOutput().getText());
+              }
+              
+              @GetMapping("/by-author")
+              public Author getAuthorByBooks(@RequestParam(value="author",defaultValue="Ken Kousen")String author) {
+                             var message="""
+                                                              Generate a list of books written by the author {author}. If you arent positive that the book belong to this author please dont include it.
+                                                              {format}
+                                                          """;
+                             BeanOutputConverter output=new BeanOutputConverter<>(Author.class);
+                             String format=output.getFormat();
+                             PromptTemplate pt=new PromptTemplate(message,Map.of("author",author,"format",format));
+                             Prompt p=pt.create();
+                             Generation g=chatClient.call(p).getResult();
+                             return (Author) output.convert(g.getOutput().getText());
+              }
+
+Function Calling
+     - If we ask question "what is the largest city in India", LLM will answer it correctly, but if we ask "What is the current tempareture in Mumbai", it cant answer correctly because LLM dosent have access to realtime data, we can solve this scenario using function calling
+     - When we give request to get the actual temp, the request goes to Spring AI appl which interact with external API(weatherapi.com) to return realtime temperature 
+
+1. In application.properties, configure external api info
+
+spring.weather.api.base.uri=http://api.weatherapi.com/v1
+spring.weather.api.key=b7565f85a8924271ae2145425242511
+
+2. we define request and respone in our Weather class 
+
+public class Weather {
+    public record Request(String city) {}
+    public record Response(Location  location, Current current) {}
+    public record Location(String name,String country) {}
+    public record Current(String temp_c) {}
+}
+
+3. Create WeatherServiceBuilder which make call to external api called weatherapi.com and get actual response based on Weather class
+
+@Service
+public class WeatherServiceBuilder {
+
+              @Value("${spring.weather.api.base.uri}")
+              private String weatherBaseURI;
+              
+              @Value("${spring.weather.api.key}")
+              private String weatherAPIKey;
+              
+              //To call particular endpoint we use RestClient
+              private RestClient restClient=RestClient.create();
+              
+              public Weather.Response getWeather(String city){
+                             return restClient.get()
+                                                         .uri(UriComponentsBuilder.fromUriString(weatherBaseURI)
+                                                          .path("/current.json")
+                                                          .queryParam("key",weatherAPIKey)
+                                                          .queryParam("q", city)
+                                                          .toUriString())
+                                                          .retrieve()
+                                                          .body(Weather.Response.class);
+              }
+}
+
+4. To integrate it with LLM, we have to create WeatherService class which implements Function functional interface
+
+@Service
+public class WeatherService implements Function<Weather.Request,Weather.Response>{
+
+              @Autowired
+              WeatherServiceBuilder serviceBuilder;
+              
+              @Override
+              public Weather.Response apply(Weather.Request t) {
+                             return serviceBuilder.getWeather(t.city());
+              }
+
+}
+
+5. We have to register this function in config class
+
+@Configuration
+public class Config {
+
+    @Bean
+    @Description("Get the weather of the city")
+              Function<Weather.Request,Weather.Response> currentWeather() {
+                             return new WeatherService();
+              }
+}
+
+6. We have to utilize this function in our llm, for that we create another service
+
+@Service
+public class AIService {
+              
+              @Autowired
+              ChatModel chatModel;
+
+              public ChatResponse getWeatherInfo(String query) {
+                             UserMessage userMessage=new UserMessage(query);
+                             return chatModel.call(new Prompt(userMessage,AzureOpenAiChatOptions.builder().function("currentWeather").build()));
+              }
+}
+
+7. Create controller prg
+
+@RestController
+public class WeatherController {
+              
+              @Autowired
+              AIService service;
+
+              @PostMapping("/query")
+              public Map<String,String> getWeatherDetails(@RequestParam String query) {
+                             return Map.of("response",service.getWeatherInfo(query).getResult().getOutput().getText());
+              }
+}
+
+Building a Spring Boot Reference Documentation Assistant with Spring AI & GPT-4
+    Actually all of these llms have training data that run up to a certain point, but at some point that training data is cut off, so what if you had something like the spring boot reference documentation that is always being updated. We don't want to ask the normal chatgpt questions because that training data runs up to certain duration, but we want the latest and up-to-date documentation so that we can ask questions 
+    So what we're going to do is build a spring boot reference docs assistant that will be able to answer questions. So we're going to take a large single PDF reference documentation and we're going to put that into a vector database, so we're going to use a PGVector database, so when we ask question it can do a search against that Vector database and basically pass some context to the llm when asking these questions. 
+
+Prerequestie
+1. Install Postgresql 13 version
+
+2. Install PgVector db 
+         Regular database store data like names, numbers, and dates. But today, we also need to work with more complex data like text for conversation, image, and search queries. These types
+of data are often turned into vectors which are listed as a number that computers can understand. Vectors help machines make decisions, answer questions, and find things that
+are similar in meaning. This is where PG vector comes very useful. 
+       Postgres SQL to store structured data (ie) data that fits into tables with rows and columns. But with the rise of artificial intelligence and machine learning, we also want to store vector data which is less structured. This is where PG vector comes in. 
+       PG vector is a special add-on or extensions for Postgres SQL. It lets you store and search vector embeddings in your database. A vector is just a list of numbers like 0.1, 0.2 or 0.3 that represents something like sentence, a photo or even a sounds. These vectors are created by AI models such as open AI, chatGPT, BERT or clip. 
+       For example, if you have a sentence like, "How is the weather today?" an AI model can turn it to into a vector. Then if someone else asks a similar questions like, "What's the weather like?" Now, the model can compare both vectors and see that they are close in meaning even if the words are different. PG vector allows you to save these vectors in postgres tables, but it doesn't just store them. It also search and compare them using similarity measures like cosine distance and inner product. These methods helps you find items that are most similar to each other. 
+
+Benefits of PGVector
+1. One of the biggest benefits of PG vector is that it lets you store vector data directly into your Postgres SQL database. You don't need to use a different system or learn a new tool. So this makes it easier to manage your data especially when you are working on projects that involve artificial intelligence or machine learning. 
+
+2. Next, search for similar results. PG vector makes it possible to search by meaning not just words. This is called semantic search. For example, if you search for how to learn phyon, the database can return results like beginner's guide to phyton programming, because the meaning are
+similar even if the words are not the same. This is much better than keyword search which only looks for exact words.
+      Semantic search helps you build smarter apps such as intelligent chat bots, help centers, or search engines. 
+
+3. Next, index support for faster searches. PG Vector allows you to create indexes on your
+vector columns. An index is like a shortcut that helps the database find data quickly. When your database has thousands or millions of vectors, searches can be slow. But with PG vector, you can use an index to make searches more faster. This is very helpful for real-time systems like
+recommendation engines where speed is very important. 
+
+4. Next, all your data in one place. Without PG vector, you might need to use a separate vector database like Pine Code. This means extra work, extra cost, and more things to manage. With PG vector, you keep everything in Postgres SQL. You can store your text, images, labels, and vectors all in the same table. This makes your setup cleaner and easier to work with. 
+    PG Vector works great with AI tools like OpenAI, Hugging Face, Lang Chain, and Python libraries. If you are building an app that uses AI, you can take your vector embeddings from OpenAI or any model and store them directly in Postgress SQL with PG vector. You don't need to change your setup or learn a new system. This makes it easier for developers to add smart features to their application such as personalized recommendations or questions answer system. 
+
+5. safe, secure and trusted.
+      By using PG vector inside Postgres SQL, you get all the safety features like backups, user permissions, and transaction support. 
+
+6. saves you money - Using PG vector means you don't need to pay for extra services or databases. You can use your existing Postgres SQL setup. Many cloud services also support PG
+vector. So you can use it with providers like Superbase, Render or Heroku. This makes PG vector a cost effective choice especially for startups, small business or personal projects. 
+
+- To install PGVector, we  need Visual Studio community and Visual studio build tools (https://www.youtube.com/watch?v=L4RWjinJacI)
+
+- open cmd prompt as admin
+
+C:\Windows\System32>call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+**********************************************************************
+** Visual Studio 2017 Developer Command Prompt v15.9.75
+** Copyright (c) 2017 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x64'
+
+C:\Windows\System32>set "PGROOT=C:\Program Files\PostgreSQL\13"
+
+C:\Windows\System32>cd %TEMP%
+
+C:\Users\SENTHI~1.KUM\AppData\Local\Temp>git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+
+C:\Users\SENTHI~1.KUM\AppData\Local\Temp>cd pgvector
+
+C:\Users\SENTHI~1.KUM\AppData\Local\Temp\pgvector>nmake /F Makefile.win
+
+C:\Users\SENTHI~1.KUM\AppData\Local\Temp\pgvector>nmake /F Makefile.win install
+
+- To enable PGVector in ur db
+
+1. Open PSQL shell, goto startmenu type psql
+
+Server: Press Enter for default (localhost).
+Database: demoDB
+Port: Press Enter for default (5432).
+Username: Enter your PostgreSQL username (default is postgres).
+Password: root
+
+2. demoDB=# SELECT * FROM pg_available_extensions WHERE name = 'vector';
+  name  | default_version | installed_version |                       comment
+--------+-----------------+-------------------+------------------------------------------------------
+ vector | 0.8.0           |                   | vector data type and ivfflat and hnsw access methods
+(1 row)
+
+If you see a row for vector, it’s installed but not yet enabled.
+
+3. To Enable pgvector in Your Database
+
+demoDB=# CREATE EXTENSION vector;
+
+demoDB=# \dx
+                             List of installed extensions
+  Name   | Version |   Schema   |                     Description
+---------+---------+------------+------------------------------------------------------
+ plpgsql | 1.0     | pg_catalog | PL/pgSQL procedural language
+ vector  | 0.8.0   | public     | vector data type and ivfflat and hnsw access methods
+(2 rows)
+
+
+1. Create Springboot project with web, JDBC api(we want to use the new jdbc client to talk to the database), Azure OpenAI, lombok, pgvector db(we need to store the documents we're going to take PDF use the embedding client to basically store vectors inside Vector database and we're going to use the PG Vector database ),spring shell(building a shell application that I can run from my command line), grallvm native support(once we done we can turn this into a native image and run it
+from our machine) dependency 
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-pdf-document-reader</artifactId>
+		</dependency>
+
+2. Configure postgres db info, open ai and vector db in application.properties file
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/demoDB
+spring.datasource.username=postgres
+spring.datasource.password=root
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# Optional: Hibernate settings
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Required for pgvector type recognition (PostgreSQL JDBC)
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+#Open AI keys
+spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.chat.options.deployment-name=
+
+#vector data
+spring.ai.vectorstore.pgvector.index-type=HNSW
+spring.ai.vectorstore.pgvector.table-name=embeddings
+spring.ai.vectorstore.pgvector.dimension=1536
+spring.ai.vectorstore.pgvector.distance-type=cosine
+
+3. Create schema.sql file for pgvector db and execute it in psql shell
+
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS hstore;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS vector_store (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    content text,
+    metadata json,
+    embedding vector(1536)  -- 1536 is the default embedding dimension
+);
+
+CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
+
+4. Goto spring.io, download reference doc from 3.2.12 version
+
+5. Create docs folder inside resources folder and keep the pdf file
+
+we're going to use this pdf to add additional contexts for the LLM to answer our questions
+
+6. create spring boot reference prompt inside prompts/resources folder 
+
+- Create spring-boot-reference.st file inside prompts folder
+
+You are a helpful and friendly AI assistant who can answer questions about Spring Boot. Use the information from the DOCUMENTS
+section to provide accurate answers. If unsure or if the answer isn't found in the DOCUMENTS section, simply state that you don't know the answer.
+
+QUESTION:
+{input}
+
+DOCUMENTS:
+{documents}
+
+we're going to ask it a question like "what is spring Boot" and we're going to provide some
+additional context using the spring boot reference documentation
+
+7. First need to start with some kind of component that can load our Vector database with the correct information, create a class ReferenceDocsLoader 
+
+
+@Component
+public class ReferenceDocsLoader {
+
+    //create a logger 
+    private static final Logger log = LoggerFactory.getLogger(ReferenceDocsLoader.class);
+
+    //get access to the jdbc client
+    private final JdbcClient jdbcClient;
+
+    //get a vectorstore instance which gets instance of PGVectorStore or SimpleVectorStore
+    private final VectorStore vectorStore;
+
+    //need a resource to access to that PDF 
+    @Value("classpath:/docs/spring-boot-reference.pdf")
+    private Resource pdfResource;
+
+    //use constructor injection to get jdbcclient and vectorstore
+    public ReferenceDocsLoader(JdbcClient jdbcClient, VectorStore vectorStore) {
+        this.jdbcClient = jdbcClient;
+        this.vectorStore = vectorStore;
+    }
+
+    //we have init() method so when this class gets created we are going to run this init method using @PostConstruct
+    @PostConstruct
+    public void init() {
+
+//using jdbcclient to select count from that Vectorstore which return as an integer
+        Integer count = jdbcClient.sql("select count(*) from vector_store")
+                .query(Integer.class)
+                .single();
+
+        log.info("Current count of the Vector Store: {}", count);
+
+//if that count is zero then we don't have anything in that Vector store so we need to add some document
+        if (count == 0) {
+            log.info("Loading Spring Boot Reference PDF into Vector Store");
+
+//we use PdfDocumentReaderConfig 
+            var config = PdfDocumentReaderConfig.builder()
+                    .withPageExtractedTextFormatter(new ExtractedTextFormatter.Builder().withNumberOfBottomTextLinesToDelete(0)
+                            .withNumberOfTopPagesToSkipBeforeDelete(0)
+                            .build())
+                    .withPagesPerDocument(1)
+                    .build();
+
+            //we use PagePdfDocumentReader to read from a PDF file  
+            var pdfReader = new PagePdfDocumentReader(pdfResource, config);
+
+           //we split it up
+            var textSplitter = new TokenTextSplitter();
+
+           //we ask Vectorstore to accept documents that it needs to split up
+            vectorStore.accept(textSplitter.apply(pdfReader.get()));
+
+            log.info("Application is ready");
+        }
+    }
+}
+
+- Start the appl, it is processing pdf and it's splitting that document into two chunks and we can see the application has started because it's finished breaking that up into different documents
+   If we restart the application it will not take that long because it sees that information in the database already and has no need to reload the database 
+
+8. Now we can start to ask questions,we've been previously doing this in a web context so we would use a rest controller and hit an endpoint and ask questions. Now we're in the context of a spring shell application so we need to build a component that can respond to those shell commands, so we create a new Java class called SpringAssistantCommand
+
+In the world of spring shell these classes are called commands using @Command, we need to create a command so when we type "q" in Spring shell it will kick off this method. In this case we just call this as "q" for question, we're asking a question which is going to return a string
+
+@Command
+public class SpringAssistantCommand {
+
+    //get azure ai model
+    private final AzureOpenAiChatModel azureChatModel;
+
+    //get access to vectorstore
+    private final VectorStore vectorStore;
+
+    //get access to the prompt
+    @Value("classpath:/prompts/spring-boot-reference.st")
+    private Resource sbPromptTemplate;
+
+    //use constructor injection to inject the values
+    public SpringAssistantCommand(AzureOpenAiChatModel azureChatModel, VectorStore vectorStore) {
+        this.azureChatModel = azureChatModel;
+        this.vectorStore = vectorStore;
+    }
+
+    @Command(command = "q")
+    public String question(@Option(defaultValue = "What is Spring Boot") String message) {
+        // Get similar documents from Vector Store
+        List<String> similarDocs = findSimilarDocuments(message);
+        String docsJoined = String.join("\n", similarDocs);
+
+        // Create system and user messages
+        SystemMessage system = new SystemMessage("You are a Spring Boot assistant. Use provided documents to answer.");
+        UserMessage user = new UserMessage("Question: " + message + "\nRelevant Docs:\n" + docsJoined);
+
+        // Create prompt
+        Prompt prompt = new Prompt(List.of(system, user));
+
+        // Call Azure OpenAI
+        return azureChatModel.call(prompt).getResult().getOutput().getText();
+    }
+
+//we're doing a similarity search against our Vector stores, because we don't want to
+send a thousand pages of PDF documents along with prompt to the LMS so we are getting just the relevant information to send 
+    private List<String> findSimilarDocuments(String message) {
+    	SearchRequest request = SearchRequest.builder().query(message).topK(3).build();
+    	List<Document> similarDocuments = vectorStore.similaritySearch(request);
+
+        return similarDocuments.stream()
+                .map(Document::getText)
+                .toList();
+    }
+}
+
+9. In main class, we need to scan those commands using @CommandScan
+
+@SpringBootApplication
+@CommandScan
+public class SpringBootDocsApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootDocsApplication.class, args);
+	}
+
+}
+
+10. Start the appl, we can see this shell comes up, you can go ahead and type "help" to see what commands are available so these are the built-in commands and the default command that we have is q. If we type 
+
+shell> q "what is the RestClient in Spring?"
+          Now it perform similarity search in the documents and then sending the response
+
+shell> q "what is a @RestController and can you provide code examples"
+
+11. Next we want to turn this into a native application that we can install on my local machine that runs fast, uses less memory and we can just always run from my command prompt so let's do that now when we started this project we selected
+     Java is a statically typed language it has a lot of dynamic capabilities things like
+reflection,proxies and resources. So when you tried to run some native executable appl,
+it couldnt find PDF or prompt template that we created because we define those as resources in our spring application, so anything that's kind of dynamic info, the compiler needs to know ahead of time before we create that native executable 
+     We need to provide some hints to the compiler so it knows about these resources, so we create a new Java class called HintsRegister which implements RuntimeHintsRegistar and override registerHints(), from the hints object we can use something called the resources which is the resource hints and we can register a pattern that include all PDFs and prompt resources
+
+
+@Configuration
+public class HintsRegistrar  implements RuntimeHintsRegistrar {
+    @Override
+    public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+        hints.resources().registerPattern("*.pdf");
+        hints.resources().registerPattern("*.st");
+    }
+}
+
+Now we have given the compiler some notification of things that are going to happen runtime and it knows that those are resources that we're going to need.
+
+12. In main class, we add @ImportRuntimeHints(HintsRegistrar.class)
+
+@ImportRuntimeHints(HintsRegistrar.class)
+@CommandScan
+@SpringBootApplication
+public class Application {
+
+	private static final Logger log = LoggerFactory.getLogger(Application.class);
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+}
+
+13. Now we run maven wrapper
+>./mvnw -Pnative native:compile -DskipTests
+
+we have a a native executable that we can go and run now 
+
+14. Now run
+>./target/springbootdocs
+
+Where it will start springboot appl with shell
+
+shell>q "what is spring boot"
+
+Few shot prompting
+    Under prompts advanced techniques, we have
+1. Zero-shot, few-shot 
+2. Chain of thought
+3. React(Reason+Act)
+
+Few shot prompting
+     It is a technique in prompt engineering used with large language models like gpt4, where you provide a small number of example inputs and outputs with the prompt itself. We include two to five examples hence few shot to clearly illustrate the format structure or type of response we are looking for.  
+     Few shot examples should typically be included as part of user message rather than system, user message includes explicit examples illustrating the expected input output pairs, a system
+message defines the overall behavior tone or rule not specific examples message.  
+
+Example:
+
+Classify the sentiment of each tweet as Positive, Negative, or Neutral.
+
+Tweet: "I just got a promotion at work, feeling so happy!"
+Sentiment: Positive
+
+Tweet: "The traffic jam ruined my whole day."
+Sentiment: Negative
+
+Tweet: "It’s cloudy outside but no rain yet."
+Sentiment: Neutral
+
+Tweet: "Can't believe my package arrived two days early!"
+Sentiment:
+
+Expected output:
+Positive
+
+1. Create springboot project with web, azure open ai dependency
+
+2. Configure open ai key in application.properties
+
+3. In main class, configure few shot prompting
+
+@Bean
+	CommandLineRunner run(AzureOpenAiChatModel chatModel) {
+	    return args -> {
+	        // Azure-specific options
+	        AzureOpenAiChatOptions options = new AzureOpenAiChatOptions();
+	        options.setTemperature(0.0);
+
+	        var system = new SystemMessage(
+	                "You are an assistant that classifies tweet sentiment as Positive, Negative, or Neutral."
+	        );
+
+	        var tweets = new UserMessage("""
+	                Tweet: "I love sunny days!"
+	                Sentiment: Positive
+
+	                Tweet: "I lost my wallet today."
+	                Sentiment: Negative
+
+	                Tweet: "Just had lunch."
+	                Sentiment: Neutral
+
+	                Tweet: "Excited for my trip tomorrow!"
+	                Sentiment:
+	                """);
+
+	        String response = chatModel
+	                .call(new Prompt(List.of(system, tweets), options))
+	                .getResult()
+	                .getOutput()
+	                .getContent();
+
+	        System.out.println(response);
+	    };
+	}
+
+4. Start the appl, it will say the sentiment of tweet 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
