@@ -10597,14 +10597,255 @@ If an object with id 1 does not exist, the response is null.
 DELETE request to /v1/artists/1
 Assuming that an object with id 1 exists, the response code is 204, and the response body is empty.
 
+@RestController
+@RequestMapping("/v1/artists")
+public class ArtistController {
+
+    @Autowired
+    private ArtistService artistService;
+
+    @PostMapping
+    public ResponseEntity<Artist> createArtist(@RequestBody Artist artist) {
+        Artist createdArtist = artistService.createArtist(artist);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdArtist);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Artist>> getAllArtists() {
+        return ResponseEntity.ok(artistService.getAllArtists());
+    }
+
+    @GetMapping("/{artistId}")
+    public ResponseEntity<Artist> getArtistById(@PathVariable Long artistId) {
+        Optional<Artist> artist = artistService.getArtistById(artistId);
+        return artist.map(ResponseEntity::ok)
+                     .orElse(ResponseEntity.ok(null)); // null if not found
+    }
+
+    @DeleteMapping("/{artistId}")
+    public ResponseEntity<Void> deleteArtist(@PathVariable Long artistId) {
+        if (artistService.getArtistById(artistId).isPresent()) {
+            artistService.deleteArtist(artistId);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.noContent().build(); // same status code if not found
+        }
+    }
+}
 
 
+@Entity
+public class Artist {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    private String firstName;
+    private String lastName;
+}
 
+public interface ArtistRepository extends JpaRepository<Artist, Long> {
+}
 
+@Service
+public class ArtistService {
 
+    @Autowired
+    private ArtistRepository artistRepository;
 
+    public Artist createArtist(Artist artist) {
+        return artistRepository.save(artist);
+    }
+
+    public List<Artist> getAllArtists() {
+        return artistRepository.findAll()
+                .stream()
+                .sorted((a1, a2) -> a1.getId().compareTo(a2.getId()))
+                .toList();
+    }
+
+    public Optional<Artist> getArtistById(Long id) {
+        return artistRepository.findById(id);
+    }
+
+    public void deleteArtist(Long id) {
+        artistRepository.deleteById(id);
+    }
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestArtistController {
+
+    private MockMvc mockMvc;
+
+    @Mock
+    private ArtistService artistService;
+
+    @InjectMocks
+    private ArtistController artistController;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private Artist artist1;
+    private Artist artist2;
+
+    @Before
+    public void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(artistController).build();
+
+        artist1 = new Artist();
+        artist1.setId(1L);
+        artist1.setFirstName("John");
+        artist1.setLastName("Doe");
+
+        artist2 = new Artist();
+        artist2.setId(2L);
+        artist2.setFirstName("Jane");
+        artist2.setLastName("Smith");
+    }
+
+    @Test
+    public void testCreateArtist_Returns201() throws Exception {
+        Mockito.when(artistService.createArtist(any(Artist.class))).thenReturn(artist1);
+
+        mockMvc.perform(post("/v1/artists")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(artist1)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.firstName").value("John"))
+                .andExpect(jsonPath("$.lastName").value("Doe"));
+    }
+
+    @Test
+    public void testGetAllArtists_Returns200() throws Exception {
+        Mockito.when(artistService.getAllArtists()).thenReturn(Arrays.asList(artist1, artist2));
+
+        mockMvc.perform(get("/v1/artists"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[1].id").value(2L));
+    }
+
+    @Test
+    public void testGetArtistById_Found() throws Exception {
+        Mockito.when(artistService.getArtistById(1L)).thenReturn(Optional.of(artist1));
+
+        mockMvc.perform(get("/v1/artists/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.firstName").value("John"));
+    }
+
+    @Test
+    public void testGetArtistById_NotFound_ReturnsNullBody() {
+        // Arrange
+        Long nonExistentId = 999L;
+        Mockito.when(artistService.getArtistById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act
+        ResponseEntity<Artist> response = artistController.getArtistById(nonExistentId);
+
+        // Assert
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertNull(response.getBody());  // body should be null
+        Mockito.verify(artistService, Mockito.times(1)).getArtistById(nonExistentId);
+    }
+
+    @Test
+    public void testDeleteArtist_Exists_Returns204() throws Exception {
+        Mockito.when(artistService.getArtistById(1L)).thenReturn(Optional.of(artist1));
+        Mockito.doNothing().when(artistService).deleteArtist(1L);
+
+        mockMvc.perform(delete("/v1/artists/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void testDeleteArtist_NotExists_Returns204() throws Exception {
+        Mockito.when(artistService.getArtistById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(delete("/v1/artists/99"))
+                .andExpect(status().isNoContent());
+    }
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestArtistService {
+
+    @Mock
+    private ArtistRepository artistRepository;
+
+    @InjectMocks
+    private ArtistService artistService;
+
+    private Artist artist1;
+    private Artist artist2;
+
+    @Before
+    public void setUp() {
+        artist1 = new Artist();
+        artist1.setId(1L);
+        artist1.setFirstName("John");
+        artist1.setLastName("Doe");
+
+        artist2 = new Artist();
+        artist2.setId(2L);
+        artist2.setFirstName("Jane");
+        artist2.setLastName("Smith");
+    }
+
+    @Test
+    public void testCreateArtist() {
+        when(artistRepository.save(any(Artist.class))).thenReturn(artist1);
+
+        Artist created = artistService.createArtist(artist1);
+
+        assertNotNull(created);
+        assertEquals(Long.valueOf(1), created.getId());
+        assertEquals("John", created.getFirstName());
+    }
+
+    @Test
+    public void testGetAllArtists_SortedById() {
+        when(artistRepository.findAll()).thenReturn(Arrays.asList(artist2, artist1));
+
+        List<Artist> result = artistService.getAllArtists();
+
+        assertEquals(2, result.size());
+        assertEquals(Long.valueOf(1), result.get(0).getId());
+        assertEquals(Long.valueOf(2), result.get(1).getId());
+    }
+
+    @Test
+    public void testGetArtistById_Found() {
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artist1));
+
+        Optional<Artist> result = artistService.getArtistById(1L);
+
+        assertTrue(result.isPresent());
+        assertEquals("John", result.get().getFirstName());
+    }
+
+    @Test
+    public void testGetArtistById_NotFound() {
+        when(artistRepository.findById(3L)).thenReturn(Optional.empty());
+
+        Optional<Artist> result = artistService.getArtistById(3L);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void testDeleteArtist() {
+        doNothing().when(artistRepository).deleteById(1L);
+
+        artistService.deleteArtist(1L);
+
+        verify(artistRepository, times(1)).deleteById(1L);
+    }
+}
 
 
 
@@ -10807,13 +11048,246 @@ The response code is 200, and when converted to JSON, the response body, the ret
    }
 ]
 
+@RestController
+@RequestMapping("/music/platform/v1/tracks")
+public class MusicTrackController {
 
+	@Autowired
+    private MusicTrackService service;
 
+	@PostMapping
+    public ResponseEntity<MusicTrack> createTrack(@RequestBody MusicTrack track) {
+        // The "id" should be null here; service will assign it
+        MusicTrack createdTrack = service.createTrack(track);
+        return ResponseEntity
+                .status(HttpStatus.CREATED) // 201 Created
+                .body(createdTrack);
+    }
 
+    @GetMapping
+    public ResponseEntity<List<MusicTrack>> getAllTracks() {
+        return ResponseEntity.ok(service.getAllTracks());
+    }
 
+    @GetMapping("/search")
+    public ResponseEntity<MusicTrack> getTrackByTitle(@RequestParam String title) {
+        Optional<MusicTrack> track = service.getTrackByTitle(title);
+        return track.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
 
+    @DeleteMapping("/{trackId}")
+    public ResponseEntity<Void> deleteTrack(@PathVariable Long trackId) {
+        if (service.deleteTrack(trackId)) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+}
 
+@Entity
+@Table(name = "music_tracks")
+public class MusicTrack {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+    private String albumName;
+    private LocalDate releaseDate;
+    private Integer playCount;
+}
+
+public interface MusicTrackRepository extends JpaRepository<MusicTrack, Long> {
+    Optional<MusicTrack> findByTitle(String title);
+}
+
+@Service
+public class MusicTrackService {
+
+	@Autowired
+    private MusicTrackRepository repository;
+
+    public MusicTrack createTrack(MusicTrack track) {
+        return repository.save(track);
+    }
+
+    public List<MusicTrack> getAllTracks() {
+        return repository.findAll();
+    }
+
+    public Optional<MusicTrack> getTrackByTitle(String title) {
+        return repository.findByTitle(title);
+    }
+
+    public boolean deleteTrack(Long id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+}
+
+@RunWith(SpringRunner.class)
+@WebMvcTest
+public class TestMusicTrackController {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private MusicTrackService service;
+
+    private MusicTrack sampleTrack;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Before
+    public void setUp() {
+        sampleTrack = new MusicTrack();
+        sampleTrack.setId(1L);
+        sampleTrack.setTitle("Lost in Echoes");
+        sampleTrack.setAlbumName("Echoes of the Unknown");
+        sampleTrack.setReleaseDate(LocalDate.of(2021, 7, 15));
+        sampleTrack.setPlayCount(5000);
+    }
+
+    @Test
+    public void testCreateTrack_ShouldReturnCreatedTrack() throws Exception {
+    	 //MusicTrack trackWithoutId = new MusicTrack(null, "Test Song", "Test Artist", "Pop", 2025);
+         //MusicTrack createdTrack = new MusicTrack(1L, "Test Song", "Test Artist", "Pop", 2025);
+
+         when(service.createTrack(any(MusicTrack.class))).thenReturn(sampleTrack);
+
+         // When & Then
+         mockMvc.perform(post("/music/platform/v1/tracks")
+                         .contentType(MediaType.APPLICATION_JSON)
+                         .content(objectMapper.writeValueAsString(sampleTrack)))
+                 .andExpect(status().isCreated())
+                 .andExpect(jsonPath("$.id").value(1L))
+                 .andExpect(jsonPath("$.title").value("Lost in Echoes"))
+                 .andExpect(jsonPath("$.albumName").value("Echoes of the Unknown"))
+                 .andExpect(jsonPath("$.playCount").value(5000));
+
+         verify(service, times(1)).createTrack(any(MusicTrack.class));
+    }
+
+    @Test
+    public void testGetAllTracks() throws Exception {
+        Mockito.when(service.getAllTracks()).thenReturn(Arrays.asList(sampleTrack));
+
+        mockMvc.perform(get("/music/platform/v1/tracks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1));
+    }
+
+    @Test
+    public void testGetTrackByTitleFound() throws Exception {
+        Mockito.when(service.getTrackByTitle(eq("Lost in Echoes"))).thenReturn(Optional.of(sampleTrack));
+
+        mockMvc.perform(get("/music/platform/v1/tracks/search")
+                .param("title", "Lost in Echoes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Lost in Echoes"));
+    }
+
+    @Test
+    public void testGetTrackByTitleNotFound() throws Exception {
+        Mockito.when(service.getTrackByTitle(eq("Unknown"))).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/music/platform/v1/tracks/search")
+                .param("title", "Unknown"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testDeleteTrackWhenExists() throws Exception {
+        Mockito.when(service.deleteTrack(1L)).thenReturn(true);
+
+        mockMvc.perform(delete("/music/platform/v1/tracks/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void testDeleteTrackWhenNotExists() throws Exception {
+        Mockito.when(service.deleteTrack(99L)).thenReturn(false);
+
+        mockMvc.perform(delete("/music/platform/v1/tracks/99"))
+                .andExpect(status().isNotFound());
+    }
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestMusicTrackService {
+
+    @Mock
+    private MusicTrackRepository repository;
+
+    @InjectMocks
+    private MusicTrackService service;
+
+    private MusicTrack sampleTrack;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        sampleTrack = new MusicTrack();
+        sampleTrack.setId(1L);
+        sampleTrack.setTitle("Lost in Echoes");
+        sampleTrack.setAlbumName("Echoes of the Unknown");
+        sampleTrack.setReleaseDate(LocalDate.of(2021, 7, 15));
+        sampleTrack.setPlayCount(5000);
+    }
+
+    @Test
+    public void testCreateTrack() {
+        when(repository.save(any(MusicTrack.class))).thenReturn(sampleTrack);
+        MusicTrack result = service.createTrack(sampleTrack);
+
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getTitle()).isEqualTo("Lost in Echoes");
+        verify(repository, times(1)).save(sampleTrack);
+    }
+
+    @Test
+    public void testGetAllTracks() {
+        when(repository.findAll()).thenReturn(Arrays.asList(sampleTrack));
+        List<MusicTrack> result = service.getAllTracks();
+
+        assertThat(result).hasSize(1);
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    public void testGetTrackByTitle() {
+        when(repository.findByTitle("Lost in Echoes")).thenReturn(Optional.of(sampleTrack));
+        Optional<MusicTrack> result = service.getTrackByTitle("Lost in Echoes");
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getAlbumName()).isEqualTo("Echoes of the Unknown");
+        verify(repository, times(1)).findByTitle("Lost in Echoes");
+    }
+
+    @Test
+    public void testDeleteTrackWhenExists() {
+        when(repository.existsById(1L)).thenReturn(true);
+        boolean deleted = service.deleteTrack(1L);
+
+        assertThat(deleted).isTrue();
+        verify(repository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    public void testDeleteTrackWhenNotExists() {
+        when(repository.existsById(99L)).thenReturn(false);
+        boolean deleted = service.deleteTrack(99L);
+
+        assertThat(deleted).isFalse();
+        verify(repository, never()).deleteById(99L);
+    }
+}
 
 
 
@@ -10860,9 +11334,158 @@ GET /school/student/{studentId}/teachers:
 •	Assume the given studentId exists in the database.
 •	Return the list of teachers associated with the studentId and status code 200.
 
+@RestController
+@RequestMapping("/school")
+public class SchoolController {
 
+    @Autowired
+    private TeacherRepository teacherRepository;
 
+    @Autowired
+    private StudentRepository studentRepository;
 
+    @PostMapping("/teacher/{teacherId}/addStudent")
+    public ResponseEntity<Teacher> addStudentToTeacher(@PathVariable Long teacherId, @RequestBody Student student) {
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        Student savedStudent = student.getId() != null
+                ? studentRepository.findById(student.getId()).orElse(student)
+                : student;
+
+        teacher.getStudents().add(savedStudent);
+        savedStudent.getTeachers().add(teacher);
+
+        studentRepository.save(savedStudent); // Save to update the relationship
+        Teacher updatedTeacher = teacherRepository.save(teacher);
+
+        return new ResponseEntity<>(updatedTeacher, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/teacher/{teacherId}/students")
+    public ResponseEntity<Set<Student>> getStudentsByTeacher(@PathVariable Long teacherId) {
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+        return new ResponseEntity<>(teacher.getStudents(), HttpStatus.OK);
+    }
+
+    @GetMapping("/student/{studentId}/teachers")
+    public ResponseEntity<Set<Teacher>> getTeachersByStudent(@PathVariable Long studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return new ResponseEntity<>(student.getTeachers(), HttpStatus.OK);
+    }
+}
+
+@Entity
+public class Teacher {
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(
+        name = "teacher_student",
+        joinColumns = @JoinColumn(name = "teacher_id"),
+        inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
+    private Set<Student> students = new HashSet<>();
+
+    // getters, setters
+}
+
+@Entity
+public class Student {
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToMany(mappedBy = "students")
+    private Set<Teacher> teachers = new HashSet<>();
+
+    // getters, setters
+}
+
+public interface TeacherRepository extends JpaRepository<Teacher, Long> {
+
+}
+
+public interface StudentRepository extends JpaRepository<Student, Long>{
+
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestSchoolController{
+
+    @InjectMocks
+    private SchoolController schoolController;
+
+    @Mock
+    private TeacherRepository teacherRepository;
+
+    @Mock
+    private StudentRepository studentRepository;
+
+    @Test
+    public void testAddStudentToTeacher_NewStudent() {
+        Long teacherId = 1L;
+        Teacher teacher = new Teacher();
+        teacher.setId(teacherId);
+        teacher.setName("Mark");
+
+        Student student = new Student();
+        student.setName("Salo");
+
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
+        when(studentRepository.save(any(Student.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(teacherRepository.save(any(Teacher.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        ResponseEntity<Teacher> response = schoolController.addStudentToTeacher(teacherId, student);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertTrue(response.getBody().getStudents().stream().anyMatch(s -> s.getName().equals("Salo")));
+    }
+
+    @Test
+    public void testGetStudentsByTeacher() {
+        Long teacherId = 1L;
+        Teacher teacher = new Teacher();
+        teacher.setId(teacherId);
+        teacher.setName("Mark");
+
+        Student student1 = new Student();
+        student1.setName("Alice");
+        teacher.getStudents().add(student1);
+
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
+
+        ResponseEntity<Set<Student>> response = schoolController.getStudentsByTeacher(teacherId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+    }
+
+    @Test
+    public void testGetTeachersByStudent() {
+        Long studentId = 1L;
+        Student student = new Student();
+        student.setId(studentId);
+        student.setName("Salo");
+
+        Teacher teacher1 = new Teacher();
+        teacher1.setName("Mark");
+        student.getTeachers().add(teacher1);
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+
+        ResponseEntity<Set<Teacher>> response = schoolController.getTeachersByStudent(studentId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+    }
+}
 
 
 
@@ -10901,6 +11524,214 @@ GET /event/total?by={by}:
 •	Return the total value summed by the given field and status code 200.
 •	For example: /event/total?by=duration returns the total duration of all events.
 •	If by is an invalid attribute (other than cost and duration), return status code 400.
+@RestController
+@RequestMapping("/event")
+public class EventController {
+
+    @Autowired
+    private EventRepository eventRepository;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+        return eventRepository.findById(id)
+                .map(event -> new ResponseEntity<>(event, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/top3")
+    public ResponseEntity<List<Event>> getTop3Events(@RequestParam String by) {
+        List<Event> topEvents;
+        switch (by.toLowerCase()) {
+            case "cost":
+                topEvents = eventRepository.findTop3ByOrderByCostDesc();
+                break;
+            case "duration":
+                topEvents = eventRepository.findTop3ByOrderByDurationDesc();
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(topEvents, HttpStatus.OK);
+    }
+
+    @GetMapping("/total")
+    public ResponseEntity<Integer> getTotalByField(@RequestParam String by) {
+        List<Event> events = eventRepository.findAll();
+        int total;
+        switch (by.toLowerCase()) {
+            case "cost":
+                total = events.stream().mapToInt(Event::getCost).sum();
+                break;
+            case "duration":
+                total = events.stream().mapToInt(Event::getDuration).sum();
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(total, HttpStatus.OK);
+    }
+}
+
+@Entity
+public class Event {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String location;
+    private int duration;
+    private int cost;
+}
+
+public interface EventRepository extends JpaRepository<Event, Long> {
+    List<Event> findTop3ByOrderByCostDesc();
+    List<Event> findTop3ByOrderByDurationDesc();
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestEventController {
+
+    @InjectMocks
+    private EventController eventController;
+
+    @Mock
+    private EventRepository eventRepository;
+
+    @Test
+    public void testGetEventById_Found() {
+        Event event = new Event();
+        event.setId(1L);
+        event.setName("Soft Summit");
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        ResponseEntity<Event> response = eventController.getEventById(1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Soft Summit", response.getBody().getName());
+    }
+
+    @Test
+    public void testGetEventById_NotFound() {
+        when(eventRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Event> response = eventController.getEventById(99L);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    public void testGetTop3Events_ByCost() {
+        List<Event> events = Arrays.asList(new Event(), new Event(), new Event());
+        when(eventRepository.findTop3ByOrderByCostDesc()).thenReturn(events);
+
+        ResponseEntity<List<Event>> response = eventController.getTop3Events("cost");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(3, response.getBody().size());
+    }
+
+    @Test
+    public void testGetTop3Events_InvalidBy() {
+        ResponseEntity<List<Event>> response = eventController.getTop3Events("location");
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    public void testGetTotalByCost() {
+        Event e1 = new Event(); e1.setCost(100);
+        Event e2 = new Event(); e2.setCost(200);
+        List<Event> events = Arrays.asList(e1, e2);
+
+        when(eventRepository.findAll()).thenReturn(events);
+
+        ResponseEntity<Integer> response = eventController.getTotalByField("cost");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(Integer.valueOf(300), response.getBody());
+    }
+
+    @Test
+    public void testGetTotalByInvalidField() {
+        ResponseEntity<Integer> response = eventController.getTotalByField("name");
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+}
+
+@RunWith(SpringRunner.class)
+@DataJpaTest
+public class TestEventRepository {
+
+    @Autowired
+    private EventRepository eventRepository;
+
+    @Before
+    public void setUp() {
+        eventRepository.deleteAll();
+
+        // Adding sample events
+        Event e1 = new Event();
+        e1.setName("Music Festival");
+        e1.setLocation("City A");
+        e1.setDuration(3);
+        e1.setCost(500);
+
+        Event e2 = new Event();
+        e2.setName("Tech Conference");
+        e2.setLocation("City B");
+        e2.setDuration(2);
+        e2.setCost(1000);
+
+        Event e3 = new Event();
+        e3.setName("Art Expo");
+        e3.setLocation("City C");
+        e3.setDuration(5);
+        e3.setCost(750);
+
+        Event e4 = new Event();
+        e4.setName("Food Carnival");
+        e4.setLocation("City D");
+        e4.setDuration(1);
+        e4.setCost(1500);
+
+        eventRepository.save(e1);
+        eventRepository.save(e2);
+        eventRepository.save(e3);
+        eventRepository.save(e4);
+    }
+
+    @Test
+    public void testFindTop3ByOrderByCostDesc() {
+        List<Event> events = eventRepository.findTop3ByOrderByCostDesc();
+
+        assertThat(events).hasSize(3);
+        assertThat(events.get(0).getCost()).isEqualTo(1500);
+        assertThat(events.get(1).getCost()).isEqualTo(1000);
+        assertThat(events.get(2).getCost()).isEqualTo(750);
+    }
+
+    @Test
+    public void testFindTop3ByOrderByDurationDesc() {
+        List<Event> events = eventRepository.findTop3ByOrderByDurationDesc();
+
+        assertThat(events).hasSize(3);
+        assertThat(events.get(0).getDuration()).isEqualTo(5);
+        assertThat(events.get(1).getDuration()).isEqualTo(3);
+        assertThat(events.get(2).getDuration()).isEqualTo(2);
+    }
+}
+
+
+
+
+
+
+
+
+
 9.	Covid API
 In this project, virtual data related to COVID-19 is provided for many countries. (Note that all the data is artificial.) Your task is to implement several REST endpoints to handle this data.
  
@@ -10926,6 +11757,217 @@ GET /covid/total?by={by}:
 •	Return the total value summed by the field and status code 200.
 •	For example: /covid/total?by=active gives total active cases.
 •	If by is an invalid attribute, return status code 400.
+@RestController
+@RequestMapping("/covid")
+public class CovidDataController {
+
+    @Autowired
+    private CovidDataRepository repository;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CovidData> getById(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(data -> new ResponseEntity<>(data, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/top5")
+    public ResponseEntity<List<CovidData>> getTop5(@RequestParam String by) {
+        List<CovidData> top5;
+        switch (by.toLowerCase()) {
+            case "active":
+                top5 = repository.findTop5ByOrderByActiveDesc();
+                break;
+            case "death":
+                top5 = repository.findTop5ByOrderByDeathDesc();
+                break;
+            case "recovered":
+                top5 = repository.findTop5ByOrderByRecoveredDesc();
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(top5, HttpStatus.OK);
+    }
+
+    @GetMapping("/total")
+    public ResponseEntity<Integer> getTotal(@RequestParam String by) {
+        List<CovidData> all = repository.findAll();
+        int total;
+        switch (by.toLowerCase()) {
+            case "active":
+                total = all.stream().mapToInt(CovidData::getActive).sum();
+                break;
+            case "death":
+                total = all.stream().mapToInt(CovidData::getDeath).sum();
+                break;
+            case "recovered":
+                total = all.stream().mapToInt(CovidData::getRecovered).sum();
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(total, HttpStatus.OK);
+    }
+}
+
+@Entity
+public class CovidData {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String country;
+    private int active;
+    private int death;
+    private int recovered;
+}
+
+public interface CovidDataRepository extends JpaRepository<CovidData, Long> {
+    List<CovidData> findTop5ByOrderByActiveDesc();
+    List<CovidData> findTop5ByOrderByDeathDesc();
+    List<CovidData> findTop5ByOrderByRecoveredDesc();
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestCovidDataController {
+
+    @InjectMocks
+    private CovidDataController controller;
+
+    @Mock
+    private CovidDataRepository repository;
+
+    @Test
+    public void testGetById_Found() {
+        CovidData data = new CovidData();
+        data.setId(1L);
+        data.setCountry("MyCountry");
+
+        when(repository.findById(1L)).thenReturn(Optional.of(data));
+
+        ResponseEntity<CovidData> response = controller.getById(1L);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("MyCountry", response.getBody().getCountry());
+    }
+
+    @Test
+    public void testGetById_NotFound() {
+        when(repository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<CovidData> response = controller.getById(1L);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    public void testGetTop5_ByActive() {
+        List<CovidData> list = Arrays.asList(new CovidData(), new CovidData(), new CovidData());
+        when(repository.findTop5ByOrderByActiveDesc()).thenReturn(list);
+
+        ResponseEntity<List<CovidData>> response = controller.getTop5("active");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(3, response.getBody().size());
+    }
+
+    @Test
+    public void testGetTop5_InvalidField() {
+        ResponseEntity<List<CovidData>> response = controller.getTop5("population");
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    public void testGetTotal_Death() {
+        CovidData d1 = new CovidData(); d1.setDeath(10);
+        CovidData d2 = new CovidData(); d2.setDeath(20);
+        when(repository.findAll()).thenReturn(Arrays.asList(d1, d2));
+
+        ResponseEntity<Integer> response = controller.getTotal("death");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(Integer.valueOf(30), response.getBody());
+    }
+
+    @Test
+    public void testGetTotal_InvalidField() {
+        ResponseEntity<Integer> response = controller.getTotal("cases");
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+}
+
+@RunWith(SpringRunner.class)
+@DataJpaTest
+public class TestCovidDataRepository {
+
+    @Autowired
+    private CovidDataRepository covidDataRepository;
+
+    @Before
+    public void setUp() {
+        covidDataRepository.deleteAll();
+
+        // Adding sample records
+        CovidData c1 = createCovidData("CountryA", 5000, 200, 3000);
+        CovidData c2 = createCovidData("CountryB", 8000, 500, 2000);
+        CovidData c3 = createCovidData("CountryC", 2000, 100, 5000);
+        CovidData c4 = createCovidData("CountryD", 10000, 700, 4000);
+        CovidData c5 = createCovidData("CountryE", 7500, 300, 2500);
+        CovidData c6 = createCovidData("CountryF", 3000, 800, 3500);
+
+        covidDataRepository.save(c1);
+        covidDataRepository.save(c2);
+        covidDataRepository.save(c3);
+        covidDataRepository.save(c4);
+        covidDataRepository.save(c5);
+        covidDataRepository.save(c6);
+    }
+
+    private CovidData createCovidData(String country, int active, int death, int recovered) {
+        CovidData data = new CovidData();
+        data.setCountry(country);
+        data.setActive(active);
+        data.setDeath(death);
+        data.setRecovered(recovered);
+        return data;
+    }
+
+    @Test
+    public void testFindTop5ByOrderByActiveDesc() {
+        List<CovidData> results = covidDataRepository.findTop5ByOrderByActiveDesc();
+
+        assertThat(results).hasSize(5);
+        assertThat(results.get(0).getActive()).isEqualTo(10000);
+        assertThat(results.get(1).getActive()).isEqualTo(8000);
+        assertThat(results.get(2).getActive()).isEqualTo(7500);
+        assertThat(results.get(3).getActive()).isEqualTo(5000);
+        assertThat(results.get(4).getActive()).isEqualTo(3000);
+    }
+
+    @Test
+    public void testFindTop5ByOrderByDeathDesc() {
+        List<CovidData> results = covidDataRepository.findTop5ByOrderByDeathDesc();
+
+        assertThat(results).hasSize(5);
+        assertThat(results.get(0).getDeath()).isEqualTo(800); // CountryF
+        assertThat(results.get(1).getDeath()).isEqualTo(700); // CountryD
+        assertThat(results.get(2).getDeath()).isEqualTo(500); // CountryB
+        assertThat(results.get(3).getDeath()).isEqualTo(300); // CountryE
+        assertThat(results.get(4).getDeath()).isEqualTo(200); // CountryA
+    }
+
+    @Test
+    public void testFindTop5ByOrderByRecoveredDesc() {
+        List<CovidData> results = covidDataRepository.findTop5ByOrderByRecoveredDesc();
+
+        assertThat(results).hasSize(5);
+        assertThat(results.get(0).getRecovered()).isEqualTo(5000); // CountryC
+        assertThat(results.get(1).getRecovered()).isEqualTo(4000); // CountryD
+        assertThat(results.get(2).getRecovered()).isEqualTo(3500); // CountryF
+        assertThat(results.get(3).getRecovered()).isEqualTo(3000); // CountryA
+        assertThat(results.get(4).getRecovered()).isEqualTo(2500); // CountryE
+    }
+}
+
+
 10.	SiteScanner API
 In this project, scan data is given for several websites. Your task is to implement several REST endpoints to handle this data.
  
@@ -10950,6 +11992,157 @@ DELETE /scan/{id}:
 GET /scan/search/{domainName}?orderBy={numPages):
 •	Return the scans filtered by product and sorted by the given column with status code 200.
 •	When the given orderBy column doesn't exist, status code 400 is returned.
+
+@RestController
+@RequestMapping("/scan")
+public class ScanController {
+
+    @Autowired
+    private ScanRepository scanRepository;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Scan> getScanById(@PathVariable Long id) {
+        Optional<Scan> scanOpt = scanRepository.findById(id);
+        if (scanOpt.isPresent() && !scanOpt.get().isDeleted()) {
+            return new ResponseEntity<>(scanOpt.get(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteScan(@PathVariable Long id) {
+        Optional<Scan> scanOpt = scanRepository.findById(id);
+        if (scanOpt.isPresent()) {
+            Scan scan = scanOpt.get();
+            scan.setDeleted(true);
+            scanRepository.save(scan);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/search/{domainName}")
+    public ResponseEntity<List<Scan>> searchScans(
+            @PathVariable String domainName,
+            @RequestParam String orderBy) {
+
+        List<Scan> filtered = scanRepository.findByDomainNameAndDeletedFalse(domainName);
+
+        Comparator<Scan> comparator;
+        switch (orderBy) {
+            case "numPages":
+                comparator = Comparator.comparingInt(Scan::getNumPages);
+                break;
+            case "numBrokenLinks":
+                comparator = Comparator.comparingInt(Scan::getNumBrokenLinks);
+                break;
+            case "numMissingImages":
+                comparator = Comparator.comparingInt(Scan::getNumMissingImages);
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        filtered.sort(comparator);
+        return new ResponseEntity<>(filtered, HttpStatus.OK);
+    }
+}
+
+@Entity
+public class Scan {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String domainName;
+    private int numPages;
+    private int numBrokenLinks;
+    private int numMissingImages;
+    private boolean deleted;
+}
+
+public interface ScanRepository extends JpaRepository<Scan, Long> {
+    List<Scan> findByDomainNameAndDeletedFalse(String domainName);
+}
+
+@RunWith(MockitoJUnitRunner.class)
+public class TestScanController {
+
+    @InjectMocks
+    private ScanController scanController;
+
+    @Mock
+    private ScanRepository scanRepository;
+
+    @Test
+    public void testGetScanById_Found() {
+        Scan scan = new Scan();
+        scan.setId(1L);
+        scan.setDomainName("test.com");
+        scan.setDeleted(false);
+
+        when(scanRepository.findById(1L)).thenReturn(Optional.of(scan));
+
+        ResponseEntity<Scan> response = scanController.getScanById(1L);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("test.com", response.getBody().getDomainName());
+    }
+
+    @Test
+    public void testGetScanById_NotFound() {
+        when(scanRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Scan> response = scanController.getScanById(1L);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    public void testDeleteScan_Success() {
+        Scan scan = new Scan();
+        scan.setId(1L);
+        scan.setDeleted(false);
+
+        when(scanRepository.findById(1L)).thenReturn(Optional.of(scan));
+        ResponseEntity<Void> response = scanController.deleteScan(1L);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(scanRepository).save(scan);
+    }
+
+    @Test
+    public void testDeleteScan_NotFound() {
+        when(scanRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Void> response = scanController.deleteScan(1L);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    public void testSearchScans_Success() {
+        Scan s1 = new Scan(); s1.setNumPages(100); s1.setDomainName("test.com");
+        Scan s2 = new Scan(); s2.setNumPages(50); s2.setDomainName("test.com");
+
+        when(scanRepository.findByDomainNameAndDeletedFalse("test.com"))
+                .thenReturn(Arrays.asList(s1, s2));
+
+        ResponseEntity<List<Scan>> response = scanController.searchScans("test.com", "numPages");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
+        assertEquals(50, response.getBody().get(0).getNumPages());
+    }
+
+    @Test
+    public void testSearchScans_InvalidOrderBy() {
+        ResponseEntity<List<Scan>> response = scanController.searchScans("test.com", "invalidField");
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+}
+
+
+
+
+
+
 11.	 Spring Boot: The Library
 A librarian wants to offer an online search page for the library's book catalog. Each book has a unique identifier called an ISBN number assigned at publication, which will be the search identifier. A paginated API that returns the books available in the library already exists.
  
