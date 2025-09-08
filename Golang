@@ -1,0 +1,4708 @@
+https://github.com/hiteshchoudhary/golang
+
+Go programming language also known as golang is already being loved by startups and also this
+language is already in production for giants like google and drawbox and many others. Now this brings this programming language already into a unique position where startups are loving it as well as it is already present in giants 
+
+Why golang
+1. Compiled
+     So go is also termed as the next gen programming language, some people also go and tell that if c would have been designed in the present era this would be it, this is how powerful
+the go language is 
+   you're going to very soon understand that a lot of languages bring up the features over the
+time and some of these languages don't come up to utilize the true power of the cloud infrastructure and that is one of the reason, why golang is getting so much of popularity and this language is already in production
+   First is this language compiled or is it interpreted or is it some what in between, the languages can be compiled like every code is being read at first and then an output file is being created like an exe and then you just run that it's really fast or it can be interpreted just like javascript code runs line by line or it can be somewhat in between just like java does 
+   What is the difference between the golang and java and other languages ?  - Golang is compiled,
+in the languages which are in between like java it just doesn't get compiled, it just gives you some of the intermediate binaries and it expects that any machine who is going to run this code should have this jvm installed
+   But in golang it just compiles everything and runtime is baked into the final product, so as long as we have installed and we don't need any jvm we just go and run 
+
+2. Tools
+     Golang actually gives you some set of tools that you can utilize, because there is a lot of control go language takes from the operating system and literally gives it to you especially in the cases of threads
+
+3. Export
+     Executables are exported at the compile time and go gives you whole options to produce the
+compiled output or the final executables for windows or for linux or for mac 
+
+4. Production 
+     Golang is already in production and this language is already used in lot of google
+ecosystem, cloud infrastructure, a lot of companies are using it and they are shrinking up their
+machines that they were previously managing, if they were managing five or six machines, now they are shrinking it down to just two machines or one machines
+is already in production and that's why
+
+5. Don't bring in any baggage
+      If you have coded in any other programming language that experience always helps you no matter what the language is, but bringing up those mindset that this language doesn't have, for example switch and case statement it doesn't have 
+
+6. ObjectOriented - Is this language object oriented kind of yes and no
+       According to the true definition of object oriented programming language, you should have classes, you should have object but we don't have classes in golang, we have structs which is kind of an alternative for classes, we also don't have any kind of overloading like we don't have operator overloading, we don't have a method overloading 
+      Golang is designed with simplicity in mind,what you see on the code you can just decide what's about to  happen by looking at the code, there is no prerequisite
+
+What is missing
+1. no try catch 
+2. lexer is doing a lot of work for you, for example when we write code we don't write semicolons in this language, if you don't write semicolon it's not going to give you any error because lexer actually provides you 
+
+Installation
+1. Download Golang https://go.dev/
+
+2. Install it
+
+3. Use VSCode as code editor 
+
+4. Create myGolang folder and open in VS code
+
+5. Create 01Hello folder in VSCode - create new file main.go 
+
+6. Right click main.go, and open in new terminal 
+>go mod init hello
+
+which creates a file go.mod, it says module is hello and goversion is 1.25
+
+7. To read and color code properly my go files we need to install some extensions on vscode called "Go" - click Install all
+
+8. In go, it is very similar to languages like c and c++ so there is always a one entry point
+which is going to act as the starting point for your program, and this is main which is a reserved keyword
+
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from Go")
+}
+
+9. Run the prg
+>go run main.go
+
+This is going to just run the file, this is not going to build it, so we are not going to get any
+executables which you can execute 
+
+10. In order to get help from go, u can give
+>go help 
+
+which displays all commands, in that we have gopath which gives env variables that is available, basically when we install any tool like Go or Java we need to set path for that so that we can access it anywhere on ur system. But when we install go it did all of this in background, but we need to know where it is installed for that we need to use "gopath"
+
+>go help gopath
+
+- Even we can give a command
+
+>go env GOPATH
+
+
+Lexer in Golang and Types
+    First line we've written is main() and we had a small discussion about the semicolons that there are some places where you can put semicolon but on some places you shouldn't be putting up
+semicolons like paranethesis. So there is a place where you can put these semicolons for example in  fmt.Println("Hello from Go");
+and this is the valid syntax, without the semicolon that is not a valid syntax and as soon as i save this file, since we've installed the golang intellisense, it automatically removes my semicolon, but there are some places where it is not automatically going to remove it, for example for loop, if loop. 
+    So how is it removing it and the code is working fine, now the actual answer is that you should be putting up semicolon at every single place, but team realized that there are some places where you shouldn't be putting up, so that lexer can come in and put up this 
+    According to  specs of the language you need to use semicolon, but there is a thing in the
+language which is known as "lexer" (ie) every language whether c, c++,java, javascript has a lexer, the job of the lexer is to simply understand that you are following the grammar of the
+language so that your syntax is correct
+    So what this lexer does that, if you install the intellisense then this lexer will automatically be kicked in and every single place this lexer comes in and manually puts the semicolon for you, so this is the job that lexer is doing 
+
+Types in the golang
+    1. Types are case sensitive and sometimes types even define that you are going to make public or the private itself, the first initial capital letter usually is going to provide the idea that whether the thing is actually public or private. For example 
+    fmt.Println("Hello from Go");
+P is capital allowing that wherever this module was written, this print line function was
+exported publicly so that anybody can use it 
+    2. In the golang, variables should be known in advance so if you're declaring a variable of type integer or string or whatever, you need to define that in advance 
+    3. Everything in the golang is a type, just like in the javascript we see that everything is
+almost like an object, so in golang you're going to see that almost everything is a type like
+String, Bool, Integer(unsigned - uint8(0 to 255),uint16(0 to 65535),uint32(0 to 4294967295),uint64(0 to 18446744073709551615),uintptr, signed - int8(-128 to 127),int16(-32768 to 32767),int32(-2147483648 to 2147483647),int64(-9223372036854775808 to 9223372036854775807)), Float(float32,float64) and Complex. byte - alias for uint8, rune - alias for int32
+
+There is also a set of predeclared integer types with implementation-specific sizes:
+
+uint     either 32 or 64 bits
+int      same size as uint
+uintptr  an unsigned integer large enough to store the uninterpreted bits of a pointer value
+
+     We have advanced type like  arrays, slices, maps, structs and pointers
+     We have another types as well like functions, internally they also treated as types so that you can pass them as an argument or as a return type 
+
+
+Variables, types and constants
+1. Create 02Variables folder inside myGolang folder
+2. Right click on 02Variables and create file main.go, we can directly type code
+
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Variables")
+}
+
+- Run the prg
+>go run main.go
+
+Everything works fine but the reason we should do the initialization of the modules because that is the way how we need to go for the production ready things.
+
+3. Open terminal
+>go mod init variables
+
+4. Write code to create the variables 
+
+fp - shortcut for fmt.Println
+
+- Whenever we declare a variable it will throw up an error, because in go if you create a
+variable and you don't use it says an error you have declared something but you haven't used it 
+
+%T - used to find out the type of this variable and put a placeholder using %T 
+
+- In most of the cases for integer value, we can use "int" itself, but also we can use unsigned int like uint8, uint16, uint32 etc
+
+
+package main
+
+import "fmt"
+
+//token := 300000 //error
+var token = 30000  //allowed
+
+const LoginToken string = "abcdegfgf"   //PUBLIC
+
+func main() {
+	var username string = "Ram"
+	fmt.Println(username)
+	fmt.Printf("Variable is of type: %T \n", username)
+
+	var isLoggedIn bool = true
+	fmt.Println(isLoggedIn)
+	fmt.Printf("Variable is of type: %T \n", isLoggedIn)
+
+	var smallVal uint8 = 255
+	fmt.Println(smallVal)
+	fmt.Printf("Variable is of type: %T \n", smallVal)
+
+	//float32 will have default 5 digit after decimal pt
+	var smallFloat float32 = 255.45544678464553
+	fmt.Println(smallFloat)
+	fmt.Printf("Variable is of type: %T \n", smallFloat)
+
+	//float64 will give exact value
+	var smallFloat1 float64 = 255.45544678464553
+	fmt.Println(smallFloat1)
+	fmt.Printf("Variable is of type: %T \n", smallFloat1)
+
+	//default values for int=0, string=empty
+	var anotherVar string
+	fmt.Println(anotherVar)
+	fmt.Printf("Variable is of type: %T \n", anotherVar)
+
+	//implicit way of declaring the variables - if you'll try to run the code it will
+work fine, but the variable type should be declared and it is very important for the golang and
+this is where again the lexer comes in and says that if you're not going to saying that what type of variable it will decide it based on what value you're putting it up
+	var website =  "www.google.com"
+	fmt.Println(website)
+    //website = 3 //error
+
+   //no var style like we can totally ignore the keyword var and still can declare other variables
+   numberOfUser := 300000
+	fmt.Println(numberOfUser)
+
+   fmt.Println(LoginToken)
+   fmt.Printf("Variable is of type: %T \n", LoginToken)
+}
+
+- Declaring variable without var keyword is not allowed outside main method, inside any
+method you are allowed to use this walrus operator(:=) but outside of the method like global you are not allowed to use this walrus operator(:=)
+- If you want to go outside of the method then  var token = 300000
+
+- We can declare the constant using const, i have created this Logintoken with first character as capital L to indicate it is a public variable, equivalent to put up a public keyword but in the golang we do that by putting up the first letter as the capital letter, now this Logintoken is
+accessible by any other file into this folder or actually in this program and you can use this anywhere
+
+5. Run the prg 
+> go run main.go
+Ram
+Variable is of type: string 
+
+
+Comma ok syntax and packages in golang
+1. Create 03UserInput folder inside myGolang folder
+2. Right click on 03UserInput and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init UserInput
+
+4. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	 welcome := "Welcome to user input"
+     fmt.Println(welcome)
+}
+
+
+Now we want to take input from the user, for this we have library in golang called as comma ok syntax or comma error syntax 
+
+If you want to search for any package we can use pkg.go.dev and search for "bufio" which can read from input outputs, so you can read from the keyboards, you can read from other printers and other resources and you can also use that buffer to store things into variable
+
+Click Functions -  you can scan for bytes, you can scan for line, you can scan for runes and words
+
+1. First we need to create a reader with walrus operator because when you use these packages we don't know what is coming up and that's exactly this walrus operator is being designed for.
+So we use bufio.NewReader() but from where you should be reading up and for that we have another library called "os" and we want to read from standard input output so we use stdin
+
+    reader := bufio.NewReader(os.Stdin)
+
+    //Now provide a message to the user 
+	 fmt.Println("Enter your rating for your product:")
+
+	 //whatever this reader actually reads we want to store that into a variable and
+     //this is where the comma okay syntax comes. In the language golang we actually don't have      	//the try catch, so if something goes wrong there is nobody to catch that, because the  	//language expects that you treat the errors as a variable. It says that you are
+	//either going to get input or you might receive an error and hold this error into a variable 	//like error, but if you don't care about anything in the golang, we just use an underscore 	//for that and in case we don't care about the input you can also use an underscore. 
+    //And we use reader.ReadString('\n') where we read upto \n
+         input,_ := reader.ReadString('\n')
+         fmt.Println("Thanks for rating, ", input)
+
+
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	welcome := "Welcome to user input"
+	fmt.Println(welcome)
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Enter your rating for your product:")
+
+	input, _ := reader.ReadString('\n')
+	fmt.Println("Thanks for rating, ", input)
+}
+
+
+- Run the program
+>go run main.go
+Welcome to user input
+Enter your rating for your product:
+5
+Thanks for rating,  5
+
+- Now we want know the type of this rating, for that we use %T
+
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	welcome := "Welcome to user input"
+	fmt.Println(welcome)
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Enter your rating for your product:")
+
+	input, _ := reader.ReadString('\n')
+	fmt.Println("Thanks for rating, ", input)
+	fmt.Printf("Type of this rating is %T",input)
+}
+
+when we run the program 
+
+> go run main.go
+Welcome to user input
+Enter your rating for your product:
+4
+Thanks for rating,  4
+
+Type of this rating is string
+
+But 4 is a string
+
+-  We can see input,_ so now it is expected that when you're reading something from standard input there might be chances that something might go wrong and for that wrong thing there might be
+an error that comes in, so in that case you can go ahead and store that error like 
+   input, err := reader.ReadString('\n')
+
+Now this is giving me problem because we are not using this. If everything goes right then it will
+give me input and if anything goes wrong it stores error in err, so this is part where we can assume  like a catch, so input part is the try and the err part is the catch. In lot of cases you
+don't worry about the errors, so you can put underscore. 
+    In some cases we just care about the errors only and not the input then we can put underscore for input 
+     _, err := reader.ReadString('\n')
+
+
+Conversions in golang
+    In previous example when we print the type of rating input, it is displaying as string. So now we see how the conversion of the strings and numbers are handled in go
+
+1. Create 04Conversion folder inside myGolang folder
+2. Right click on 04Conversion and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init conversion
+
+4. Write code in main.go
+
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	fmt.Println("Welcome to our application")
+	fmt.Println("Please rate the product between 1 and 5")
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, _ := reader.ReadString('\n')
+	fmt.Println("Thanks for rating, ", input)
+	
+}
+
+> go run main.go
+Welcome to our application
+Please rate the product between 1 and 5
+4
+Thanks for rating,  4
+
+5. For some reason you want to add 1 to whatever the rating user is giving to us 
+
+     numRating = input + 1
+
+it gives us an error immediately that it cannot convert 1 to a string type, because we have already seen that input is of type string and we cannot add, so we need to convert this string to number for that the package that is going to help us in this conversion is known as "strconv"  method "parseFloat" which requires two values to be passed (ie) input  whatever the string that you pass on and then the bit size especially in the float we give 64, and also we need to handle the error
+
+     numRating, err := strconv.ParseFloat(input,64)
+
+- Again we get an error that we are not using the error and numRating, so syntax of this comma ok
+syntax is every time you see this error, you move the program by cautiously checking that if there is error or not 
+     if err != nil {
+         fmt.Println(err)
+     } else {
+         fmt.Println("Added 1 to the rating: ", numRating + 1)
+     }
+
+
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+)
+
+func main() {
+	fmt.Println("Welcome to our application")
+	fmt.Println("Please rate the product between 1 and 5")
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, _ := reader.ReadString('\n')
+	fmt.Println("Thanks for rating, ", input)
+
+	//numRating = input + 1
+	numRating, err := strconv.ParseFloat(input, 64)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Added 1 to the rating: ", numRating+1)
+	}
+}
+
+> go run main.go
+Welcome to our application
+Please rate the product between 1 and 5
+4
+Thanks for rating,  4
+
+strconv.ParseFloat: parsing "4\r\n": invalid syntax 
+
+6. Now we will get an error, we are able to convert the string using the parsefloat and we are taking this input, but if see this error it says there is a 4 and \n, so automatically when you are hitting the enter it's not just alone 4 that is going but also \n which is a trailing character which is coming up.
+     So we need to trim the trailing as well as the first characters from our numbers using "strings" package and function TrimSpace()
+
+
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
+
+func main() {
+	fmt.Println("Welcome to our application")
+	fmt.Println("Please rate the product between 1 and 5")
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, _ := reader.ReadString('\n')
+	fmt.Println("Thanks for rating, ", input)
+
+	//numRating = input + 1
+	numRating, err := strconv.ParseFloat(strings.TrimSpace(input), 64)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Added 1 to the rating: ", numRating+1)
+	}
+}
+
+> go run main.go
+Welcome to our application
+Please rate the product between 1 and 5
+4
+Thanks for rating,  4
+
+Added 1 to the rating:  5
+
+
+Handling time in golang
+1. Create 05Time folder inside myGolang folder
+2. Right click on 05Time and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init myTime
+
+- we can use pkg.go.dev and search for "time" package 
+
+4. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Welcome to time in Golang")
+}
+
+5. To get current time we use Now()
+
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	fmt.Println("Welcome to time in Golang")
+
+	presentTime := time.Now()
+	fmt.Println(presentTime)
+}
+
+> go run main.go
+Welcome to time in Golang
+2025-08-19 21:01:08.379881 +0530 IST m=+0.001224301
+
+6. To change the format of the time using Format("01-02-2006"), in the documentation it is mentioned that we are always going to use this time as a standard for formatting, so no matter what your actual time is, you have to give the format like this 
+
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	fmt.Println("Welcome to time in Golang")
+
+	presentTime := time.Now()
+	//current date and time
+	fmt.Println(presentTime)
+
+	//change format of date - prints only date
+	fmt.Println(presentTime.Format("01-02-2006"))
+
+	//prints date with day we have to always give Monday
+	fmt.Println(presentTime.Format("01-02-2006 Monday"))
+
+	//prints current time we use 15:04:05
+	fmt.Println(presentTime.Format("01-02-2006 15:04:05 Monday"))
+}
+
+> go run main.go
+Welcome to time in Golang
+2025-08-19 21:18:03.0395078 +0530 IST m=+0.001090701      
+08-19-2025
+08-19-2025 Tuesday
+08-19-2025 21:18:03 Tuesday
+
+7. We don't want to get the current time, maybe we want to create the time from some of the values that you are manually entering using Date(int year, Time.Month,int date, int hr, int min, int sec, int nsec, Location l)
+
+    createdDate := time.Date(2022,time.December,14,20,10,23,0,time.UTC)
+	fmt.Println(createdDate)
+	fmt.Println(createdDate.Format("01-02-2006 Monday"))
+
+
+Build for windows, linux and mac
+    go actually gives you the tools which can help you to build exes the executable for windows, the linux executable files and for mac files using
+
+>go env
+we can see that we have modules, the architecture, where the caches are, the environments and a whole bunch of other things, but where i'm interested is "goos=windows" if you are on that
+operating system and using this goos command we can actually build for different operating system, and the command to build is "go build"
+
+>GOOS="Darwin" go build
+    If we want to change the value of goos (ie) Darwin for Unix OS, it is going to build an
+application. Since we are in windows we can run
+
+>go build
+
+it's automatically going to find the main.go file and will compile and create mytime.exe file, and we can double click and run it  or open cmd prompt and run
+
+C:\myGolang\05myTime>myTime.exe
+Welcome to time in Golang
+2025-08-19 21:39:39.1101083 +0530 IST m=+0.001373901
+08-19-2025
+08-19-2025 Tuesday
+08-19-2025 21:39:39 Tuesday
+
+
+Memory management in golang
+     Memory management is really simple in the golang, unlike other languages in which you have to do the memory management on your own, but in the golang memory allocation and deallocation automatically happens.  In the memory management we are going to use these two methods new() and make() which helps you to allocate some memory and then in that memory you can put up some data structure like an array or variable or slice etc
+
+new()													make()
+1. Allocate memory but no init						1. Allocate memory and init
+2. u will get memory address						2. u will get memory address
+3. zeroed storage									3. non-zeroed storage
+
+     when you use the keyword new a memory is being allocated but it is not initialized, when you use the keyword make a memory is allocated and is initialized also, so that you can use that memory and put any value into that
+     In both of the cases you are going to get a memory address and you can reference them using
+the pointers 
+     new actually gives you the zeroed storage and make actually gives you the non-zeroed storage, the zero storage in which you cannot put any data initially but in the non-zeroed storage you can
+actually put any of the data 
+     The garbage collection happens automatically anything which is out of the scope or becomes nil is eligible for the garbage collection 
+
+- we can use pkg.go.dev and search for "runtime" package - runtime is a package used to get some
+low level information about how much of the cpu is available, RAM info etc
+
+- Refer 2nd paragraph under env variables
+
+GOGC which is again garbage collector variable sets the initial garbage collection target percentage, so this is the variable just like we have GOOS, this is the variable which sets
+the initial percentage for the garbage collection. A collection is triggered when the ratio of freshly allocated data to live data remain above after the  previous collection reaches its percentage, so basically it's saying there is a threshold value you are allowed to set that value and the garbage collection happens after that value 
+
+There are different functions are there like
+- NumCPU() - returns the number of logical CPUs usable by the current process.
+
+
+Pointers in golang
+1. Create 07Pointer folder inside myGolang folder
+2. Right click on 07Pointer and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init pointers
+
+4. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Welcome to Golang Pointer")
+}
+
+Why pointer exists?
+    Now there is a problem in the programming language and this is a problem which exists in all of the language, the problem is that sometimes you know that whenever you declare any variable or
+constant or array, they are just a reference of the memory and these values get stored in some
+memory and the problem is that sometimes when you pass these variables into functions or classes and objects, sometimes these variables not get passed, instead a copy is being created for these variables and that copy is being passed to these multiple of functions. This sometimes create
+some of the irregularities in the program, so to avoid these irregularities we have the pointers, pointers give us the surety that whatever the resource you are passing on as a pointer, we are not passing these variables we are passing the memory address of these variables so it guarantee
+that whatever you're passing on it is always the actual value from the memory
+    Sometimes when you pass on these variables, a copy of this variable is being passed on
+whenever there is a case when you want to avoid and you want absolute guarantee that always the
+actual value should be passed on, then we prefer that a pointer should be passed. 
+    Pointer is just a direct reference to the memory address and since you're directly passing on
+that address it makes 100% guarantee that the actual value is being passed 
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Welcome to Golang Pointer")
+
+	var ptr *int
+	fmt.Println("Value of pointer is ", ptr)
+}
+
+> go run main.go
+Welcome to Golang Pointer
+Value of pointer is  <nil>
+
+If you start a pointer, you don't put any value to it, its value is actually nil
+
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Welcome to Golang Pointer")
+
+	//var ptr *int
+	//fmt.Println("Value of pointer is ", ptr)
+
+    //create a variable which automatically infer that it is a type of integer 
+    myNumber := 23
+
+    //create a pointer which points to this memory address of myNumber, previously we just created a pointer, here i'm not creating a pointer i'm just creating a pointer which is also referencing to some some memory
+    var ptr = &myNumber
+    
+    fmt.Println("Value of actual pointer is ",ptr)
+	fmt.Println("Value of actual pointer is ",*ptr)
+
+    *ptr = *ptr+2;
+    fmt.Println("New Value is ",*ptr)
+	
+}
+
+> go run main.go
+Welcome to Golang Pointer
+Value of actual pointer is  0xc00000a098
+Value of actual pointer is  23
+New Value is 25
+
+First line we get 0xc00 which is an actual memory address, but in the second line we get the value 23, so we know that pointer is a reference to the direct memory location and that's what it is
+but the value inside this pointer is actually 23
+
+
+Array in golang
+    Array is very less used in the golang, in majority of the other programming language array is
+the most used data structure but in the golang the language specification actually holds our hand a lot and don't allow us to use too much of the array, but under the hood there are other data
+types which actually utilizes array. We have dont sort or any other operations in array
+
+1. Create 08Array folder inside myGolang folder
+2. Right click on 08Array and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init myArray 
+
+4. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Welcome to Golang Array")
+
+	var fruitList [4]string
+	fruitList[0] = "Apple"
+	fruitList[1] = "Orange"
+	fruitList[3] = "Mango"
+
+	fmt.Println("Fruit List is: ",fruitList)  //Fruit List is:  [Apple Orange  Mango]
+
+    //It prints apple we have this orange and the space is just one between apple and orange but for mango there is a long space in between, this is how by default it prints out and try to give
+you an indication that there is a blank space in your fruitlist and since you have got four elements that are allowed but we  putting up three values into it
+
+    fmt.Println("Fruit List is: ",len(fruitList))  //4
+
+	var vegList = [5]string{"Potato", "Tomato", "Methi"}
+	fmt.Println("Veg List is: ", len(vegList)) //5
+	
+}
+
+> go run main.go
+Welcome to Golang Array
+Fruit List is:  [Apple Orange  Mango]
+Fruit List is:  4
+Veg List is:  5
+
+
+Slices in golang
+    Slices are much more powerful and mostly used a data type in the entire golang. Slices are
+actually under the hood arrays and these arrays, once they get an abstraction layer and some more features they're called as slices
+    slice we don't actually mention that how many values are going to come in, when you define
+those values that means you are creating a simple array. Since the array was very precisely
+defined only three values or four values we cannot just add as many values as we like, but in Slices we can add as many values as we like and it automatically expands the memory for us
+
+1. Create 09MySlice folder inside myGolang folder
+2. Right click on 09MySlice and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init mySlice
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+func main() {
+	fmt.Println("Welcome to Golang Slices")
+
+	//Slice declaration
+	var fruitList = []string{}
+	fmt.Printf("Type of fruitlist is %T\n", fruitList)
+
+	var fruitList1 = []string{"apple", "orange", "grapes"}
+	fmt.Println("Fruit List is: ", fruitList1)
+
+	//add new value use append()
+	fruitList1 = append(fruitList1, "Mango", "Peach")
+	fmt.Println(fruitList1) //[apple orange grapes Mango Peach]
+
+	//colon syntax is actually used to slice up your slice
+	//and that means if you want to make separate parts of your slice
+	//will start with one and the ending limit is all
+	fruitList1 = append(fruitList1[1:])
+	fmt.Println(fruitList1) //[orange grapes Mango Peach]
+
+	//no start value starts with 0 to end-1
+	//fruitList1 = append(fruitList1[:3])
+	//fmt.Println(fruitList1) //[orange grapes Mango]
+
+	//starts with 1 and end-1
+	fruitList1 = append(fruitList1[1:3])
+	fmt.Println(fruitList1) //[grapes Mango]
+
+	//another syntax to create slice using make()
+	highScore := make([]int, 4)
+
+	highScore[0] = 234
+	highScore[1] = 945
+	highScore[2] = 465
+	highScore[3] = 867
+	//highScore[4] = 777 //error index out of range
+
+	//slice of integer and you can store four values but this is the
+	//default allocation of the memory as soon as you use the method append it is going
+	//to reallocate the memory and all of the values will be accommodated
+	// Initially we have only four memories to be allocated and
+	//as soon as the new value comes in then the entire memory allocation happens again
+	//and this saves a lot of memory, a lot of time and a lot of performance optimization
+	highScore = append(highScore, 555, 666, 321)
+
+	fmt.Println(highScore)
+
+	//we have package sort for sorting purpose
+	sort.Ints(highScore)
+	fmt.Println(highScore)
+	fmt.Println(sort.IntsAreSorted(highScore))
+}
+
+> go run main.go
+Welcome to Golang Slices
+Type of fruitlist is []string
+Fruit List is:  [apple orange grapes]
+[apple orange grapes Mango Peach]
+[orange grapes Mango Peach]
+[grapes Mango]
+[234 945 465 867 555 666 321]
+[234 321 465 555 666 867 945]
+true
+
+- Remove a value from slice based on the index
+
+we use :index means we don't have a first value so starts with 0 till index (ie) 2-1, so it will have reactjs, javascript. Next we have courses[index+1:] (ie) we start from 2+1=3rd position and end we dont know so it displays all, so we have python, ruby
+
+courses = append(courses[:index], courses[index+1:])
+
+As soon as we save this we get an error, although the logic is correct but the syntax is not
+correct, this is where you define your definition of function in a way which accepts more argument by using ...
+
+    var index int = 2
+	courses = append(courses[:index], courses[index+1:]...)
+	fmt.Println(courses) // [reactjs javascript python ruby]
+
+> go run main.go
+Welcome to Golang Slices
+Type of fruitlist is []string
+Fruit List is:  [apple orange grapes]
+[apple orange grapes Mango Peach]
+[orange grapes Mango Peach]
+[grapes Mango]
+[234 945 465 867 555 666 321]
+[234 321 465 555 666 867 945]
+true
+[reactjs javascript swift python ruby]
+[reactjs javascript python ruby]
+
+
+Maps in golang
+   Maps or also known as hash table with key value pairs
+
+
+1. Create 10MyMap folder inside myGolang folder
+2. Right click on 10MyMap and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init mySlice 
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Welcome to Golang Maps")
+
+	//create a map using make() with non-zero value and string as key and string as value
+	languages := make(map[string]string)
+
+	//initialize values
+	languages["JS"] = "JavaScript"
+	languages["PY"] = "Python"
+	languages["RB"] = "Ruby"
+
+	// these are not comma separated values in the golang especially in the array, maps
+	fmt.Println("List of all languages: ", languages)
+
+	//print individual values
+	fmt.Println("JS shorts for: ", languages["JS"])
+
+	//delete a key-value pair from the map
+	delete(languages, "RB")
+	fmt.Println("List of all languages: ", languages)
+
+	//loop through the map
+	for key, value := range languages {
+		fmt.Printf("For key is %v, value is %v\n", key, value)
+	}
+
+	// in case you don't care about the key you can go ahead and just say underscore
+	for _, value := range languages {
+		fmt.Printf("For key value is %v\n", value)
+	}
+}
+
+> go run main.go
+Welcome to Golang Maps
+List of all languages:  map[JS:JavaScript PY:Python RB:Ruby]
+JS shorts for:  JavaScript
+List of all languages:  map[JS:JavaScript PY:Python]      
+For key is JS, value is JavaScript
+For key is PY, value is Python
+For key value is JavaScript
+For key value is Python
+
+
+Structs in golang
+    Structs are really important because they are the alternative versions of classes and we
+don't have classes in golang instead we have structs
+    There is no inheritance in golang, no super or parent 
+
+1. Create 11MyStructs folder inside myGolang folder
+2. Right click on 11MyStructs and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init myStructs
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Welcome to Golang Structs")
+
+	//Initialize the struct
+	ram := User{"Ram", "ram@gmail.com", true, 25}
+	fmt.Println(ram)
+
+	//format the struct and display it using %+v in the case of structure
+	//%+v also gives you not only the values but also the structure and what are the naming convention being used
+	fmt.Printf("Ram details are: %+v\n", ram)
+
+	//print single field from structs
+	fmt.Printf("Name is: %v and email is: %v\n", ram.Name, ram.Email)
+}
+
+// Define a struct
+// we have used User as capital U because this is like a class
+// or a template that you'll be using so it needs to be exported
+// All the fields also can be accessed by anybody so that's why you are actually
+// putting up all the first letter as the capital
+type User struct {
+	Name   string
+	Email  string
+	Status bool
+	Age    int
+}
+
+> go run main.go
+Welcome to Golang Structs
+{Ram ram@gmail.com true 25}
+Ram details are: {Name:Ram Email:ram@gmail.com Status:true Age:25}
+Name is: Ram and email is: ram@gmail.com
+
+
+Control flow statements in Golang
+1. If else in golang
+
+1. Create 12IfElse folder inside myGolang folder
+2. Right click on 12IfElse and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init ifElse
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("IfElse in Golang")
+
+	loginCount := 23
+    var result string
+
+	if loginCount < 10 {
+		result = "Regular user"
+	}
+
+	fmt.Println(result)
+
+	//u cant bring { to the nextline, it will be error
+	/*if loginCount < 10 
+	{
+		result = "Regular user"
+	}*/
+
+	if loginCount < 10 {
+		result = "Regular user"
+	} else {
+		result = "Something else"
+	}
+
+	if loginCount < 10 {
+		result = "Regular user"
+	} else if loginCount > 10 {
+		result = "Watch out"
+	} else {
+		result = "Exactly 10 login count"
+	}
+
+	//you not only need to actually create the variable in advance and then
+    //check them out you can create them on the go as well
+	if 9%2 == 0 {
+		fmt.Println("Number is even")
+	} else {
+		fmt.Println("Number is odd")
+	}
+
+	//In the cases of web request handling we use special syntax in which
+    //you can go ahead and initialize a variable and directly put up a value into it 
+	//Sometimes value comes in from the web request and you just assign it on the go and do the checking on the go
+	//Initializing it and assigning value and at the same time  and we can put up a semicolon and keep on moving for checking value
+	if num := 3; num < 10 {
+		fmt.Println("Num is less than 10")
+	} else {
+		fmt.Println("Num is not less than 10")
+	}
+
+	/*if err != nil {
+
+	}*/
+}
+
+2. Switch case in golang
+
+1. Create 13SwitchCase folder inside myGolang folder
+2. Right click on 13SwitchCase and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init ifElse
+
+4. Write code in main.go
+
+- In order to generate random number we use package math/rand generates pseudorandom numbers, rand.Seed sets the starting point for the pseudorandom number generator, if you don’t set a seed, it always uses the same seed (1), which means it will generate the same sequence of random numbers every time you run your program. with seed (especially time.Now().UnixNano()), you get varied results.
+
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	fmt.Println("Switch Case in Golang")
+
+	//set the seed
+	rand.Seed(time.Now().UnixNano())
+
+	//we need a dicenumber so we create a variable, it will generate number between 0 and 5
+	diceNumber := rand.Intn(6) + 1
+    fmt.Println("Value of dice is ",diceNumber)
+
+	switch(diceNumber){
+	case 1:
+		fmt.Println("Dice value is 1 and you can open")
+	case 2:
+		fmt.Println("You can move to 2 spot")
+	case 3:
+		fmt.Println("You can move to 3 spot")
+	case 4:
+		fmt.Println("You can move to 4 spot")
+	case 5:
+		fmt.Println("You can move to 5 spot")
+	case 6:
+		fmt.Println("You can move to 6 spot and roll dice again")
+	default:
+		fmt.Println("What was that!")
+	}
+
+	// there is a requirement you want that once you hit the case all the cases
+	//needs to go through and run after that then you have to explicitly define "fallthrough"
+	//When we call fallthrough it will execute the case and immediate case also will be execute
+	switch(diceNumber){
+	case 1:
+		fmt.Println("Dice value is 1 and you can open")
+	case 2:
+		fmt.Println("You can move to 2 spot")
+	case 3:
+		fmt.Println("You can move to 3 spot")
+		fallthrough
+	case 4:
+		fmt.Println("You can move to 4 spot")
+		fallthrough
+	case 5:
+		fmt.Println("You can move to 5 spot")
+	case 6:
+		fmt.Println("You can move to 6 spot and roll dice again")
+	default:
+		fmt.Println("What was that!")
+	}
+
+}
+
+
+Loop break continue and goto in golang
+1. Create 14Loops folder inside myGolang folder
+2. Right click on 14Loops and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init ifElse
+
+4. Write code in main.go
+
+-In golang we dont have ++i, we have only i++
+
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Loops in Golang")
+
+	//create slice to loop through it
+	days := []string{"Sunday", "Tuesday", "Wednesday", "Friday", "Saturday"}
+	fmt.Println(days)
+
+	//1. For loop
+	for d := 0; d < len(days); d++ {
+		fmt.Println(days[d])
+	}
+
+	//2. To loop through entire list and return the index
+	for i := range days {
+		fmt.Println(days[i])
+	}
+
+	//Loop returns both index and value, it is kind of for each loop in golang
+	for index, day := range days {
+		fmt.Printf("index is %v and value is %v\n", index, day)
+	}
+
+	//In case if u r interest in index only the value then u can use _ (ie) comma ok syntax
+	for _, day := range days {
+		fmt.Printf("value is %v\n", day)
+	}
+
+	//Usage of break, continue, goto
+	rValue := 1
+	/*for rValue < 10 {
+		fmt.Println("Value is ",rValue)
+		rValue++
+	}*/
+
+	/*for rValue < 10 {
+		if rValue==5 {
+			break
+		}
+		fmt.Println("Value is ",rValue)
+		rValue++
+	}*/
+
+	/*for rValue < 10 {
+		if rValue==5 {
+			rValue++
+			continue
+		}
+		fmt.Println("Value is ",rValue)
+		rValue++
+	}*/
+
+	for rValue < 10 {
+		if rValue == 2 {
+			goto lco
+		}
+		if rValue == 5 {
+			rValue++
+			continue
+		}
+		fmt.Println("Value is ", rValue)
+		rValue++
+	}
+
+lco:
+	fmt.Println("Jumping to this label")
+
+}
+
+
+Functions in golang
+1. Create 15Functions folder inside myGolang folder
+2. Right click on 15Functions and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init functions
+
+4. Write code in main.go
+
+- Function usually starts with a "func" keyword and name of the function
+- We have just declared this function but never called, but still this function actually go
+ahead and execute as soon as if we run main.go and this is a proof that main acts as an entry point for your program
+- We are not allowed to write functions inside functions 
+- yes anonymous function exist and you can also create function without name and immediately invoked
+- We have no idea how many values are going to come in, but we want to add all of them using var args
+- It's not always necessary that you only return integer or only return string, we can also return multiple returntypes from function where u provide return values and wrap inside parenthesis
+
+Syntax:
+func functioname(parameters) returntype {
+   //logic
+}
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Functions in Golang")
+	greeter() //call the function
+	greeterTwo()
+
+	result := adder(3, 4)
+	fmt.Println("Sum is: ", result)
+
+	result = proAdder(1, 2, 3, 4, 5)
+	fmt.Println("Pro sum is: ", result)
+
+	result1, msg := proAdder1(1, 2, 3, 4, 5)
+	fmt.Println("Pro sum is: ", result1, "and message is: ", msg)
+
+	result2, _, _ := proAdder2(1, 2, 3, 4, 5)  //used comma ok syntax
+	fmt.Println("Pro sum is: ", result2)
+
+	//Anonymous function - function without name
+	func(msg string) {
+		fmt.Println("Message:", msg)
+	}("Hello, Go!")
+}
+
+/*func main() {
+	fmt.Println("Functions in Golang")
+	greeter()  //call the function
+
+	func greeterTwo() {   //error
+		fmt.Println("Another function")
+	}
+	greeterTwo()
+}*/
+
+func greeterTwo() {
+	fmt.Println("Another function")
+}
+
+//create a function
+func greeter() {
+	fmt.Println("Hello from Golang")
+}
+
+//function with parameter and return type
+func adder(a int, b int) int {
+	sum := a + b
+	return sum
+}
+
+//Profunction using ...
+func proAdder(values ...int) int {
+	sum := 0
+	for _, value := range values {
+		sum += value
+	}
+	return sum
+}
+
+//function with multiple return values
+func proAdder1(values ...int) (int, string) {
+	sum := 0
+	for _, value := range values {
+		sum += value
+	}
+	return sum, "Hello from proAdder1"
+}
+
+//function with multiple return values
+func proAdder2(values ...int) (int, string, bool) {
+	sum := 0
+	for _, value := range values {
+		sum += value
+	}
+	return sum, "Hello from proAdder2", true
+}
+
+
+> go run main.go
+Functions in Golang
+Hello from Golang
+Another function
+Sum is:  7
+Pro sum is:  15
+Pro sum is:  15 and message is:  Hello from proAdder1     
+Pro sum is:  15
+Message: Hello, Go!
+
+
+Methods in golang
+     When functions actually go into the classes we like to term them as method, in golang we dont have classes but we have structs we need to bring our functions into these structs so that
+we can call them methods
+
+1. Create 16Methods folder inside myGolang folder
+2. Right click on 16Methods and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init methods
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Welcome to Golang Structs")
+
+	//Initialize the struct
+	ram := User{"Ram", "ram@gmail.com", true, 25}
+	fmt.Println(ram)
+
+	fmt.Printf("Ram details are: %+v\n", ram)
+	fmt.Printf("Name is: %v and email is: %v\n", ram.Name, ram.Email)
+
+	ram.GetStatus()  //calling the method
+	ram.NewEmail()
+    fmt.Printf("Name is: %v and email is: %v\n", ram.Name, ram.Email)
+}
+
+// Define a struct
+type User struct {
+	Name   string
+	Email  string
+	Status bool
+	Age    int
+	//oneAge int //this property is not exported since it is not started with capital letter so it is not public
+}
+
+//create a function, make sure the first letter is capital if you are planning to export this method 
+//when you want make this function a method (ie) it should be a part of struct then obviously you need
+//to pass on a struct to it, we pass on the entire struct or a property into it that's up to you 
+//in this case we're going to pass on the entire structure. Now this is called as method
+func (u User) GetStatus() {
+    fmt.Println("Is user active: ",u.Status)
+}
+
+//define another function to manipulate email
+func (u User) NewEmail() {
+	u.Email = "test@gmail.com"
+	fmt.Println("Email of this user is ",u.Email)
+}
+
+> go run main.go
+Welcome to Golang Structs
+{Ram ram@gmail.com true 25}
+Ram details are: {Name:Ram Email:ram@gmail.com Status:true Age:25}
+Name is: Ram and email is: ram@gmail.com
+Is user active:  true
+Email of this user is  test@gmail.com
+Name is: Ram and email is: ram@gmail.com
+
+- Initially we are getting old email (ie) ram@gmail.com, then we use this NewEmail() method which actually manipulates the email and prints us the email as test@gmail.com, but finally we are getting ram@gmail.com (ie) whenever you pass on the structs it actually passes on a copy so  if you want to really pass on the original object you should be passing up the reference of it or a pointer to that
+
+Defer in golang
+     Deferred statement invokes a function whose execution is differed at the moment the surrounding function returns (ie) when a function executes it executes line by line even
+though it is compiled, as soon as you put the defer keyword whatever the next line you have
+marked for execution, it's not going to execute there but it's going to execute at the very end of the function itself and in LIFO order
+
+1. Create 17Defer folder inside myGolang folder
+2. Right click on 17Defer and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init defer
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Defer in Golang")
+	defer fmt.Println("Hello")
+}
+
+> go run main.go
+Defer in Golang
+Hello
+
+- The special case of the defer actually comes into the picture, when you move this line at the top
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+    defer fmt.Println("Hello")
+	fmt.Println("Defer in Golang")
+	
+}
+
+since we told that the function execution happens line by line, but since we have mentioned the keyword defer which means wherever you put up the defer it just cuts this line and place it just
+before last curly braces
+
+> go run main.go
+Defer in Golang
+Hello
+
+- In case if we have multiple defer stmt, it will execute in reverse order (ie) LIFO order 
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	defer fmt.Println("Hello")
+	defer fmt.Println("one")
+	defer fmt.Println("two")
+	fmt.Println("Defer in Golang")
+}
+
+> go run main.go
+Defer in Golang
+two
+one
+Hello
+
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	defer fmt.Println("Hello")
+	defer fmt.Println("one")
+	defer fmt.Println("two")
+	fmt.Println("Defer in Golang")
+	myDefer()
+}
+
+//create a function
+func myDefer() {
+	for i := 0; i < 5; i++ {
+		defer fmt.Print(i)
+	}
+}
+
+> go run main.go
+Defer in Golang
+43210two
+one
+Hello
+
+Normally function will execute line by line, since we have defer stmt it will not executed but store in stack as Hello, one, two, then it will print Defer in Golang since it is normal line, after that myDefer() will execute because this line never saw the deferred statement so the function call will happen, but we actually call the defer so the print is not going to happen immediately it will get stored into the stack as 0,1,2,3,4. Finally it will print in LIFO order as
+Defer in Golang
+43210
+Then control will go back to main() and it will say there is nothing up, but we have some statement which are deffered that are already being placed in the line so we need to execute them in LIFO order
+two
+one
+Hello
+
+
+
+Working with files in golang
+     In the golang just like all other languages we can only go through with the text files and 
+if you want to work with csv files or pdf there are specialized library to be used
+     While working with the files obviously we need io utils package which is by default in the golang, and you will also need the defer, so once you are done with reading the files or writing into it, we need to close that file so the first thing that you should be doing is put close() into the defer, so that when everything has happened finally the files should get closed up
+
+1. Create 18Files folder inside myGolang folder
+2. Right click on 18Files and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init files
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
+func main() {
+	fmt.Println("Files in Golang")
+
+	//create content to put in text file
+	content := "This needs to go into a file - test.co.in"
+
+	//create file in current dir using os package
+	//as soon as you create this file there are chances that file might be created
+	//or it might show up some error, in that case we are ready to receive both of them using comma ok syntax
+	file, err := os.Create("./myFile.txt")
+
+	//first check the error because if there is error there are some issues
+	//in this case whenever i get a error, i get panic so you can use a keyword known as "panic" and you can throw the error
+	//panic will just shut down the execution of the program and will show you what the error you are facing
+	if err != nil {
+		panic(err)
+	}
+
+	//For writing in file we use io package with WriteString()
+	//After writing it gives length or an error
+	length, err := io.WriteString(file, content)
+
+	//check for error
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Length is ", length)
+
+	//close the file with defer stmt
+	defer file.Close()
+}
+
+> go run main.go
+Files in Golang
+Length is  41
+
+It creates a new file myFile.txt
+
+- Now we want to read the file, so we create separate function 
+
+For reading the file we use os.ReadFile() which returns data and error, whenever you read the
+file it's not being read into the string format, it will always read into the bytes format, so in order to convert to string will be cast by string
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
+func main() {
+	fmt.Println("Files in Golang")
+
+	//create content to put in text file
+	content := "This needs to go into a file - test.co.in"
+
+	//create file in current dir using os package
+	//as soon as you create this file there are chances that file might be created
+	//so it might show up some error, in that case we are ready to receive both of them using comma ok syntax
+	file, err := os.Create("./myFile.txt")
+
+	//first check the error because if there is error there are some issues
+	//in this case whenever i get a error, i get panic so you can use a keyword known as "panic" and you can throw the error
+	//panic will just shut down the execution of the program and will show you what the error you are facing
+	if err != nil {
+		panic(err)
+	}
+
+	//For writing in file we use io package with WriteString()
+	//After writing it gives length or an error
+	length, err := io.WriteString(file, content)
+
+	//check for error
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Length is ", length)
+
+	//close the file with defer stmt
+	defer file.Close()
+
+	readFile("./myFile.txt")
+}
+
+// readFile function to read the file
+func readFile(filename string) {
+	data, err := os.ReadFile(filename)
+
+	//check for error
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("The content of the file is \n", string(data))
+}
+
+> go run main.go
+Files in Golang
+Length is  41
+The content of the file is
+ This needs to go into a file - test.co.in
+
+- We have check the error in multiple places, instead we define a separate function called  checkNilErr
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
+func main() {
+	fmt.Println("Files in Golang")
+
+	//create content to put in text file
+	content := "This needs to go into a file - test.co.in"
+
+	//create file in current dir using os package
+	//as soon as you create this file there are chances that file might be created
+	//so it might show up some error, in that case we are ready to receive both of them using comma ok syntax
+	file, err := os.Create("./myFile.txt")
+
+	//first check the error because if there is error there are some issues
+	//in this case whenever i get a error, i get panic so you can use a keyword known as "panic" and you can throw the error
+	//panic will just shut down the execution of the program and will show you what the error you are facing
+	checkNilErr(err)
+
+	//For writing in file we use io package with WriteString()
+	//After writing it gives length or an error
+	length, err := io.WriteString(file, content)
+
+	//check for error
+	checkNilErr(err)
+
+	fmt.Println("Length is ", length)
+
+	//close the file with defer stmt
+	defer file.Close()
+
+	readFile("./myFile.txt")
+}
+
+// readFile function to read the file
+func readFile(filename string) {
+	data, err := os.ReadFile(filename)
+
+	//check for error
+	checkNilErr(err)
+
+	fmt.Println("The content of the file is \n", string(data))
+}
+
+func checkNilErr(err error){
+	if err != nil {
+		panic(err)
+	}
+}
+
+
+Handling web request in golang
+      Here we just want to grab all the data on particular webpage and to do we need a package called http package 
+
+- we can use pkg.go.dev and search for "http" package and choose net/http which is one of the fastest and the most recommended way of handling the web request in the golang, we have methods to  handle the cookies, manipulate the headers,  we have whole bunch of requests as well that you can fire up
+- Click on Types, there is a type "response" so whenever you make a request to any of the web website basically you will get a response object back, from that response we get a whole lot of properties like status, statusCode 
+- Next important is "Close bool" (ie) ReadResponse nor ReadResponse.write ever close a
+connection which means whenever you are making a request neither your reader neither your writer
+is actually closing that request,  it is your responsibility to close that response
+
+1. Create 19WebRequest folder inside myGolang folder
+2. Right click on 19WebRequest and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init webrequest
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+)
+
+// create a variable where the url is defined
+const url = "https://spring.io/blog/category/news"
+
+func main() {
+	fmt.Println("WebRequest in Golang")
+
+	//create simple HTTP request from net pkg with get() it requires just one parameter which is url
+	//once you are making a request, your request may or may not success, so we use comma ok syntax to check if the request was successful
+	response, err := http.Get(url)
+
+	//check error
+	if err != nil {
+		panic(err)
+	}
+
+	//check type of response
+	fmt.Printf("Response is of type %t\n", response) //*http.response
+	//it says *http.response so this is not an ordinary bytes or an ordinary string
+	//you get a reference of the original response that we have received so that you can manipulate it further
+
+	defer response.Body.Close() //close the response body at the end of the function since we used defer
+
+	//read this response using io.ReadAll() which reads from all formats
+	data, err := io.ReadAll(response.Body)
+
+	//check error
+	if err != nil {
+		panic(err)
+	}
+
+	content := string(data)
+	fmt.Println(content)
+}
+
+
+Handling URL in golang
+     urls are the key essential part whenever you are handling anything related to web, previously we saw that how we can make a request to a url, but  when you need to actually grab some
+information from the url especially the parameters 
+
+
+1. Create 20Urls folder inside myGolang folder
+2. Right click on 20Urls and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init urls
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+	"net/url"
+)
+
+// create a url
+const myUrl string = "https://abc.com:3000/learn?coursename=go&paymentId=sbcd123"
+
+func main() {
+	fmt.Println("Handling Urls in Golang")
+	fmt.Println(myUrl)
+
+	//1. We have url now we get info from url
+	//parsing the url which means we  want to extract some information from url, using url package
+	//once we parse we receive the result which has more info, may be ur url is correct or malformed url so we use comma ok syntax
+	result, _ := url.Parse(myUrl)
+
+	fmt.Println(result.Scheme)
+	fmt.Println(result.Host)
+	fmt.Println(result.Port())
+	fmt.Println(result.Path)
+	fmt.Println(result.RawQuery)
+
+	//Query() actually just stores all these query parameters into a better format
+	qParams := result.Query()
+	fmt.Printf("The type of query params %T\n", qParams) //url.values are key values types
+
+	fmt.Println(qParams["coursename"])
+
+	for _, val := range qParams {
+		fmt.Println("Param values are ", val)
+	}
+
+	//2. We have all info abt url, we need to construct a url
+	//in this case you don't want to pass on a copy of url instead we pass on a reference of url
+	partsOfUrl := &url.URL{
+		Scheme:  "https",
+		Host:    "abc.com",
+		Path:    "/tutorials",
+		RawPath: "user=Ram",
+	}
+
+	//construct a string out of a url
+	anotherUrl := partsOfUrl.String()
+	fmt.Println(anotherUrl)
+}
+
+
+> go run main.go
+Handling Urls in Golang
+https://abc.com:3000/learn?coursename=go&paymentId=sbcd123
+https
+abc.com:3000
+3000
+/learn
+coursename=go&paymentId=sbcd123
+The type of query params url.Values
+[go]
+Param values are  [go]
+Param values are  [sbcd123]
+https://abc.com/tutorials
+
+
+Creating server for golang frontend
+       We know how to make web requests and handle a tiny bit of web request, but the goal is to  create our own backend server, so we need to know that how we can talk to a variety of routes,what kind of response we can receive and what to expect in these responses and how to handle them.
+       We do not want to create the responses from any given website and we don't control that how the response is going to come up, how the header is going to come in, so we want to create something of our own server to take care of request and response
+
+- Here we are going to create our own backend server using nodejs and handle request and response
+
+1. Install nodejs and check it
+>node --version
+
+2. Create myWebServer folder, open cmd prompt 
+
+- In node, first we have to create package.json file
+C:\myGolang\myWebServer>npm init -y
+
+- Install all packages
+C:\myGolang\myWebServer>npm install
+
+- Install nodemon and express
+C:\myGolang\myWebServer>npm i --save-dev nodemon
+C:\myGolang\myWebServer>npm i --save express
+
+3. Create index.js
+
+const express = require('express')
+const app = express()
+const port = 8000
+
+app.use(express.json()); 
+app.use(express.urlencoded({extended: true}));
+
+app.get('/', (req, res) => {
+  res.status(200).send("Welcome to Node server")
+})
+
+app.get('/get', (req, res) => {
+    res.status(200).json({message: "Hello from server"})
+  })
+
+
+app.post('/post', (req, res) => {
+    let myJson = req.body;      // your JSON
+	
+	res.status(200).send(myJson);
+})
+
+app.post('/postform', (req, res) => {
+    res.status(200).send(JSON.stringify(req.body));
+})
+  
+
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`)
+})
+
+4. Start server
+C:\myGolang\myWebServer>npm start
+
+- Now server will be started in 8000 portno
+
+5. To check, we can install Thunderclient extension in VSCode and check
+
+GET - http://localhost:8000/
+GET - http://localhost:8000/get
+POST - http://localhost:8000/post with JSON
+{
+  "name":"Ram"
+}
+POST - http://localhost:8000/postform with Form-encode data 
+{
+  "name":"Ram"
+}
+
+
+Make GET request in golang
+
+1. Create 21WebReq folder inside myGolang folder
+2. Right click on 21WebReq and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init webreq
+
+4. Write code in main.go
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+)
+
+func main() {
+	fmt.Println("Handling Web Requests in Golang")
+	PerformGetRequest() //call the function
+}
+
+// Create get request
+func PerformGetRequest() {
+	const myurl = "http://localhost:8000/get"
+
+	//making get request using http pkg, returns either response or error so we use comma ok syntax
+	response, err := http.Get(myurl)
+
+	//check for error
+	if err != nil {
+		panic(err)
+	}
+
+	//close the request with defer
+	defer response.Body.Close()
+
+	fmt.Println("Status code: ", response.StatusCode)
+	fmt.Println("Content length is: ", response.ContentLength)
+
+	//read the content of response body, it might give content or error so we use comma ok syntax
+	//content, _ := io.ReadAll(response.Body)
+	//fmt.Println(content)  //byte format
+	//fmt.Println(string(content))
+
+	//Another way to handle the response, using strings package builder() method, used to build a string using write() method
+	var responseString strings.Builder
+	content, _ := io.ReadAll(response.Body)
+
+	byteCount, _ := responseString.Write(content)
+
+	fmt.Println("ByteCount is: ", byteCount)
+
+	//your response is still inside this responsestring, just like it has a method of write(), it has a method to
+	//just throw away this data as well called String()
+	fmt.Println(responseString.String())
+}
+
+> go run main.go
+Handling Web Requests in Golang
+Status code:  200
+Content length is:  31
+ByteCount is:  31
+{"message":"Hello from server"}
+
+
+Make POST request with JSON data in golang
+
+1. Create another method in previous program for post request with JSON data 
+
+// Method for POST request
+func PerformPostJsonRequest() {
+	const myurl = "http://localhost:8000/post"
+
+	//fake json payload using strings.NewReader
+	requestBody := strings.NewReader(`
+		{
+			"coursename":"Let's go with golang",
+			"price": 0,
+			"platform":"learnCodeOnline.in"
+		}
+	`)
+
+	////making post request using http pkg with url, type of data and request body, returns either response or error so we use comma ok syntax
+	response, err := http.Post(myurl, "application/json", requestBody)
+
+	//check for err
+	if err != nil {
+		panic(err)
+	}
+
+	//close the request with defer
+	defer response.Body.Close()
+
+	//read the content of response body, it might give content or error so we use comma ok syntax
+	content, _ := io.ReadAll(response.Body)
+
+	//print the content by wrapping in string, since response in bytes
+	fmt.Println(string(content))
+}
+
+
+> go run main.go
+Handling Web Requests in Golang
+{"coursename":"Let's go with golang","price":0,"platform":"learnCodeOnline.in"}
+
+Send form data in golang
+
+1. Create another method in previous program for post request with form data 
+
+// method for form data request
+func PerformPostFormRequest() {
+	const myurl = "http://localhost:8000/postform"
+
+	//formdata using url.Values{}
+	data := url.Values{}
+	data.Add("firstname", "hitesh")
+	data.Add("lastname", "choudhary")
+	data.Add("email", "hitesh@go.dev")
+
+    //to send form data we use PostForm
+	response, err := http.PostForm(myurl, data)
+	if err != nil {
+		panic(err)
+	}
+
+	defer response.Body.Close()
+
+	content, _ := io.ReadAll(response.Body)
+	fmt.Println(string(content))
+
+}
+
+> go run main.go
+Handling Web Requests in Golang
+{"email":"hitesh@go.dev","firstname":"hitesh","lastname":"choudhary"}
+
+
+How to create JSON data in golang
+      Preiously  we received the json response but we were not treating it as a json, we were treating it more like a string. So we need to  understand how to create json and how to handle json when it is coming up from a web request
+
+1. Create 22Json folder inside myGolang folder
+2. Right click on 22Json and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init json
+
+4. Write code in main.go
+
+we're going to work with the encoding of the json which means we  have a data and it can be a slices, it can be arrays, key value pair whatever that is we want to convert the data into a valid json
+
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+// create a structure, here structure is private as its not starting with capital letter
+type course struct {
+	Name     string
+	Price    int
+	Platform string
+	Password string
+	Tags     []string //slice
+}
+
+func main() {
+	fmt.Println("Handling JSON in Golang")
+	EncodeJson()
+}
+
+// create function to encode to json
+func EncodeJson() {
+
+	//create slice of course
+	lcoCourses := []course{
+		{"ReactJS Bootcamp", 299, "abc.com", "abc123", []string{"web-dev", "js"}},
+		{"MERN Bootcamp", 199, "abc.com", "bcd123", []string{"full-stack", "js"}},
+		{"Angular Bootcamp", 299, "abc.com", "hit123", nil},
+	}
+
+	//package this data as JSON data using json pkg with Marshal() which takes an interface which is nothing but alternative of structs
+	finalJson, err := json.Marshal(lcoCourses)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", finalJson)
+
+}
+
+
+> go run main.go
+Handling JSON in Golang
+[{"Name":"ReactJS Bootcamp","Price":299,"Platform":"abc.com","Password":"abc123","Tags":["web-dev","js"]},{"Name":"MERN Bootcamp","Price":199,"Platform":"abc.com","Password":"bcd123","Tags":["full-stack","js"]},{"Name":"Angular Bootcamp","Price":299,"Platform":"abc.com","Password":"hit123","Tags":null}] 
+
+- We can see it is little bit hard to read this data that's point number one, next we are
+able to see this password as well which is not really good and in the cases of this tags the last one it says null not the nil, so obviously the user who is consuming this api need to be very aware of this, but we can make this api a little bit more easier to read using MarshalIndent() which takes 3 arguments, the first one is the is the name of the interface or the struct itself, the second one is prefix, and 3rd one is based on what we should indent the values 
+
+finalJson, err := json.MarshalIndent(lcoCourses, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", finalJson)
+
+> go run main.go
+Handling JSON in Golang
+[
+        {
+                "Name": "ReactJS Bootcamp",
+                "Price": 299,
+                "Platform": "abc.com",
+                "Password": "abc123",
+                "Tags": [
+                        "web-dev",
+                        "js"
+                ]
+        },
+        {
+                "Name": "MERN Bootcamp",
+                "Price": 199,
+                "Platform": "abc.com",
+                "Password": "bcd123",
+                "Tags": [
+                        "full-stack",
+                        "js"
+                ]
+        },
+        {
+                "Name": "Angular Bootcamp",
+                "Price": 299,
+                "Platform": "abc.com",
+                "Password": "hit123",
+                "Tags": null
+        }
+]
+
+when internally all of your data is converted into json it is indented based on the \t
+
+- Everything is being spaced out based on \t, when we put prefix then  every single time you hit \t then you will be seeing this prefix
+
+finalJson, err := json.MarshalIndent(lcoCourses, "lco", "\t")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", finalJson)
+
+- The problem still exists that we can see password and also when i'm consuming the properties (ie) name, platform etc all starting is uppercase letter this is not really good. Atleast all the keys that are coming up, it is kind of recommended and a good practice that all of them should be
+lower case
+  Golang is aware of that that you'll be creating structures like this and you will be throwing these structures as a json format and that is why json actually provides you some properties where we create alias for all properties
+
+ package main
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+// create a structure, here structure is private as its not starting with capital letter
+type course struct {
+	Name     string `json:"coursename"`
+	Price    int
+	Platform string   `json:"website"`
+	Password string   `json:"-"`              //dash means we don't want this field to be 																	displayed whoever is consuming my api
+	Tags     []string `json:"tags,omitempty"` //omitempty - if the value is null in this case nil 													  then just don't throw that field at all(dont 												provide space between tags,omitempty, if space then error)
+}
+
+func main() {
+	fmt.Println("Handling JSON in Golang")
+	EncodeJson()
+}
+
+// create function to encode to json
+func EncodeJson() {
+
+	//create slice of course
+	lcoCourses := []course{
+		{"ReactJS Bootcamp", 299, "abc.com", "abc123", []string{"web-dev", "js"}},
+		{"MERN Bootcamp", 199, "abc.com", "bcd123", []string{"full-stack", "js"}},
+		{"Angular Bootcamp", 299, "abc.com", "hit123", nil},
+	}
+
+	//package this data as JSON data using json pkg with Marshal() which takes an interface which is nothing but alternative of structs
+	finalJson, err := json.MarshalIndent(lcoCourses, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", finalJson)
+
+}
+ 
+
+> go run main.go
+Handling JSON in Golang
+[
+        {
+                "coursename": "ReactJS Bootcamp",
+                "Price": 299,
+                "website": "abc.com",
+                "tags": [
+                        "web-dev",
+                        "js"
+                ]
+        },
+        {
+                "coursename": "MERN Bootcamp",
+                "Price": 199,
+                "website": "abc.com",
+                "tags": [
+                        "full-stack",
+                        "js"
+                ]
+        },
+        {
+                "coursename": "Angular Bootcamp",
+                "Price": 299,
+                "website": "abc.com"
+        }
+]
+
+- Now we can see all names are changed, password is not displayed and for last tag since it is null, it also dosent displayed
+
+
+How to consume JSON data in golang
+      Now we're going to see how we can actually consume the json data which is also known as decoding the json data. In many of the application json data will come to you as a api resource or other backend that is being designed and you want to consume this json data. Previously we have consumed the data it was just in the string format, now we want to see that how actually we can consume
+
+// create method to consume data
+func DecodeJson() {
+
+	//create JSON data we can request it from the web or create our own data
+	//The data that we're receiving from the web is going to be  slice of byte
+	jsonDataFromWeb := []byte(`
+	{
+		"coursename": "ReactJS Bootcamp",
+		"Price": 299,
+		"website": "abc.com",
+		"tags": ["web-dev","js"],
+	}
+	`)
+
+	//create a variable of type course structs
+	//whatever the data is coming up from the web i have created a structure for it and i want to put that into structure
+	var lcoCourse course
+
+	//Next we need to be verify that this data is actually in the correct json format using json.Valid()
+	checkValid := json.Valid(jsonDataFromWeb)
+
+	if checkValid {
+		fmt.Println("JSON was valid")
+		//we do an unmarshall, which take 2 parameter, the first one is the data itself and second is the interface (ie)
+		//another name for struct, but the problem is that you don't want to pass on just an interface like that because it might give you a copy of that and you want to actually store all of
+		//this data so we pass as a reference
+		json.Unmarshal(jsonDataFromWeb, &lcoCourse)
+
+		//in order to use or print these interfaces we use %#v
+		fmt.Printf("%#v\n", lcoCourse)
+	} else {
+		fmt.Println("JSON WAS NOT VALID")
+	}
+}
+
+- Just add one extra comma in structs, so that u will get an error as output 
+
+> go run main.go
+Handling JSON in Golang
+JSON WAS NOT VALID
+
+- After removing comma, it is a correct json data so we get output. All of the json that is coming up, course name which is an equivalent and automatically look up for the structure, so whatever is
+coming up as a course name it's not actually a course name in my struct, that's an alias it needs to go inside the field of name, so the property name will be populated with that, for password since you didn't pass on any password it didn't added any value and the tags 
+
+> go run main.go
+Handling JSON in Golang
+JSON was valid
+main.course{Name:"ReactJS Bootcamp", Price:299, Platform:"abc.com", Password:"", Tags:[]string{"web-dev", "js"}}
+
+- We dont want to create a structure every time just fill up all of this data and give
+me a key value pair so that i can extract the values based on the keys and values
+
+// create method to consume data
+func DecodeJson() {
+
+	//create JSON data we can request it from the web or create our own data
+	//The data that we're receiving from the web is going to be  slice of byte
+	jsonDataFromWeb := []byte(`
+	{
+		"coursename": "ReactJS Bootcamp",
+		"Price": 299,
+		"website": "abc.com",
+		"tags": ["web-dev","js"]
+	}
+	`)
+
+	//create a variable of type course structs
+	//whatever the data is coming up from the web i have created a structure for it and i want to put that into structure
+	var lcoCourse course
+
+	//Next we need to be verify that this data is actually in the correct json format using json.Valid()
+	checkValid := json.Valid(jsonDataFromWeb)
+
+	if checkValid {
+		fmt.Println("JSON was valid")
+		//we do an unmarshall, which take 2 parameter, the first one is the data itself and second is the interface (ie)
+		//another name for struct, but the problem is that you don't want to pass on just an interface like that because it might give you a copy of that and you want to actually store all of
+		//this data so we pass as a reference
+		json.Unmarshal(jsonDataFromWeb, &lcoCourse)
+
+		//in order to use or print these interfaces we use %#v
+		fmt.Printf("%#v\n", lcoCourse)
+	} else {
+		fmt.Println("JSON WAS NOT VALID")
+	}
+
+
+	// some cases where you just want to add data to key value
+
+	//create map with key as string and since the data is coming up from the web we are not sure the rest of the part is always
+	//a string, because it can be anything. So we don't know what data is coming up, so we say value as
+   //an interface and we can just populate it
+	var myOnlineData map[string]interface{}
+
+	//we call unmarshal() with jsondata and pass on a reference  
+	json.Unmarshal(jsonDataFromWeb, &myOnlineData)
+
+	fmt.Printf("%#v\n", myOnlineData)
+
+    //loop through it 
+	for k, v := range myOnlineData {
+		fmt.Printf("Key is %v  and value is %v and Type is: %T\n", k, v, v)
+	}
+}
+
+> go run main.go
+Handling JSON in Golang
+JSON was valid
+main.course{Name:"ReactJS Bootcamp", Price:299, Platform:"abc.com", Password:"", Tags:[]string{"web-dev", "js"}}
+map[string]interface {}{"Price":299, "coursename":"ReactJS Bootcamp", "tags":[]interface {}{"web-dev", "js"}, "website":"abc.com"}
+Key is coursename  and value is ReactJS Bootcamp and Type is: string
+Key is Price  and value is 299 and Type is: float64
+Key is website  and value is abc.com and Type is: string     
+Key is tags  and value is [web-dev js] and Type is: []interface {}
+
+So if any data comes up from the web, we know it is in the byte format you can either convert it into a string or create a structure to handle the data into the json or just loop through it
+
+
+MOD in golang - go mod init name
+    If you are building something as a back-end, eventually it will go in the production and if you're working in some big organization who is using golang something like dropbox or google, you should really need to know in depth about the go mod which is a tooling.
+    Now golang gives you a lot of stuff which are known as tooling and these are basically tools which you can use for variety of reasons, "go build" is one of such tool which build your
+application to be ready for production, "go run" is also a tool which helps you to run it at a low cost compared to the build,"go mod" is also another tool which helps you to do a lot of stuff 
+
+1. Create 23myModule folder inside myGolang folder
+2. Right click on 23myModule and create file main.go, we can directly type code
+
+3. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Modules in Golang")
+}
+
+-  we can run this file according to the latest standard without creating modules
+
+> go run main.go
+Modules in Golang
+
+4.  It is not a good way of working so we now create modules with any hosting where you're going
+to put all of the code 
+>go mod init github.com/senthil1418/mymodules
+
+5. If we open go.mod file, it says your module name is github.com/senthil1418/mymodules and the go version is 1.25.0, so we can say that the first job of this "go mod" file is to initialize it and it gives the idea of some third party who will be running your code and this entire code was dependent on which version of golang
+
+6.  we will be using a routing system which is gorilla mux, now i'm more interested
+in the installation and the minimum one route 
+
+- Install gorilla mux 
+     If you want to install this you can use the "go tool" used to pull in all the dependencies. If you use this "go get" it will go on to the web and will bring in all the assets from the web itself so this repository will be directly fetched, this is really important because in the production sometimes there are some servers on which your application is hosted and they are not allowed to consume things via internet
+
+C:\myGolang\23myModule> go get -u github.com/gorilla/mux
+go: downloading github.com/gorilla/mux v1.8.1
+go: added github.com/gorilla/mux v1.8.1
+
+If u check go.mod file, you can see require and it says github.com/gorilla/mux, so this is the library that's coming in and the version that is coming in is 1.8.1, it also says "indirect" which  means that as of now your code in the main.go file or any other file is not using this, as soon as you start using it this indirect will go away
+
+It also creates go.sum file and what this go.sum file does, if u know there are a lot of attacks that happen, one of the recent big attack in usa was kind of a man in the middle attack, where there was an update which was supposed to go in the solaris and somebody just injected their malicious code in that update and everybody just did that malicious update. In order to avoid these kinds of things because you are pulling up a lot of things from the github repository, it does a check on that.
+   So at the time of writing this code we say that we are pulling up this repository which is having a hash of this one, if anything changes in that repository in this special version then
+the hash is going to fail and that is done in the go sum 
+   You can see that in this folder we don't have these files, these files are there but i'm not
+able to see that
+
+C:\myGolang\23myModule> go env   - u can check GOPATH=C:\Users\senthil.kumart\go
+
+- Go to that path
+C:\Users\senthil.kumart\go>cd pkg/mod
+
+C:\Users\senthil.kumart\go\pkg\mod>dir
+ Volume in drive C is Data
+ Volume Serial Number is 2434-F0CB
+
+ Directory of C:\Users\senthil.kumart\go\pkg\mod
+
+08/18/2025  09:14 PM    <DIR>          .
+08/18/2025  09:14 PM    <DIR>          ..
+08/18/2025  09:13 PM    <DIR>          cache
+08/21/2025  07:23 PM    <DIR>          github.com
+08/18/2025  09:14 PM    <DIR>          golang.org
+08/18/2025  09:14 PM    <DIR>          honnef.co
+08/18/2025  09:14 PM    <DIR>          mvdan.cc
+               0 File(s)              0 bytes
+               7 Dir(s)  285,176,274,944 bytes free
+
+
+"cache" is where all of the libraries or the packages that you are bringing up from the internet, this is the place where they go in not on your working directory and whenever next time you
+request them, they are not being fetched from the web, they are being fetched from a local copy 
+
+C:\Users\senthil.kumart\go\pkg\mod\cache\download\github.com>dir
+ Volume in drive C is Data
+ Volume Serial Number is 2434-F0CB
+
+ Directory of C:\Users\senthil.kumart\go\pkg\mod\cache\download\github.com
+
+08/21/2025  07:23 PM    <DIR>          .
+08/18/2025  09:14 PM    <DIR>          ..
+08/18/2025  09:14 PM    <DIR>          !burnt!sushi
+08/18/2025  09:14 PM    <DIR>          fatih
+08/18/2025  09:14 PM    <DIR>          fsnotify
+08/18/2025  09:14 PM    <DIR>          google
+08/21/2025  07:23 PM    <DIR>          gorilla
+               0 File(s)              0 bytes
+               7 Dir(s)  285,262,041,088 bytes free
+
+7. Create method in main.go
+
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func main() {
+	fmt.Println("Modules in Golang")
+	greeter()
+}
+
+func greeter() {
+	fmt.Println("Hey there mod users")
+}
+
+// create method with two parameters w and r, w is actually an http.ResponseWriter and r is a //request and this is not an ordinary variable, this is a type of pointer again coming up from //http.Request
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	//we need to send some response, so the request is somebody sending us a request and if you //want to use the parameters and url and all of that that all is inside the r but if you want to //send some response back that is done through this w this is response writer
+	//everything from the web is coming up from the byte format, so we set a slice of byte
+	w.Write([]byte("<h1>Welcome to golang series on YT</h1>"))
+}
+
+- greeter() is normal function, but serveHome is actually a method we have designed for this gorilla mux used  to handles on a route 
+
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux" // Importing the gorilla/mux package for routing
+)
+
+func main() {
+	fmt.Println("Modules in Golang")
+	greeter()
+	//add router to handle request
+	r := mux.NewRouter()
+	r.HandleFunc("/", serveHome).Methods("GET")
+
+	//run this as a server using http.ListenAndServer with port and router
+	//this actual code can actually throw up some error in the case of web, we can use comma ok syntax, instead we have another package called "log" which has fatal(), if something goes as fail it just logs that value
+	log.Fatal(http.ListenAndServe(":4000", r))
+}
+
+func greeter() {
+	fmt.Println("Hey there mod users")
+}
+
+// create method with two parameters w and r, w is actually an http.ResponseWriter and r is a request and this is not an ordinary
+// variable, this is a type of pointer again coming up from http.Request
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	//we need to send some response, so the request is somebody sending us a request and if you want to use the parameters
+	//and url and all of that that all is inside the r but if you want to send
+	//some response back that is done through this w this is response writer
+	//everything from the web is coming up from the byte format, so we set a slice of byte
+	w.Write([]byte("<h1>Welcome to golang series on YT</h1>"))
+}
+
+- Build this appl
+>go build .
+   - It creates as exe file
+
+> go run main.go
+Modules in Golang
+Hey there mod users
+
+In the browser, run http://localhost:1000, where it will call serveHome() and prints "Welcome to golang series on YT"
+
+8. In go.mod file, although we are using this gorilla mux it still says indirect,  this is exactly why this line appeared at front which says use "go mod tidy" used to tides up all the libraries that you are depending on that, it also removes all those packages that you are not using it also try to bring in all the packages . Now run
+
+> go mod tidy
+
+We can see in go.mod file that the indirect line is gone, that means this package is directly being used
+
+9. We saw "go.sum" which gives us these hash sums for that specific version, so that if
+anything goes maliciously wrong on that repository we can verify that, so we can say "go mod" has a tool of verify
+
+> go mod verify
+all modules verified
+
+It will check this mod that how many modules are required and as soon as you run "go mod verify" it go into the go.sum file, take those hashes which are very unique and just try to verify everything is fine 
+
+10. Next expensive operation is "go list"
+
+> go list
+github.com/senthil1418/mymodules
+
+It says your entire application is dependent on just this modules, but  our application is dependent a little bit more on that so for that we run
+
+> go list all
+
+It will displays all the applications,  all the packages but obviously my application is not
+dependent on all, this actually lists all the packages that are installed, instead we use
+
+> go list -m all
+github.com/senthil1418/mymodules
+github.com/gorilla/mux v1.8.1
+
+It actually gives your appl is dependent on which package  and also it is dependent on
+this gorilla mux, maybe gorilla mux is further dependent on some dependencies we can also find that using
+
+>go list -m -versions github.com/gorilla/mux
+
+Displays which version of gorilla mux we want to use and we want to inquire that how many versions are available
+
+> go mod why github.com/gorilla/mux
+# github.com/gorilla/mux
+github.com/senthil1418/mymodules
+github.com/gorilla/mux
+
+you want to ask a question that why am i dependent on this package 
+
+> go mod graph
+github.com/senthil1418/mymodules github.com/gorilla/mux@v1.8.1
+github.com/senthil1418/mymodules go@1.25.0
+go@1.25.0 toolchain@go1.25.0
+
+Provides graph of the dependency  from left and right
+
+- If you want to edit this go mod file by using
+
+>go mod edit -go 1.24.0   -- change your go version
+
+- So far anything that we are bringing in is not coming up into this folder, everything is going on to that cache and whenever we need that it is coming up from the cache itself, but there might be a use case where maybe you are using gorilla mux but the router is not exactly doing all the things that you want to do. So maybe you want to overwrite some of those modules and then
+you want to publish it into production by using
+
+>go mod vendor
+
+As you run this, it gives you a folder which is vendor, consider this vendor folder is almost like node modules. Now it is not bringing up everything from the web it is going to bring it at one time, then you can package this entirely and everything now is going to be run through this vendor. 
+  If we call "go run main.go", if you do this obviously this is going to just bring up
+everything from the web itself. 
+  But if we run "go run -mod=vendor main.go",  first look into the vendor folder if there is one it's going to bring up everything from here 
+
+
+Building API in golang - Models
+        we're going to build a complete api but we are not yet going to inject database, we'll be
+using the gorilla mux package for handling all of the routing
+        Normally when building API, we are not going to write everything in single main.go file, we will create separate file, but as of now we create in single file
+
+1. Create 24BuildApi folder inside myGolang folder
+2. Right click on 24BuildApi and create file main.go, we can directly type code
+
+3. Open terminal
+>go mod init github.com/senthil1418/buildapi
+
+4. Inject gorilla/mux
+> go get -u github.com/gorilla/mux
+go: added github.com/gorilla/mux v1.8.1
+
+since this was already in my cache, it didn't took time, looked in at the cache that and just
+pulled it up
+
+4. Write code in main.go
+
+The action plan is we want to create a kind of backend api, we'll be working with the courses so
+we want to give user to get all the courses, they are able to create new courses, delete the
+courses and update the existing courses. We also see that if there is no unique id or no title or the name being given to a course, then the course should not be added so we need to create kind of a helper method for doing so. For having all of this data we'll be using a slice as our fake
+database since we are not studying about database now. We inject gorilla mux so that
+every single route is being handled by a separate method for all the crud operation
+
+package main
+
+//since we are creating a database kind of a similar syntax we need to define that how our course //is going to look like so we need to create a model 
+//create a struct as model, we need to export it so we just give in capital letter
+type Course struct {   //separate file
+	CourseId    string  `json:"courseid"`
+	CourseName  string  `json:"coursename"`
+	CoursePrice int     `json:"price"`
+	// the author is not going to be a type of string or integer but my own custom type
+	//where we get into the concept of copying the value so we don't want to do that we want to pass on a reference as type of pointer
+	Author      *Author `json:"author"`
+}
+
+//multiple models and these models sometimes interact with each other 
+//for example course is going to have an author 
+type Author struct {    //separate file
+	Fullname string `json:"fullname"`
+	Website  string `json:"website"`
+}
+
+//fake DB which is slice of type course
+var courses []Course
+
+//usually we create some helper methods  which helps you to perform some tasks like 
+//encrypt the password or not allowing users to pull the data from
+//the database without a unique course id or the course name
+//This method returns bool value, since this method is going to be part of structure
+//so we need to pass on that structure and we passing the courses  which will be a pointer of //course, so we get access to all of Course value, and we check courseid and coursename is empty
+func (c *Course) IsEmpty() bool {    //separate file
+	return c.CourseId == "" && c.CourseName == ""
+}
+
+func main() {
+
+}
+
+
+Sending a API json response for all courses in golang
+     Now we create controller to handle the request
+
+
+//controller - separate file
+
+// serve home route - when we open up your application we don't want blank page or an empty page //or an error instead we want to send some message
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("<h1>Welcome to API by LearnCodeOnline</h1>"))
+}
+
+// create another route to fetch up all the values from my database
+   func getAllCourses(w http.ResponseWriter, r *http.Request) {
+	   fmt.Println("Get all courses")
+	   //set the headers 
+	   w.Header().Set("Content-Type", "application/json")
+
+	  //Fetch all data from fake db as a json using json pkg and NewEncoder() giving us an
+      //encoder which working with the writer  and use the method of Encode() with whatever the   	 		//value you provided
+	  json.NewEncoder(w).Encode(courses)
+}
+
+
+In this case it is going to just return an empty database, later we just inject some of the fake database values inside the database this process is known as seeding 
+
+
+Get one course based on request id in golang
+        When you design these kinds of api, we don't call them as getOneCourse and getAllCourses etc, but we just call them as courses, course and based on it is a get request or post
+request or a put request which is a good practice and we do follow that in production,but for designing purpose we break this practice and follow our own format
+        So first thing we have to do is fetch that id from request and since we have all courses as an array we will loop through that array and compare this id
+
+// fetch single course
+func getOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Get one course")
+	w.Header().Set("Content-Type", "application/json")
+
+	//fetch id from request using mux.Vars() which extract all vatiables from request and returns    	//key value pairs
+	params := mux.Vars(r)
+
+	// loop through courses, and return the response
+	//We are not worried about the index so we give _, and take only the value and we are looping 	//through a range of courses
+	for _, course := range courses {
+		// find matching id - course is having a lot of properties and we take courseid, if that 			//matches to something the id which is user is passing me which is stored inside the 				//params, since params is a key value pair we have to mention that user is sending me with 		//the name of id
+		if course.CourseId == params["id"] {
+			//To return the response we  use this json library provides with NewEncoder which takes 			//writer, and call Encode() and we want to send entire course to writer
+			json.NewEncoder(w).Encode(course)
+			return
+		}
+	}
+
+	//if id is not found
+	json.NewEncoder(w).Encode("No Course found with given id")
+	return
+}
+
+
+Add a course controller in golang
+    We inject some value into our database, but we use just a slice but let's assume this is a database and we want to inject some value into this 
+    First thing is this courseid which is a string, if we define as integer that would be easy
+in this case, we can generate a random number and just add it up. Since courseid is the string so we need use packages of string conversion. So far we have been encoding the json because we are
+creating the json and sending to the front end, but this time the json is coming into this method so we have to decode that json value
+
+
+//Add one course into db
+func createOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Create one course")
+	w.Header().Set("Content-Type", "application/json")
+
+	// check if entire body is empty, since request actually
+    //gives you the direct access of this body, we can check it 
+	if r.Body == nil {
+		//return a response
+		json.NewEncoder(w).Encode("Please send some data")
+	}
+
+	// check for {} data, nothing inside the json itself
+
+	//create a variable of type Course
+	var course Course
+
+	//We decode that values because we expect that data should come in a particular structure because i'm adding into the database
+    //while decoding we utilize the reader because that's what's sending me the data, use the decode() where we pass on a reference of course, we  don't care that what you give me a return value so we give _
+	_ = json.NewDecoder(r.Body).Decode(&course)
+
+	//After decode we want to check whether empty or not and return JSON response
+	if course.IsEmpty() {
+		json.NewEncoder(w).Encode("No data inside JSON")
+		return
+	}
+
+	//we are not taking any value as a response from this entire operation, since we passed as a 	//reference we do have all the values inside this course
+    //and we push this new course inside the slice 
+
+}
+
+Previously isEmpty() checks for both courseid and coursename, now we don't want to check for the courseid we want that user should be allowed to move further if the courseid is not empty, because 
+we want to manually create the course id we don't want to rely on the user to give courseid, so we change isEmpty() to check only coursename
+
+func (c *Course) IsEmpty() bool {
+	//return c.CourseId == "" && c.CourseName == ""
+	return c.CourseName == ""
+}
+
+
+- Now we generate random value for course id and convert it into string and later add course into slice courses
+
+
+// Add one course into db
+func createOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Create one course")
+	w.Header().Set("Content-Type", "application/json")
+
+	// check if entire body is empty, since request actually
+	//gives you the direct access of this body, we can check it
+	if r.Body == nil {
+		//return a response
+		json.NewEncoder(w).Encode("Please send some data")
+	}
+
+	// check for {} data, nothing inside the json itself
+
+	//create a variable of type Course
+	var course Course
+
+	//We decode that values because we expect that data should come in a particular structure because i'm adding into the database
+	//while decoding we utilize the reader because that's what's sending me the data, use the decode() where we pass on a reference of course, we  don't care that what you give me a return value so we give _
+	_ = json.NewDecoder(r.Body).Decode(&course)
+
+	//After decode we want to check whether empty or not and return JSON response
+	if course.IsEmpty() {
+		json.NewEncoder(w).Encode("No data inside JSON")
+		return
+	}
+
+    //TODO: check only if title is duplicate
+	// loop, title matches with course.coursename, JSON
+
+	//we are not taking any value as a response from this entire operation, since we passed as a reference we do have all the values inside this course
+	//and we push this new course inside the slice
+
+	//First we generate unique id using rand pkg
+	src := rand.NewSource(time.Now().UnixNano()) // for non-deterministic randomness
+	rr := rand.New(src)
+
+	//perform string conversion using strconv pkg
+	course.CourseId = strconv.Itoa(rr.Intn(100))
+
+	//append course into courses
+	courses = append(courses, course)
+
+	//send course to json
+	json.NewEncoder(w).Encode(course)
+	return
+
+}
+
+Update a course controller in golang
+      In case of update, we find one course based on unique course id and need to fetch all those values that should be updated this is a regular operation. Since we are not in the database, first 
+we're going to loop through all the values and once we hit the value which is given by us as an id, then we're going slice off that value from slice which is having different values, then we're going to just remove that value and since we have that id already in our params we're going to just inject that value
+
+//Update the course
+func updateOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Update one course")
+	w.Header().Set("Content-Type", "applicatioan/json")
+
+	// fetch id from req using mux.Vars()
+	params := mux.Vars(r)
+
+	// loop through value
+	for index, course := range courses {
+		//check for each id with whatever value that we provided which is present in params, if it 		//is present we remove that course from slice of courses
+		if course.CourseId == params["id"] {
+
+			//remove course from slice
+			courses = append(courses[:index], courses[index+1:]...)
+
+            //Now we want to add a new value based on the id, so we need to grab two things, the 				//id which we already have in the params but we don't have the values to add,
+			// so we need to grab that from the request body
+
+			var course Course
+
+			//Use json.NewDecoder() and fetch values from the body (ie) r.body and and you will be 				//decoding that through a reference called course, so now we decode the json based on  				//this course 
+			_ = json.NewDecoder(r.Body).Decode(&course)
+
+			//we need to have a unique id, we are already generating a unique id but in this case
+		//since this is an update operation the id should remain same, so we take id from params 
+			course.CourseId = params["id"]
+
+			//add updated course in slice
+			courses = append(courses, course)
+
+			//send encoded response 
+			json.NewEncoder(w).Encode(course)
+			return
+		}
+	}
+	
+}
+
+
+Delete a course controller in golang
+    For deleting, first thing we need to have a unique id then we loop through as soon as we match the id we are going to remove that course from slice
+
+
+//delete one course
+func deleteOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Delete one course")
+	w.Header().Set("Content-Type", "applicatioan/json")
+
+	params := mux.Vars(r)
+
+	//loop, id, remove (index, index+1)
+
+	for index, course := range courses {
+        //fetch id from params
+		if course.CourseId == params["id"] {
+           //remove from slice
+			courses = append(courses[:index], courses[index+1:]...)
+			json.NewEncoder(w).Encode("Data is deleted")
+			break
+		}
+	}
+}
+
+
+Handling routes and testing routes in golang
+     Finally we need to create router for handling the request using mux.NewRouter
+
+func main() {
+    fmt.Println("API - LearnCodeOnline.in")
+	r := mux.NewRouter()
+
+	//seeding which inject some data into this courses which is a slice of type course
+	courses = append(courses, Course{CourseId: "2", CourseName: "ReactJS", CoursePrice: 299, Author: &Author{Fullname: "Hitesh Choudhary", Website: "lco.dev"}})
+	courses = append(courses, Course{CourseId: "4", CourseName: "MERN Stack", CoursePrice: 199, Author: &Author{Fullname: "Hitesh Choudhary", Website: "go.dev"}})
+
+    //define routing for controller methods
+	r.HandleFunc("/", serveHome).Methods("GET")
+	r.HandleFunc("/courses", getAllCourses).Methods("GET")
+	r.HandleFunc("/course/{id}", getOneCourse).Methods("GET")
+	r.HandleFunc("/course", createOneCourse).Methods("POST")
+	r.HandleFunc("/course/{id}", updateOneCourse).Methods("PUT")
+	r.HandleFunc("/course/{id}", deleteOneCourse).Methods("DELETE")
+
+	// listen to a port
+	log.Fatal(http.ListenAndServe(":4000", r))
+}
+
+- Build the application
+> go build .
+
+- Run the application
+> go run main.go
+API - LearnCodeOnline.in
+
+- Open Thunderclient ext and we can check for the routes
+GET - http://localhost:4000/
+GET - http://localhost:4000/courses
+GET - http://localhost:4000/course/2
+POST - http://localhost:4000/course
+     - If we didnt send any data, it will give No data inside JSON
+     - we give json data, but we dont need to give courseid as it is randomly generates
+{
+  "coursename":"Java",
+  "price":2000,
+  "Author" : {
+    "fullname":"Patrick",
+    "website":"java.com"
+  }
+}
+
+Now we can give  http://localhost:4000/courses, whether it is stored inside slice of courses
+
+PUT - http://localhost:4000/course/49 with updated JSON value
+
+{
+  "coursename":"JavaSpring",
+  "price":2000,
+  "Author" : {
+    "fullname":"Patrick",
+    "website":"java.com"
+  }
+}
+
+Now we can give  http://localhost:4000/courses, check whether data is updated
+
+DELETE- http://localhost:4000/course/49  
+
+Now we can give  http://localhost:4000/courses, check whether data is deleted
+
+
+MongoDB setup for API in Golang
+     We now know that how we can create crud apis and we also know that how we can deal up with multiple structs can be dependent on that and all of those models. Now we bring attention more on to the database side, so how application can have some of the data which can go back and forth and perform all the crud operations in the database
+     We will be using the managed mongodb which is known as atlas, which is almost same in
+case you have local installation you just write localhost version and the port of mongodb, if you
+use atlas there is a url given to you
+
+1. Create 25MongoApi folder inside myGolang folder
+2. Right click on 25MongoApi and create file main.go
+
+3. Open terminal
+>go mod init github.com/senthil1418/mongoapi
+
+4. Inject gorilla/mux
+> go get -u github.com/gorilla/mux
+go: added github.com/gorilla/mux v1.8.1
+
+5. Inject mongo db go driver
+> go get go.mongodb.org/mongo-driver/v2/mongo
+
+It take a little bit while because this is the very first time they are downloading it, we can see go.sum we can see lot of packages
+
+6. we need an instance MongoDB of mongodb we can work on 
+
+- Login into mongodb.com - Products - Click Atlas - Get Started - Provide username(senthil1418@gmail.com), pwd(Birthday12!@)
+
+- Click DatabaseAccess - Create Database user - system - root - read and write to any db
+- Click Create Cluster - Free - Cloud Provider is AWS & Mumbai - Create Cluster - cluster will be created
+- Click Connect 
+- Click Drivers - Under Connect to ur appl
+- copy the driver url
+
+- Click Network access - Delete existing ip addr - Click Add IP address - Click "Allow access from anywhere"
+
+mongodb+srv://system:root@cluster0.pcbdphu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+In golang it is expected that in the root directory of the project there is going to be just one go file it can be main.go file or it can be other go file but it should be just one main.go file. If i'm going to create more files just in the root directory they are going to create an issue so we need to create a folder and inside those folder we have to create more go files
+
+
+Defining models for netflix in golang
+1. First we are creating directory structure inside 25MongoAPI. Create model, controller, router folders,  but remember in the root directory there should be just one go file and preferably the main.go, rest all the files should be into a separate folder 
+
+2. Create models.go file inside model folder
+        So whenever you use the mongodb it gives you the ids which mongodb generates it automatically and these are not just ids, these ids are of underscore id type, they are kind
+of a bson structure and they are very similar to json but they have a little bit more added  fields
+
+package model
+
+import (
+    //This package will give all primitive ids
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+//create a type of struct
+type Netflix struct {
+	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Movie   string             `json:"movie,omitempty"`
+	Watched bool               `json:"watched,omitempty"`
+}
+
+
+Making a connection to database in golang
+      If this application is bigger then we would be putting up a database connections into a separate file, database helpers into a separate file and the controllers in its own separate file, it just needs to be inside a folder and  go automatically brings up all these instances for you in the import statement
+
+1.  We create controller.go file inside controller folder to keep all database connection, database helper methods and final controller 
+
+package controller
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+// create global variable
+const connectionString = "mongodb+srv://system:root@cluster0.pcbdphu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+const dbName = "movie"
+const colName = "watchlist" //collection name
+
+// We want to take a reference of the mongodb collection by marking it as a pointer
+// since we are marking it as a pointer returns an original reference
+var collection *mongo.Collection
+
+// connect with monogoDB
+// create function init() which is a specialized method in the golang which runs only at the very //first time and only once
+func init() {
+	//client option for connecting with mongodb
+	clientOption := options.Client().ApplyURI(connectionString)
+
+	//connect to mongodb using mongo.Connect() with context and clientOption and returns client or error, so we use comma ok syntax
+	client, err := mongo.Connect(context.TODO(), clientOption)
+
+	//goto pkg.go.dev - context package
+	/*Package context defines the Context type, which carries deadlines, cancellation signals, and other request-scoped values across API boundaries and between processes. which means whenever you are making a call to some machine which is outside of your machine (ie) db is usually outside and in this case specially it is on to some web server then we need to provide a context that for how long we can make a request and what happens when the request goes off and if the connection is still active,there should be a context on which we can work.
+	If we see types of context, we have background, todo
+	1.background -  if anything happens in the background it returns a non nil empty context, it is never cancelled and has no values and has no deadline so if you want something that keeps on happening in the background just go ahead and use the context.background
+	2. todo - we use the context.todo when it is unclear which context to use, so in this case if you have no idea what context to use in all those places you can use the todo */
+/*In most of the methods when we contact to the mongodb to insert value or get value in that case
+majority you will be using the context.background, but in majority of the cases where you have no idea we can use context.todo */
+
+	//check for error
+	if err != nil {
+		log.Fatal(err) //we can use panic also
+	}
+	fmt.Println("MongoDB connection success")
+
+	//we don't want just a database connection, we want to create a database, a column name
+	//we need a simple reference of that so that i can use them anywhere using collection variable
+	collection = client.Database(dbName).Collection(colName)
+
+	//collection instance
+	fmt.Println("Collection instance is ready")
+}
+
+
+Insert data in mongodb in golang
+      If we want to add any value into a slice, we can just bring that value from the request.body or the url params and we can just process the data and inject that into the slice. But in case of the database we'll have two separate set of methods, one for all mongodb and the basic methods.
+      So the job of basic method is going to bring up all the data from request body or url params and do all the checkings and authentication whatever they need to do with the data and they're going to call these mongodb helpers. 
+     The job of these mongodb helper is they take the data whatever you give them, they don't do any further check because it is expected that we have done all the checks, they will just receive
+the data and will insert the data into the database and will give us a report that whether it was as successful operation or not
+
+
+// insert 1 record - it takes some data and it just add the data into the mongodb
+// create insertOneMovie() which take movie which comes from the type model.Netflix
+// model.Netflix, model represent package name and not folder name
+func insertOneMovie(movie model.Netflix) {
+	/*we use InsertOne() which takes context, so whenever you are doing any database operation
+	we can use the background context and what do you want to add into the database in our case it is movie. Since this is a database operation it can be a successful or it can give me an error, so we comma ok syntax */
+	inserted, err := collection.InsertOne(context.Background(), movie)
+
+	//check for error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// After insertion we are just interested in the id, so whenever you add any value in
+	//the database, that value receives a unique id and that unique id
+	// as a success is being returned back with this operation of InsertOne
+	fmt.Println("Inserted 1 movie in db with id: ", inserted.InsertedID)
+}
+
+Here we have used insertOneMovie(), i as a lowercase because it is a mongodb helper method, we will never be exporting this method, the other method that we talked about they will be
+written with the first uppercase letter because 100% that we will be exporting those methods 
+
+
+Update a record in mongodb in golang
+       In update, first we have to provide a filter about which data should we update and the second part of the operation is you need to pass on a flag which is $set  and you pass on the updated information that whatever you want to update
+
+// update 1 record
+// create updateOneMovie() which takes movieId as argument
+func updateOneMovie(movieId string) {
+
+	/* first we have to convert this movieid into something that mongodb understand, mongodb understand id which internally is in the form of underscore id so we need to fetch that first using primitive.ObjectIDFromHex() which converts string into the object id which is acceptable by the mongodb  during the conversion it's give an id or an error so we use comma ok syntax */
+	id, _ := primitive.ObjectIDFromHex(movieId)
+
+	//Now we have to provide a filter, we know everything inside the mongodb is not json technically it is bson and both they look exactly same
+	//So we use either bson.M or bson.D, bson.M used for simple filters, updates, inserts where field order doesn’t matter, bson.D used when order matters
+	//we use bson.m this where you provide all your query parameters, we know in mongodb it is actually _id  so this is my filter and we use this to fetch an id filter for you 
+	filter := bson.M{"_id": id}
+
+	//For update also we use same bson.m, first provide a flag which is a $set, next we want to set further values using bson.m and  if we directly pass on values to bson.m then the values will be always being inserted, but we don't want to insert instead we want to update those values.
+	//we have a property watched which is coming up from model and we  turn this flag into true and remember we are not checking that whether this flag is previously true or not but we are always turning this flag into true 
+	update := bson.M{"$set": bson.M{"watched": true}}
+
+	// we call updateOne() which takes parameter, first one is context.background, second one is filter based on which it can filter the values and finally value to be updated
+	//It returns result or  an error and we have to handle using comma ok syntax
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	
+	//check for error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//this result actually gives you a value that how many values are being updated using result.ModifiedCount
+	fmt.Println("modified count: ", result.ModifiedCount)
+}
+
+
+Delete one and delete many in mongodb in golang
+     Now we want to delete a very specific record and want to delete all the records in the mongodb, both of these operations happens based on the filter. To delete just one record just provide that particular thing, so that it can match just one value and delete that, if you want to
+delete all of that just provide an empty set, empty means just everything
+
+// delete 1 movie by passing movieId
+func deleteOneMovie(movieId string) {
+
+	//First it convert string movieId to object id with _ that mongodb will understand
+	//it returns an id or error so we use comma ok syntax
+	id, _ := primitive.ObjectIDFromHex(movieId)
+
+	//We provide a filter based on that it can filter and then we can eventually delete
+	//we use bson.M, where we look for an _id that will be matched for with the id that we are giving up
+	filter := bson.M{"_id": id}
+
+	//we call deleteOne() whre we provide context.background and requires a filter
+	//it returns deletecount or an error so we use comma ok syntax
+	deleteCount, err := collection.DeleteOne(context.Background(), filter)
+
+	//check for error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//return deletecount
+	fmt.Println("Movie got delete with delete count: ", deleteCount)
+}
+
+// delete all records from mongodb and returns int
+func deleteAllMovie() int64 {
+
+	//call DeleteMany() which takes context.background, second one takes a filter by providing bson.D{{}} with an empty parenthesis means everything will be selected  and 3rd arg is nil
+	//u can use either bson.M or bson.D 
+	//it returns  deleteresult or an error so we use comma ok syntax
+	deleteResult, err := collection.DeleteMany(context.Background(), bson.D{{}}, nil)
+
+	//check for error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//print count from deleteResult
+	fmt.Println("NUmber of movies delete: ", deleteResult.DeletedCount)
+	return deleteResult.DeletedCount
+}
+
+
+Get all collection in mongodb in golang
+      We can perform read operation via the filter which is easier one, but if you want to fetch
+all of data then it gets a little bit tricky, especially when you are using the go driver of the mongodb. In case if you are using orm these situations are already being taken care but not in the
+mongodb drivers 
+
+Now refer to mongodb blog, Golang & MongoDB - How to Read Documents
+
+https://www.mongodb.com/company/blog/quick-start-golang--mongodb--how-to-read-documents
+
+Under "Reading All Documents from a Collection"
+
+we use this episodeCollection which is basically a collection which has a method find(), it pass
+on a context and in our case it is context.background and same thing bson.m passed which has
+nothing inside it which means everything. find() method returns back a cursor, assuming no error happens the result will exist in a mongodb cursor which is big gigantic object on which you can loop through but this is not exactly the data 
+    This cursor has a property next(), if the next value is available for us so we can use
+this to loop through the values and we can create a simple episode which is bson.mtype, if there are errors we will just avoid it if there are no errors we'll work through that 
+
+you do not returned the actual values, you get a return of a cursor which is a type of mongodb object and you have to loop through and pull out the values from it 
+
+
+// get all movies from database
+func getAllMovies() []primitive.M {
+
+	/*we need a collection which has a property Find() which takes on the context we use the context.background and then we have to provide a filter as  bson.M or bson.D with empty parenthesis that means everything*/
+	//It returns an a cursor or error so we use comma ok syntax
+	cur, err := collection.Find(context.Background(), bson.D{{}})
+	
+	//check for error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	/*we have this cursor now we have to declare a variable movies which is an array of type M, remember we have the bson.d or bson.M but since we are using this primitive package we have primitive.A, preventive.M or D. In the queries you can use bson.d whatever you like, since we are creating a variable of that type we have to use M */
+	var movies []primitive.M
+
+	// We have cursor now we loop through inside it, we use a for loop but in the style of while loop 
+   //cursor has a property next() where we have to pass on a context and it will keep on giving you the result as much as it has the next value
+	for cur.Next(context.Background()) {
+
+		//create a variable of type bson.M 
+		var movie bson.M
+
+		//we use Decode() which takes a pointer of movie variable, it will decode the value from the cursor and put it into the movie variable
+		//this either is going to decode and this movie will be fulfilled with the values or it falls into anerror 
+		err := cur.Decode(&movie)
+
+		//check for error
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//use this variable and push this into an array using append
+		movies = append(movies, movie)
+	}
+
+	//close the cursor passing the context
+	defer cur.Close(context.Background())
+	return movies
+}
+
+
+Controller files - Get all movies from DB in golang
+    Now we create controllers which are going to take help of these mongodb helpers and will throw
+some data out. So far in previous examples, all the controllers or the db helpers that we have created their first letter is all lowercase that means we never had the intention to export them out
+    But in the case, these controllers we need to export them out, because we have seen that
+router folder and all these routers will need these controllers
+
+//this is going to be inserted into my router so we need to create a writer and a reader 
+func GetMyAllMovies(w http.ResponseWriter, r *http.Request) {
+	//write some headers
+	w.Header().Set("Content-Type", "application/x-www-form-urlencode")
+	//call helper method 
+	allMovies := getAllMovies()
+	//send that as a response in json 
+	json.NewEncoder(w).Encode(allMovies)
+}
+
+
+Create a movie in our database
+     create a variable that will be of type models.netflix, a json will come up from the front end and we can decode that json according to our structure and then takehelp from the mongodb helper file and insert the data to it
+
+func CreateMovie(w http.ResponseWriter, r *http.Request) {
+	//write the headers
+	w.Header().Set("Content-Type", "application/x-www-form-urlencode")
+	w.Header().Set("Allow-Control-Allow-Methods", "POST")
+
+	// create a variable movie of type model.netflix
+	var movie model.Netflix
+
+	//now we need to accept the data we have to call json.NewDecoder() which requires reader.body,
+	//next we decode it by passing on the reference of structure 
+	_ = json.NewDecoder(r.Body).Decode(&movie)
+
+	// take this movie send it to the helper method
+	insertOneMovie(movie)
+
+	//we need to send a response we use NewEncoder which use a writer and encode a movie data 
+	json.NewEncoder(w).Encode(movie)
+
+}
+
+
+Update a movie in our database
+    We are going to mark the movie as watched 
+
+func MarkAsWatched(w http.ResponseWriter, r *http.Request) {
+	//write the header
+	w.Header().Set("Content-Type", "application/x-www-form-urlencode")
+	w.Header().Set("Allow-Control-Allow-Methods", "PUT")
+
+	//we need unique id of that movie and that comes from the url and fetch this value using mux.Vars() and store in params which has key value pairs
+	params := mux.Vars(r)
+
+	//call helper method by fetching key id from params
+	updateOneMovie(params["id"])
+
+	//send a json response based on id
+	json.NewEncoder(w).Encode(params["id"])
+}
+
+Delete one and all movie from database
+
+func DeleteAMovie(w http.ResponseWriter, r *http.Request) {
+	//write a header
+	w.Header().Set("Content-Type", "application/x-www-form-urlencode")
+	w.Header().Set("Allow-Control-Allow-Methods", "DELETE")
+
+	//fetch id from url using mux.Vars()
+	params := mux.Vars(r)
+
+	//call helper method
+	deleteOneMovie(params["id"])
+	//send the response
+	json.NewEncoder(w).Encode(params["id"])
+}
+
+func DeleteAllMovies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencode")
+	w.Header().Set("Allow-Control-Allow-Methods", "DELETE")
+
+	count := deleteAllMovie()
+	json.NewEncoder(w).Encode(count)
+}
+
+Creating routes and testing API in golang
+
+1. Create router.go file inside router folder
+
+package router
+
+import (
+	"github.com/gorilla/mux"
+	"github.com/senthil1418/mongoapi/controller"
+)
+
+// create a function Router this will be exported so we starting capital letter case
+// Since this router is to be exported and will be used in the main file so we need to return reference or a pointer to mux.NewRouter
+func Router() *mux.Router {
+	router := mux.NewRouter()
+
+	router.HandleFunc("/api/movies", controller.GetMyAllMovies).Methods("GET")
+	router.HandleFunc("/api/movie", controller.CreateMovie).Methods("POST")
+	router.HandleFunc("/api/movie/{id}", controller.MarkAsWatched).Methods("PUT")
+	router.HandleFunc("/api/movie/{id}", controller.DeleteAMovie).Methods("DELETE")
+	router.HandleFunc("/api/deleteallmovie", controller.DeleteAllMovies).Methods("DELETE")
+
+	return router
+}
+
+2. Now we have call everything in main.go
+
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/senthil1418/mongoapi/router"
+)
+
+func main() {
+	fmt.Println("MongoDB API")
+	r := router.Router()
+	fmt.Println("Server is getting started...")
+	log.Fatal(http.ListenAndServe(":4000", r))
+	fmt.Println("Listening at port 4000 ...")
+}
+
+3. Build the appl
+>go build .
+
+4. Run the appl
+> go run main.go
+MongoDB connection success
+Collection instance is ready
+MongoDB API
+Server is getting started...
+
+- Open thunderclient
+
+1. First we post a movie
+POST - http://localhost:4000/api/movie - Body - JSON
+{
+  "Movie":"IT",
+  "Watched":false
+}
+{
+  "Movie":"KGF",
+  "Watched":false
+}
+
+We can check in MongoDb database - Click Browse Collections - we can see the data is inserted in db
+
+2. PUT - http://localhost:4000/api/movie/68a8788e448e2b0620ed0772 
+
+Now we can see watched is updated as true 
+
+3. DELETE - http://localhost:4000/api/movie/68a8788e448e2b0620ed0772 - deletes single movie
+
+4. DELETE - http://localhost:4000/api/deleteallmovie - delete all movie
+
+
+Concurrency and goroutines in golang
+     So far whatever the projects we have built up, even the minifolders, while loop, for loop they are complete in itself, so the project actually work it does the job what it is intended to   do. Now the goal is not to just complete the stuff, the goal is to understand the things, why they are happening, what they are actually doing 
+    First we're going to talk about concurrency and parallelism. For example, consider you're eating your food and there is a notification in your phone which is an instagram notification
+and you're also feeling hot so you want to turn on the air conditioner. Now you can do it through
+concurrency or you can do it in parallelism also.
+    So what is concurrency and how you do it, so you are eating food, so you don't check
+your phone while eating the food, so that means you are not giving even the parallelism or the concurrency, you just do one task at a time, you just eat the food you don't check the mobile phone and you also don't turn on the air condition because that's what you do at one time.
+    But on the other hand there is a scenario where you are eating the food, so the notification come in, you left the plate you picked up the phone you check the notification, you put down the phone down, then you turn on the ac you put down the remote, you look back on instagram you put the phone down, then you start again eating your food, now this is known as concurrency. You are
+allowing yourself to get involved into doing multiple tasks, but you are not doing them at the same time, you are kind of doing them at the same time but not exactly, you are putting down your phone, then you are picking up the plate to eat the food and then you're putting down the plate and then you are using the remote to turn on the ac, now this is exactly what is being
+represented as concurrency, you are allowed to do multiple tasks but your task is going to
+be done at one given time 
+      Parallelism is you are eating your food with one spoon you put up the food in your mouth, you're checking the instagram, you're turning on the ac and getting back onto your food
+this is parallelism. You're doing all the things at the one task. This is difference between concurrency and parallelism
+     goroutines is the way how you achieve this parallelism, now goroutines often are being compared with the threads as well, but there are just two major differences up here. 
+     The threads are managed by os on the other hand, the goroutines are managed by the
+go runtime. So go runtime can actually fire up more threads without even getting permission from os, of course os is responsible for allotting your threads but in this the more control is actually in the go runtime and that is the reason why this language is more popular in the
+cloud, because in the cloud environment we have no shortage of these threads and we can take advantage of all of them
+    In the thread there is a fixed stack being used of 1mb, surely we can refer to other memories to read and write and can increase that, but by default the threads are 1 mb that is like the minimum of having a thread. On the goroutine the threads are of just 2 kb, so you can imagine just in a limited amount of memory how many threads you can fire up and each thread can be responsible for bringing up more data. Maybe you are hitting up 12 different apis and you can fire up each thread to bring up data from each of those apis so that will be done so much faster
+
+1. Create 26GoRoutine folder inside myGolang folder
+2. Right click on 26GoRoutine and create file main.go, we can directly type code
+
+3. Open terminal
+> go mod init goroutine
+
+4. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	greeter("Hello")
+	greeter("world")
+}
+
+// create func greeter() which takes string,  we want to print it five times
+func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		fmt.Println(s)
+	}
+}
+
+
+> go run main.go
+Hello
+Hello
+Hello
+Hello
+Hello
+Hello
+world
+world
+world
+world
+world
+world
+
+first the greater method is called with the hello so this function is running up five times to
+print hello, then again the control is switched back on to the main method and the greater is being called with the world and now the world is being printed five time 
+
+-  go routine is simply created by adding a keyword go
+
+package main
+
+import "fmt"
+
+func main() {
+	go greeter("Hello")
+	greeter("world")
+}
+
+// create func greeter() which takes string,  we want to print it five times
+func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		fmt.Println(s)
+	}
+}
+
+> go run main.go
+world
+world
+world
+world
+world
+world
+
+ 
+It will just fire up a thread which is going to be further responsible for executing this greeter with hello, but you never said when to come back or you never waited for it to come back, the
+main method actually exist as soon as all the methods are being fired up, so we never waited
+for that thread to come back and print those methods so that is why you see just the world. 
+
+- In order to work on that we can use time.sleep()
+
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	go greeter("Hello")
+	greeter("world")
+}
+
+// create func greeter() which takes string,  we want to print it five times
+func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		time.Sleep(3 * time.Millisecond)
+		fmt.Println(s)
+	}
+}
+
+> go run main.go
+Hello
+world
+world
+Hello
+Hello
+world
+world
+Hello
+Hello
+world
+world
+
+we are firing up our different threads and as soon as the thread's job is done, then it's coming
+back and we are receiving that and as soon as we receive that the result of that thread we are just printing it.  This is not an ideal way of handling the situation, the problem is
+not that we are not waiting for the thread and the main method ends its execution, but having a time here is not an obvious solution 
+
+
+Wait groups in golang
+      This is something that you'll be using in real world scenario and especially if you
+have multiple servers, now in the case of the cloud deployment, we are into a position that we actually talk to a lot of databases and sometimes even the microservices. So what happens
+if we are talking to multiple databases there are some read replicas which are specialization in
+reading only and there are some write servers or write databases which can do read and write both, so these are kind of a common situation. Some of your apis talk to the read servers only, some of
+them talk to the read and write servers both, now apart from this there are other
+cases in which if you have microservices and some of the microservices actually talk to other microservices and you can actually use go routines there 
+      You can launch a thread which can talk to different micro services and pull the data from there or another case like you are having three different api endpoints and you want to bring the data from all those endpoints and you can launch up a different method in different thread for
+all that. 
+
+
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func main() {
+	//go greeter("Hello")
+	//greeter("world")
+
+	//define some website
+	websitelist := []string{
+		"https://start.spring.io",
+		"https://spring.io",
+		"https://google.com",
+		"https://github.com",
+	}
+
+	//loop through and call our getStatusCode which is getting the status code and pass on this //instance of the web
+	for _, web := range websitelist {
+		getStatusCode(web)
+	}
+}
+
+// create func greeter() which takes string,  we want to print it five times
+/*func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		time.Sleep(3 * time.Millisecond)
+		fmt.Println(s)
+	}
+}*/
+
+// create function which makes a request to the websites and gets a status code, we pass some //endpoint get a status code from http
+func getStatusCode(endpoint string) {
+
+	//we use http to fire up a get method() where we pass an endpoint
+	// It will either give me a result or an error so we use comma ok syntax
+	res, err := http.Get(endpoint)
+
+	//check for error
+	if err != nil {
+		fmt.Println("OOPS in endpoint")
+	}else {
+	     fmt.Printf("%d status code for %s\n", res.StatusCode, endpoint)
+	}
+}
+
+
+> go run main.go
+200 status code for https://start.spring.io
+200 status code for https://spring.io
+200 status code for https://google.com
+200 status code for https://github.com
+
+They are running nicely but they are taking a little bit while to execute, we can do it much more faster if we just roll out different threads and can fire up the go routines
+
+- Now we put up a go keyword in getStatusCode() then it's going to launch multiple threads or go routines
+
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func main() {
+	//go greeter("Hello")
+	//greeter("world")
+
+	//define some website
+	websitelist := []string{
+		"https://start.spring.io",
+		"https://spring.io",
+		"https://google.com",
+		"https://github.com",
+	}
+
+	//loop through and call our getStatusCode which is getting the status code and pass on this instance of the web
+	for _, web := range websitelist {
+		go getStatusCode(web)
+	}
+}
+
+// create func greeter() which takes string,  we want to print it five times
+/*func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		time.Sleep(3 * time.Millisecond)
+		fmt.Println(s)
+	}
+}*/
+
+// create function which makes a request to the websites and gets a status code, we pass some endpoint get a status code from http
+func getStatusCode(endpoint string) {
+
+	//we use http to fire up a get method() where we pass an endpoint
+	// It will either give me a result or an error so we use comma ok syntax
+	res, err := http.Get(endpoint)
+
+	//check for error
+	if err != nil {
+		fmt.Println("OOPS in endpoint")
+	}else {
+	     fmt.Printf("%d status code for %s\n", res.StatusCode, endpoint)
+	}
+}
+
+>go run main.go
+
+It will not display any output, the reason is that we are not waiting in the main method so that
+it it just waits a little bit for all those go routines to come back and report to us and that is a problem.  We can solve this by time.millisecond() instead we use the package sync with waitgroups to get better response
+
+
+- Waitgroup is kind of a modified version of the time.sleep, when use this waitgroup we have 3 jobs to to be done
+1. add that means as soon as a go routine is being created we have to add that into this waitgroup so that it is responsible for management, for example we have five go routines and until unless they are back it will not end 
+2. done - once your job is done and that go routine whatever you have sent is done with its work then it is your responsibility to call for done
+3. wait - whenever my job is not done it should wait
+
+1. We call wg.Add() inside for loop with 1 go routine
+
+for _, web := range websitelist {
+		go getStatusCode(web)
+		wg.Add(1) //we add one to the wait group for each go routine we are creating
+	}
+
+2. We call wg.wait()
+
+3. Another part of this weight group comes up into getStatusCode, now into the status code we use
+the defer and we're going to say wait group you have to actually pass on a signal which is done
+
+
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"sync"
+)
+
+// We need a variable which is going to be a wait group and declare that as global, because we will be passing it into different methods. Normally  you do not create a variable instead you will be creating a pointer because you pass on a reference of sync.waitgroup
+var wg sync.WaitGroup //pointer
+
+func main() {
+	//go greeter("Hello")
+	//greeter("world")
+
+	//define some website
+	websitelist := []string{
+		"https://start.spring.io",
+		"https://spring.io",
+		"https://google.com",
+		"https://github.com",
+	}
+
+	//loop through and call our getStatusCode which is getting the status code and pass on this //instance of the web
+	for _, web := range websitelist {
+		go getStatusCode(web)
+		//we add one to the wait group for each go routine we are creating
+		wg.Add(1) //used to keep on adding the go routines number, in this case we have just one 						//because there is just one call happening
+	}
+
+	//Next we call wg.wait() always goes at the end of the main method because it is only responsible for not allowing main method to finish
+	wg.Wait() //it responsibility don't just exit yet some of jobs are coming
+}
+
+// create func greeter() which takes string,  we want to print it five times
+/*func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		time.Sleep(3 * time.Millisecond)
+		fmt.Println(s)
+	}
+}*/
+
+// create function which makes a request to the websites and gets a status code, we pass some //endpoint get a status code from http
+func getStatusCode(endpoint string) {
+
+	// it is responsibile to pass on a signal which is done
+	defer wg.Done()
+
+	//we use http to fire up a get method() where we pass an endpoint
+	// It will either give me a result or an error so we use comma ok syntax
+	res, err := http.Get(endpoint)
+
+	//check for error
+	if err != nil {
+		fmt.Println("OOPS in endpoint")
+	}else {
+	     fmt.Printf("%d status code for %s\n", res.StatusCode, endpoint)
+	}
+}
+
+
+> go run main.go
+200 status code for https://github.com
+200 status code for https://spring.io
+200 status code for https://start.spring.io
+200 status code for https://google.com
+
+When we run this is much more faster 
+
+Mutex in golang
+1. Consider for some reason you are storing all signals which is slice which stores all the
+strings and the first string is test
+
+var signals = []string{"test"}
+
+2. In getStatusCode(), after print message, we want to append the signals with whatever the end point is coming up
+
+if err != nil {
+		fmt.Println("OOPS in endpoint")
+	}else {
+		  signals = append(signals,endpoint)
+	     fmt.Printf("%d status code for %s\n", res.StatusCode, endpoint)
+	}
+
+3. Further after all this done, after waitgroup we want to go and print out this signal
+
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"os/signal"
+	"sync"
+)
+
+var wg sync.WaitGroup //pointer
+var signals = []string{"test"}   //step 1
+
+func main() {
+	//go greeter("Hello")
+	//greeter("world")
+
+	websitelist := []string{
+		"https://start.spring.io",
+		"https://spring.io",
+		"https://google.com",
+		"https://github.com",
+	}
+
+	for _, web := range websitelist {
+		go getStatusCode(web)		
+		wg.Add(1)
+	}
+
+	wg.Wait()
+    fmt.Println(signals)  //step 3
+}
+
+/*func greeter(s string) {
+	for i := 0; i < 6; i++ {
+		time.Sleep(3 * time.Millisecond)
+		fmt.Println(s)
+	}
+}*/
+
+func getStatusCode(endpoint string) {
+
+	defer wg.Done()
+
+	res, err := http.Get(endpoint)
+
+	if err != nil {
+		fmt.Println("OOPS in endpoint")
+	}else {
+		  signals = append(signals,endpoint)   //step 2
+	     fmt.Printf("%d status code for %s\n", res.StatusCode, endpoint)
+	}
+}
+
+> go run main.go
+200 status code for https://github.com
+200 status code for https://spring.io
+200 status code for https://start.spring.io
+200 status code for https://google.com
+[test https://github.com https://spring.io https://start.spring.io https://google.com]
+
+It is running, but as I told when you create a goroutines these are managed by the go
+runtime and threads are managed by os itself. Now if the threads or the go routines are being managed by the runtime who is managing the lock onto a memory space
+
+Here we are just firing up one go routine, but there can be a situation where five different
+go-routines might be working on and all of them simultaneously trying to write into a single memory which is not good, there should be some responsibility on our side that we should avoid this one and that's exactly where mutex comes into picture
+    Mutex is mutual exclusion locks, the zero value for mutex is unlocked mutex and what basically mutex role is, it provides you a lock over the memory and there are a read write mutex as well which is going to lock this memory till one go routine is working and till the time it is writing it will not allow anybody to just use this memory. Read write mutex will allow anybody to use the
+memory space for reading purposes, but if somebody comes to write that then i'm
+going to lock that and whoever was using for reading purpose will send out and will not allow him to read till the write operation is all done 
+
+1. Define this mutex using sync package,  we create a pointer of that because we need to pass it on into multiple of the go routines
+
+var mut sync.Mutex 
+
+2. When we performing an operation like read and write  we say mutex to do a lock of it and it
+is also your responsibility that once all of this is done we will like to unlock 
+
+if err != nil {
+		fmt.Println("OOPS in endpoint")
+	} else {
+		mut.Lock()
+		signals = append(signals, endpoint)
+		mut.Unlock()
+		fmt.Printf("%d status code for %s\n", res.StatusCode, endpoint)
+	}
+
+
+In the bigger application there is a variable or a database or something which is being written by multiple of these go routines, in that case we can use this
+
+
+Race Condition in golang
+      There are multiple go routines and we can very loosely say there are multiple threads that
+are going on and memory space is just one thing, so if you try to write into this memory space using one thread and another thread at the same time comes in for writing into the same memory space, obviously we are going to get into the issues. 
+     In the previous example we were not able to see that, but in this example we will actually catch that up, not while having the error but rather having a race tooling with the golang. 
+
+
+1. Create 27Mutex folder inside myGolang folder
+2. Right click on 27Mutex and create file main.go, we can directly type code
+
+3. Open terminal
+> go mod init mutex
+
+4. Write code in main.go
+
+package main
+
+func main() {
+	fmt.Println("RaceCondition in Golang")
+}
+
+a. create a variable score which store integer values and the default value is 0, it can also store 1, 2 or anything and we like to push more values into this score so we will use go routines for that
+
+var score = []int{0}
+
+b. create a couple of go routines we're not going to create them into separate methods, but we create some anonymous function(which contains body but without function name) inside main function and executing them immediately
+
+    go func(){}()
+	go func(){}()
+	go func(){}()
+
+c. Write logic in go routine to add the values, so we append the value into score, so first function actually pushes 1 into  score and same thing is going to happen into the second go routine  which pushes 2 into  score
+
+   go func(){
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		score = append(score, 1)
+	}()
+	go func(){
+		fmt.Println("Two GoRoutine")
+		score = append(score, 2)
+	}()
+	go func(){}()
+
+This brings us an issue that we are firing up the go routines but nobody is there in  main method to run all go routines and  waits for these go routines to come back. So we use sync package for that purpose
+
+d. We create waitgroup as a pointer 
+
+wg := &sync.WaitGroup{}
+
+e. Now in these goroutine function we need to pass on waitgroups, we know it is reference so we need to pass on a pointer of type sync.waitgroup
+
+go func(wg *sync.WaitGroup) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		score = append(score, 1)
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+		fmt.Println("Two GoRoutine")
+		score = append(score, 2)
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+       fmt.Println("Three GoRoutine")
+		score = append(score, 3)
+    }(wg)
+
+- once the waitgroup is being passed, next we need to notify main method that we have enabled the
+waitgroup, so in this waitgroup you have to wait till all the waitgroups returns back finishing up their job by adding wg.wait()
+
+   go func(wg *sync.WaitGroup) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		score = append(score, 1)
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+		fmt.Println("Two GoRoutine")
+		score = append(score, 2)
+	}(wg)
+	go func(wg *sync.WaitGroup){
+       fmt.Println("Three GoRoutine")
+		score = append(score, 3)
+    }(wg)
+
+	wg.Wait()
+
+- Next we have add all goroutines in waitgroups
+
+   wg.Add(3)
+   go func(wg *sync.WaitGroup) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		score = append(score, 1)
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+		fmt.Println("Two GoRoutine")
+		score = append(score, 2)
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+        fmt.Println("Three GoRoutine")
+		score = append(score, 3)
+    }(wg)
+
+	wg.Wait() 
+
+- Now that the waitgroup is being passed, now it is my responsibility to pass on a signal that this waitgroup is done
+
+   wg.Add(3)
+	go func(wg *sync.WaitGroup) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		score = append(score, 1)
+		wg.Done()
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+		fmt.Println("Two GoRoutine")
+		score = append(score, 2)
+		wg.Done()
+	}(wg)
+	go func(wg *sync.WaitGroup) {
+        fmt.Println("Three GoRoutine")
+		score = append(score, 3)
+		wg.Done()
+    }(wg)
+       
+	wg.Wait()
+   fmt.Println(score)
+
+
+In my slice as of now we are having starting with 0 and once 1st go routine runs this will
+write or add 1 to it, once 2nd go routine runs it will just add 2 to my slice and 3rd go routine will add 3 to my slice. Since we called wg.wait() so that all the go routines get an equal
+chance to come back and report to the base
+
+> go run main.go
+RaceCondition in Golang
+Three GoRoutine
+Two GoRoutine
+One GoRoutine
+[0 3 2 1]
+
+3rd go routine actually does it job first and the ordering of which go routine will execute first is not guaranteed because these are just independent kind of goroutines. When we run this again
+the order might change might not change there is no guarantee on that.
+   
+Everything is working so where is the race condition, everything is working fine, actually not everything is working fine on the surface level it might look like that this is all working good, if you are using the cloud resources you are not utilizing it in a better way, so we provide 
+--race this will actually analyze for yourself that whether your program is having some of the race condition or not
+
+> go run --race .
+RaceCondition in Golang
+One GoRoutine
+Two GoRoutine
+Three GoRoutine
+==================
+WARNING: DATA RACE
+Read at 0x00c0000080a8 by goroutine 9:
+  main.main.func2()
+      C:/myGolang/27Mutex/main.go:24 +0x87
+  main.main.gowrap2()
+      C:/myGolang/27Mutex/main.go:26 +0x41
+
+Previous write at 0x00c0000080a8 by goroutine 8:
+  main.main.func1()
+      C:/myGolang/27Mutex/main.go:19 +0x104
+  main.main.gowrap1()
+      C:/myGolang/27Mutex/main.go:21 +0x41
+
+Goroutine 9 (running) created at:
+  main.main()
+      C:/myGolang/27Mutex/main.go:22 +0x33c
+
+Goroutine 8 (finished) created at:
+  main.main()
+      C:/myGolang/27Mutex/main.go:16 +0x239
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c00000a118 by goroutine 10:
+  runtime.growslice()
+      C:/Program Files/Go/src/runtime/slice.go:177 +0x0
+  main.main.func3()
+      C:/myGolang/27Mutex/main.go:29 +0xbc
+  main.main.gowrap3()
+      C:/myGolang/27Mutex/main.go:31 +0x41
+
+Previous write at 0x00c00000a118 by goroutine 8:
+  main.main.func1()
+      C:/myGolang/27Mutex/main.go:19 +0xe4
+  main.main.gowrap1()
+      C:/myGolang/27Mutex/main.go:21 +0x41
+
+Goroutine 10 (running) created at:
+  main.main()
+      C:/myGolang/27Mutex/main.go:27 +0x444
+
+Goroutine 8 (finished) created at:
+  main.main()
+      C:/myGolang/27Mutex/main.go:16 +0x239
+==================
+==================
+WARNING: DATA RACE
+Write at 0x00c0000080a8 by goroutine 9:
+  main.main.func2()
+      C:/myGolang/27Mutex/main.go:24 +0x104
+  main.main.gowrap2()
+      C:/myGolang/27Mutex/main.go:26 +0x41
+
+Previous read at 0x00c0000080a8 by goroutine 10:
+  main.main.func3()
+      C:/myGolang/27Mutex/main.go:29 +0x87
+  main.main.gowrap3()
+      C:/myGolang/27Mutex/main.go:31 +0x41
+
+Goroutine 9 (running) created at:
+  main.main()
+      C:/myGolang/27Mutex/main.go:22 +0x33c
+
+Goroutine 10 (running) created at:
+  main.main()
+      C:/myGolang/27Mutex/main.go:27 +0x444
+==================
+[0 1 2]
+Found 3 data race(s)
+exit status 66
+
+There is a race which is being created in your program which is trying to access a memory and everybody is trying to do that is why it is creating an issue and we are exiting with a status of 66. So the solution is where mutex comes into picture
+
+f. Create a variable mut of type pointer  from sync package 
+
+mut := &sync.Mutex{}
+
+g. Next we want to pass on this mutex to all go routine
+
+go func(wg *sync.WaitGroup, m *sync.Mutex) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		score = append(score, 1)
+		wg.Done()
+	}(wg,mut)
+	go func(wg *sync.WaitGroup,m *sync.Mutex) {
+		fmt.Println("Two GoRoutine")
+		score = append(score, 2)
+		wg.Done()
+	}(wg,mut)
+	go func(wg *sync.WaitGroup,m *sync.Mutex) {
+		fmt.Println("Three GoRoutine")
+		score = append(score, 3)
+		wg.Done()
+	}(wg,mut)
+
+So mutex is mutually  exclusion lock whenever you try to access a memory you should lock it, so
+that all the time you're performing operations on that memory nobody else can come in and just mess around with the job. For example imagine you are having a bank account and one of your threads want to add a thousand dollar in this account and another thread that comes up and  want to take a thousand thousand dollars out of that account and if you're not locking that memory you are definitely going to create a lot of issues
+
+f. In order to perform mutex, whenever you are performing any kind of operation  we have to lock this and it is also your responsibility that you unlock the memory or the resource 
+
+go func(wg *sync.WaitGroup, m *sync.Mutex) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		mut.Lock()
+		score = append(score, 1)
+		mut.Unlock()
+		wg.Done()
+	}(wg,mut)
+	go func(wg *sync.WaitGroup,m *sync.Mutex) {
+		fmt.Println("Two GoRoutine")
+		mut.Lock()
+		score = append(score, 2)
+		mut.Unlock()
+		wg.Done()
+	}(wg,mut)
+	go func(wg *sync.WaitGroup,m *sync.Mutex) {
+		fmt.Println("Three GoRoutine")
+		mut.Lock()
+		score = append(score, 3)
+		mut.Unlock()
+		wg.Done()
+	}(wg,mut)
+
+> go run --race .
+RaceCondition in Golang
+Two GoRoutine
+One GoRoutine
+Three GoRoutine
+[0 2 1 3]
+
+Now it is going to resolve race condition, if the race conditions are all good and
+done you will get a great performance
+
+g. We can create the read write mutex
+
+func main() {
+	fmt.Println("RaceCondition in Golang")
+
+	wg := &sync.WaitGroup{}
+	mut := &sync.RWMutex{}
+
+	var score = []int{0}
+
+	wg.Add(3)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		mut.Lock()
+		score = append(score, 1)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		fmt.Println("Two GoRoutine")
+		mut.Lock()
+		score = append(score, 2)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		fmt.Println("Three GoRoutine")
+		mut.Lock()
+		score = append(score, 3)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+
+	wg.Wait()
+	fmt.Println(score)
+}
+
+whenever you are performing any write operation you do exactly same as you have been doing, but in addition whenever you are performing a read operation we have to lock this
+resource as well as unlock the resource also 
+
+h. To perform read, we create another goroutine, we are not going to perform any lock or any
+updation, but we are either trying to loop through all the values and this is the place
+where you this read lock
+
+go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		fmt.Println("Three R")
+		mut.RLock()
+		fmt.Println(score)
+		mut.RUnlock()
+		wg.Done()
+	}(wg, mut)
+
+If you're trying to lock the resource directly that is not good you should always be locking the resource when you're trying to read that 
+
+What is RWMutex?
+    whenever we are writing something into the memory the lock is really necessary, because if another routine comes in and write into then we're getting into a mess, but at the time of reading
+that kind of strict lock is not really necessary, so if any thread comes into writing that surely
+we'll lock it, but if any thread or multiple threads comes into the same resource and try to read that resource we are going to definitely  allowing that and that's what this read write mutex 
+      If somebody is reading into our memory and another thread comes in to write something into that, in that case it is the job of this read write mutex to throw away all the threads routines
+which are trying to read that and once everything is gone out of scope, then your thread is allowed to write the memory, until the time it is writing into the memory, no thread will be
+allowed to read from the memory
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("RaceCondition in Golang")
+
+	wg := &sync.WaitGroup{}
+	mut := &sync.RWMutex{}
+
+	var score = []int{0}
+
+	wg.Add(4)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		//create print stmt to know which goroutine is running
+		fmt.Println("One GoRoutine")
+		mut.Lock()
+		score = append(score, 1)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		fmt.Println("Two GoRoutine")
+		mut.Lock()
+		score = append(score, 2)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		fmt.Println("Three GoRoutine")
+		mut.Lock()
+		score = append(score, 3)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+	go func(wg *sync.WaitGroup, m *sync.RWMutex) {
+		fmt.Println("Four Routine")
+		mut.RLock()
+		fmt.Println(score)
+		mut.RUnlock()
+		wg.Done()
+	}(wg, mut)
+
+	wg.Wait()
+	fmt.Println(score)
+}
+
+
+> go run --race .
+RaceCondition in Golang
+Two GoRoutine
+Three GoRoutine
+One GoRoutine
+Four Routine
+[0 2 3 1]
+[0 2 3 1]
+
+
+Channels and Deadlock in golang
+     In previous program we discussed if we have multiple goroutines, these go routines can actually access to a single memory, all of this go routine are struggling to to write this memory and we solve that issue by using the mutex. But sometimes it is not feasible that you declare a
+global variable or you use database to write a value, your go routine just go up in the internet  do some operation pick some values add that entry into the database and then your go routines start another
+      First go routine has no idea about next go routine, you can say that this waitgroup is there to make it aware, but wait group is just a management here, waitgroup doesn't tell that there is another goroutine waiting for it, it says nothing about it, it will just do your job send me a
+done signal and i'll take care of the rest and this actually brings us the concept of channels
+
+
+Why Channels?
+      Channels are a way in which your multiple go routines can actually talk to each other, they will still not be aware of what's happening inside that or what long it's going to take another go
+routine to finish of the job, but maybe you are waiting for just some signal or just some information from another go routine and you don't need to go come back and finish all of that and you can do it on the go while the thread has not completed the execution 
+
+
+1. Create 28Channels folder inside myGolang folder
+2. Right click on 28Channels and create file main.go, we can directly type code
+
+3. Open terminal
+> go mod init channels
+
+4. Write code in main.go
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Channels in Golang")
+}
+
+5. Create a channel using make() of type integers
+
+myCh := make(chan int)
+
+But you cannot just go ahead and say we created a channel, since channel are a way through which multiple go routines interact and you need to define that what kind of values you will be passing on between each other is it integer or is it a string 
+
+- Now we are going to push 5 values into it, the arrow always points towards the left in the golang
+
+myCh <- 5
+
+- Print this channel, how we receive values from the channeL using <-channelname
+
+fmt.Println(<-myCh)
+
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int)
+
+	myCh <- 5
+
+	fmt.Println(<-myCh)
+}
+
+> go run main.go
+Channels in Golang
+fatal error: all goroutines are asleep - deadlock!        
+
+goroutine 1 [chan send]:
+main.main()
+        C:/myGolang/28Channels/main.go:10 +0x6e
+exit status 2
+
+It leads to an error which is an deadlock. The channel works in a way,  the channel will allows you to pass me a value, if somebody is listening to me. This is a big problem statement because
+it is saying that if somebody is listening to me then only i'll allow you to pass on me a value. you can create a channel but you cannot utilize the channel until unless you use go routines 
+
+6.  whenever we are creating go routines, a waitgroups needs to come in, so we create a
+pointer from this wait.sync  package 
+
+wg := &sync.WaitGroup{}
+
+- create a go routine without any name, we want to pass on two values first is going to be  integer type of channel, next you will be passing on wait groups which is a pointer from sync.waitgroup. So whenever we are going to call this method i'll pass on this my channel and 
+an access to this wait group, we create two channels
+
+go func(ch chan int, wg *sync.WaitGroup) {}(myCh,wg) -  responsible for our receiving the
+																value
+
+go func(ch chan int, wg *sync.WaitGroup) {}(myCh,wg) - responsible for putting values into the  																	channel
+- We need to add goroutine in waitgroup and at the end we need to wait for it
+
+    wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		wg.Done()
+	}(myCh,wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		wg.Done()
+	}(myCh,wg)
+	wg.Wait()
+
+- Now  we add values into the 2nd channel and receive the values from the 1st channel 
+
+wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh,wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		myCh <- 5
+		wg.Done()
+	}(myCh,wg)
+	wg.Wait()
+
+
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+    wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh,wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		myCh <- 5
+		wg.Done()
+	}(myCh,wg)
+	wg.Wait()
+}
+
+> go run main.go
+Channels in Golang
+5
+
+We are able to pass on the value into the channel and we are receiving the value from the channel
+
+7. Now we want to just not pass on one value we also want to pass on another value 6
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		myCh <- 5
+		myCh <- 6
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+When we run it will give me error that you are passing me two values since one routine is
+listening. We can fix that by having two listeners who are consuming that value and it basically flush out that value. But there are cases when you don't want to have that and probably we need same listener is going into a loop and trying to get all the values out of the channel in that case you can use a buffered channel 
+
+myCh := make(chan int,2)  //one is a default value for the channel, if we want to add one more value of it this is not going to consume it, but at least it will not fall into error
+
+> go run main.go
+Channels in Golang
+5
+
+8. so channels can also be closed using close()
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		myCh <- 5
+		myCh <- 6
+		close(myCh)
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+> go run main.go
+Channels in Golang
+5
+
+It works correctly, and also there is no way while you are reading the values that the channel is
+closed or not
+
+- Maybe for some reason before even passing all the values you have just closed the channel and now you are trying to read that this leads to an error
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		close(myCh)
+		myCh <- 5
+		myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+
+> go run main.go
+Channels in Golang
+0
+panic: send on closed channel
+
+goroutine 21 [running]:
+main.main.func2(0x0?, 0xc00008c070)
+        C:/myGolang/28Channels/main.go:24 +0x36
+created by main.main in goroutine 1
+        C:/myGolang/28Channels/main.go:22 +0x1b9
+exit status 2
+
+-Now listening on to the close channel is not problematic, if i'm not sending any values to the channel and i'm listening to that, now listening is definitely allowed and it is giving me a zero
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		close(myCh)
+		//myCh <- 5
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+> go run main.go
+Channels in Golang
+0
+
+- This zero is again nightmare, why it so because if we passing value as zero and run that again, it gives output as zero
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+        myCh <- 0
+		close(myCh)
+		
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+> go run main.go
+Channels in Golang
+0
+
+so what is the guarantee that the zero that you are receiving is actually a signal value itself or is it a message that you're receiving when you're listening to a closed channel
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		
+		close(myCh)
+        //myCh <- 0
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+> go run main.go
+Channels in Golang
+0
+
+In that case instead of printing what you can do is you can actually receive the value up. you can receive a value by listening to the channel and finally print the value
+
+val, isChanelOpen := <-myCh
+fmt.Println(isChanelOpen)
+		fmt.Println(val)
+
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		val, isChanelOpen := <-myCh
+		fmt.Println(isChanelOpen)
+		fmt.Println(val)
+		//fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+
+		close(myCh)
+		//myCh <- 0
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+> go run main.go
+Channels in Golang
+false
+0
+
+Now we are receiving a false and also  receiving a value 0, but based on this false and true you can decide that this is 0 is coming up, because of the closed channel or is it coming up because
+there's somebody who is trying to send you a value 
+
+- Now we are sending a value 0, so we receive true
+
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels in Golang")
+
+	myCh := make(chan int, 1)
+	wg := &sync.WaitGroup{}
+
+	//myCh <- 5
+	//fmt.Println(<-myCh)
+	wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		val, isChanelOpen := <-myCh
+		fmt.Println(isChanelOpen)
+		fmt.Println(val)
+		//fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+        myCh <- 0
+		close(myCh)
+		
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+}
+
+
+> go run main.go
+Channels in Golang
+true
+0
+
+9. We saw that channels can be buffered or can be unbuffered, we got the idea we can also evaluate the channel is being closed or not and we can also now consume and send some values on the channel. Previously we saw closing this channel after sending the value and if we close the channel before sending it creates a panic. But what if we accidentally wrote a codewhere before even consuming the value we go ahead and close the channel
+
+wg.Add(2)
+	go func(ch chan int, wg *sync.WaitGroup) {
+		close(myCh)
+		val, isChanelOpen := <-myCh
+		fmt.Println(isChanelOpen)
+		fmt.Println(val)
+		//fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+	go func(ch chan int, wg *sync.WaitGroup) {
+		myCh <- 0
+		close(myCh)
+
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+
+It is allowed to do so and thisc obviously will create the problem that you just close the channel before consuming the value which create some of the issues. By default all these channels are like bi-directional they can send the values, they can receive the values
+     If you really want to make sure that you write clean code then we have to add <- symbols in go routine
+
+wg.Add(2)
+   //Receive only
+	go func(ch <-chan int, wg *sync.WaitGroup) { // value which is going outside of the box so 																this is receiving a value 
+		close(myCh)
+		val, isChanelOpen := <-myCh
+		fmt.Println(isChanelOpen)
+		fmt.Println(val)
+		//fmt.Println(<-myCh)
+		wg.Done()
+	}(myCh, wg)
+
+    //SEND only
+	go func(ch chan <- int, wg *sync.WaitGroup) { //something is going inside the channel
+		myCh <- 0
+		close(myCh)
+
+		//myCh <- 6
+
+		wg.Done()
+	}(myCh, wg)
+	wg.Wait()
+
+so adding these signature what it does it actually makes these go routines as send only. Once you do so then putting up these close statement will automatically give you errors, that if
+the channel receive only channel you are not even allowed to put up a closed statement on that
