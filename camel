@@ -1,0 +1,2931 @@
+What Apache Camel solves ?
+1. Enterprise Integrations are complex
+    - Whenever we talk enterprises they have 100's of appl. This appl ha complex communication patterns and use variety of transports like HTTP, queues etc and variety of protocols like HTTP, JMS, AMQP
+
+2. Evolution of Cloud and Microservices makes enterprise Integration even more complex.
+     Consider we have microservice1 which communicates with other microservices. It might be using different transport to communicate with each of microservices. Microservice1 calls microservice2 as rest api, however microservice1 use queue to talk with microservice3 which uses wide variety of protocol and communication approach 
+
+3. How we simplify Enterprise Integration or how we simplify code that we write to enable microservice1 to talk to other services and adhere all best practises ?     - We can follow Enterprise Integration pattern, however understanding and implement  is very challenge so we go for Apache camel
+
+Apache camel
+   - Open source enterprise integration framework - we can easily integrate systems which are consuming and producing data
+   - Also helps to implement patterns around microservice architecture and cloud
+   - very lean (ie) lightweight and extensible 
+         Apache camel can integrate with other frameworks like Kafka, Active MQ, JMS, make HTTP calls, talk to cloud services like AWS lambda so camel is lightweight because camel use Component architecture
+         There are 100's of components which are provided for different databases, message queues, apis and cloud integrations
+         It also supports 200+ protocols, transports,data formats and 300+ converters between these data formats
+         Provides Domain Specific Language (DSL) customized to suit needs of Application Integration
+
+Example: springbootversion-2.4.2,camelversion-3.7.0
+1. Create SpringBoot-Camel1 project with web, dev tools,actuator,apache camel dependency
+2. Create SpringBoot-Camel2 project with web, dev tools,actuator,apache camel dependency
+<dependency>
+  <groupId>org.apache.camel.springboot</groupId>
+  <artifactId>camel-spring-boot-starter</artifactId>
+  <version>3.7.0</version>
+</dependency>
+3. Build camel route
+   - Create MyFirstTimerRoute.class in SpringBoot-Camel1 where we use timer to schedule things and run at regular intervals 
+   - To build a route, we extend RouteBuilder class and override configure() where we configure all our routes
+     Actually Camel is integration framework, so lets say we want to listen to a queue and whatever input that comes in we want to do some transformation on it and finally save it to a database. This sequence of steps is called route.
+     In this specific route, we have 2 endpoints, one endpoint is queue we are listening on a queue and saving into database that is other endpoint
+    In this case we use timer to actually trigger messages and we will not save them to database instead we will write into log.
+
+  - In order to define the route, we want to specify the starting point of route from where for that we use "from()" method. Here we specify the timer which is timer endpoint
+     from("timer:first-timer")
+   We are listening on timer endpoint so whenever there is a new message on the timer endpoint, we want to send it to a log using "to()" 
+     from("timer:first-timer").to("log:first-timer");
+Here timer and log are keywords. 
+
+4. Start the appl, so in SpringBoot-Camel1 console we can see "Total 1 routes of which 1 route started" and print lot of logs will be printed 
+   Here Timer generates a null message every second and we are picking it up and sending to log
+
+5. Now instead of null message we add something meaningful constant message using transform() and constant()
+   from("timer:first-timer")
+   .transform().constant("My constant message")
+   .to("log:first-timer");
+We are picking up message from the timer endpoint and transforming message as a constant and send out to log.
+
+6. Start the appl, now we can see the body to "My Constant message"
+
+7. Now we can add date and time to the message 
+from("timer:first-timer")
+   .transform().constant(LocalDateTime.now())
+   .to("log:first-timer");
+So now we can the body of message to current date and time
+
+8. But in realtime we wont have a constant message, so we see how to make message dynamic 
+   We create a bean to generate that message, so we create separate class GetCurrentTimeBean with getCurrentTime() and autowire it 
+@Component
+class GetCurrentTimeBean {
+	public String getCurrentTime() {
+		return "Time now is "+LocalDateTime.now();
+	}
+}
+
+and call that bean to generate the message dynamically using 
+    from("timer:first-timer")
+   .bean("getCurrentTimeBean")
+   .to("log:first-timer");
+
+If we have multiple methods in bean then we have provide the method name 
+      from("timer:first-timer")
+   .bean("getCurrentTimeBean","methodname")
+   .to("log:first-timer");
+Now Spring is doing a component scan of this particular package and find the component and create a bean with the bean "getCurrentTimeBean". We use Spring bean to do transformation and this bean would be invoked each time  it receives message on this specific endpoint 
+
+9. Start the appl, now we can see time will be different 
+   When u want to pickup a message from queue, u want to typically do a transformation around and send out to database 
+
+10. There are 2 types of operation that u can do within specific route (ie) processing and transformation
+   Once we receive a message we want to do operation or something which does not make a change on the body of the message itself, that is called processing 
+   However if you are doing anything that changes the body of the message then that is called transformation
+  Previously we transform null message to constant message using transform() and bean(). In addition to that we need to do some processing by taking body of the message.
+  So we create component called SimpleLoggingProcessingComponent with process() which takes message as input 
+@Component
+class SimpleLoggingProcessingComponent {
+	private Logger log=LoggerFactory.getLogger(SimpleLoggingProcessingComponent.class);
+	
+	public void process(String message) {
+	   log.info("SimpleLoggingProcessingComponent {}",message);
+	}
+}
+
+11. Now we make use of SimpleLoggingProcessingComponent to process our thing. So we autowired SimpleLoggingProcessingComponent
+      from("timer:first-timer")
+	.log("${body}")
+	.transform().constant("My constant message")
+		.log("${body}")
+		   .bean(getCurrentTimeBean)
+		   .log("${body}")
+		   .bean(loggingComponent)
+		   .log("${body}")
+	       .to("log:first-timer");
+
+In this case if we do log body after loggingComponent there will not any change in the body of message.
+   The difference between GetCurrentTimeBean and SimpleLoggingProcessingComponent is return type of method. If ur return type is String we can change the method body and when we call bean method with void then it means we are doing some kind of processing 
+
+12. Previoulsy we done processing and transformation. Whenever we do transform we have method called transform() which can be used for transformation or we can use bean() for transformation. We also done processing using bean().
+   In addition we can do processing of message by creating processors 
+   .process(new SimpleLoggingProcessor())
+
+	from("timer:first-timer")
+		.log("${body}")
+		.transform().constant("My constant message")
+		.log("${body}")
+		   .bean(getCurrentTimeBean)
+		   .log("${body}")
+		   .bean(loggingComponent)
+		   .log("${body}")
+		   .process(new SimpleLoggingProcessor())
+	       .to("log:first-timer");
+
+Create SimpleLoggingProcessor which implements Processor and override process()
+
+class SimpleLoggingProcessor implements Processor {
+	private Logger log=LoggerFactory.getLogger(SimpleLoggingProcessor.class);
+
+	@Override
+	public void process(Exchange exchange) throws Exception {
+		log.info("SimpleLoggingProcessor {}",exchange);
+	}
+
+}
+
+13. Start the appl, we can see the body of message using Processor
+   Finally we done transformation using transform() or bean(), Processing is done using process() or bean()
+
+14. Now we are going to process the files for that we create new class called MyFileRouter which extends RouteBuilder and override configure()
+   Now we get all files from input folder and move it to output folder 
+from("file:files/input").to("file:files/output");
+
+15. Start the appl, refresh the project, now u can see files/input folder inside the project. So whatever we create in input folder will move to output folder
+
+16. Goto github.com/in28minutes/camel and download the repository, from that copy all files present in 01.files folder and copy to input folder of the project.
+   So as soon u copy the files to input folder, it will move to output folder, when u refresh the project and no log will be printed in the console
+
+17. Now inorder to print the log, we use
+.from("file:files/input")
+.log("${body}")
+.to("file:files/output")
+Now copy only one file from output to input folder, refresh the project,then it automatically move to output folder, then we can see body of file in the console.
+   As per the camel, we are picking up file from input folder and moving to another endpoint (ie) output folder, as part of processing we are printing the content of the body.
+
+18. Now we want to send message to ActiveMQ from SpringBoot-Camel1 and SpringBoot-Camel2 service want to receive that message 
+    To do that we need to launch ActiveMq
+-Download activemq from https://activemq.apache.org/components/classic/download/
+-Run bin>activemq start   
+-In case if it shows already bind exception, then conf/activemq.xml, change in <transporter> as 61616 to 6616 and  5672 to 5762
+- Run localhost:8161 with admin,admin
+- click Manage ActiveMQ Broker
+
+19. Now we want SpringBoot-Camel1 to put message on ActiveMQ
+   Create ActiveMQSenderRouter class which extends RouteBuilder and override configure(). Here we want to create a timer and in regular interval we want to put that message in queue
+    from("timer:active-mq-timer?period=10000")
+    .transform().constant("My message for Active MQ")
+    .log("${body}")
+    .to("activemq:my-activemq-queue");
+Every 10sec we are generating message to activemq
+
+20. Since timer,log endpoints are predefined that comes from camel, but queue and database endpoint has to be created by providing the dependency. In our case we need to create endpoint "activemq" so we provide dependency
+<dependency>		<groupId>org.apache.camel.springboot</groupId>
+<artifactId>camel-spring-boot-starter</artifactId>
+<version>3.7.0</version>
+</dependency> 
+  - In application.properties we configure
+spring.activemq.broker-url=tcp://localhost:6616
+  - Start the appl, now we can see in the console activemq has been started 
+  - Goto ActiveMQ in broswer-click Queues-now u can see 
+my-activemq-queue name will be displayed
+  - If u refresh the activemq, u can see each time message will be added in the queue
+  - If u see the console,u can see "My message for Active MQ" will be displayed
+  
+
+21. Now we want to consume the message in SpringBoot-Camel2
+  - Change port in application.properties
+        server.port=8000
+        spring.activemq.broker-url=tcp://localhost:6616
+  - Add activemq dependency in SpringBoot-Camel2
+<dependency>		<groupId>org.apache.camel.springboot</groupId>
+<artifactId>camel-spring-boot-starter</artifactId>
+<version>3.7.0</version>
+</dependency> 
+  - Create ActiveMQReceiverRouter class which extends RouteBuilder and override configure() with
+  from("activemq:my-activemq-queue")
+  .to("log:received-message-from-active-mq");
+  - Start SpringBoot-Camel2 appl, and in console we can see so many received messages
+
+Note: For Camel version 3.7.0 will be support by JDK11
+
+
+Spring Boot + Apache Camel Integration
+   - Normally in an enterprise there is lot of application running and some of them are legacy appl and some are new appl, legacy means the appl design in old technology so interaction of those appl is not easy since implementation of the application is different so their message format may be different
+   - Suppose one appl is giving XML response and client expecting JSON so there will need to perform marshalling and unmarshalling kind of things
+   - However this are point to point integration so assume that legacy appl change its implementation or change its business in future so the new appl is developed with some latest technology. So interacting with 2 appl will get impacted for the business change
+   - Instead of directly tightly coupled the appl each other we can use additional layer to mediate the difference between the application.
+   - Apache camel is rule based routing and mediation engine that provides a jave object based implementation of enterprise integration pattern
+   - Apache camel is the lightweight framework, it can be deployed in any container like tomcat,jboss. Apache camel provides bunch of components so with these components we can interact with multiple endpoints and we can interact with multiple external application. For example we have activemq component and we exposing some endpoint, so with the help of HTTP, or FTP we can consume the activemq provided endpoint 
+  - In realtime from one appl we get the data from database or files or activemq,rabbitmq or by calling some HTTP protocols and sending that data to different appl and again those data we are storing in database or files or queues.
+
+Here we see how to transfer the records from one file to another file, filter the file, process the file, process the multiple files from one dir to another dir
+
+1. Create SpringBoot-Camel3 with camel, devtools
+2. Now we move data from one file to another file, create folder "a" and some file called "file1.txt", file2.txt,file3.txt and "b". Now we move data from folder "a" to folder "b"
+3. Create FileRouter class which extends RouteBuilder and override configure()
+  from("file:C:\\GitDemo\\a").to("file:C:\\GitDemo\\b"); 
+4. Specify property in application.properties
+camel.springboot.main-run-controller=true
+5. Start the application
+    - Now we see all files moved from "a" to "b" folder
+    - Now inside "a" folder it creates .camel folder and move all files to that folder
+6. In order to remove that we have to provide
+from("file:C:\\GitDemo\\a?noop=true").to("file:C:\\GitDemo\\b"); 
+7. Delete all files from "b" folder, copy all file from .camel folder to "a" folder and delete .camel folder
+8. Start the appl, now u cant see .camel folder and files will be moved from "a" folder to "b" folder
+
+9. Now we want to transfer specific file from "a" folder to "b" folder using filter() and Exchange.FILE_NAME which startswith myfile
+from("file:C:\\GitDemo\\a?noop=true").filter(header(Exchange.FILE_NAME).startsWith(type))
+		.to("file:C:\\GitDemo\\b");
+
+10. Now we want to transfer the file which contain content called "Java"
+from("file:C:\\GitDemo\\a?noop=true").filter(body().startsWith(content))
+		.to("file:C:\\GitDemo\\b");
+
+11. Now we read the text file and process into csv format 
+  Create only file1.txt inside "a" folder with 
+Raj Kumar  
+Ram Kumar
+   Now when we run, it create records.csv file into "b" folder separated with ","
+
+12. Now we do multiprocess operation, where assume we have bank appl which contains a text file which contains
+26234 Ram Closed
+26235 Sam Pending
+26236 Raj Interest
+Now we want to separate the files based on closed, pending and interest, for that we write logic using process with different filter 
+  - We need to add one dependency
+<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-csv</artifactId>
+			<version>2.21.0</version>
+		</dependency>
+
+
+Integrate Apache Camel with Spring Boot to create REST API
+1. Create SpringBoot-Camel4 with web, devtools and camel
+<dependency>		<groupId>org.apache.camel</groupId>
+<artifactId>camel-servlet-starter</artifactId>
+<version>2.24.0</version>
+</dependency>
+<dependency>
+<groupId>org.apache.camel</groupId>
+<artifactId>camel-jackson</artifactId>
+<version>2.24.0</version>
+</dependency>
+   - We add Camel-servlet(we are not using DispatcherServlet as we are not writing Spring REST) and Camel-Jackson same like Jackson dependency used to convert json to object and object to json
+
+2. Create ApplicationResource.class which is similar to our controller which extends RouteBuilder and override configure()
+   - We need camel component using restConfiguration() and we specify camel servlet and specify port and localhost and expect JSON so we specify Binding 
+restConfiguration().component("servlet").port(9090).host("localhost").bindingMode(RestBindingMode.json);
+  - Now we need to expose restapi "/hello" which prints "Welcome to camel"
+rest().get("/hello").produces(MediaType.APPLICATION_JSON_VALUE).route()
+				.setBody(constant("Welcome to Camel")).endRest();
+   
+3. Enable camel servlet in properties file 
+camel.component.servlet.mapping.context-path=/*
+server.port=9090
+
+4. Start the appl and run localhost:9090/hello which prints "Welcome to Camel"
+
+5. Now we want to consume custom object called Order object as json
+   - Create Order class with id,name, price
+   - Create OrderService class and initialize order object so that we populate those values in our route, so for post request we have addOrder() and for get request we have getOrders()
+
+6. Now in resource, we need to invoke OrderService so we have to inject it 
+   @Autowired
+	private OrderService service;
+
+7. Now we write rest endpoints to get list of orders 
+rest().get("/getOrders").produces(MediaType.APPLICATION_JSON_VALUE).route().setBody(() -> service.getOrders())
+				.endRest();
+
+8. Start the appl and run localhost:9090/getOrders
+
+9. Now we write rest endpoint for POST request, we cant directly add value using setBody() so we have to use Processor component
+   Since addOrder() takes Order as input and Order as output, we specify using type() and outType() and finally we need to process it
+rest().post("/addOrder").consumes(MediaType.APPLICATION_JSON_VALUE).type(Order.class).outType(Order.class)
+				.route().process(processor).endRest();
+
+10. We create OrderProcessor which implements Processor and override process() which handle ur input,Exchange will extract the value and add in our service 
+
+11. Now we need to inject OrderProcessor, it is not in our control, it is called by Camel so we cant inject directly using @Autowired so we use @BeanInject 
+
+12. Start the appl, in Postman with POST request give localhost:9090/addOrder
+   Body - Raw - Application/json
+{
+   "id":100,
+   "name":"tv",
+   "price":2000
+}
+Click Send
+
+Now verify using get method in browser using localhost:9090/getOrder
+  - Now we see all 5 orders 
+   
+
+Spring Boot + Apache Camel + Apache Kafka
+
+1. Create SpringBoot+Camel5 with web,
+<dependency>
+		    <groupId>org.apache.camel</groupId>
+		    <artifactId>camel-spring-boot-starter</artifactId>
+		    <version>2.17.3</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.camel</groupId>
+		    <artifactId>camel-kafka</artifactId>
+		    <version>2.16.3</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.scala-lang</groupId>
+		    <artifactId>scala-library</artifactId>
+		    <version>2.11.0</version>
+		</dependency>
+
+2. Now we create rest endpoint to contact kafka endpoint, so we create route to give kafka info in separate class KafkaRoute which extends RouteBuilder and override configure()
+   We specify topicname, kafkaserver, zookeeper, serializerClass used for serialization 
+
+3. We create rest endpoint to trigger kafka component called test()
+   We also need Camel template to send message to camel component 
+
+4. When we give "/test" it will send message to kafka
+
+5. Start kafka
+C:\Softwares\kafka_2.12-2.0.0\config>zookeeper-server-start.bat zookeeper.properties
+
+C:\Softwares\kafka_2.12-2.0.0\config>kafka-server-start.bat server.properties
+6. Start the appl, run as localhost:3000/test and now the message will display in kafka server
+
+7. May be try to restart the kafka once again and give
+
+C:\Microservice1\SpringBoot-Camel5>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic testtopic1 --from-beginning
+
+
+
+EIP(Enterprise Integration Pattern) Patterns
+   - It is design pattern used in enterprise appl integration and message oriented middleware in the form of pattern language
+  
+In SpringBoot-Camel1, we have provided different pattern
+
+1. EIP Splitter
+    from("file:C:/GitDemo/input").split().tokenize("\n").to("activemq:my-activemq-queue1");
+   - It will split the 4 words based on newline in file1.txt in input folder and send to activemq
+
+2. EIP content based router 
+      Content-Based Router inspects the content of a message and routes it to another channel based on the content of the message. It is something like "if-else" loop run in camel
+    - Now it will split the file based on \n and move to another route "direct:test".
+    - Now it comes to "direct:test" and using choice(), it checks what are the contents of the message accordingly it will message to the queue. If it contains "queue1" it will send to activemq-queue1 and respectively
+    - Create file test.txt in input folder with 
+1
+2
+queue1
+queue2
+queue3
+    - Run appl, now 4 queues will be created depending on the contents 
+activemq-queue1 - 1
+activemq-queue2 - 1
+activemq-queue3 - 1
+activemq-queue4 - 2
+
+3. EIP-Message Filter
+       A Message Filter is a special form of a Content-Based Router. It examines the message content and passes the message to another channel if the message content matches certain criteria
+
+4. EIP - Recepient list
+       A Content-Based Router allows us to route a message to the correct system based on message content. Whatever previous message we have seen it was previously only decided if the message contain some content go to particular queue. But suppose at runtime we have to decide the name of queue depending on the content of message then we use recepient list
+       It decide at runtime what all the recepients of the message
+     - Now it will split the file based on \n and move to another route "direct:test".
+     - In "direct:test" we have written a Processor, so whatever the message which is present in exchange it stores in recipients string. Using that string we have created a queue. We add recipientqueue to the header variable queue and get variable queue from header 
+     - Create file called test.txt with 
+1
+2
+     - Run the appl, and check whether it created 1,2 queue
+
+
+5. EIP - Wire Tap
+       Wire Tap allows you to route messages to a separate location while they are being forwarded to the ultimate destination.
+      - In "direct:test1", if some unwanted thing happens to message and that message routed to "DeadLetterQueue" and goes to "direct:test2" for processing 
+      - Create file called test.txt with
+test
+      - Run the appl, it will create queue DeadLetterQueue and prints "test" in console
+
+
+
+Spring Boot Apache Camel - Consume REST API 
+    Using Spring Boot we expose some REST API and then using Apache Camel route we consume those REST api
+
+1. Create SpringBoot-Rest with web dependency
+2. Create Employee model class 
+3. Create Controller class 
+The GET API will accept an id as a request parameter and create an employee object using the passed id and return it as response.
+The POST API will accept an employee object as request body. Using the parameters of the employee object it will create another employee object and return it as response.
+
+4. Create Maven project called CamelProject which consumes this API 
+5. We provided Camel-http dependency using http component we will calling services or apis exposed by spring boot and consuming them
+6. Create Employee model class which will passed during POST request 
+7. We create camel Processor called EmployeeProcessor which will create Employee object and marshall it xml and then set as body for exchange 
+8. Next we create SimpleRouteBuilder class where we define routes for consuming GET and POST api 
+   Here we have get input from "input" folder which wil trigger this route and in header we set http method as "GET" and made the request to spring boot appl and call MyProcessor which just prints the response after webservice is called 
+   In post request we get input from "input" folder and call CreateEmployeeProcessor which create new Employee object and marshall to new JSON format and send the header as POST and content and send the request to Spring boot appl and call MyProcessor which just prints the response after webservice is called 
+9. Create applicationContext.xml that call route builder class 
+10. Create main class
+
+11. Start springboot application
+12. Start main class from camelProject
+13. Now create text file inside input folder which makes rest call to SpringBoot appl "employee" and create employee object . Once done in Main application we can see employee object will be created and prints 
+
+
+-------------------------------------------------------------------------------------------------
+What is Enterprise Integration?
+      It is a process of combining multiple separate enterprise software together into one system.  Consider in modern bank system, what happens when you pay with your bank card,
+   - payment is processed on a terminal and information is sent to Central banking system and back signaling that you have enough money to make a purchase
+   - simultaneously Central banking system sends notification to your mobile
+application so that you get a popup message, if you then request your bank statement at bank's website or at its office, you will get an updated information, accounting for your latest purchase    	As we can see there is a lot of different software systems, terminal, Central banking system mobile application, website and many more, all this systems need to communicate information and
+Enterprise Integration is a process of enabling that communication 
+
+What is Apache Camel ?
+     Apache camel was created to solve exactly this kind of problem integration, it is
+an opensource Java framework designed specifically for building integration solutions, it allows developers to set up integrations that connect systems, convert data formats, perform
+transformations, handle errors and login, handle different communication protocols like HTTP, JMS and many others, camel does this with a concept called routes which moves data from one system to another.
+    When you request your bank statement at your bank's office, here camel is used to connect Banks office software to the Central banking system, imagine that the bank's office software is a bit old and can only communicate by JMS protocol with XML messages, while Central banking system is more modern and communicates by HTTP protocol and Json messages, here is how camel comes into play 
+    Banks office software sends a JMS statement request, this request is read by camel route from
+a JMS Queue then it is logged and then transformed from XML to Json and that Json is then used as HTTP request to the central banking system. Json response from the central banking system is then
+transformed back from Json to XML and then this statement response is sent back as a JMS message to the bank's office software, so with camel you  find these kinds of routes to define a
+flow of data between systems
+
+What is Apache Camel? -  three bullet points which i took it from the camel website itself
+1. Apache camel is an open source integration framework that empowers you to quickly and easily integrate various systems consuming or producing data
+2. Apache camel is a versatile open source integration framework based on known
+enterprise integration patterns 
+3. Apache camel is the industry standard for reducing boilerplate code for complex integrations while maintaining features like automatic error handling re-delivery of policies the ability to handle complex aggregations
+
+These points are quite simple straightforward plain english but one thing you notice here is that there is a one common point which is called integration
+
+What is Integration?
+1. Integration of different systems
+      Integration means integration of different systems so when we say different systems, you can have different operating systems (ie) one running on windows platform and other running on unix  based platform still you would like these systems to communicate to each other.
+2. Integration of different technologies
+      Integration of different technologies maybe one system is using some sort of tcp based protocol, another one using maybe another protocol like udp, doesn't really matter but still we like to communicate using those different technologies 
+3. Different systems working together 
+     One system maybe erp system, another is maybe some sort of chat system you like to send a notification ,maybe email system you like to send emails some sort of notifications
+all these systems working together in harmony 
+4. Different programming languages   
+     The system can be written in java, .net, c-sharp, php, python doesn't really matter but still
+you like to talk to that system, you like to exchange data with that system 
+5. Different message formats 
+     Maybe your system is producing json or my system only understands xml still we like to talk to each other and we like to exchange the data 
+
+So this is know on a high level what integration means, you are trying to talk to another system
+written in another language using different technology running on different platform, it's quite a complex problem in in enterprise sector
+
+What is Enterprise Integration Pattern?
+      It is a catalog of design patterns for developing systems to integrate new and existing software in a business environment 
+
+Why do you need Integration Patterns ?
+1. Different software has different formats
+        As we discussed you know different software has different formats, one is using json another using xml, third maybe some very native like protocol buffer 
+2. when you're integrating you don't know whether it is point-to-point integration or hub and spoke integration
+
+Point to Point integration - Expensive 
+      We have three system at the top are trying to talk to the bottom three systems, you can see in point-to-point integration every system  have one line coming from itself to the 
+system which it's trying to integrate, so you can see first system is talking to three different systems. Imagine if first system has to talk to rest of these systems it will have five arrows.
+    If we try to bring a new system, we can see the lines will become six, another one seven. Imagine if every system started to talk to each other, it is kind of a cartesian product, so if we have like six system maybe we need 36 integration, so the complexity just grows out of control. 
+    If there is any critical  change in one system then all other systems which are connected to it will break until they are ready to take those changes, that's why it's called like quite an expensive integration pattern
+
+Hub and spoke integration
+     You have a hub sitting in between, all these systems which are around it they are publishing messages to this hub or receiving messages from this
+     Easy to understand and easy to implement
+     Typically Hub can be some sort of enterprise bus or some sort of messaging system like ibm mq, rabbitmq, kafka or it can be a simple file system where somebody putting a file and other parties is reading file or it can be a database one party is writing database and maybe other are reading from database 
+
+These are two typical integration patterns which fall into either point to point or hub & spoke, so what other types are there in the enterprise design pattern. They created 65 design patterns and categorize into seven categories like
+
+1. Messaging systems - you can send email or you can send usome sort of soap or you canconstruct json or you can send xml it doesn't really matter so it basically explains how you can use messaging systems to send the message 
+2. Messaging channels -  you can have a point to point queues, you can have a publish subscribe topics, message bus 
+3. Message construction - so when we are constructing a message where should you put the data, where should you put the headers, where should you put the additional properties etc
+4.  Message Routing - Routing of message, you can have a content-based routing (ie) you have a message either by looking at the message or looking at the header we can decide where to route that message 
+5. Message transformation - how should you be transforming your message, aggregation
+was one of those things. So you get the data from bunch of upstream systems, you took those pieces of data and enriched with some useful information, to get a new message 
+6. Message endpoints - where your systems basically connect or talk to other system using some sort of layer in between 
+7. System management - how should we managing system, suppose i want to bring one system down or we  would like to do some upgrades etc
+
+In our example we were using patterns like message, it is our message that is read from jms queue, transformed sent to banking system and then back message Channel, these are our
+JMS queue and HTTP URL and translator this is our logic that transforms message from XML to Json 
+
+Frameworks 
+1. Apache camel
+2. Spring Integration 
+3. Enterprises bus - Mule, APIGEE are the biggest players in the commercial space
+
+Why Apache Camel?
+1. Camel is a java based framework designed to easily embed within web or standalone java application.
+   Camel is just a set of libraries you can put it in your web-based java application. Suppose we are writing some sort of MVC application or rest based application doesn't matter, what web
+application we are writing you can literally embed this.
+   We can have a standalone java application or spring boot application which is some sort of ETL which just taking data, transforming data and sending downstream you can use it, rather than writing a lot of boilerplate code.
+
+2. It uses Java DSL(Domain Specific Language) or XML to build routes 
+       The team come up with some sort of simple syntax which everybody can understand and then they can start building their routes and end points so they come up with Java DSL, same thing works in xml also
+
+3. Pojo based model
+      Camel works with pojo, you create a bean, you put it into apache camel's exchange,you store that information in camel, you just pass it on to your route, you pull it again to manipulate the data, send it again on the route it just works. We don't need to worry about how camel is storing it internally 
+
+4. simple and consistent format 
+       The dsl or xml provides this consistent formatwhen you are building your routes. You always get data from something, then you are processing and then you're sending to a destination.
+It doesn't matter what technology we are using it could be a database or file system or web or any messaging system, we want to read from this place, we want to do the processing and send it to this destination 
+
+5.  Apache camel has got support for all the technologies which are available in the enterprise world, any database like rdbms,nosql, messaging system like ibm mq, rabbitmq, kafka or file systems or any protocol, it has a component to  support it
+    Component means you just give the connection details such as username password for databases or messaging it takes care of underlying protocols, we don't need to really worry about how we are going to connect to that database or messaging system you just give the credentials, camel will take over it knows exactly how to talk to that technology or that protocol and it just manages it
+
+6. Support for over 50 data formats - Data formats like  json or xm, also we have standard formats 
+in the financial sector, in the telecom sector, in the healthcare etc
+
+7. Pluggable architecture - Apache camel has comes with 150 components,over 50 formats, but there is always a possibility that the thing which you are trying to do in your organization or in your project it might not have a support. So you can build your own component or data format and you can just plug it
+
+8. Test kit - what's the point of creating a market leading framework or application if it cannot be tested easily by the  system which is going to consume that library
+   Apache camel has solved that problem, it comes up with camel test framework ,you can mock your routes, you can try to integrate with in-memory, you can test the whole thing. Not only you
+can do unit testing, you can do some sort of you know integration testing using this framework
+
+Camel Projects
+1. Camel core
+2. Camel Springboot - camel has a support for springboot
+3. Camel K (kubernetes) - it's a lightweight integration framework built on camel that runs natively on on kubernetes and it's basically designed for serverless and microservices architecture
+4. Camel kafka connector
+5. Camel Quarkus
+6. Camel Karaf - allow camel components to run in the osgi environment
+
+Apache Camel Architecture
+      A main component is camelcontext which holds all camel related entities, these entities are routes which represents data flows between systems, components which allow camel to communicate with various software by various protocols, endpoints which are message channels through which messages are sent and received, processor which modify messages and execute any user defined logic, registry which serves as a storage for many camel related entities and many other
+components 
+
+1. CamelContext
+       Camel context is the most important part of Apache camel framework. CamelContext is a
+runtime which makes all these entities work together, most importantly it runs our routes which means that without camelcontext our Integrations will not start to be ready for running
+
+Lifecycle of CamelContext
+1. First camelcontext is created by using DefaultCamelContext, it is used when we have a
+standalone camel application without spring framework 
+2. Then all necessary entities like routes are added to the context 
+3. Then context is started and all routes that were added at configuration step start working, receiving and sending messages 
+4. When we don't want to run our integrations or routes anymore we stop the context and all routes stop working
+5. Finally we should close the context 
+
+By the way camelContext implements Autocloseable interface which means that we can use try with resources to close it automatically
+
+2. Routes
+       They specify how data is transferred from one system to another, we write camel routes
+using camel's domain specific languages or dsls, for now there are three dsls available Java DSL, XML DSL and yaml DSL
+      Each camel route is a series of steps that will be executed with our data. 
+
+from("file:src/main/resources/files").routeId("example-roure")
+     .log("File contains: ${body}")
+     .transform().simple("File contents: ${body}")
+     .to("file:src/main/resources/files/processed");
+
+
+- Each camel route starts with from() DSL element which specifies a source or input for our route, for example 
+     from("file:src/main/resources/files")
+
+The input for this route will be some file located in the specified directory. Similarly
+     from("jms:queue:statementRequest")
+The input for this route will be statementRequest JMS queue. In this from() statement technically we can pass any string here, but not any string will work for example if we write something
+like my custom component here it will not work. only those strings that have camel component associated with them can work 
+    
+- After the from() statement one or more processing steps follow, these steps are DSL elements that do something with our message or execute some logic. For example, we can see log processing step displays the message and transform processing steps changes the message content
+
+- Last processing step in this route is to() DSL element which sends the message to some destination, in our case this destination is a file system directory 
+- Each camel route has its own ID, we can specify it in routeId DSL element, if we don't do it camel will generate one automatically
+
+3.  Message 
+        Camel works with messages as they flow through camel routes, messages are data records
+that are used by different systems to communicate with each other. 
+       Camel message is an abstraction that can represent something like JMS, Kafka message, HTTP request or file in a file system. 
+       It consists of body, headers. Body is a payload of the message, it can be of any type and
+length. Next headers  represents an additional information attached to the message, it has a type of java.util.map of strings (ie) each camel header has a unique name of type string and can have any value 
+       Next MessageId is a message identifier, usually camel generates this message ID by itself, but some components provide their own message IDs. Lastly camel message may or may not have
+a timestamp associated with it, similar to messageID some camel components can provide a time stamp, but like messageID this time stamp is not generated by camel automatically, it must
+be provided by 
+
+4. Camel Exchange
+       Normally  messages do not flow through camel routes by themselves, they are contained
+within camel exchanges. In apache camel, exchanges represent request and optionally a response message or an exception that happened during processing of the request. We can think of exchange as of container for message and some metadata that is flowing through camel route 
+       Camel exchange contains exchangeID which is a unique identifier of an exchange generated by
+camel itself,  exception is Java exception that might be thrown during a flow of camel route, pattern is a flag that indicates if this exchange is used for request reply or event messaging,
+properties and variables are maps containing different metadata similar to headers in message and exchange clock is a Java object that might be used to obtain a time stamp of exchange creation
+       MEP(Message Exchange Patterns) - There are two types of messages we can have like inonly or inout 
+InOnly - manadatory - one-way message also known as event message, so you're sending something you don't care about like what happened to that message. 
+InOut - optional - We are sending something and we want either some sort of response back from
+
+So in MEP you define what sort of data this exchange holds in message either inonly or inout message
+
+5. Camel Components
+       Components are connectors that allow camel to communicate with external systems, they provide connectivity to many different protocols or software elements such as Kafka, JMS, HTTP and many others. Components are what we use in our camel routes from() and to() statements in order for them to work. 
+       So how we know what to specify in from() and to(), for example how do we know that
+we need to write file then colon and then the directory, there is only one place to get
+this information official camel documentation https://camel.apache.org/components/, we find the list of all available components 
+       So if we need to read the file, so we will go to "file" component description and first thing that we can see here is exactly the string that we were using in our camel route, file then
+colon and then directory name 
+
+6. Camel Endpoints
+       Camel end points are an abstraction over message Channel integration pattern, each camel endpoint represents such Channel through which different systems can exchange messages.
+       In our example route, we have two end points, from() file endpoint that reads files from specified directory and to() file endpoint that writes file to another directory.
+       from end point is called a consumer because it reads or consumes messages in our files, as
+they arrive to end point it is called a producer because it writes or produces messages to the specified destination. 
+       Different end points can represent different things, for example HTTP consumer endpoint would act as a HTTP server as it will read incoming HTTP messages, HTTP producer Endpoint would act as a HTTP client and it will send HTTP messages to the specified URL. JMS consumer endpoint will read JMS messages from queue or a topic, as they arrive JMS producer endpoint will write
+or publish JMS messages to queue or a topic.
+      Now we see how end points are created in camels internally, endpoints are produced by
+components. For example, in our route what actually happens internally is that camel sees this
+file part of the string in from() and goes to file component and asks for an object which will read files from the specified directory, this object is our consumer
+     The same happens in our to() statement,camel sees this file part goes to file component except this time it asks for an object that will write files to the specified directory and that's how we get our producer file endpoint 
+     So Camel endpoints represent message channels and it is the end points who actually read and
+write messages and components are used only to produce these end points 
+
+7. Processor
+       Processors are used to perform custom logic in camels routes, for example transform message body, log message contents or add or modify headers. Camel provides many built-in processors for
+example log processor for logging, transform processor for changing message body etc.
+      Additionally you can implement your own processors by implementing Processor interface which
+has only one method process() used to execute our business logic 
+
+
+
+
+https://www.youtube.com/watch?v=NDEqj8omPmM&list=PLhOKPsimMS-zdKEE_F53TKNROx2uJBPF6&index=2
+https://github.com/cyberlogic-consulting/cyberlogic-yt-camel-for-beginners
+
+Building simple routes in camel
+1. We will build a Java application that runs a camel route the route will read files from one dire and write them to another directory 
+
+- Create SpringBootCamel project with apache camel, web dependency
+
+- Creating a route using Java DSL, a class extend RouteBuilder and override configure(). We use from() to configure routes
+
+@Component
+public class ExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() {
+        from("file:src/main/resources/files")
+                .to("file:src/main/resources/files/output");
+    }
+}
+
+it's fully managed by spring framework we just add your RouteBuilder as a spring bean by using @Component annotation then it will be picked up by Spring and managed automatically 
+
+- Create Hello.txt inside src/main/resources/files folder
+
+- Run ur appl,  we can see our file hello.txt is moved to the specified directory  output. Now we can check in console, we can see first camel is started, then our consumer is started with our route, then it pulled our input directory where there was one file and it was processed
+by moving it into output directory 
+
+- Add log contents of our file before writing it in another directory, we know camel routes operate with messages and camel messages have headers and body so let's log them to make log processing
+
+public void configure() {
+        from("file:src/main/resources/files")
+                .log("Message: ${body}, Headers: ${headers}")
+                .to("file:src/main/resources/files/output");
+    }
+
+- Run our appl and put hello.txt back to our input directory, We can log messages in console
+
+- Now we add an endpoint option so that our file is not deleted from input directory after
+it is processed using noop, if it is true the file is not moved or deleted in any way,  default value is false and we can use this option for Consumer end points which means that we can only use it in our from statement 
+
+public void configure() {
+        from("file:src/main/resources/files?noop=true")
+                .log("Message: ${body}, Headers: ${headers}")
+                .to("file:src/main/resources/files/output");
+    }
+
+- Again move our file to input directory and run our route, we can see that after the route is finished our file stays here in the input directory and it is also moved into the output directory
+
+
+2. Working With Apache Camel Endpoints
+
+
+1. Consider we want to externalize some of our end points configuration, for example we want a
+setting in our properties file about noop property, if noop equals true then the input file is not removed or affected. So define in application.properties inside resources folder
+
+my.camel.property.noop=true
+
+- Now to make this value to bring in our end point, we need to do some extra steps in our main class 
+
+public class Main {
+
+	public static void main(String[] args) {
+		try (CamelContext camelContext = new DefaultCamelContext()) {
+            camelContext.addRoutes(new ExampleRoute());
+            PropertiesComponent properties = camelContext.getPropertiesComponent();
+            properties.setLocation("classpath:my-camel.properties");
+            camelContext.start();
+            Thread.sleep(2000);
+            camelContext.stop();
+        }catch(Exception e) {
+            throw new RuntimeException();
+        }
+
+	}
+
+}
+
+- Now we can use this property in our end point 
+
+@Override
+    public void configure() {
+        from("file:src/main/resources/files?noop={{my.camel.property.noop}}")
+                .log("Message: ${body}, Headers: ${headers}")
+                .toD("file:src/main/resources/files/output");
+    }
+
+- Run the prg, now it will copy the file and put inside output directory and it does not delete or move the input file. If we change the value in application.properties files to false and run again now we can see that the input file is deleted 
+
+- Create another file welcome.txt into resources/files folder
+
+- Dynamic end points, till  this time we used static hardcoded directory names but what if we want to change output directory name based on the input file contents. We see camel end points are evaluated once on a startup and do not change during camelcontext run time, these kinds of end
+points are called Static endpoints. Now imagine we want to send the file to the directory with the same name as the files contents, for example if file contents are helloworld then the output
+directory for this file will be src/main/resources/files/output/helloworld and if the contents of the file is welcome then the output directory should be a src/main/resources/files/output/welcome 
+     To work with Dynamic endpoints we have to use toD() DSL element   
+
+
+@Override
+    public void configure() {
+        from("file:src/main/resources/files?noop={{my.camel.property.noop}}")
+                .log("Message: ${body}, Headers: ${headers}")
+                .toD("file:src/main/resources/files/output/${body}");
+    }
+
+- Run the prg, it will create src/main/resources/files/output/welcome/welcome.txt and src/main/resources/files/output/hello world/hello.txt, so it has created folder based on contents of file
+   So when you don't know your endpoint configuration in advance and want to decide your destination at runtime we use toD()
+
+-  In actual applications it's rarely seen that a body element is used to form a destination, instead we can setProperty() DSL element to set a property like destination and assign it any value. Now we use this setProperty in our simple expression with exchangeproperty 
+
+  @Override
+    public void configure() {
+        from("file:src/main/resources/files?noop={{my.camel.property.noop}}")
+                .log("Message: ${body}, Headers: ${headers}")
+                .setProperty("destination", simple("${body}"))
+                .toD("file:src/main/resources/files/output/${exchangeProperty.destination}");
+    }
+
+- Delete contents from output folder, run the prg
+
+- Bean references in endpoints -  create a class filter that only consumes txt files which implements GenericFileFilter with accept() method
+
+@Component("my-file-filter")   // matches filter=#my-file-filter
+public class ExampleFileFilter implements GenericFileFilter {
+    @Override
+    public boolean accept(GenericFile file) {
+        return file.getFileName().endsWith(".txt");
+    }
+}
+
+
+- Configure bean in our endpoint using filter=#my-file-filter, by putting this hash sign we indicate that the value for this filter option should be looked up in the registry by the name
+
+ @Override
+    public void configure() {
+        from("file:src/main/resources/files?noop={{my.camel.property.noop}}&filter=#my-file-filter")
+                .log("Message: ${body}, Headers: ${headers}")
+                .setProperty("destination", simple("${body}"))
+                .toD("file:src/main/resources/files/output/${exchangeProperty.destination}");
+    }
+
+- Create new file hello.md inside resources/files folder
+
+- Delete contents from output folder, run the prg, our txt files are copied but our MD file is filtered and not picked up by our route 
+
+
+- Escaping Characters with RAW values in URI
+      Consider we want our files to be renamed and the name of the new file should start with
+& sign, for example &file.txt so to rename our files after they are moved we use filename end point option, but as you can see if we just & it breaks our URI because any string after & is
+treated like a separate option
+
+.toD("file:src/main/resources/files/output/${body}?fileName=&file.txt")
+
+So to escape this & symbol we should use RAW construction, any symbols inside its brackets do not count toward URL validation
+
+   public void configure() {
+    	from("file:src/main/resources/files?noop={{my.camel.property.noop}}&filter=#my-file-filter")
+                .log("Message: ${body}, Headers: ${headers}")
+                .toD("file:src/main/resources/files/output/${body}?fileName=RAW(&file.txt)");;
+    }
+
+- Delete contents from output folder, run the prg, so now it will create &file.txt inside Helloworld and welcome folder
+
+
+Apache Camel Routing
+    We will take a look at apache camel's routing capabilities in particular we will go through examples of content based routing (ie) messages are routed to different destinations based on their content (like XML field values, JSON attributes, or headers).
+
+from("file:input")
+    .choice()
+        .when(simple("${body} contains 'Order'"))
+            .to("file:orders")
+        .when(simple("${body} contains 'Invoice'"))
+            .to("file:invoices")
+        .otherwise()
+            .to("file:others");
+
+Reads files from input folder
+If file contains "Order" → goes to orders folder
+If file contains "Invoice" → goes to invoices folder
+Else → goes to others folder
+
+Simple Routing
+
+1. Create SpringBootCamelRouting project with camel, web, spring for apache activemq artemis, camel-jms, artemis jms client dependency
+
+<dependency>
+    <groupId>org.apache.camel.springboot</groupId>
+    <artifactId>camel-jms-starter</artifactId>
+    <version>4.14.0</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.activemq</groupId>
+    <artifactId>artemis-jms-client</artifactId>
+</dependency>
+
+2. We'll be using message broker to show routing when we have multiple queues to route using ActiveMQ Artemis
+
+A. Install  ActiveMQ Artemis2.38.0 - Extract zip file
+
+B. Create separate instance in Artemis
+
+C:\Softwares\apache-artemis-2.38.0\bin>artemis create mybroker
+Creating ActiveMQ Artemis instance at: C:\Softwares\apache-artemis-2.38.0\bin\mybroker
+
+--user:
+What is the default username?
+senthil
+
+--password: is mandatory with this configuration:
+What is the default password?
+
+
+--allow-anonymous | --require-login:
+Allow anonymous access?, valid values are Y, N, True, False
+Y
+
+Auto tuning journal ...
+done! Your system can make 0.88 writes per millisecond, your journal-buffer-timeout will be 1136000
+
+You can now start the broker by executing:
+
+   "C:\Softwares\apache-artemis-2.38.0\bin\mybroker\bin\artemis" run
+
+Or you can setup the broker as Windows service and run it in the background:
+
+   "C:\Softwares\apache-artemis-2.38.0\bin\mybroker\bin\artemis-service.exe" install
+   "C:\Softwares\apache-artemis-2.38.0\bin\mybroker\bin\artemis-service.exe" start
+
+   To stop the windows service:
+      "C:\Softwares\apache-artemis-2.38.0\bin\mybroker\bin\artemis-service.exe" stop
+
+   To uninstall the windows service
+      "C:\Softwares\apache-artemis-2.38.0\bin\mybroker\bin\artemis-service.exe" uninstall
+
+- It will create set of commands to run ur broker
+
+C. Start ActiveMQ Artemis, 
+
+C:\Softwares\apache-artemis-2.38.0\bin\mybroker\bin>artemis run
+
+Now ActiveMQ will be started. (By default it will start on 5672, if we want to change port no we go C:\Softwares\apache-artemis-2.38.0\bin\my-broker\etc\broker.xml and change in <acceptor> 
+
+D. Run http://localhost:8161, username and pwd as senthil and welcome 
+
+3.  We need to set up our JMS component so that it connects to our local Activemq instance
+
+@Configuration
+public class JmsConfig {
+    @Bean
+    public ConnectionFactory jmsConnectionFactory() {
+    	ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        return connectionFactory;
+    }
+}
+
+4. Create a route and configure our routes 
+
+@Component
+public class ChoiceExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() {
+        //input.queue even if we don't have this queue it will be created automatically first time 		//we access it 
+        from("jms:input.queue")
+                .log("Body: ${body}, Headers: ${headers}");
+    }
+}
+
+5. Run the prg, so when we run the program input.queue will be automatically created
+
+Select addresses - input.queue - queues - anycast - input.queue - click More - Send Message - In Body you can type ur message
+
+Now we can see in console, we have received the message from ActiveMQ queue and logged
+
+Implementing Content-Based Routing
+       Imagine our message has some kind of content, for example header and based on the value of
+that content we want to send our message to different destinations. In our example, we have this request type header and based on its value, we want to send it in different queues, if request type equal statement we want to send it to statement.queue, if request type is payment details we want to send it to paymentdetails.queue and in the case that we can't identify our request type we will send it to unrecognized.queue, to do such kind of content-based routing we use Choice DSL
+element.  After choice(), we can declare one or more when() DSL element to specify our conditions which takes Predicate as argument
+
+
+ public void configure() {
+        from("jms:input.queue")
+                .log("Body: ${body}, Headers: ${headers}")
+                .choice()
+                .when(exchange -> {
+                    //we know exchange is a container for message, so to get message header first
+					//we use exchange.getMessage.getHeader
+                    Object requestType = exchange.getMessage().getHeader("requestType");
+                    if (requestType != null) {
+                        return "statement".equals(requestType);
+                    }
+                    return false;
+                })
+                    .to("jms:statement.queue") //send msg to statement.queue
+                .when(simple("${header.requestType} == 'paymentDetails'")) //even we can use 															//simple language to fetch the header details 
+                    .to("jms:request.details.queue")
+                .otherwise()
+                    .to("jms:unrecognised.queue")
+                .end()  //we need to close our choice with end() DSL element
+                .log("Processing ended.");  //log the info 
+    }
+
+- Run the prg - goto localhost:8161 - login with senthil and welcome - Click Queues
+
+- Select ... of input.queue - Send Message - Add Headers
+
+name = requestType  value= statement, provide some message in  body 
+
+Now it will create statement.queue. Similarly
+
+name = requestType  value= abcd, provide some message in  body 
+
+Now it will create unrecognized.queue.
+
+Now we can goto each queue - Browse queue - click Show and we can view the messages
+
+when you need to have different execution branches based on your message contents you have this Choice when otherwise and construction which is like if elseif else statements
+
+Using Recipient List for Dynamic Destinations
+     Sometimes we want to route our message to multiple destinations based on its contents, in our case destinations are departments and we want to route our message to multiple departments based on its header that has this destination list
+
+1. Create separate route called RecipientListExampleRoute that extends RouteBuilder and override configure()
+    - Now we consume from recipient.list.queue, to specify our multiple destinations at runtime we
+should use recipientList() DSL element, there are many ways how to specify this list of end points but the most simple way is to just provide a header and we call it as "whereToSend"
+    from("jms:recipient.list.queue")
+                .recipientList(header("whereToSend"));
+    - We need to fill this header and for that we use new DSL element process() which accepts
+Processor class and override one method process() which accepts exchange. 
+      from("jms:recipient.list.queue")
+                .process(new Processor() {
+                    @Override
+                    public void process(Exchange exchange) {
+                        
+                    }
+                })
+                .recipientList(header("whereToSend"));
+     - First we extract our Department's header using exchange.getMessage() and then store in an Arraylist.  Next we add it to header using exchange.getMessage().setHeader()
+from("jms:recipient.list.queue")
+                .process(new Processor() {
+                    @Override
+                    public void process(Exchange exchange) {
+                        String departments = exchange.getMessage().getHeader("departments", String.class);
+                        List<String> whereToSend = new ArrayList<>();
+                        if (departments != null) {
+                            Arrays.asList(departments.split(",")).forEach(department -> whereToSend.add("jms:" + department + ".queue"));
+                        }
+                        exchange.getMessage().setHeader("whereToSend", whereToSend);
+                    }
+                })
+                .recipientList(header("whereToSend"));
+
+      
+@Component
+public class RecipientListExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() throws Exception {
+        from("jms:recipient.list.queue")
+                .process(new Processor() {
+                    @Override
+                    public void process(Exchange exchange) {
+                        String departments = exchange.getMessage().getHeader("departments", String.class);
+                        List<String> whereToSend = new ArrayList<>();
+                        if (departments != null) {
+                            Arrays.asList(departments.split(",")).forEach(department -> whereToSend.add("jms:" + department + ".queue"));
+                        }
+                        exchange.getMessage().setHeader("whereToSend", whereToSend);
+                    }
+                })
+                .recipientList(header("whereToSend"));
+    }
+}
+
+2. Run the prg, it creates recepient.list.queue. Now we send message in this queue
+
+Select recepient.list.queue - Click Send Message - Click Add Headers
+
+name=departments
+value= dep1,dep2,dep3
+
+Body: hello dept
+
+Click Send
+
+We can see three departments queues are created and we can see message in each of them 
+
+- Once again send messages
+
+name=departments
+value= dep1,dep2
+
+Body: welcome dept
+
+Click Send
+
+Now we can click on each queue and check the messages
+
+So when you need to send your message to multiple destinations based on its contents, you can add this process step to your route and we can implement any logic you want fill some header or exchange property and then use it in recipient list
+
+
+Apache Camel Message Translation
+    Apache camel has many ways to transform messages but the most common are processors, beans and
+transform DSL element 
+
+Using Processors for transformation
+
+1. Create SpringBootCamelMapping project with camel, web dependency
+
+2. Create processor-example.txt file inside resources/files folder with "Helloworld" content
+
+3. Create route using file component which reads file from this input directory, logs it and writes it to output directory with the same name
+
+@Component
+public class ProcessorExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() {
+        from("file:src/main/resources/files?fileName=processor-example.txt&noop=true")
+                .log("Body: ${body}, Headers: ${headers}")
+                .to("file:src/main/resources/files/output?fileName=processor-example.txt");
+    }
+}
+
+4. Now we do message mapping using process() DSL element which takes a Processor in implementation and only has one method process() that can implement any logic like transformation of our message
+
+ public void configure() {
+        from("file:src/main/resources/files?fileName=processor-example.txt&noop=true")
+                .log("Body: ${body}, Headers: ${headers}")
+                .process(exchange -> {
+                    //First extract our message with getMessage() and then we need to extract a body from our message with getBody(), as our message is read by file component it will have a generic file type but we can specify String.class and camel will do transformation by extracting file contents and putting them into the string
+                    String body = exchange.getMessage().getBody(String.class);
+
+                   //we transform our message body to uppercase 
+                    String transformedBody=body.toUpperCase();
+
+                    //we need to write our new transformed body to our message using setBody()
+                    exchange.getMessage().setBody(transformedBody);
+                })
+                .to("file:src/main/resources/files/output?fileName=processor-example.txt");
+    }
+
+In general all camel transformations with process() DSL and processors follow the same sequence, first we extract our body headers, message properties, variables all that we need, then we use any Java  concept to transform them and then we write them back to the exchange 
+
+5. Run the prg, now we can see our input file transformed in uppercase and generated inside resources/files/output folder
+
+6. If we need to transform Json file then we can use library called camel-jackson and add it to our pom.xml
+
+<dependency>
+    <groupId>org.apache.camel.springboot</groupId>
+    <artifactId>camel-jackson-starter</artifactId>
+    <version>4.14.0</version>
+</dependency>
+
+7. Create processor-example.json inside resources/files folder
+
+{
+  "Request": {
+    "Type": "example-type",
+    "Payload": {
+      "Data": "sample-data",
+      "Metadata": {
+        "Timestamp": "2024-12-04T12:00:00Z",
+        "ID": "12345"
+      }
+    }
+  }
+}
+
+8. To do transformation logic we need to use marshall() and unmarshall() DSL elements in from() and to() along with data format
+
+             from("file:src/main/resources/files?fileName=processor-example.txt&noop=true")
+                .unmarshal().json()
+                .log("Body: ${body}, Headers: ${headers}")
+                .process(exchange -> {                   
+                   
+                })
+                .marshal().json()
+                .to("file:src/main/resources/files/output?fileName=processor-example.txt");
+
+- What unmarshalling and marshalling does is that, it actually parses and then writes our message for us, so we get body as ObjectNode and we can create new value into object
+
+ from("file:src/main/resources/files?fileName=processor-example.json&noop=true")
+                .unmarshal().json()
+                .log("Body: ${body}, Headers: ${headers}")
+                .process(exchange -> {
+                    ObjectNode body = exchange.getMessage().getBody(ObjectNode.class);
+
+                    body.put("newFiled", "newValue");
+
+                    exchange.getMessage().setBody(body);
+                })
+                .marshal().json()
+                .to("file:src/main/resources/files/output?fileName=processor-example.json");
+
+9. Run the appl, now we can see it generates json file inside resources/files/output folder with newfield added into it 
+
+So at the start of our route we're unmarshalling our message, then we are doing some process with it and before writing it to its destination we are marshalling it back again
+
+camel has a lot of different data formats we were using Json Jackson but you can use any of this in the same way, you can refer the documentation link
+https://camel.apache.org/components/4.14.x/dataformats/index.html
+
+
+Using Camel Beans for Transformations
+
+1. Create route BeanExampleRoute which read from file and write to another file, we use bean() DSL to bind bean to context
+ 
+@Component
+public class BeanExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() {
+        from("file:src/main/resources/files?fileName=processor-example-bean.json&noop=true")
+                .unmarshal().json()
+                .log("Body: ${body}, Headers: ${headers}")
+                .bean()
+                .marshal().json()
+                .to("file:src/main/resources/files/output?fileName=processor-example-bean.json");
+    }
+}
+
+- Create a bean and then bind to context and then we can reference it in our route
+
+@Component("my-transformer")
+public class MyExampleMapper {
+
+    public void transform(Exchange exchange) {
+        ObjectNode body = exchange.getMessage().getBody(ObjectNode.class);
+
+        body.put("newFiled", "newValue");
+
+        exchange.getMessage().setBody(body);
+    }
+}
+
+-  Now we can reference this bean in our route 
+
+from("file:src/main/resources/files?fileName=processor-example-bean.json&noop=true")
+                .unmarshal().json()
+                .log("Body: ${body}, Headers: ${headers}")
+                .bean("my-transformer")
+                .marshal().json()
+                .to("file:src/main/resources/files/output?fileName=processor-example-bean.json");
+
+So here Camel will see this my-Transformer name it will goes to registry and get our bean which has only one method that accepts exchange and camel will call this method automatically and provide the message exchange automatically.  If your bean has only one method and this method accepts exchange, camel will autodetect this method and will call it without the need to specify method name explicitly 
+
+2. Create processor-example-bean.json inside resources/files folder
+
+{
+  "Request": {
+    "Type": "example-type",
+    "Payload": {
+      "Data": "sample-data",
+      "Metadata": {
+        "Timestamp": "2024-12-04T12:00:00Z",
+        "ID": "12345"
+      }
+    }
+  }
+}
+
+3. Run the prg, we can see it produces output similar to what we had previously as expected because our mapping logic is the same. So usually process is used for simple processing that doesn't take many steps and beans are used for more complex logic this is because beans are binded to our context
+
+Using transform for transformations
+
+1. Create route TransformExampleRoute using transform() DSL element
+
+@Component
+public class TransformExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() {
+        from("file:src/main/resources/files?fileName=transform-example.txt&noop=true")
+                .log("Body: ${body}, Headers: ${headers}")
+                .transform()
+                .to("file:src/main/resources/files/output?fileName=transform-example-bean.txt");
+    }
+}
+
+transform DSL element is another DSL elements which has body() and we usually use this for simple transformation, so we try to use regex and replace all our hello with bye. We can also provide simple expression to do our transformation, for example we can add an XML tag to it 
+
+@Component
+public class TransformExampleRoute extends RouteBuilder {
+    @Override
+    public void configure() {
+        from("file:src/main/resources/files?fileName=transform-example.txt&noop=true")
+                .log("Body: ${body}, Headers: ${headers}")
+                .transform(body().regexReplaceAll("hello", "bye"))
+                .transform(simple("<request>${body}</request>"))
+                .to("file:src/main/resources/files/output?fileName=transform-example-bean.txt");
+    }
+}
+
+2. Create transform-example.txt inside resources/files folder with "Hello world"
+
+3. Run ur appl, now we can see here it transformed our input message hello world to bye world and then added XML tags so that the message became a valid XML
+
+
+Apache Camel Error Handling
+      We will take a look at how errors can be handled in Apache camel, we learn to use error
+handlers on exception DSL, doTry, docatch, dofinally DSL, we will also learn how to reuse
+error handling logic
+
+
+Error handling using doTry, docatch, dofinally
+
+1. Create SpringBootCamelErrorHandling with web, camel dependency
+
+2. Create ErrorHandlerExampleRoute route, this simple route simulates an error that might happen in any camel route, we have our message that we get from some component and then somewhere along the way our logic throws an exception
+
+@Component
+public class ErrorHandlerExampleRoute extends RouteBuilder {
+
+    @Override
+    public void configure() throws Exception {
+     //this route starts from  timer component which just creates empty messages at specified   		//intervals
+        from("timer:ticker?period=1s")  
+                 //set body to our message           
+                .setBody(simple("Hello World")) 
+                //our route throws exception
+                .process(exchange -> {
+                    throw new RuntimeException("Test exception");
+                })
+                .log("Ended route with body: ${body}");
+    }
+}
+
+3. Run the appl, we can see our exception was printed exceptiontrace and nowhere here we can see our ended route log message this is because our route was interrupted
+    So by default camel has this DefaultErrorHandler(check in eclipse console) which just prints
+exception stacktrace and the message history is a list of steps that were taken before the
+exception occurred 
+
+4. Now we can assign errorHandler to our route by just specifying errorHandler() and providing error Handler reference
+
+         from("timer:ticker?period=1s")
+         .errorHandler(defaultErrorHandler())
+         .setBody(simple("Hello World"))    
+         .process(exchange -> {
+             throw new RuntimeException("Test exception");
+         })
+         .log("Ended route with body: ${body}");
+
+5.  Run our appl and we will see that nothing changes because again this is basically a default
+configuration we don't need to write it, it is enabled in any camel route
+
+6. Now we see what we can configure with our defaultErrorHandler and it has its own DSL like like maximumRedeliveries and reDeliveryDelay
+
+from("timer:ticker?period=1s")
+         .errorHandler(defaultErrorHandler().maximumRedeliveries(3).redeliveryDelay(500))
+         .setBody(simple("Hello World"))    
+         .process(exchange -> {
+             throw new RuntimeException("Test exception");
+         })
+         .log("Ended route with body: ${body}");
+
+This means that our message will be retried three times with a delay of 500 milliseconds, in our case this is pointless because we know that we are getting the exception, but in many other cases this might make sense, because for example if we're getting an HTTP timeout then trying
+again might be a valid option, it is also worth that when we retry our message it is retried from the point of failure. So when we retry our message three times in this example, we're
+actually retrying this process step three times but we don't setBody three times, this might be important in the case we do some processing before we encounter an error 
+
+7. DeadLetterChannelErrorHandler - it sends all messages with exhausted delivery attempts to this endpoint URI 
+
+ @Override
+    public void configure() throws Exception {
+
+    	 from("timer:ticker?period=1s")
+         .errorHandler(deadLetterChannel("file:src/main/resources/files/error?fileName=example-error.txt").maximumRedeliveries(3).redeliveryDelay(500))
+         .setBody(simple("Hello World"))    
+         .process(exchange -> {
+             throw new RuntimeException("Test exception");
+         })
+         .log("Ended route with body: ${body}");
+    }
+
+- Run the prg,  we can see our message was retried several times, in the console we can see "Redelivery delay calculated as 1000", as we have maximum redeliveries as 3 and finally after all
+redeliveries attempts are completed, we stored our message that cause the exception in this dead letter file
+
+8. NoErrorHandler - used when we want to disable default error handling for some reason (used only for testing)
+
+ from("timer:ticker?period=1s")
+         .errorHandler(noErrorHandler())
+         .setBody(simple("Hello World"))    
+         .process(exchange -> {
+             throw new RuntimeException("Test exception");
+         })
+         .log("Ended route with body: ${body}");
+
+
+Finally errorhandlers we have a DefaultErrorHandler that is enabled by default and don't need to specify it, we have DeadLetterChannnelErrorHandler that sends messages which exhausted their
+redelivery attempts to this endpoint URI and we have NoErrorHandler if we want to disable default error handling
+
+9. camel routes have try and catch mechanisms we can specify them with doTry, doCatch and doFinally DSL elements, we need to specify a branch of execution after each statement, for
+example here in catch block we will be just logging our message, at last we need to close this whole thing with end() DSL element 
+
+from("timer:ticker?period=1s")
+                .setBody(simple("Hello World"))
+                .doTry()
+                .process(exchange -> {
+                    throw new RuntimeException("Test exception");
+                })
+                .doCatch(Exception.class)
+                .log("Catch Exception: ${exception}")
+                .doFinally()
+                .log("Finally: ${exception}")
+                .end()
+                .log("Ended route with body: ${body}");
+
+- Run the appl, we can see that our exception is catched from catch then to finally block after 1s 
+interval
+
+- we can also specify onWhen in our catch clause and we can set conditions for our exception to be caught, for example we can set condition that our exception should only be caught when it contains string "example"
+
+ from("timer:ticker?period=1s")
+        .routeConfigurationId("example-error-handling")
+        .setBody(simple("Hello World"))
+        .doTry()
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .doCatch(Exception.class).onWhen(simple("${exception.message} contains 'Example'"))
+        .log("Catch Exception: ${exception}")
+        .doFinally()
+        .log("Finally: ${exception}")
+        .end()
+        .log("Ended route with body: ${body}");
+
+- Run the appl, we can see only finally block is executed since my exception dosent contain "Example", but if we provide "Example Exception" then it will execute both catch and finally block
+
+10. onException block
+          If we want to specify our error handling logic for the whole route instead of just doTry block, this is when we need to use onException() DSL element 
+
+@Component
+public class OnExceptionExampleRoute extends RouteBuilder {
+
+    @Override
+    public void configure() {
+    	from("timer:ticker?period=1s")
+    	.onException(Exception.class)
+    	   .log("Exception: ${exception}")
+    	   .maximumRedeliveries(2)
+    	   .redeliveryDelay(300)
+    	.end()
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    }
+
+}
+
+- Run the appl, we can get exception 
+
+11. handled() and continued() DSL Elements
+          In onException block we mark an exception as handled(), this means that Camel will
+count the error as processed normally and will not forward it to error handlers
+
+.onException(Exception.class)
+    	   .log("Exception: ${exception}")
+    	   .maximumRedeliveries(2)
+    	   .redeliveryDelay(300)
+    	   .handled(true)
+    	.end()
+
+- Run the appl, since our exception is marked as handled and this is why we don't see any stack traces, camel does not count it as an error anymore, and an exception object is deleted from our
+message, but the message processing does not continue it stops at the step that caused an exception 
+
+- But in rare case we want to continue processing our message as normal after we dealt with our
+exception, we can use continued() DSL element this means that after this exception processing steps message routing will continue
+
+.onException(Exception.class)
+    	   .log("Exception: ${exception}")
+    	   .maximumRedeliveries(2)
+    	   .redeliveryDelay(300)
+    	   .continued(true)
+    	.end()
+
+- Run the appl, now we can see exception and "Ended route with body: Hello World" message also, this is because after continued we went further to our next processing step
+
+
+12. Exception scope
+          We usually want to have similar error handling logic for all our routes and not to repeat logic and keep our routes clear. But onException scoped to the route in which it is declared only 
+         So we can declare onException and errorHandler in our configure method itself, this way they will be applicable for any route declared in this configure method
+
+@Component
+public class OnExceptionExampleRoute extends RouteBuilder {
+
+    @Override
+    public void configure() {
+    	
+    onException(Exception.class)
+ 	   .log("Exception: ${exception}")
+ 	   .maximumRedeliveries(2)
+ 	   .redeliveryDelay(300);
+ 	   
+ 	   errorHandler(defaultErrorHandler());
+ 	   
+    	from("timer:ticker?period=1s")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    	
+    	from("timer:ticker_two?period=1s")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    }
+
+}
+
+- This configuration is good when we have only one routeBuilder class but usually we have many. So if you want to specify error handling logic in one place for all of route Builder classes, then we can create a new base class called ErrorHandlingExample and make this class as abstract so that it's not instantiated and extend RouteBuilder 
+
+@Component
+public abstract class ErrorHandlingExample extends RouteBuilder {
+
+    @Override
+    public void configure() throws Exception {
+        onException(Exception.class)
+                .log("Exception: ${exception}")
+                .maximumRedeliveries(2)
+                .redeliveryDelay(300);
+
+        errorHandler(defaultErrorHandler());
+    }
+}
+
+- Make ur OnExceptionExampleRoute class to extends ErrorHandlingExample instead of RouteBuilder and call super.configure() inside configure()
+
+@Component
+public class OnExceptionExampleRoute extends ErrorHandlingExample {
+
+    @Override
+    public void configure() throws Exception{
+ 	   super.configure()
+    	from("timer:ticker?period=1s")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    	
+    	from("timer:ticker_two?period=1s")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    }
+
+}
+
+- This is how it was done in earlier versions of camel and if you work with Legacy code bases we will probably encounter such error handling logic separation. But in modern versions of camel we have a way to decouple error handling logic from the class using RouteConfiguration 
+
+Create ErrorHandlingConfigurationExample that extends RouteConfigurationBuilder  which similar to RouteBuilder and has only one method configuration() where we should use routeConfiguration()
+DSL element to specify our route configuration ID called "example-error-handling"  and we can apply our route configuration to any of these camel routes same as specifying this onException in routes
+
+@Component
+public class ErrorHandlingConfigurationExample extends RouteConfigurationBuilder {
+
+    @Override
+    public void configuration() {
+        routeConfiguration("example-error-handling").
+        onException(Exception.class)
+                .log("Exception: ${exception}")
+                .maximumRedeliveries(2)
+                .redeliveryDelay(300);
+    }
+}
+
+-  To apply our routeConfiguration, first we need to extends RouteBuilder and provide our
+configuration through this routeconfigurationID element 
+
+@Component
+public class OnExceptionExampleRoute extends RouteBuilder {
+
+    @Override
+    public void configure() throws Exception {
+
+    	from("timer:ticker?period=1s")
+    	.routeConfigurationId("example-error-handling")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    	
+    	from("timer:ticker_two?period=1s")
+    	.routeConfigurationId("example-error-handling")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    }
+
+}
+
+- Run the appl, we will get the finall block as my exception dosent contain Example
+
+- If you don't want to specify configuration ID for each of your routes, we can have a nameless
+configuration
+
+routeConfiguration().
+        onException(Exception.class)
+                .log("Exception: ${exception}")
+                .maximumRedeliveries(2)
+                .redeliveryDelay(300);
+
+Now you have a configuration that has no ID added to your context, then it will be applied to each
+route that does not have this routeconfigurationID, for example
+
+ @Override
+    public void configure() throws Exception {
+
+    	from("timer:ticker?period=1s")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    	
+    	from("timer:ticker_two?period=1s")
+    	.routeConfigurationId("example-error-handling")
+        .setBody(simple("Hello World"))
+        .process(exchange -> {
+            throw new RuntimeException("Test exception");
+        })
+        .log("Ended route with body: ${body}");
+    }
+
+For example consider we have two route configurations, one with ID and the second without
+ID, so for first route the configuration without ID will be applied and for second route named configuration will be applied 
+
+
+Apache Camel with Spring Boot
+
+1. Create SpringBoot-Camel project with web, apache camel, artemis, camel jms, camel test dependency 
+
+<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-jms-starter</artifactId>
+			<version>4.14.0</version>
+		</dependency>
+<dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-test-spring-junit5</artifactId>
+            <version>4.14.0</version>
+            <scope>test</scope>
+        </dependency>
+
+Apache camel dependency provides with camel-spring-boot-starter which autoconfigures camelcontext allows routes autodiscovery, brings camel related beans like ProducerTemplate and does all
+kinds of other core functionalities. Camel components with spring boot are added with this camel component starter dependencies in our case we use camel-JMS-starter, we have artemis starter for artemis connectionFactory autoconfiguration 
+
+camelcontext is not managed anywhere this is because it is autoconfigured (ie) automatically started and run, the only thing that we need to specify property 
+   camel.springboot.main-run-controller=true
+because we don't have any extra threads running our application, just exits from main method and ends without giving camelcontext to  work, and this property just makes it work indefinitely by creating a separate thread. Also instead of specifying this property, we can add spring-boot-starter-web to pom.xml which starts webserver in separate thread and achieve the same result of making our camelcontext work indefinitely
+     camel spring boot dependency brings an ability for Camelcontext to look up beans in Springs
+application context,  in Spring applications camelcontext is a bean and can be injected as any other spring bean using @Autowireda annotations
+
+2. Create route classes with @Component annotation and springboot autodetects any class that extends RouteBuilder as a spring bean and runs the route specified 
+    Next we don't need to configure any camel's properties instead we can configure in application.properties and use it in the route
+
+example.queue.input.name=example-input
+example.queue.output.name=example-output
+
+@Component
+public class ExampleRoute extends RouteBuilder {
+
+    public static final String ID = "ExampleRoute";
+
+    @Override
+    public void configure() {
+        from("jms:{{example.queue.input.name}}")
+                .routeId(ID)
+                .log("Received request: ${body}")
+                .bean("exampleMessageTransformer")
+                .to("jms:{{example.queue.output.name}}");
+    }
+}
+
+We use Bean DSL element to process our exchanges by Spring beans here we have exampleMessageTransformer bean reference 
+
+3. Create ExampleMessageTransformer bean with 2 beans ExampleMessageBodyMapper, ExampleMessageHeaderMapper and transform() method accepts exchange
+
+
+@Service("exampleMessageTransformer")
+public class ExampleMessageTransformer {
+
+    private final ExampleMessageBodyMapper bodyMapper;
+
+    private final ExampleMessageHeaderMapper headerMapper;
+
+    public ExampleMessageTransformer(ExampleMessageBodyMapper bodyMapper, ExampleMessageHeaderMapper headerMapper) {
+        this.bodyMapper = bodyMapper;
+        this.headerMapper = headerMapper;
+    }
+
+    public void transform(Exchange exchange) {
+        Message msg = exchange.getMessage();
+        String headerKey = "example-header";
+
+        // Body mapping (null-safe)
+        String body = msg.getBody(String.class);
+        msg.setBody(bodyMapper.map(body));
+
+        // Header mapping (null-safe)
+        String headerVal = msg.getHeader(headerKey, String.class);
+        msg.setHeader(headerKey, headerMapper.map(headerVal));
+    }
+}
+
+
+@Service
+public class ExampleMessageBodyMapper {
+
+	 public String map(String input) {
+	        return (input != null) ? input.toUpperCase() : "DEFAULT_BODY";
+	 }
+}
+
+
+@Service
+public class ExampleMessageHeaderMapper {
+
+	public String map(String input) {
+        return (input != null) ? input.toUpperCase() : "DEFAULT_HEADER";
+    }
+}
+
+
+4. Create ExampleService to inject ProducerTemplate bean, these templates are used
+to produce or consume from camel end points, this means that we can inject this producertemplate bean in any of our beans, and from inside that bean we can send messages to camel routes, so basically we can communicate with camel routes from inside any Java code
+
+@Service
+public class ExampleService {
+
+    private final ProducerTemplate producerTemplate;
+
+    public ExampleService(ProducerTemplate producerTemplate) {
+        this.producerTemplate = producerTemplate;
+    }
+
+//doStuff method when called,it will send "hello world" body to this example-direct-route endpoint
+    public void doStuff() {
+        producerTemplate.sendBody("direct:example-direct-route", "Hello World");
+    }
+}
+
+5.  Configuring connection factories in camel spring boot 
+           These components are usually JMS and any kind of database connecting components like
+Jdbc, SQL, JPA components etc and these components require a connectionFactory to send and receive messages
+      We have this spring-boot-starter-artemis dependency which is not coming from camel,but is a usual spring boot dependency and it autoconfigures JMS connectionFactory for aretmis by defining properties in application.properties file
+
+spring.artemis.broker-url=tcp://localhost:61616
+spring.artemis.user=senthil
+spring.artemis.password=welcome
+
+So our camel JMS component does is, it uses autowired-enabled property which basically tells
+us that if the component needs something to work, for example JMS connectionFactory it will look in Springs application context and works automatically. 
+     autowired-enabled property option is true by default, so when this JMS component realizes it needs JMS connection Factory it goes to Spring applicationcontext and looks up connection Factory
+which is autoconfigured by this spring-boot-starter-artemis dependency
+
+If we've had two JMS connection factories autoconfigured, then this setup wouldn't have worked because this JMS component cannot automatically choose between several JMS connection factories, it needs exactly one JMS connection Factory in the context. If we have several we need to either specify connection Factory in an endpoint itself like
+
+from("jms:{{example.queue.input.name}}")?connectionFactory=#myConnectionFactory
+
+Instead  we create camel configuration class
+
+@Configuration
+public class CamelConfiguration  {
+
+    @Bean
+    public JmsComponent artemis(@Qualifier("artemis") ConnectionFactory cf) {
+          JmsComponent jms=new JmsComponent();
+          jms.setConnectionFactory(cf);
+          return jms;
+    }
+
+}
+
+This is the setup that is used in the case we have several connectionfactories, for example this might happen when we connect several different mq Brokers like several artemis instances or
+maybe we have one artemis broker and the other websphere, this setup we can use to configure our connection Factory and then after we've configure that, we can use this artemis JMS component in our routes like
+
+from("artemis:{{example.queue.input.name}}")
+                .routeId(ID)
+                .log("Received request: ${body}")
+                .bean("exampleMessageTransformer")
+                .to("artemis:{{example.queue.output.name}}");
+
+6. Run ur appl, it will create queue "example-input", u can send message now it will be create and consumed by another queue "example-output"
+
+
+7. Testing Camel Routes with Spring Boot
+           We can unit test our camel routes with regular spring boot test annotation. we can inject our context using our regular mockito annotations to mock our spring beans, but we want to
+know two annotations,
+  1. @EndpointInject allows you to inject mock endpoints, you don't need to get them from camel
+context, you're just specify mock endpoint name and you will get it
+    @EndpointInject("mock:example-route-test")
+    private MockEndpoint mock;
+
+  2. @Produce annotation injects a ProducerTemplate configured to write messages to this exact end point that we've specified here
+    @Produce(directTestEndpoint)
+    private ProducerTemplate template;
+
+By injecting in this way we can then use this template to send our messages without specifying destination each time by just specifying body and then header.
+
+- We have our ExampleMessageTransformer is mocked and it is called in our route to transform our message and verifying that it's transform method which processes our exchange is called exactly once 
+
+- @CamelSpringBootTest ensures that Camelcontext starts and stops as it is needed for testing
+classes, so in general just add this annotation to your spring boot camel tests
+
+@CamelSpringBootTest
+@SpringBootTest
+public class ExampleRouteTest {
+
+    @Autowired
+    private CamelContext camelContext;
+
+    @MockBean
+    private ExampleMessageTransformer transformerMock;
+
+    private final String directTestEndpoint = "direct:example-route-test";
+
+    @EndpointInject("mock:example-route-test")
+    private MockEndpoint mock;
+
+    @Produce(directTestEndpoint)
+    private ProducerTemplate template;
+
+    @BeforeEach
+    public void replaceEndpoints() throws Exception {
+        AdviceWith.adviceWith(
+                camelContext,
+                ExampleRoute.ID,
+                route -> route
+                        .interceptSendToEndpoint("jms:{{example.queue.output.name}}")
+                        .skipSendToOriginalEndpoint()
+                        .to(mock)
+        );
+        AdviceWith.adviceWith(
+                camelContext,
+                ExampleRoute.ID,
+                route -> route.replaceFromWith(directTestEndpoint)
+        );
+    }
+
+    @Test
+    void testExampleRoute() throws Exception {
+        String testBody = "test-body";
+        String testHeader = "test-header";
+        mock.expectedMessageCount(1);
+
+        template.sendBodyAndHeader(testBody, "example-header", testHeader);
+
+        verify(transformerMock, times(1)).transform(any());
+        mock.assertIsSatisfied();
+    }
+}
+
+
+
+Building REST Applications with Apache Camel
+      Camel has two main ways to support restful services 
+1. camel java dsl - which looks exactly like the other routes or endpoints, where we have from() which is our consumer and then we have to() which is our producer
+
+     from("rest:api/orders").to("jms:orders")
+
+2. Rest dsl which is declarative
+      rest("api").{method}("orders").to("jms:orders")
+
+-First we will discuss about REST DSL
+
+
+1. Create SpringBootRESTCamel with  web, spring data jpa, h2,validation, lombok, swagger dependency
+
+When you create a Spring Boot app with spring-boot-starter-web, Spring Boot auto-configures an embedded HTTP server (Tomcat by default, but can also be Jetty or Undertow). Apache Camel is just a routing engine — it doesn’t run an HTTP server by itself.
+It relies on components to consume/produce messages.
+
+For HTTP, Camel provides multiple components:
+camel-servlet → runs on top of a Servlet container (like Tomcat).
+camel-platform-http → integrates with Spring Boot’s HTTP server via spring-boot-starter-web.
+camel-undertow → runs its own Undertow server if you prefer.
+
+👉 When you use Spring Boot + camel-platform-http, Camel registers handlers/endpoints on the existing Spring Boot server.
+
+<!-- Camel starters -->
+    <dependency>
+      <groupId>org.apache.camel.springboot</groupId>
+      <artifactId>camel-spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>  //It lets Camel use Spring Boot’s built-in HTTP server
+      <groupId>org.apache.camel.springboot</groupId>
+      <artifactId>camel-platform-http-starter</artifactId>
+    </dependency>
+    <!-- JSON data format (fixes the classic “Data format 'jackson' could not be created” error) -->
+    <dependency>
+      <groupId>org.apache.camel.springboot</groupId>
+      <artifactId>camel-jackson-starter</artifactId>
+    </dependency>
+
+2. Configure db info in application.properties file
+
+server.port=9090
+
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+3. Create entity class
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "books")
+public class Book {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "title is required")
+    private String title;
+
+    @NotBlank(message = "author is required")
+    private String author;
+
+    @PositiveOrZero(message = "price must be >= 0")
+    private BigDecimal price;
+
+}
+
+4. Create repo intf
+
+public interface BookRepository extends JpaRepository<Book, Long> {
+
+}
+
+5. Create route using REST DSL
+
+@Component
+public class BookRestRoutes extends RouteBuilder {
+
+    @Override
+    public void configure() {
+
+        // === Global error mappings similar to a @RestControllerAdvice
+//If a NotFoundException is thrown while processing any exchange in this route, apply this block
+        onException(NotFoundException.class)
+           //Camel swallows the exception and continues using the response you define.
+            .handled(true)
+           //Sets the HTTP response status to 404
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+           //Ensures the HTTP response has Content-Type: application/json
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+          //Defines the response body using Camel’s Simple language
+            .setBody(simple("{\"error\":\"${exception.message}\"}"));
+
+
+
+//Whenever a ConstraintViolationException occurs in a route, apply this handling block.
+        onException(jakarta.validation.ConstraintViolationException.class)
+            .handled(true)
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+            .setBody(simple("{\"error\":\"Validation failed\"}"));
+
+//restConfiguration() is where you set the "environment" for all your REST endpoints (what //component runs them, how data is bound, and how Swagger docs are generated).
+
+        // === REST configuration ===
+        //used to configure global REST settings for your application
+        restConfiguration()
+//Tells Camel to use Spring Boot’s platform-http component for REST endpoints (recommended for Spring Boot 3).Alternatives: "servlet", "jetty", "undertow"
+        .component("platform-http")
+//Camel will automatically marshal Java objects → JSON (for responses) and unmarshal JSON → Java objects (for requests).Saves you from writing manual converters.
+        .bindingMode(RestBindingMode.json)
+//Ensures JSON output is formatted with indentation
+        .dataFormatProperty("prettyPrint", "true")
+//Enables Cross-Origin Resource Sharing (CORS), allowing frontend apps (like Angular, React, etc.) to call your API from a different domain.
+        .enableCORS(true)
+//Defines the path where Swagger/OpenAPI docs are published, eg:http://localhost:8080/openapi
+        .apiContextPath("/openapi")
+//Metadata for Swagger UI → API title
+        .apiProperty("api.title", "Book API")
+//API version shown in docs.
+        .apiProperty("api.version", "1.0.0")
+//Tells Swagger that all endpoints are under /api. Example: /api/books.
+        .apiProperty("base.path", "/api");   
+
+
+        // === REST endpoints ===
+/*rest("/books") → Defines a REST API base path /books.
+.description("Book CRUD") → For OpenAPI/Swagger documentation.
+.consumes("application/json") / .produces("application/json") → Defines input/output content types for all endpoints under /books.*/
+        rest("/books").description("Book CRUD")
+            .consumes("application/json").produces("application/json")
+
+/*GET /books → Fetches all books.
+.outType(Book.class) → Response body is a Book (or list of Books; some versions prefer List<Book>.class).
+to("bean:bookService?method=findAll") → Calls bookService.findAll() and returns its result.*/
+            .get().description("List all books")
+                .outType(Book.class)
+                .to("bean:bookService?method=findAll")
+
+/*GET /books/{id} → Retrieves a single book by id.
+${header.id} → picks up the value of the id from the HTTP path parameter /books/{id} and maps it into the method argument.
+Calls bookService.findById(id).*/
+            .get("/{id}").description("Get by id")
+                .outType(Book.class)
+                .to("bean:bookService?method=findById(${header.id})")
+
+/*POST /books → Creates a new book.
+.type(Book.class) → The request body must be JSON mapped to a Book.
+.outType(Book.class) → Response will be a Book object.
+Routes to direct:createBook (a Camel internal endpoint).*/
+            .post().description("Create")
+                .type(Book.class).outType(Book.class)
+                .to("direct:createBook")
+
+/*PUT /books/{id} → Updates an existing book.
+.type(Book.class) → Request body must be a Book.
+${header.id} → Path parameter for ID.
+${body} → The JSON request body mapped to Book.
+Calls bookService.update(id, book).*/
+            .put("/{id}").description("Update by id")
+                .type(Book.class).outType(Book.class)
+                .to("bean:bookService?method=update(${header.id}, ${body})")
+
+/*DELETE /books/{id} → Deletes a book by id.
+Routes to direct:deleteBook.*/
+            .delete("/{id}").description("Delete by id")
+                .to("direct:deleteBook");
+
+/*Calls bookService.create(book).
+Sets HTTP response code to 201 Created.*/
+        from("direct:createBook")
+            .to("bean:bookService?method=create")
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201));
+
+/*Calls bookService.delete(id).
+Sets HTTP status 204 No Content.
+Clears the response body (since delete doesn’t return anything).*/
+        from("direct:deleteBook")
+            .to("bean:bookService?method=delete(${header.id})")
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(204))
+            .setBody(constant(""));
+    }
+
+}
+
+6. Create userdefined exception
+
+public class NotFoundException extends RuntimeException {
+    public NotFoundException(String msg) { super(msg); }
+}
+
+
+7. Create service 
+
+@Service("bookService")
+public class BookService {
+
+    @Autowired
+    private BookRepository repo;
+
+    public List<Book> findAll() {
+        return repo.findAll();
+    }
+
+    public Book findById(Long id) {
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("Book " + id + " not found"));
+    }
+
+    public Book create(Book b) {
+        b.setId(null);
+        return repo.save(b);
+    }
+
+    public Book update(Long id, Book updated) {
+        Book existing = findById(id);
+        existing.setTitle(updated.getTitle());
+        existing.setAuthor(updated.getAuthor());
+        existing.setPrice(updated.getPrice());
+        return repo.save(existing);
+    }
+
+    public void delete(Long id) {
+        Book existing = findById(id);
+        repo.delete(existing);
+    }
+}
+
+8. Start the appl, run http://localhost:9090/swagger-ui/index.html and run all endpoints
+
+9. Check db, http://localhost:9090/h2-ui
+
+10. Creating REST api using Camel Java DSL elements
+
+@Component
+public class BookJavaDSLRoutes extends RouteBuilder {
+
+    @Override
+    public void configure() {
+
+        // === Global exception handling (similar to @RestControllerAdvice) ===
+        onException(NotFoundException.class)
+            .handled(true)
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+            .setBody(simple("{\"error\":\"${exception.message}\"}"));
+
+        onException(ConstraintViolationException.class)
+            .handled(true)
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+            .setBody(simple("{\"error\":\"Validation failed\"}"));
+
+
+        // === Java DSL based REST endpoints (platform-http) ===
+
+     // GET /api/books (List all books)
+        from("platform-http:/api/books?httpMethodRestrict=GET")
+            .routeId("listBooks")
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+            .to("bean:bookService?method=findAll");
+
+        // GET /api/books/{id} (Get by ID)
+        from("platform-http:/api/books/{id}?httpMethodRestrict=GET")
+            .routeId("getBookById")
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+            .to("bean:bookService?method=findById(${header.id})");
+
+        // POST /api/books (Create new book)
+        from("platform-http:/api/books?httpMethodRestrict=POST")
+            .routeId("createBook")
+            .unmarshal().json(Book.class)   // request body -> Book
+            .to("bean:bookService?method=create")
+            .marshal().json()               // Book -> JSON
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201));
+
+        // PUT /api/books/{id} (Update book)
+        from("platform-http:/api/books/{id}?httpMethodRestrict=PUT")
+            .routeId("updateBook")
+            .unmarshal().json(Book.class)
+            .to("bean:bookService?method=update(${header.id}, ${body})")
+            .marshal().json()
+            .setHeader(Exchange.CONTENT_TYPE, constant("application/json"));
+
+        // DELETE /api/books/{id} (Delete by ID)
+        from("platform-http:/api/books/{id}?httpMethodRestrict=DELETE")
+            .routeId("deleteBook")
+            .to("bean:bookService?method=delete(${header.id})")
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(204))
+            .setBody(constant(""));
+
+    }
+}
+
+
+
+SEDA(Staged Event Driven Architecture) using Apache Camel
+       It’s a Camel endpoint (seda:) that provides an asynchronous in-memory queue for routing messages between routes. The producer sends a message into the SEDA queue, and a consumer route picks it up later, possibly in a different thread.
+
+Key Features
+1. In-Memory Queue - Messages are stored in an internal blocking queue. Very fast, but not persistent (if Camel restarts, messages are lost).
+
+2. Asynchronous - Producer does not wait for consumer to finish. This increases throughput and allows concurrency.
+
+3. Supports Multiple Consumers - You can have multiple routes consuming from the same SEDA endpoint.
+
+4. Thread Pool Control - You can configure concurrency (concurrentConsumers, size, etc.).
+
+When to Use SEDA
+When you need:
+1. Decoupling between producer & consumer routes.
+2. Async processing within the same Camel JVM.
+3. High throughput message passing (faster than JMS/Kafka for in-JVM).
+
+When not to use:
+1. If you need persistence, durability, or cross-application communication.
+(In that case, use JMS, Kafka, or ActiveMQ instead.)
+
+Without SEDA:
+Client → REST → bookService.add() → emailService.sendNotification() → Response.
+(Client waits until email is sent ⏳).
+
+With SEDA:
+Client → REST → bookService.add() → enqueue message to seda:sendEmail → Response ✅
+Async thread later → emailService.sendNotification().
+
+Example
+You have a REST API to add a new book.
+
+The API should respond quickly to the client.
+But after saving the book, you also want to send an email notification (which is slow).
+You don’t want the REST call to wait for the email to be sent.
+
+Solution: Use SEDA to offload the email notification to another async route.
+
+1. Configure seda dependency in pom.xml
+
+  <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-seda-starter</artifactId>
+            <version>4.14.0</version>
+        </dependency>
+
+2. Create Emailservice 
+
+@Service("emailService")
+public class EmailService {
+
+    public void sendNotification(Book book) {
+        try {
+            Thread.sleep(2000); // simulate delay
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Email sent for book: " + book.getTitle());
+    }
+}
+
+3. Change route for create book alone
+
+from("direct:createBook")
+            .to("bean:bookService?method=create")
+            .to("seda:sendEmail")  
+            //.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201));
+            .setBody(constant("Book added successfully!"));
+        
+        from("seda:sendEmail?concurrentConsumers=3")
+        .bean("emailService", "sendNotification")
+        .log("Email processed for book");
+
+This way, producers don’t wait for consumers — they just enqueue orders. Even if bookService.emailService() is slow, the REST endpoint responds immediately (non-blocking).
+
+4. Run the appl
+
+
+
+Apache Camel Variables
+       We know properties and variables reside as within camel exchange
+
+Using properties
+     we can set property by using setProperty() DSL element with property name and value which can be constant or simple language or some other expression. Since property resides within an exchange, we can set and get properties through the exchange itself
+
+1. Create SpringBootCamelProperties with web, apache camel dependency
+
+2. Create Route class
+
+routeId() is just a way to give your Camel route a human-readable, stable name instead of relying on auto-generated IDs. By default, Camel automatically generates route IDs (like route1, route2, etc.), but in real-world projects, it’s a good practice. 
+
+Without routeId("propertyExampleRoute"), Camel might assign route1 by default.
+With routeId(), you control the naming (propertyExampleRoute).
+
+@Component
+public class PropertyExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "propertyExampleRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                //creating property through DSL
+                .setProperty("myProperty", constant("My property value"))
+                //creating property through exchange itself
+                .process(exchange -> {
+                	exchange.getProperty("myProperty", String.class);
+                	exchange.setProperty("myProperty1", "My property value1");
+                })
+                //Next we transform or modify the message body
+                .transform(simple("Transformed body: ${exchangeProperty.myProperty1}"))
+                .log("${body}");
+    }
+}
+
+3. Run the appl, so for every 3s it will display property info
+
+Using Variables
+      We use setVariable() DSL  and transforming our body with variable now, we can access also
+our variables through the exchange
+
+@Component
+public class VariableExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "variableExampleRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                //creating variable using DSL
+                .setVariable("myVariable", constant("My variable value"))
+                //creating variable through exchange itself
+                .process(exchange -> {
+                	exchange.getVariable("myVariable", String.class);
+                	exchange.setVariable("myVariable1", "My Variable value1");
+                })
+                //transform the body
+                .transform(simple("Transformed body: ${variable.myVariable1}"))
+                .log("${body}");
+    }
+}
+
+- Run the appl
+
+Variables vs Properties
+1. Properties have only exchange scope, but variables can have an exchange scope and global scope which means variable is global for the whole camelcontext 
+
+2. Variables can be used with variable send() and receive() DSL element 
+
+3. Variables can have custom scope which means that you can use any custom implemented storage for variable you want, for example you might store your variables in database and share them even between different camel applications
+
+4. Camel properties are used internally by camel, for example if your property is called something like HTTP_Headers, you might have an unexpected behavior as some Camel HTTP components might look
+into this property to configure their behavior 
+
+So always use variables instead of properties, most of the time they have different scopes, they can be stored in custom location like database and shared between different camel applications, they have variable send and variable receive DSL support and finally variables are not
+used internally by camel components so you don't have a chance of overriding
+
+
+Route Scoped Variables
+     We have actually two routes, one route starts at timed intervals sets its own route scoped variable and sends an exchange to the second route which just logs the route variable itself.
+     Inorder to set route variable we're using the same setVariable() DSL, but our variable name is prefixed with "route:". When we want to access route scoped variable we need to specify 
+"route:routeID of the route which set our variable:variablename", this is the proper way of
+referencing routE variable and that's how variable is scoped to the route. 
+
+@Component
+public class RouteVariableExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "routeVariableExampleRoute";
+
+    public static final String SECOND_ROUTE_ID = "routeVariableExampleSecondRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                .setVariable("route:myVariable", constant("My variable value"))
+                .to("direct:route-variable-example-second-route");
+
+        from("direct:route-variable-example-second-route")
+                .id(SECOND_ROUTE_ID)
+                .log(
+                        "Value of variable.route:" + ROUTE_ID + ":myVariable is: " +
+                        "${variable.route:" + ROUTE_ID + ":myVariable}"
+                )
+                .log("Value of variable.myVariable is: ${variable.myVariable}");
+    }
+}
+
+- Run the appl, we can see 
+
+Value of variable.route:routeVariableExampleRoute:myVariable is: My variable value
+Value of variable.myVariable is: 
+
+Since myVariable is route scoped but not exchange scoped, this type of variables is used when you
+need to have some information about your route that other routes can also access
+
+Using Global Variables
+      We can use application.properties to set your global variables using "camel.variable" and access it using  "${variable.global:gVariable}"
+
+1. In application.properties, set global variable as
+
+camel.variable.gVariable = My global variable
+
+2. Create Route 
+
+@Component
+public class GlobalVariableExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "globalVariableExampleRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                .log("Value of variable.global:myVariable is: ${variable.global:gVariable}");
+    }
+}
+
+3. Run the appl, it will print 
+Value of variable.global:gVariable is: My global variable
+
+Custom Variable Scope
+     Custom variable scope allows us to store our variables in location we've defined ourselves, for this to work we need to implement VariableRepository interface which has 4 methods like
+getId(),  removeVariable(), getVariable(), setVariable() and also start(), stop() methods. In case we're storing our variables in some form of external storage are meant to start and stop connection to that storage 
+
+@Component
+public class ExampleVariableRepository implements VariableRepository {
+
+	//Create an string for ID
+    public static final String ID = "exampleVariableRepository";
+
+    //For storage we create a Map
+    private final Map<String, Object> store = new HashMap<>();
+
+    private static final Logger log = LoggerFactory.getLogger(ExampleVariableRepository.class);
+
+    
+    //remove, get and set variable methods are just working with that hash map 
+    //but we can imagine that instead of this HashMap we might have had some database storage
+    @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public Object removeVariable(String name) {
+        log.info("Removing variable: {}", name);
+        return store.remove(name);
+    }
+
+    @Override
+    public Object getVariable(String name) {
+        log.info("Fetching variable: {}", name);
+        return store.get(name);
+    }
+
+    @Override
+    public void setVariable(String name, Object value) {
+        log.info("Storing variable: {} with value {}", name, value);
+        store.put(name, value);
+    }
+
+//For start and stop methods we do nothing because our hashmap is initialized
+//If we have some form of external storage we can establish and then clean up your connections in start and stop methods
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
+}
+
+- Create Route, we're using ID to reference our custom scope (ie) ExampleVariableRepository.ID
+
+@Component
+public class CustomVariableRepoExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "customVariableRepoExampleRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                .setVariable(
+                        ExampleVariableRepository.ID + ":myVariable",
+                        constant("My variable value"))
+                .log("Value of variable." + ExampleVariableRepository.ID + ":myVariable : " +
+                        "${variable." + ExampleVariableRepository.ID + ":myVariable}");
+    }
+}
+
+- Run the appl
+
+
+Variable receive() DSL element
+      Consider our route is triggered by some request like timer and setting the body inside the route, but we can imagine this route is something like JMS queue and then we would have your JMS message as an "Initial request body".  To provide additional data you need to query some external service, so when we call some to() DSL element and this producer endpoint returns a response that overrides our "Initial request body", so when we log it we have the "Response from service" but we've lost our initial request body which we might need for further transformations
+      The better way of doing it is using toV() DSL element with first argument we're passing the
+same endpoint URI, for variable send we don't pass anything because we're sending our initial request body and as variable receive we're specifying our variable name which we don't have to create this variable beforehand it will be created for us by camel itself, so when
+"Response from service" returns it will be written to "responseFromService" variable automatically
+
+
+@Component
+public class VariableReceiveExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "variableReceiveExampleRoute";
+
+    public static final String SERVICE_ROUTE_ID = "variableReceiveExampleServiceRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                .setBody(constant("Initial request body"))
+                .toV("direct:variable-receive-example-service", null, "responseFromService")
+                .log("Body: ${body}; variable: ${variable.responseFromService}");
+
+        from("direct:variable-receive-example-service")
+                .routeId(SERVICE_ROUTE_ID)
+                .setBody(constant("Response from service"));
+
+    }
+}
+
+- Run the appl, we get the response as
+Body: Initial request body; variable: Response from service
+
+
+Variable send() DSL element
+       If we want to query our external service called  "direct:variable-send-example-service"
+which returns some response, but we don't want this response to overwrite our initial request body and we want to save our initial request as a message body in our exchange 
+
+@Component
+public class VariableSendExampleRoute extends RouteBuilder {
+
+    public static final String ROUTE_ID = "variableSendExampleRoute";
+
+    public static final String SERVICE_ROUTE_ID = "variableSendExampleServiceRoute";
+
+    @Override
+    public void configure() {
+        from("timer:tick?period=3s")
+                .routeId(ROUTE_ID)
+                .setBody(constant("Initial request body"))
+                .setVariable("requestToService", constant("My request"))
+                .toV(
+                        "direct:variable-send-example-service",
+                        "requestToService",
+                        "responseFromService"
+                )
+                .log("Body: ${body}; variable: ${variable.responseFromService}");
+
+        from("direct:variable-send-example-service")
+                .routeId(SERVICE_ROUTE_ID)
+                .log("Service received request: ${body}")
+                .setBody(constant("Response from service"));
+
+    }
+}
+
+
+How to use Aggregator EIP using Spring and Apache Camel?
+      Sometimes, multiple messages belong together (e.g., order items that form one invoice).
+Instead of processing them individually, you want to aggregate them into one combined exchange.
+Camel provides the Aggregator EIP using .aggregate() DSL.
+       When u r implementing aggregator design patterns there are few must have configurations
+1. Correlation identifier - It is an expression that determines which incoming messages belong together, because we have bunch of messages coming and we like to have some sort of condition and we can try to put those messages which are matching ur criteria and then create one final out message
+
+2. Completion condition - Along with combining the message we also like to have some condition, so if these conditions are matched then ur message is completed and ready to send out
+
+3. Aggregation strategy - specifies how to combine the messages into a single message 
+
+Real world example
+     As a customer we want to buy a car, so we go to some price comparing website and fills details about the car and it will be submitted to the server. Now server will validating and once everything is correct, this server has to talk to various insurance brokers, consider we have bunch of insurance brokers 
+    Now the server needs to submit the form to these insurance brokers and those insurance companies have to provide the price info as response. Now the server will aggregate all these prices and verify whether it meets the customer criteria or not and return the final response to the customer 
+    You can write ur own logic to aggregate and build this complex logic with lot of coding, instead we have Enterprise Integration pattern to solve these realworld problems
+    In camel, we will write a camel route which take request from customer and send to bunch of insurance brokers and once the price has come back, it automatically knows how to aggregate it and send the response back 
+
+Example
+   We have string which is sending some message with aggregation id or correlation id, so based on that id we can build logic (ie) whenever we see same id 3 times then we like to join the messages 
+
+1. Create SpringBootAggregator project with camel, web dependency
+
+2. Create route
+       In real world we will be connecting with messaging queue or database and messages will be coming through and we will be reading it. 
+      In our case we are using timer component to create bunch of messages, this timer component will initiate an event and whenever this event occurs we put a new message in body using process() and log the event
+
+@Component
+public class AggregatorRoute extends RouteBuilder {
+
+	@Override
+	public void configure() throws Exception {
+		from("timer:insurance?period=200")
+        .process(exchange -> {
+         Message message = exchange.getMessage();
+         message.setBody(new Date());
+         })
+        .log(LoggingLevel.ERROR, "${body}");
+	}
+
+}
+
+- Run the appl, so for every 200ms date will be printed in the console 
+
+Now we have written a route which streams the messages. Now we want to aggregate the message when some ID is matching, here we wont have any id in case if it is coming from some source that process will send some ID. Since we are creating stream over here, one of the rule of aggregation strategy is that every header message needs to contain some correlation id or unique id 
+    Now we set the header with unique identifier called correlationId and hardcoded the value as 1 (ie) every stream message that comes will have an id as 1 and print the correlationId
+
+@Component
+public class AggregatorRoute extends RouteBuilder {
+	
+	final String CORRELATION_ID = "correlationId";
+
+	@Override
+	public void configure() throws Exception {
+		from("timer:insurance?period=200")
+		.process(exchange -> {
+	         Message message = exchange.getMessage();
+	         message.setHeader(CORRELATION_ID, 1);
+	         message.setBody(new Date());
+	         })
+		.log(LoggingLevel.ERROR, "${header." + CORRELATION_ID + "} ${body}");
+	}
+
+}
+
+- Run the appl, now for every 200ms we get the date as well as header value 
+
+- Next we implement aggregation using aggregate() DSL element, first thing we have to pass is what is the correlationid based on which we can aggregate the data, second thing we have to pass a class which implements AggregationStrategy interface 
+
+@Override
+	public void configure() throws Exception {
+		from("timer:insurance?period=200")
+		.process(exchange -> {
+	         Message message = exchange.getMessage();
+	         message.setHeader(CORRELATION_ID, 1);
+	         message.setBody(new Date());
+	         })
+		.aggregate(header(CORRELATION_ID), new MyAggregationStrategy())
+		.log(LoggingLevel.ERROR, "${header." + CORRELATION_ID + "} ${body}");
+	}
+
+- Create MyAggregationStrategy class which implements AggregationStrategy and override aggregate() which takes oldExchange and newExchange
+     So everytime when stream comes to camel route, it automatically going to filter based on id 
+
+
+public class MyAggregationStrategy implements org.apache.camel.AggregationStrategy {
+    @Override
+    public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
+
+//For firsttime call to this method we dont have any old value so it returns new value. So camel stores in memory so nexttime camels see same correlationid, it will call aggregate() once again and return newExchange as oldvalue. So camel will stores all this info and it is aware of oldExchange, newExchange 
+        if (Objects.isNull(oldExchange)) {
+            return newExchange;
+        }
+
+        //Extract msg from oldExchange
+        String oldBody = oldExchange.getIn().getBody(String.class);
+        //Extract msg from newExchange
+        String newBody = newExchange.getIn().getBody(String.class);
+
+//Now we can do any processing on the message we extracted from body, this is called as aggregation, now we concatenate oldBody and newBody into separate variable aggBody 
+        String aggBody = oldBody + "->" + newBody;
+
+//Next we need to set this message in our exchange, so nexttime when camel sees same identifier it can give oldobject as well as newobject
+        oldExchange.getIn().setBody(aggBody);
+
+        return oldExchange;
+    }
+}
+
+- We have told camel to aggregate based on correlationid and strategy class which has business logic, now we have to say at what point aggregation should be finish using completionSize(), because we are collecting the messages but we should finish at times 
+
+@Override
+	public void configure() throws Exception {
+		from("timer:insurance?period=200")
+		.process(exchange -> {
+	         Message message = exchange.getMessage();
+	         message.setHeader(CORRELATION_ID, 1);
+	         message.setBody(new Date());
+	         })
+		.aggregate(header(CORRELATION_ID), new MyAggregationStrategy())
+		.completionSize(3)
+		.log(LoggingLevel.ERROR, "${header." + CORRELATION_ID + "} ${body}");
+	}
+
+So here whenever it has joined 3 messages then it should finish the aggregation and once finished we log to see the completion message. So log will be executed only if all 3 aggregations are completed 
+   So when route started we started consuming some messages, then we put some aggregation logic, then we told the criteria on what point it should finishing and log will be called only if that completion is matched 
+
+- Run the appl, so we can see for every 200ms we can info followed by ->, so after 3 message it stops and once again starts the process. So we created a stream of messages, using aggregate() we clubbed them and applied the business logic
+
+- Now instead of hardcoding value for id, we are going to randomize it using Random class
+
+public void configure() throws Exception {
+		 Random random = new Random();
+		from("timer:insurance?period=200")
+		.process(exchange -> {
+	         Message message = exchange.getMessage();
+	         message.setHeader(CORRELATION_ID, random.nextInt(4));
+	         message.setBody(new Date());
+	         })
+		.aggregate(header(CORRELATION_ID), new MyAggregationStrategy())
+		.completionSize(5)
+		.log(LoggingLevel.ERROR, "${header." + CORRELATION_ID + "} ${body}");
+	}
+
+So every 200ms a message comes it will create a random id, if camel see same id then it will club
+the messages together, as soon as it saw 3 messages otherwise it will keep on generating 
+
+- Run the appl, we can see if same id is generated more than 3 times then it is printed otherwise it will not be printed it will continuously generating
+
+
+Circuit Breaker Design Pattern using Apache Camel
+        Circuit breaker basically encapsulates the operation and then it monitors it for
+failures, it has three stages.
+1. closed means when everything is operating successfully, we do not have any failure in your software
+2. open - we may make a call to external service or some resource, you detected a failure then application will basically stop sending the load to that resource or API okay and which means now
+circuit breaker has been opened 
+3. half open  means after a short period in the open State, an operation is attempted to see whether it can complete successfully, so basically we are just trying to check the resource
+which was failing earlier has it come back or not, if the answer comes no then we go back to this open State one more time, if answer comes yes (ie) service has recovered and we see successful
+responses then we basically reset our breaker and then we go to this closed State 
+
+Usecase
+     We are giving a call to a webservice, when call to service takes more than 500ms and 99% of
+the requests fail then hold subsequent request for five seconds and return some sort of static response  after that we retry 
+
+1. Create SpringbootCamelCircuitBreaker project with camel, web, camel circuit breaker and camel http server dependency 
+
+<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-resilience4j</artifactId>
+			<version>4.14.0</version>
+		</dependency>
+<dependency>
+    <groupId>org.apache.camel.springboot</groupId>
+    <artifactId>camel-http-starter</artifactId>
+    <version>4.14.0</version>
+</dependency>
+
+2. Create controller
+       It takes some sleeping time as argument and based on that input it is going to sleep between whatever the sleep time in millisecond is passed by our client. So if things are greater than 500 then we are printing a message otherwise we sleep and return back my response
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
+@RestController
+public class HelloController {
+
+    @GetMapping("hello")
+    public String hello(@RequestParam String sleepTimeMills) {
+        Date requestReceived = new Date();
+        Integer randomTime = randomTime(sleepTimeMills);
+        if (randomTime >= 500) {
+            System.out.println("Long Sleep (" + randomTime + ") Request for: " + sleepTimeMills);
+        }
+        try {
+            MILLISECONDS.sleep(randomTime);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return "Response: Sleep("
+                + randomTime
+                + ") Start("
+                + requestReceived
+                + ") (End: "
+                + new Date()
+                + ")";
+    }
+
+    private Integer randomTime(String bound) {
+        Random random = new Random();
+        return random.nextInt(Integer.valueOf(bound));
+    }
+}
+
+3. Create route
+       For every one second we make a call to this service then just print a body, we are not monitoring how long it's taking for the response to come back, we are not monitoring the failures, we are not doing any short of circuit breaker
+
+
+@Component
+public class CircuitBreaker extends RouteBuilder {
+	    @Override
+	    public void configure() throws Exception {
+	    	from("timer:time?period=1000")
+	    	.log(LoggingLevel.INFO, "------------Start----------------------------")
+            .to("http://localhost:8000/hello?sleepTimeMills=1000")
+            .log(LoggingLevel.INFO, "Body - ${body}")
+            .log(LoggingLevel.INFO, "------------End----------------------------");
+	    }
+}
+
+- Run the appl, we can see for every one second we are making call to this web service and then
+print the response as "Body - Response: Sleep(978) Start(Tue Sep 02 16:40:04 IST 2025) (End: Tue Sep 02 16:40:05 IST 2025)”
+
+- But our requirement is, if request takes more than 500 millisecond then we have to basically time out this request, so now we have to implement circuitbreaker 
+
+  from("timer:time?period=1000")
+                //Implement circuit breaker
+                .circuitBreaker()
+                    .log(INFO, "------------Start----------------------------")
+                    .to("http://localhost:8000/hello?sleepTimeMills=1000")
+//circuit breaker will take something called fallback using onFallback() which send some sort of static response using constant 
+                .onFallback().transform().constant("Static Fallback Message")
+                .end()  //end the circuit breaker 
+                    .log(INFO, "Body - ${body}")
+                    .log(INFO, "------------End----------------------------"); 
+                
+
+we have now added circuit breaker, but where are we actually monitoring for that we use resilience
+
+
+from("timer:time?period=1000")
+             .circuitBreaker()
+               //Starts a Resilience4j circuit breaker configuration block
+                .resilience4jConfiguration()
+                //Enables the timeout feature. If a call takes longer than the defined duration, it will be considered a failure.
+                	.timeoutEnabled(true)
+//Sets the timeout duration to 500 milliseconds.If a call takes longer than 500ms, Resilience4j aborts it and marks it as failed.
+                	.timeoutDuration(500)
+                 .end()
+                 .log(LoggingLevel.INFO, "------------Start----------------------------")
+                 .to("http://localhost:8000/hello?sleepTimeMills=1000")
+             .onFallback().transform().constant("Static Fallback Message")
+             .end()
+                 .log(LoggingLevel.INFO, "Body - ${body}")
+                 .log(LoggingLevel.INFO, "------------End----------------------------");
+               
+
+- Run the appl, we can see if timeout is less than 500 it will return the body but if the requests are having long sleep time, so all of them are failing and that's why we are returning static fallback message
+
+- Next part of the userstory it was saying monitor for 99% of the failures using failureRateThreshold(99), by default it's 50, 99% request if failing then we enable or open  circuit breaker
+
+ public void configure() throws Exception {
+	    	 from("timer:time?period=1000")
+             .circuitBreaker()
+                .resilience4jConfiguration()
+                	.timeoutEnabled(true)
+                	.timeoutDuration(500)
+                    .failureRateThreshold(99) //The failure rate threshold in percent.Here, if 99% or more of the calls fail, the circuit breaker will open (
+                    .waitDurationInOpenState(5) //When the circuit breaker opens (due to failures), it will remain open for 5 seconds before moving to half-open state and allowing a test request.
+                    .automaticTransitionFromOpenToHalfOpenEnabled(true)  //Automatically transitions from OPEN → HALF-OPEN after the wait duration without needing a manual reset.
+                 .end()
+                 .log(LoggingLevel.INFO, "------------Start----------------------------")
+                 .to("http://localhost:8000/hello?sleepTimeMills=1000")
+             .onFallback().transform().constant("Static Fallback Message")
+             .end()
+                 .log(LoggingLevel.INFO, "Body - ${body}")
+                 .log(LoggingLevel.INFO, "------------End----------------------------");
+               
+	    }
+
+As soon as a failure occurs (ie) one percent failure occurs we are  going to hold on my next five requests before sending it to server and then just return static response 
+
+- Run the appl,we can see if one request fails then for next five calls or five second it
+did not make any request to our server
+
+
+Multicast EIP with SpringBoot & Apache Camel.
+    Multicast EIP allows to route the same message to a number of endpoints and process them in a different way.
+    So we have incoming message but we have multiple receipent list (ie) different endpoints, and we are sending copy of this message to these endpoints and once these endpoints modify that message with some additional information and those changes will not be visible to other endpoints 
+    For example, we have news portal so based on ur region it can translate the news in ur own regional language. So consider we have content management system where storywriter is writing in english, as soon as that person submits the story it can come to server and the server can broadcast to multiple endpoints which are responsible to translate that into regional language, this is where we can use Multicast EIP
+    Similarly in e-commerce appl, as soon as customer places an order, we can broadcast the order to several enpoints like allocating the stock, notify the warehouse, shippment the items etc
+
+1. Create route 
+
+So if we are not using multicast EIP, then we send request to multiple endpoints like
+  from(“ “)
+     .to(“direct:A”,”direct:B”);
+
+Here it sequentially send message from one endpoint to another endpoint. So the problem here is that if endpoint “A” modifies any message those changes will be reflected on endpoint “B”
+
+But our requirements is that when we receive a message we need to broadcast that message either sequentially or parallelly since multicast supports both, but we dont want that message to be modified on other endpoints
+
+- So we are going to use timer which sends some orders for every 2sec. Next we update the body of message by representing order in json format and orderid with incremental value
+
+
+@Component
+public class MultiCastRoute extends RouteBuilder{
+
+	@Override
+	public void configure() throws Exception { 
+
+//we are going to use timer which sends some orders for every 2sec
+		from("timer:orders?period=2000")
+
+//Next we update the body of message by representing order in json format and orderid with incremental value
+		   .process(exchange ->exchange.getIn().setBody(
+                                                "{order-id: '"
+                                                        + (orderId.getAndIncrement())
+                                                        + "', "
+                                                        + "price: '£20.00'}"))
+
+//Now we want to send order to payment and stock-allocation endpoints
+           .to("direct:payment", "direct:stock-allocation");
+
+//Once we receive the message in payment endpoint, we need to modify it and print the data
+from("direct:payment").process(exchange -> enrich(exchange, "Paid")).log(LoggingLevel.ERROR, "${body}");
+        
+//After payment has been taken,stock has been allocated and we need to publish an event to notify other routes
+from("direct:stock-allocation")
+                .process(exchange -> enrich(exchange, "Allocated"))
+                .log(LoggingLevel.ERROR, "${body}");
+	}
+
+//user defined method to modify the data, we take json message and add new property called “status”
+	 private void enrich(Exchange exchange, String statusValue) {
+        Message in = exchange.getIn();  //get the message
+        String order = in.getBody(String.class); //get the body of message
+        String status = "'status': '" + statusValue + "'";
+        String body = order.replace("}", ", " + status + "}"); //add a new value status
+        in.setBody(body);
+    }
+}
+
+
+- Run the appl, we can see status will be keep on adding into the same message for every 2sec rather on fresh copy
+{order-id: '100', price: '£20.00', 'status': 'Paid'}
+{order-id: '100', price: '£20.00', 'status': 'Paid', 'status': 'Allocated'}
+
+- To avoid this problem we use Multicast EIP using multicast() DSL element
+
+from("timer:orders?period=2000")
+		.process(exchange ->exchange.getIn().setBody(
+                                                "{order-id: '"
+                                                        + (orderId.getAndIncrement())
+                                                        + "', "
+                                                        + "price: '£20.00'}"))
+		.multicast()  
+		.to("direct:payment", "direct:stock-allocation");
+
+- Run the appl, now we can status will be adding to new message where we can see different routes
+route2      : {order-id: '123', price: '£20.00', 'status': 'Paid'}
+route3      : {order-id: '123', price: '£20.00', 'status': 'Allocated'}
+
+So now we have send messages sequentially to different endpoints 
+
+- Right now it is happening sequential order, eventhough camel sends fresh copy of message to these endpoints, but still are happening in sequential manner. Consider when we come to payment endpoint and if there is some delay in that endpoint, so stock-allocation will be executed only if payment is completed in that case we can use parallelProcessing() to execute them parallelly 
+
+from("timer:orders?period=2000")
+		.process(exchange ->exchange.getIn().setBody(
+                                                "{order-id: '"
+                                                        + (orderId.getAndIncrement())
+                                                        + "', "
+                                                        + "price: '£20.00'}"))
+		.multicast().parallelProcessing()  
+		.to("direct:payment", "direct:stock-allocation");
+
+- Run the appl, we can say it executes in parallelly by seeing the timestamp, eventhough without parallel processing also it would be same, but if we put some sleep() we can see the difference 
+
+
+How to use RabbitMQ with Springboot and Apache Camel ?
+
+1. Install rabbitmq and run http://localhost:15672
+     username: guest
+     pwd: guest
+
+Here we can Exchanges tab, which is first point of contact when any messages comes to RabbitMQ server, so all the messages comes to the exchange which u have defined. It has few inbuilt exchanges like
+1. amq:direct - used for one to one communication, it has routingkey using that we can connect with your queue
+2. amq:fanout - typically used for broadcasting messages, it dosent care about routingkey so as soon as messages comes from fanout it sends to all queues which are connected 
+
+Next we have Queues tab, we can create queues in 2 ways, first way we can create a queue and then talk to the application, second way we can define all queue related info in camel routes and start the appl those queues will be automatically created if they do not exists
+
+2. Create SpringBootCamelRabbitMQ with camel, web and camel rabbitmq dependency
+
+<dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-spring-rabbitmq</artifactId>
+            <version>4.14.0</version>
+        </dependency>
+
+3. Configure RabbitMQ configuration to connect with RabbitMQ
+
+Note: If we try to define method name connectionFactory, then we have to define that in route lik
+from("rabbitmq:amq.direct?queue=weather&weather&autoDelete=false&connectionFactory=connectionFactory") this is not effective
+
+But camel has done, if we name bean as rabbitConnectionFactory it will be autoinjected. 
+
+
+@Configuration
+public class CamelConfiguration {
+
+	@Bean
+	public ConnectionFactory rabbitConnectionFactory() {
+		ConnectionFactory factory=new ConnectionFactory();
+		factory.setHost("localhost");
+		factory.setPort(5672);
+		factory.setUsername("guest");
+		factory.setPassword("guest");
+		return factory;
+	}
+}
+
+
+4. Create route to display weather related details
+
+@Component
+public class WeatherRoute extends RouteBuilder {
+
+	@Override
+	public void configure() throws Exception {
+		//create consumer using from(), use a component called rabbitmq
+		//next we specify exchange name called amq:direct, next we specifiy queue name called "weather" to talk
+		//next routingkey exists between exchange and queue, we can give any routing key and we call as "weather"
+		//we dont want queue to be deleted once appl is shutdown so we use autodelete=false
+		from("rabbitmq:amq.direct?queue=weather&routingKey=weather&autoDelete=false")
+		   .log(LoggingLevel.ERROR,"Message from RabbitMQ is ${body}");
+	}
+	
+	
+}
+
+5. Run the appl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
