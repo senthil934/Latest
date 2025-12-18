@@ -1132,18 +1132,20 @@ public class WeatherServiceBuilder {
               @Value("${spring.weather.api.key}")
               private String weatherAPIKey;
               
-              //To call particular endpoint we use RestClient
+          //To call this particular endpoint we are using RestClient service 
               private RestClient restClient=RestClient.create();
-              
+          
+//we have defined a function which is going to getWeather, we just have to pass a city name to get the output     
               public Weather.Response getWeather(String city){
+// calling get() method to build the URI so we have to take the base URL on top of that we have to add the current.json and then there are certain parameters
                              return restClient.get()
-                                                         .uri(UriComponentsBuilder.fromUriString(weatherBaseURI)
-                                                          .path("/current.json")
-                                                          .queryParam("key",weatherAPIKey)
-                                                          .queryParam("q", city)
-                                                          .toUriString())
-                                                          .retrieve()
-                                                          .body(Weather.Response.class);
+                  .uri(UriComponentsBuilder.fromUriString(weatherBaseURI)
+                           .path("/current.json")
+                   .queryParam("key",weatherAPIKey)
+                     .queryParam("q", city)
+                            .toUriString())
+                            .retrieve()
+                   .body(Weather.Response.class);
               }
 }
 
@@ -1184,6 +1186,9 @@ public class AIService {
 
               public ChatResponse getWeatherInfo(String query) {
                              UserMessage userMessage=new UserMessage(query);
+
+//Using chatModel.call() we have to pass our user query and then call our
+//functions and let this model know we do have a functions also available 
                              return chatModel.call(new Prompt(userMessage,AzureOpenAiChatOptions.builder().function("currentWeather").build()));
               }
 }
@@ -1294,13 +1299,174 @@ demoDB=# \dx
 1. Create Springboot project with web, JDBC api(we want to use the new jdbc client to talk to the database), Azure OpenAI, lombok, pgvector db(we need to store the documents we're going to take PDF use the embedding client to basically store vectors inside Vector database and we're going to use the PG Vector database ),spring shell(building a shell application that I can run from my command line), grallvm native support(once we done we can turn this into a native image and run it
 from our machine) dependency 
 
-<dependency>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.5.4</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>SpringBootDocs</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SpringBootDocs</name>
+	<description>Demo project for Spring Boot</description>
+	<url />
+	<licenses>
+		<license />
+	</licenses>
+	<developers>
+		<developer />
+	</developers>
+	<scm>
+		<connection />
+		<developerConnection />
+		<tag />
+		<url />
+	</scm>
+	<properties>
+		<java.version>21</java.version>
+		<spring-ai.version>1.0.1</spring-ai.version>
+		<spring-shell.version>3.4.1</spring-shell.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-advisors-vector-store</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-azure-openai</artifactId>
+		</dependency> 
+
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.shell</groupId>
+			<artifactId>spring-shell-starter</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-pdf-document-reader</artifactId>
 		</dependency>
+<!-- Use OkHttp transport for Azure SDK -->
+<dependency>
+  <groupId>com.azure</groupId>
+  <artifactId>azure-core-http-okhttp</artifactId>
+  <version>1.13.2</version> <!-- or latest -->
+</dependency>
+
+<!-- Keep the GA Azure OpenAI SDK -->
+<dependency>
+  <groupId>com.azure</groupId>
+  <artifactId>azure-ai-openai</artifactId>
+  <version>1.0.0-beta.16</version> <!-- prefer GA over old beta.* -->
+</dependency>
+
+<!-- Spring AI Azure OpenAI module (you already have 1.0.3) -->
+<dependency>
+  <groupId>org.springframework.ai</groupId>
+  <artifactId>spring-ai-azure-openai</artifactId>
+  <version>1.0.3</version>
+</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.shell</groupId>
+			<artifactId>spring-shell-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.ai</groupId>
+				<artifactId>spring-ai-bom</artifactId>
+				<version>${spring-ai.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.shell</groupId>
+				<artifactId>spring-shell-dependencies</artifactId>
+				<version>${spring-shell.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+		<!-- 	<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-sdk-bom</artifactId>
+				<version>1.2.0</version> use the latest available
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency> -->
+
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.graalvm.buildtools</groupId>
+				<artifactId>native-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
 
 2. Configure postgres db info, open ai and vector db in application.properties file
 
+spring.application.name=SpringBootDocs
+server.port=5555
+
+# PostgreSQL Database Configuration
 spring.datasource.url=jdbc:postgresql://localhost:5432/demoDB
 spring.datasource.username=postgres
 spring.datasource.password=root
@@ -1315,15 +1481,21 @@ spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 #Open AI keys
-spring.ai.azure.openai.api-key=
-spring.ai.azure.openai.endpoint=
-spring.ai.azure.openai.chat.options.deployment-name=
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+spring.ai.azure.openai.embedding.options.deployment-name=text-embedding-3-small
+
+spring.ai.vectorstore.pgvector.initialize-schema=true 
+spring.main.web-application-type=none
+spring.shell.interactive.enabled=true
 
 #vector data
 spring.ai.vectorstore.pgvector.index-type=HNSW
-spring.ai.vectorstore.pgvector.table-name=embeddings
-spring.ai.vectorstore.pgvector.dimension=1536
-spring.ai.vectorstore.pgvector.distance-type=cosine
+spring.ai.vectorstore.pgvector.table-name=vector_store
+spring.ai.vectorstore.pgvector.embedding-dimension = 1536 
+spring.ai.vectorstore.pgvector.distance-type=COSINE_DISTANCE
+
 
 3. Create schema.sql file for pgvector db and execute it in psql shell
 
@@ -1334,8 +1506,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS vector_store (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     content text,
-    metadata json,
-    embedding vector(1536)  -- 1536 is the default embedding dimension
+    metadata  jsonb NOT NULL DEFAULT '{}'::jsonb,
+    embedding vector(1536)  
 );
 
 CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
@@ -1424,6 +1596,52 @@ public class ReferenceDocsLoader {
     }
 }
 
+
+@Component
+public class ReferenceDocsLoader implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(ReferenceDocsLoader.class);
+    private final JdbcClient jdbcClient;
+    private final VectorStore vectorStore;
+
+    @Value("classpath:/docs/spring-boot-reference.pdf")
+    private Resource pdfResource;
+
+    public ReferenceDocsLoader(JdbcClient jdbcClient, VectorStore vectorStore) {
+        this.jdbcClient = jdbcClient;
+        this.vectorStore = vectorStore;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        Integer count = jdbcClient.sql("select count(*) from vector_store")
+                .query(Integer.class)
+                .single();
+
+        log.info("Current count of the Vector Store: {}", count);
+        if (count == 0) {
+            log.info("Loading Spring Boot Reference PDF into Vector Store");
+
+            var config = PdfDocumentReaderConfig.builder()
+                    .withPageExtractedTextFormatter(new ExtractedTextFormatter.Builder()
+                            .withNumberOfBottomTextLinesToDelete(0)
+                            .withNumberOfTopPagesToSkipBeforeDelete(0)
+                            .build())
+                    .withPagesPerDocument(1)
+                    .build();
+
+            var pdfReader = new PagePdfDocumentReader(pdfResource, config);
+            var textSplitter = new TokenTextSplitter();
+
+            List<Document> docs = textSplitter.apply(pdfReader.get());
+            vectorStore.add(docs); // Use add() instead of accept()
+
+            log.info("Application is ready");
+        }
+    }
+}
+
+
 - Start the appl, it is processing pdf and it's splitting that document into two chunks and we can see the application has started because it's finished breaking that up into different documents
    If we restart the application it will not take that long because it sees that information in the database already and has no need to reload the database 
 
@@ -1477,6 +1695,42 @@ send a thousand pages of PDF documents along with prompt to the LMS so we are ge
                 .map(Document::getText)
                 .toList();
     }
+}
+
+
+@Component
+@Command
+public class SpringAssistantCommand {
+
+    private final AzureOpenAiChatModel chatClient;
+    private final VectorStore vectorStore;
+    @Value("classpath:/prompts/spring-boot-reference.st")
+    private Resource sbPromptTemplate;
+
+    public SpringAssistantCommand(AzureOpenAiChatModel chatClient, VectorStore vectorStore) {
+        this.chatClient = chatClient;
+        this.vectorStore = vectorStore;
+    }
+
+    @Command(command = "q")
+    public String question(@DefaultValue(value = "What is Spring Boot") String message) {
+        PromptTemplate promptTemplate = new PromptTemplate(sbPromptTemplate);
+        Map<String, Object> promptParameters = new HashMap<>();
+        promptParameters.put("input", message);
+        promptParameters.put("documents", String.join("\n", findSimilarDocuments(message)));
+
+        return chatClient.call(promptTemplate.create(promptParameters))
+                .getResult()
+                .getOutput().getText();
+                
+    }
+
+    private List<String> findSimilarDocuments(String message) {
+       // List<Document> similarDocuments = vectorStore.similaritySearch(SearchRequest.query(message).withTopK(3));
+    	List<Document> similarDocuments = vectorStore.similaritySearch(message);
+        return similarDocuments.stream().map(Document::getFormattedContent).toList();
+    }
+
 }
 
 9. In main class, we need to scan those commands using @CommandScan
@@ -1616,11 +1870,647 @@ Positive
 4. Start the appl, it will say the sentiment of tweet 
 
 
+--------------------------------------------------------------------------------------------------
+
+https://www.youtube.com/watch?v=SmDZV9_nAdY
+Springboot with RAG
+   First let's understand how the traditional LLM model is working. So here we have the user that is asking a question to the LLMs like OpenAI, Gemini and AzureAI. So whenever the user asks a
+question to the LLM, it looks up and queries the pre-trained data of the LLM. Usually this data is  historical training data and it is not up to date with the current affairs. This is one of
+the problem with the traditional LLMs because they rely on historical training data and not update  with the current data and they also have no knowledge about our own knowledge base like our internal documentation etc. 
+  So if you have a huge internal documentation and you want to use the capabilities of LLMs to get a nice summary out of your internal documentation then it is not possible with the traditional LLM way. So that's why a new AI technique called as retrieval augmented generation was introduced. 
+  So it is nothing but a technique that is used to retrieve external information like our knowledge base like PDFs, HTML or CSV or text documents and using that information and we combine the logical reasoning capabilities of LLM and then we generate some accurate responses to the user questions. 
+
+Retrieval augmented generation
+   So the user first uploads their knowledge based document like a PDF or text document. And then they upload this document to our application which is enhanced with this RAG capabilities. And then the applications processes this document and then stores this data in the form of vectors in a vector database. 
+  A vector database is a specialized database like SQL relational database and non-reational
+database that stores data in the form of vector. A vector is nothing but a mathematical representation of the human readable text. We have different kinds of database to store this vector data like pinecone, chroma, pg vector, maria db, redis, cassandra etc. So to fulfill the user queries, our application will perform a similarity search based on the given question to the vector database and then we get the response back from the database and this response is sent as an LLM prompt and then our LLMs will give back the answer. 
+   So to perform the steps 2, 3 and 4 we have something called as a data injection pipeline. So we have our user document and our application will splits that document into different chunks and then it will convert these chunks into something called as an embedding. An embedding is a type of
+vector that is used to represent the data in a format that is understandable for LLMs. So we need to essentially convert this text of chunk into embeddings and then store it into the vector database. Next we retrieve this embeddings and then we provide it along with the user prompt to 
+the llms. 
+
+1. Create springboot project with web, jdbc api, azure ai, pgvector, tikadocument reader (used to to process and parse the PDF documents and also used for various kinds of document formats such as PDF, word files, PPT and HTML
+
+Using OkHttp azure in order to avoid the problem with Netty in azure ai
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.12</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>Springboot-Docs</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Springboot-Docs</name>
+	<description>Demo project for Spring Boot</description>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>21</java.version>
+		<spring-ai.version>1.0.3</spring-ai.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-advisors-vector-store</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-azure-openai</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-tika-document-reader</artifactId>
+		</dependency>
+<dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		
+<!-- Use OkHttp transport for Azure SDK -->
+<dependency>
+  <groupId>com.azure</groupId>
+  <artifactId>azure-core-http-okhttp</artifactId>
+  <version>1.13.2</version> <!-- or latest -->
+</dependency>
+
+<!-- Keep the GA Azure OpenAI SDK -->
+<dependency>
+  <groupId>com.azure</groupId>
+  <artifactId>azure-ai-openai</artifactId>
+  <version>1.0.0-beta.16</version> <!-- prefer GA over old beta.* -->
+</dependency>
+
+<!-- Spring AI Azure OpenAI module (you already have 1.0.3) -->
+<dependency>
+  <groupId>org.springframework.ai</groupId>
+  <artifactId>spring-ai-azure-openai</artifactId>
+  <version>1.0.3</version>
+</dependency>
+
+<!-- OPTIONAL: if you want to be sure Netty isn’t used anywhere, exclude it -->
+<!-- <dependency>
+  <groupId>com.azure</groupId>
+  <artifactId>azure-core-http-netty</artifactId>
+  <version>1.15.11</version>
+  <scope>provided</scope>
+  <optional>true</optional>
+  </dependency> -->
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.ai</groupId>
+				<artifactId>spring-ai-bom</artifactId>
+				<version>${spring-ai.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+2. Configure db info, apikeys info in application.properties file
+
+server.port=1111
+
+spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+spring.ai.azure.openai.embedding.options.deployment-name=text-embedding-3-small
+
+#used to initialize the pg vector schema automatically for us. So this will enable the vector database functionality in our application.
+spring.ai.vectorstore.pgvector.initialize-schema=true
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/vectordb1
+spring.datasource.username=postgres
+spring.datasource.password=root
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+3. Create vectordb1 in postgres db
+
+4. Create pdf folder inside resources folder and paste spring document file
+
+Goto google - search for springboot reference documentation - open first link which open documentation for 2.4.3, now we can change 3.2.7 which redirect to latest documentation
+
+5. Create service class which implement a commandlinerunner because we want this class to
+be executed at the time of startup of the application, which reads the pdf file and stored as chunks inside db 
+
+@Service
+public class DocumentIngestionService implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentIngestionService.class);
+
+    @Value("classpath:/pdf/spring-boot-reference.pdf")
+    private Resource resource;
+
+    private final VectorStore vectorStore;
+
+    public DocumentIngestionService(VectorStore vectorStore) {
+        this.vectorStore = vectorStore;
+    }
+
+    @Override
+    public void run(String... args) {
+        //read the pdf using TikaDocumentReader which passes actual document
+        TikaDocumentReader reader = new TikaDocumentReader(resource);
+
+        //split the pdf contents into chunks using TextSplitter 
+        TextSplitter textSplitter = new TokenTextSplitter();
+
+        //split this document into multiple chunks using split()
+        List<Document> documents = textSplitter.split(reader.read());
+        log.info("Ingesting PDF file");
+
+        //vectorstore will convert this list of documents into embeddings and then store it inside the vectordatabase.
+//vectorstore interface have multiple implementations like PGvectorstore, simplevectorstore,  as we have the autoconfiguration spring boot is automatically going to pick up the PGvector store for us 
+        vectorStore.accept(documents);
+        log.info("Completed Ingesting PDF file");
+    }
+}
+
+6. Start the appl, now pdf file will be divided into chunks and store inside db
+
+7. Open Postgres db and check for the table count and we can see schema is created, we can see the human readable text is converted into ammathematical representation called as embedding 
+
+Right table table - Query tool - we can check our data 
+
+8.  create an endpoint where we can chat with this data
+
+
+@RestController
+@RequestMapping("/api/chat")
+public class ChatController {
+
+    private final AzureOpenAiChatModel azureOpenAiChatModel;
+    private final VectorStore vectorStore;
+
+    public ChatController(AzureOpenAiChatModel azureOpenAiChatModel, VectorStore vectorStore) {
+        this.azureOpenAiChatModel = azureOpenAiChatModel;
+        this.vectorStore = vectorStore;
+    }
+
+    @PostMapping
+    public String chat(@RequestBody String message) {
+       //we use ChatClient class from spring AI and call builder(), inside that we call chatmodel class
+        return ChatClient.builder(azureOpenAiChatModel)
+              //to build the chat model we use build()
+                .build()
+              //provide the prompt to azureaichatmodel
+                .prompt()
+              //we define advisor, which is uh a component that's doing all the matching.
+So in diagram we saw that an our application is supposed to fetch the data from the vector store by performing a similarity search based on the given question and create an embedding and and send this send this message as an LLM prompt with the relevant context. So an advisor is something that is doing this out of the box for us. So we use QuestionAnswerAdvisor from spring AI which take vectorstore as argument. 
+                .advisors(new QuestionAnswerAdvisor(vectorStore)) // RAG-style Q&A
+     //next we provide the user message using user() method
+                .user(message)
+     //next we call the response and then convert it to the user readable string
+                .call()
+                .content();
+    }
+}
+
+9. Start the appl, run in Postman with Post request 
+http://localhost:1112/api/chat - Body - Text - What is Springboot
+
+---------------------------------------------------------------------------
+Spring AI+Kafka
+
+Below is a complete, end‑to‑end example that wires Spring Boot + Kafka + Spring AI so you can:
+
+POST a question to a REST endpoint ➜ produce it to a Kafka topic
+Consume the question ➜ call Spring AI (OpenAI or Azure OpenAI) to generate an answer
+Publish the answer to another Kafka topic
+
+1. Create springboot project with web, lombok, azure ai, kafka 
+
+2. Configure properties
+
+3. create kafka configuration
+
+@Configuration
+public class KafkaConfig {
+
+	@Value("${app.inputtopic.name}")
+	private String inputTopic;
+
+	@Value("${app.outputtopic.name}")
+	private String outputTopic;
+
+	@Bean
+	NewTopic incomingQuestions() {
+		return TopicBuilder.name(inputTopic).partitions(3).replicas(1).build();
+	}
+
+	@Bean
+	NewTopic aiResponses() {
+		return TopicBuilder.name(outputTopic).partitions(3).replicas(1).build();
+	}
+
+// Convenience wrappers
+	public static void sendQuestion(KafkaTemplate<String, QuestionEvent> template, QuestionEvent event, String topic) {
+		template.send(topic, event.getId(), event);
+	}
+
+	public static void sendAnswer(KafkaTemplate<String, AnswerEvent> template, AnswerEvent event, String topic) {
+		template.send(topic, event.getCorrelationId(), event);
+	}
+}
+
+4. Create models
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class QuestionEvent {
+  private String id = UUID.randomUUID().toString();
+
+  @NotBlank
+  private String question;
+
+  private String userId;
+  private Instant timestamp = Instant.now();
+  private Map<String, Object> metadata;
+
+}
+
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AnswerEvent {
+	private String id = UUID.randomUUID().toString();
+	private String correlationId; // QuestionEvent.id
+	private String answer;
+	private List<String> sources;
+	private Instant startedAt;
+	private Instant finishedAt;
+	private Integer promptTokens;
+	private Integer completionTokens;
+
+	public Duration latency() {
+		return (startedAt != null && finishedAt != null) ? Duration.between(startedAt, finishedAt) : Duration.ZERO;
+	}
+
+	public AnswerEvent(String correlationId, String answer, List<String> sources) {
+		this.correlationId = correlationId;
+		this.answer = answer;
+		this.sources = sources;
+	}
+
+}
+
+5. Create AI service
+
+@Service
+public class AiService {
+
+  // Spring will inject the provider-backed ChatModel bean (AzureOpenAiChatModel)
+  private final ChatModel chatModel;
+
+  private static final String SYSTEM_TEMPLATE = """
+      You are an enterprise assistant. Answer concisely.
+      If you are not confident, reply: "I don't know".
+      Use only the information provided in the user's question and metadata when relevant.
+      """;
+
+  public AiService(ChatModel chatModel) {
+    this.chatModel = chatModel;
+  }
+
+  public AnswerEvent generateAnswer(QuestionEvent q) {
+    AnswerEvent answer = new AnswerEvent(q.getId(), null, List.of());
+    answer.setStartedAt(Instant.now());
+
+
+SystemPromptTemplate spt = new SystemPromptTemplate(SYSTEM_TEMPLATE);
+    Prompt systemPrompt = spt.create(Map.of()); // <-- Prompt
+
+    // Combine the system prompt messages with the user message into one Prompt
+    Prompt fullPrompt = new Prompt(
+        Stream.concat(
+            systemPrompt.getInstructions().stream(),        // system messages (List<Message>)
+            Stream.of(new UserMessage(q.getQuestion()))     // add user message
+        ).toList()
+    );
+
+    ChatResponse resp = chatModel.call(fullPrompt);
+    String content = resp.getResult().getOutput().getText().toString();
+    
+    answer.setAnswer(content);
+    answer.setFinishedAt(Instant.now());
+    return answer;
+
+  }
+}
+
+6. Create controller
+
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+
+	@Autowired
+    KafkaTemplate<String, QuestionEvent> kafkaTemplate;
+	
+	@Value("${app.inputtopic.name}")
+	private String inputTopic;
 
 
 
+	@PostMapping("/questions")
+	public Map<String, Object> submit(@RequestBody @Valid QuestionEvent event) {
+		KafkaConfig.sendQuestion(kafkaTemplate, event, inputTopic);
+		return Map.of("status", "queued", "id", event.getId(), "topic", inputTopic);
+	}
+}
+
+7. Create consumer
+
+@Component
+public class QuestionConsumer {
+
+	private final AiService aiService;
+	private final KafkaTemplate<String, AnswerEvent> answerTemplate;
+
+	@Value("${app.outputtopic.name}")
+	private String outputTopic;
+
+	public QuestionConsumer(AiService aiService, KafkaTemplate<String, AnswerEvent> answerTemplate) {
+		this.aiService = aiService;
+		this.answerTemplate = answerTemplate;
+	}
+
+	@KafkaListener(topics = "${app.inputtopic.name}", groupId = "group2")
+	public void onMessage(@Payload QuestionEvent event) {
+		AnswerEvent answer = aiService.generateAnswer(event);
+		KafkaConfig.sendAnswer(answerTemplate, answer, outputTopic);
+	}
+}
+
+8. Start zookeeper, kafka server
+
+9. Run appl, with POST request - http://localhost:1000/api/questions
+with body json
+
+{
+  "question":"what is kafka used for?",
+  "userId":"senthil"
+}
+
+Now msg to send to topic input-topic, from their we consume and send answer to ai-responses topic
+ 
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic ai-responses --from-beginning
+
+----------------------------------------------------------------------------
+Event Streaming AI Pipeline with Kafka and Spring Boot
+
+Architecture
+
+┌─────────────┐       ┌────────────────┐       ┌──────────────────────┐
+│ Event Source│ ───▶  │ Kafka Topic:   │ ───▶  │ Spring Boot Consumer │
+│ (apps/IoT)  │       │  events.raw    │       │ - transform + enrich │
+└─────────────┘       └────────────────┘       │ - call LLM via       │
+                                              │   Spring AI           │
+                                              └────────┬──────────────┘
+                                                       │
+                                 ┌─────────────────────▼─────────────────────┐
+                                 │  LLM (Azure OpenAI/OpenAI/LLama/etc.)     │
+                                 └─────────────────────▲─────────────────────┘
+                                                       │
+                                         ┌─────────────┴─────────────┐
+                                         │ Kafka Topic: events.scored│
+                                         └────────────────────────────┘
+
+1. Create springboot project with web, kafka, lombok, azure ai
+
+2. Configure properties in application.properties file
+
+spring.application.name=SpringAIKafka1
+server.port=1001
+
+#Producer configuration
+spring.kafka.producer.bootstrap-servers=localhost:9092
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+spring.json.add.type.headers=false
+spring.kafka.producer.acks=all
+
+#Consumer configuration 
+spring.kafka.consumer.bootstrap-servers=localhost:9092
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.consumer.group-id=group2
+spring.kafka.consumer.auto-offset-reset=earliest
+spring.kafka.consumer.properties.spring.json.trusted.packages=*
+spring.kafka.consumer.enable-auto-commit=false
+spring.kafka.listener.ack-mode=manual          
+spring.kafka.listener.type=single
 
 
+
+spring.ai.azure.openai.api-key=
+spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+
+
+topics.input = events.raw
+topics.output = events.scored
+
+3. Create model to pass feedback and get feedback score 
+
+public record FeedbackEvent(String feedbackId, String customerId, String channel, String text, long ts) {}
+
+public record FeedbackScore(String feedbackId, String sentiment, double confidence, String summary, long ts) {}
+
+4. Create producer to send feedback to kafka topic
+
+@Component
+public class FeedbackProducer {
+
+	private final KafkaTemplate<String, String> template;
+
+	@Value("${topics.input}")
+	private String inputTopic;
+
+	public FeedbackProducer(KafkaTemplate<String, String> template) {
+		this.template = template;
+	}
+
+	public void send(FeedbackEvent event) {
+		// serialize as JSON (for demo); prefer Avro/Schema Registry for prod
+
+		String payloadTemplate = """
+				{
+				  "feedbackId": "%s",
+				  "customerId": "%s",
+				  "channel": "%s",
+				  "text": "%s",
+				  "ts": %d
+				}
+				""";
+
+		String payload = payloadTemplate.formatted(event.feedbackId(), event.customerId(), event.channel(),
+				event.text().replace("\"", "\\\""), event.ts());
+
+		template.send(inputTopic, event.feedbackId(), payload);
+	}
+}
+
+
+5. Create controller
+
+@RestController
+@RequestMapping("/api/ingest")
+public class IngestController {
+
+  private final FeedbackProducer producer;
+
+  public IngestController(FeedbackProducer producer) { this.producer = producer; }
+
+  @PostMapping("/feedback")
+  public String ingest(@RequestParam String text,
+                       @RequestParam(defaultValue = "web") String channel,
+                       @RequestParam(defaultValue = "cust-1") String customerId) {
+    FeedbackEvent ev = new FeedbackEvent(
+        UUID.randomUUID().toString(), customerId, channel, text, Instant.now().toEpochMilli());
+    producer.send(ev);
+    return "queued:" + ev.feedbackId();
+  }
+}
+
+6. Create AI service to generate emotion based on feedback and send to Feedbackscore object
+
+@Service
+public class FeedbackAiService {
+
+  private final ChatModel chat;
+  private final ObjectMapper mapper = new ObjectMapper();
+
+  public FeedbackAiService(ChatModel chatClient) {
+    this.chat = chatClient;
+  }
+
+  public FeedbackScore score(String feedbackId, String text) {
+    String system = """
+      You are a precise sentiment analyst.
+      Return a compact JSON with fields: sentiment(one of: positive, negative, neutral),
+      confidence (0..1), summary (<=25 words).
+      Do not include any extra commentary.
+    """;
+
+    String user = "Text: " + text;
+
+    /*String response = chat.prompt()
+        .system(system)
+        .user(user)
+        .call()
+        .content();*/
+    
+
+     var sysMsg = new SystemMessage(system);
+     var userMsg = new UserMessage(user);
+
+    Prompt p=new Prompt(List.of(sysMsg, userMsg));
+
+    
+    String response = chat.call(p).getResult().getOutput().getText().toString();
+
+    try {
+      JsonNode n = mapper.readTree(response);
+      String sentiment = n.path("sentiment").asText("neutral");
+      double confidence = n.path("confidence").asDouble(0.5);
+      String summary = n.path("summary").asText("");
+      return new FeedbackScore(feedbackId, sentiment, confidence, summary, Instant.now().toEpochMilli());
+    } catch (Exception ex) {
+      // fallback in case model returned non-JSON
+      return new FeedbackScore(feedbackId, "neutral", 0.0, response, Instant.now().toEpochMilli());
+    }
+  }
+}
+
+7. Create consumer and send score to another topic
+
+@Component
+public class FeedbackConsumer {
+
+  private final FeedbackAiService ai;
+  private final KafkaTemplate<String, String> template;
+  private final ObjectMapper mapper = new ObjectMapper();
+
+  @Value("${topics.output}")
+  private String outputTopic;
+
+  public FeedbackConsumer(FeedbackAiService ai, KafkaTemplate<String, String> template) {
+    this.ai = ai; this.template = template;
+  }
+
+  @KafkaListener(topics = "${topics.input}", groupId = "genai-consumer", concurrency = "3")
+  public void onMessage(ConsumerRecord<String, String> record, Acknowledgment ack) {
+    try {
+      JsonNode node = mapper.readTree(record.value());
+      String feedbackId = node.path("feedbackId").asText();
+      String text = node.path("text").asText();
+      FeedbackScore scored = ai.score(feedbackId, text);
+      String out = mapper.writeValueAsString(scored);
+      template.send(outputTopic, feedbackId, out);
+      ack.acknowledge(); // manual commit after successful processing
+    } catch (Exception e) {
+      // TODO: send to DLQ topic (events.raw.dlq) or retry with backoff
+      ack.acknowledge();
+    }
+  }
+}
+
+8. Start zookeeper, kafka server
+
+9. Start app, with Post request run, http://localhost:1001/api/ingest/feedback?text=Delivery was too good
+
+10. Check console consumer about feedback score
+
+C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic events.scored --from-beginning
+"{\"feedbackId\":\"2f50137d-4f6d-4ca0-b5e6-496ce815b73e\",\"sentiment\":\"negative\",\"confidence\":0.95,\"summary\":\"Delivery was late and support was poor, leading to dissatisfaction.\",\"ts\":1766060471411}"
+"{\"feedbackId\":\"9acc7899-1b74-47d7-80c9-26e2362f8221\",\"sentiment\":\"positive\",\"confidence\":0.95,\"summary\":\"The delivery exceeded expectations and was very satisfactory.\",\"ts\":1766060507535}"
 
 
 
