@@ -89,8 +89,11 @@ open AI, Azure, Amazon Bedrock, Google Gemini etc
 
 2. In application.properties we configure the api keys
 
-spring.ai.openai.api-key=
+spring.ai.openai.api-key=${OPEN_API_KEY}
 spring.ai.openai.chat.options.model=gpt-4
+
+In order to hide key for best practise, we can define in env variables 
+Right click prject - Run as - Run Configuration - Environment tab - Add the new values 
 
 3. Create ChatController
 
@@ -110,7 +113,7 @@ llms
    @Autowired
    private final ChatClient chatClient;
 
-So ChatClient is an interface which extends ModelClient with two methods, one method taking a string call something and return a string, another method  will take in something called a prompt and return a ChatResponse 
+So ChatClient is an interface used to talk with chat models works with both sync and async(reactive) mode which extends ModelClient with two methods, one method taking a string call something and return a string, another method  will take in something called a prompt and return a ChatResponse 
 
 - Now we call chatClient method and return the String
 
@@ -148,6 +151,23 @@ Prompt Engineering
 Prompts and Spring 
     So prompt management relies on a Text Template Engine, so  when we get into prompt templates there's a way to craft a string and then have some type of dynamic variables or templates that we can go ahead and input later.
      You can think as analogous to the view in Spring MVC, when we are working in a controller we may have a model where we put customer first name, last name and we send that model down to the view, in this case our prompt is really the view to the AI 
+
+Whenever we send a prompt to an LLM (Large Language Model), the model processes it and returns a response to our Spring Boot application, which then handles the user interaction. But the prompt structure matters a lot.
+Prompts can have roles:
+
+User Role: Represents user input (e.g., “Explain JavaScript promises with an example”).
+System Role: Defines rules or behavior for the LLM (e.g., “You are an expert JavaScript assistant”).
+Assistant Role: Represents the AI’s response.
+Tool/Function Role: Used for function calls or tool integrations (supported by some LLMs).
+
+Most of the time, we work with three roles:
+
+System (defines behavior)
+User (actual query)
+Assistant (response from AI)
+
+Roles help the LLM generate more accurate and context-aware responses.
+
 
 - In browser, Prompt class 
       A Prompt class has a few different constructors, it doesn't just pass a string it actually creates a new UserMessage. You will also see some of these constructors take a message and again UserMessage is a specific type of message. If we look at the implementations of this Message there are a few things like an AssistantMessage, ChatMessage, SystemMessage and UserMessage
@@ -2014,8 +2034,8 @@ Using OkHttp azure in order to avoid the problem with Netty in azure ai
 
 server.port=1111
 
-spring.ai.azure.openai.api-key=
-spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
 spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
 spring.ai.azure.openai.embedding.options.deployment-name=text-embedding-3-small
 
@@ -2349,8 +2369,8 @@ spring.kafka.listener.type=single
 
 
 
-spring.ai.azure.openai.api-key=
-spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
 spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
 
 
@@ -2512,10 +2532,3102 @@ C:\Softwares\kafka_2.12-2.6.0\config>kafka-console-consumer.bat --bootstrap-serv
 "{\"feedbackId\":\"2f50137d-4f6d-4ca0-b5e6-496ce815b73e\",\"sentiment\":\"negative\",\"confidence\":0.95,\"summary\":\"Delivery was late and support was poor, leading to dissatisfaction.\",\"ts\":1766060471411}"
 "{\"feedbackId\":\"9acc7899-1b74-47d7-80c9-26e2362f8221\",\"sentiment\":\"positive\",\"confidence\":0.95,\"summary\":\"The delivery exceeded expectations and was very satisfactory.\",\"ts\":1766060507535}"
 
+------------------------------------------------------------------------------
+https://modelcontextprotocol.io/docs/getting-started/intro
+Model Context Protocol (MCP)
+    MCP, the secret weapon that lets you communicate with AI by adding extra functionality, whether you're building Advanced applications or just want more precise responses, this is the missing piece that will transform how you interact with AI
+    MCP (Model Context Protocol) is an open-source standard for connecting AI applications to external systems. Using MCP, AI applications like Claude or ChatGPT can connect to data sources (e.g. local files, databases), tools (e.g. search engines, calculators) and workflows (e.g. specialized prompts)—enabling them to access key information and perform tasks.
+
+Why MCP?
+   So if we talk about large language models, we know that they're pre-trained
+on vast amounts of data, we know that there is a knowledge cut off date, you
+can ask an llm like Claude or chat GPT  like "what is your knowledge
+cutoff date" and it will tell you, so it only has information up to that day. It has no access to real time data or events, no access to your documents, no
+access to your local machine, most of the time that might be okay but in certain situations we might need latest info
+   So consider a scenarios where I am asking "How many states are in
+the United States", it will easily give me that answer. But if I ask for realtime data or realtime events like "what's the current weather" then LLM 
+can't answer that question. 
+   Consider another scenario we are building an application or an agent which is a AI powered application that needs access to data in another data set somewhere, so your application should connect to GitHub or some microservice in your organization, then we probably write our own integrations into each of these things right and other teams in our organization might be writing the same integrations so we are just duplicating a lot of effort there, so
+this is the problem that we're trying to using MCP
+
+What is MCP?
+  It is a framework for enhancing interactions between AI models and external data sources or tools, so we have large language model which will communicate to the mCP protocol which is like USB where USB is a protocol, if we didn't have USB then every device that we'd plug would have some type of different plug, so we came up with this USB protocol 
+  So mCP is trying to be a protocol that large language models can talk external device, this was started by anthropic. So it's a protocol that defines how a large language model will communicate with other data sets, so we need to talk to some realtime API to get me the current weather, we need to communicate with the database, we need to do a web search to get upto date information, we need to look at some personal or private documentation we need that context to be able to answer whatever query you're giving to me 
+
+How MCP Work?
+   There's a client and a server, so a client is something that is
+able to plug in these mCP servers and communicate with them, for example we have first server which is a file system secure file operations with
+configurable access controls, so now if we have a client like Claude desktop we can plug in a server like the file system and now we can give Claude desktop access to my file system. So before this if we want to ask a question like "how many files are in my downloads folder", it would have no idea but
+now if we give it access to the file system, now it could start to answer
+those questions 
+   We have other clients like Claude code which has recently been released, that allows you from the command line and examine a folder and do some things
+in there like ask questions about your repo, you can plug mCP servers into this. We have larger kind of AI workflow ides like cursor and windsurf  whuch have the ability to plug in mCP servers 
+
+mCP is allowing you to add tools to different clients so some of those clients like claude deskto, cursor,  wind surf. mCP is allowing us to add all
+these different types of servers without having to rewrite this functionality
+
+---------------------------------------------------------------------------
+Building a Streaming Chatbot with Spring Boot and Spring AI
+    If we go to ChatGPT and you type out a query, so write me a short overview of machine learning, you immediately start getting some feedback, like the LLM is processing that response, generating some text, and sending it back to you.
+
+1. Create SpringAIChatbot project with web, azure ai dependency
+
+2. Configure API key in application.properties
+
+3. Create index.html in static folder
+
+when we type some msg in textbox and click submit button, we give post request "/chat" and display the info in pre tag with id "chat-message". We have a script which resets the chatbot and input field after the response
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Chatbot</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+<div class="container mx-auto p-4 flex-1 flex flex-col">
+    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Dan's Chatbot</h1>
+
+    <div  class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg shadow">
+        <pre id="chat-messages" class="whitespace-pre-wrap break-words overflow-x-auto">
+            <!-- Chat messages will be inserted here -->
+        </pre>
+    </div>
+
+    <form hx-post="/chat" hx-target="#chat-messages" hx-swap="beforeend" class="flex items-center">
+        <input
+                type="text"
+                name="message"
+                placeholder="Type your message..."
+                class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+        >
+        <button
+                type="submit"
+                class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            Send
+        </button>
+    </form>
+</div>
+
+<script>
+    htmx.on("htmx:afterRequest", function(evt) {
+        if (evt.detail.elt.tagName === "FORM") {
+            evt.detail.elt.reset();
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+</script>
+</body>
+</html>
+
+4. Start appl, run http://localhost:2222  when we give input
+"What is spring boot", it will give answer. But when we ask "write a short overview of machine learning" then we have to wait until we get the answer 
+
+So we don't need to wait for the entire response. So if you start sending me back data, I can start reading it while you're generating the response.
+
+5. Now we add streaming support, so instead of returning a string, we are going to return a flux of strings from the reactor project, Spring WebFlux
+and spring AI brings this in for you.
+
+@GetMapping("/stream")
+    public Flux<String> chatWithStream(@RequestParam String message) {
+    	Prompt p=new Prompt(message);
+
+        return chatClient.stream(p)
+            .flatMap(response -> Flux.fromIterable(response.getResults()))
+            .map(result -> result.getOutput().getText());
+
+    }
+
+6. Create stream.html
+
+So we're adding an event listener. When we submit the form, we're going to get the input value for message. And we want to basically fetch streaming data using fetch stream with retry.
+		We're going to call that stream endpoint and pass our message in.
+And we basically loop over that and make sure that if the response is okay. We're going to await the fetch, which is the URL from the server.We do something to process that stream, decode that so it looks nice. We get that stream data back. And then we add this message to the chatbot.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .message-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message-content code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+<div class="container mx-auto p-4 flex-1 flex flex-col">
+    <h1 class="text-2xl font-bold mb-4 text-center text-gray-800">Dan's Chatbot</h1>
+
+    <div class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg shadow">
+        <div id="chat-messages" class="space-y-4"></div>
+    </div>
+
+    <form id="chat-form" class="flex items-center">
+        <input
+                type="text"
+                id="message-input"
+                name="message"
+                placeholder="Type your message..."
+                class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+        >
+        <button
+                type="submit"
+                class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+            Send
+        </button>
+    </form>
+</div>
+
+<script>
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const chatMessages = document.getElementById('chat-messages');
+
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const message = messageInput.value;
+        if (!message) return;
+
+        // Add user message to chat
+        addMessageToChat('User', message);
+
+        // Clear input
+        messageInput.value = '';
+
+        // Fetch streaming data from the server
+        try {
+            const response = await fetchStreamWithRetry('/stream?message=' + encodeURIComponent(message));
+            const reader = response.body.getReader();
+            let botMessageElement = addMessageToChat('Bot', '');
+            let contentElement = botMessageElement.querySelector('.message-content');
+            await processStream(reader, contentElement);
+        } catch (error) {
+            console.error('Error fetching chatbot response:', error);
+            addMessageToChat('System', 'An error occurred while fetching the response. Please try again.');
+        }
+    });
+
+    async function fetchStreamWithRetry(url, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response;
+            } catch (e) {
+                console.error(`Attempt ${i + 1} failed: ${e.message}`);
+                if (i === retries - 1) throw e;
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retrying
+            }
+        }
+    }
+
+    async function processStream(reader, contentElement) {
+        const decoder = new TextDecoder("utf-8");
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                contentElement.innerHTML += decoder.decode(value, { stream: true });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        } catch (error) {
+            console.error('Error processing stream:', error);
+            contentElement.innerHTML += '<br>[Error: Stream interrupted. Please try again.]';
+        }
+    }
+
+    function addMessageToChat(sender, content) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `${sender.toLowerCase()}-message ${sender === 'User' ? 'bg-blue-100' : 'bg-gray-100'} p-3 rounded-lg`;
+        messageElement.innerHTML = `
+            <div class="font-bold ${sender === 'User' ? 'text-blue-600' : 'text-green-600'}">${sender}:</div>
+            <div class="message-content">${content}</div>
+        `;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return messageElement;
+    }
+</script>
+</body>
+</html>
+
+7. Start the appl,run http://localhost:2222/stream.html and ask "Tell me some of the most popular programming languages"
+
+Now we get that streaming data back. This is a much, much better user experience
+
+------------------------------------------------------------------------------
+ChatModel API
+   ChatClient is higher level of abstraction (ie) we will directly interact with all AI model. But ChatModel is low level of abstraction (ie) it will run below chatclient
+ 1. ChatModel represent a specific chat model provider eg: OpenAI, Azure, Hugging face. So spring AI provide supports for all models and providers, so Spring AI made Chatmodel as a layer. It is an interface that represent a specific chat model provider, so to represent this model an implementation class has to be created  
+ 2. Each vendor has its own implementation like OpenAiChatModel, AzureOpenAiChatModel
+ 3. We dont use chatmodel directly in our appl, we have to directly use ChatClient, so ChatClient uses ChatModel internally, all the configurations are done automatically. When ChatClient is created, chatModel comes inside it, which object does the ChatModel is using and that implementation is automatically used 
+
+Internal working
+    When we create a project, we use a controller where our request comes,
+inside the controller we call the chatclient. So chatClient internally
+uses ChatModel API because this lower level of abstraction and ChatClient is a higher level of abstraction. Each ChatModel has its own implementation, Now through chat model we can interact with LLM and llm will respond from here.
+
+1. As soon as we create a new project, we add a starter for openai or azure ai, as soon as it is added its dependency will be added in classpath since springboot autoconfigures and all the beans will be autoconfigured 
+2. So it will loaded automatically the  AzureOpenAiAutoConfiguration class, so it binds ur properties from application.properties file and create AzureOpenAiChatModel bean
+3. If we are using ChatClient, ctrl+T open ChatClient and keep cursor on ChatClient and press ctrl - open implementation
+   We can see DefaultChatClient where the object for this class is created which is a higher level object which we will be using
+4. Now open ChatModel interface which represent a chat provider, and its implementation will be given differently based on the model. So keep cursor on ChatModel and press ctrl - open implementation. Now it will open AzureOpenAiChatModel since we are using Azure AI. So based on the dependency we provided, the chatmodel will be automatically changed and the object will be created 
+5. Now we see how object is created, as we know based on starter project it will load AzureOpenAiAutoConfiguration class
+  Give ctrl+T and open AzureOpenAiAutoConfiguration class, now it will call AzureOpenAiChatModel bean where it will be containing AzureOpenAiChatProperties class, open that class which will contain all the properties and returns chatModel
+
+
+Advisor
+    Advisors will actually work like a middleware or Interceptors. Whenever user sends a request as a prompt to ChatClient. Next it will go to advisior which will send the query to LLM. So advisior will work as an interceptor where we will be write some cross cutting concerns before sending to LLM. Finally LLM will generate the response, after that we again call advisior and then we can send message to user 
+
+user - chatclient - Advisor - LLM - Response - Advisor - User 
+
+1. Create SpringAI-Advisor project with web, azure ai dependency
+
+2. Configure ai info in application.properties
+
+3. Create prompts folder inside resources folder with prompts
+
+system-message.st
+You are a helpful coding assistant, Explain the concept in detail with example.
+
+user-message.st
+Explain the coding concepts: {concept}.
+
+4. Create controller
+
+@RestController
+@RequestMapping
+public class ChatController {
+
+	private ChatClient chatClient;
+
+	@Value("classpath:/prompts/user-message.st")
+	private Resource userMessage;
+
+	@Value("classpath:/prompts/system-message.st")
+	private Resource systemMessage;
+
+	public ChatController(ChatClient.Builder builder) {
+		this.chatClient = builder.build();
+	}
+
+	@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		String str = chatClient.prompt().system(system -> system.text(this.systemMessage))
+				.user(user -> user.text(this.userMessage).param("concept", query)).call().content();
+		return ResponseEntity.ok(str);
+	}
+
+}
+
+5. Start the appl, run http://localhost:2222/chat?q=json
+
+It will describe all information about JSON 
+
+6. Now we need to create advisor, for example consider we want to log our request prompt before sending into LLM
+
+The Spring AI Advisors API provides a flexible and powerful way to intercept, modify, and enhance AI-driven interactions in your Spring applications. By leveraging the Advisors API, developers can create more sophisticated, reusable, and maintainable AI components.
+
+Spring AI Built-in Advisors
+Spring AI framework provides several built-in advisors to enhance your AI interactions. Here’s an overview of the available advisors:
+
+Chat Memory Advisors
+These advisors manage conversation history in a chat memory store:
+
+1. MessageChatMemoryAdvisor - inject past msg as structured chat msg
+
+Retrieves memory and adds it as a collection of messages to the prompt. This approach maintains the structure of the conversation history. Note, not all AI Models support this approach.
+
+2. PromptChatMemoryAdvisor - inject chat history as text inside the prompt
+
+Retrieves memory and incorporates it into the prompt’s system text.
+
+3. VectorStoreChatMemoryAdvisor
+
+Retrieves memory from a VectorStore and adds it into the prompt’s system text. This advisor is useful for efficiently searching and retrieving relevant information from large datasets.
+
+4. QuestionAnswerAdvisor
+
+This advisor uses a vector store to provide question-answering capabilities, implementing the Naive RAG (Retrieval-Augmented Generation) pattern.
+
+5. RetrievalAugmentationAdvisor
+
+Advisor that implements common Retrieval Augmented Generation (RAG) flows using the building blocks defined in the `org.springframework.ai.rag` package and following the Modular RAG Architecture.
+
+Reasoning Advisor
+6. ReReadingAdvisor
+
+Implements a re-reading strategy for LLM reasoning, dubbed RE2, to enhance understanding in the input phase. Based on the article: [Re-Reading Improves Reasoning in LLMs](arxiv.org/pdf/2309.06275).
+
+Content Safety Advisor
+7. SafeGuardAdvisor
+A simple advisor designed to prevent the model from generating harmful or inappropriate content.
+
+- We can pass multiple advisors, the execution order of advisors in the chain is determined by the getOrder() method. 
+1. Advisors with lower order values are executed first.
+2. The advisor chain operates as a stack:
+     -The first advisor in the chain is the first to process the request.
+It is also the last to process the response.
+3. To control execution order:
+     - Set the order close to Ordered.HIGHEST_PRECEDENCE to ensure an advisor is executed first in the chain (first for request processing, last for response processing).
+     - Set the order close to Ordered.LOWEST_PRECEDENCE to ensure an advisor is executed last in the chain (last for request processing, first for response processing).
+4. Higher values are interpreted as lower priority.
+5. If multiple advisors have the same order value, their execution order is not guaranteed.
+
+
+7. Now we use SimpleLoggerAdvisor to log all the request before sending to LLM and print on the console
+
+Open SimpleLoggerAdvisor which implements CallAdvice and StreamAdvice and override adviceCall(). Inside this method we call logRequest() which just logs also chatClientRequest
+
+public ChatController(ChatClient.Builder builder) {
+		//this.chatClient = builder.build();
+		this.chatClient = builder.defaultAdvisors(new SimpleLoggerAdvisor()).build();
+	}
+
+8. Define logging level in application.properties file
+
+logging.level.org.springframework.ai.chat.client.advisor=DEBUG
+
+9. Start the appl, run http://localhost:2222/chat?q=json
+
+It will display the request like system and user message, context and response info as a log in console by using SimpleLoggerAdvisor
+
+10. Now we implement SafeGuardAdvisor which blocks the call to the model provider if the user input contains any of the sensitive words, if it has it will print default_failure_response message
+
+	public ChatController(ChatClient.Builder builder) {
+		//this.chatClient = builder.build();
+		this.chatClient = builder.defaultAdvisors(new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("games"))).build();
+	}
+
+11. Start the appl,  run http://localhost:2222/chat?q=card games
+
+It will display "I'm unable to respond to that due to sensitive content. Could we rephrase or discuss something else?”
+
+12. Next we create PromptChatMemoryAdvisor
+
+@RestController
+@RequestMapping("/chat")
+public class PromptController {
+
+	private final ChatClient chatClient;
+
+	public PromptController(ChatClient.Builder builder) {
+
+		ChatMemory chatMemory = MessageWindowChatMemory.builder()
+				.chatMemoryRepository(new InMemoryChatMemoryRepository()).maxMessages(20).build();
+
+		this.chatClient = builder.defaultAdvisors(PromptChatMemoryAdvisor.builder(chatMemory).build()).build();
+        
+	}
+
+	@PostMapping("/{conversationId}")
+	public String home(@PathVariable String conversationId, @RequestBody String message) {
+		return chatClient.prompt().advisors(advisor -> advisor.param("conversationId", conversationId)).
+				user(message).call().content();
+	}
+}
+
+- Start the appl, run with POST request http://localhost:2222/chat/conv1 and in body My name is Ram
+
+run with POST request http://localhost:2222/chat/conv1 and in body What is my name?
 
 
 
 
+Conversational History in Java based Generative AI Applications
+1. Open any LLM - copilot
+  Type: My name is Ram
+It will give the response. Next
+  Type: What is my name
+It will give the response as Ram, it will know because of memory or conversational history
+
+So web is stateless there is no remembering things that happens, so when you talk to a large language model, the large language model itself knows
+nothing about this conversational history. So when we're building our own applications, by default we don't have that conversational history but this is important because it allows me to iterate on what we are doing. We take another example 
+
+2. Open copilot 
+Type: write me a short summary on machine learning 
+
+Now I'm going to follow up this prompt because I want to iterate on this, I don't like these bullet points we really want one to two paragraphs that we can use somewhere 
+
+Type: write me 1-2 paragraphs without using bullet points keep it concise
+
+Now notice we didn't say write me 1-2 paragraphs on machine learning and
+that's because it has that conversational history, we can start to
+iterate on things. It is important that copilot is the product that sits on top of the LLM and the product is saving conversational history and allowing me to iterate on my responses. So we need to have conversational history 
+when we're doing this in our own applications 
+
+1. Create SpringAI-ConversationHistory project with web, azure ai dependency
+
+2. Configure ai info in application.properties
+
+3. Create controller
+
+@RestController
+public class ChatController {
+
+    private final ChatClient chatClient;
+
+    public ChatController(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
+    }
+
+    @GetMapping("/")
+    public String home(@RequestParam String message) {
+        return chatClient.prompt()
+                .user(message)
+                .call()
+                .content();
+    }
+}
+
+4. Start the appl, run http://localhost:2222/?message=my name is Ram
+
+Now once again we run http://localhost:2222/?message=what is my name.
+
+It will say it dont have access ur personal data this means
+that it's not remembering our previous conversation. So chatgpt product sitting on top of the LLM, so the product is remembering that conversational history
+
+5. So we are going to use advisor, there are different advisior we are using MessageChatMemoryAdvisior
+
+public ChatController(ChatClient.Builder builder) {
+
+		ChatMemory chatMemory = MessageWindowChatMemory.builder()
+				.chatMemoryRepository(new InMemoryChatMemoryRepository()).maxMessages(20).build();
+
+		this.chatClient = builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build()).build();
+
+	}
+
+6. Start the appl, , run http://localhost:2222/?message=my name is Ram
+
+Now once again we run http://localhost:2222/?message=what is my name.
+
+Now it will display "Your name is Ram"
+
+Run http://localhost:2222/?message=write short summary of Java programming language
+
+Run http://localhost:2222/?message=can u make summary more detail
+
+we didn't say specifically do this about the Java programming language that is
+now in the conversational history so it knows how to iterate on
+
+
+Custom Advisor for Count Number of Token consumes 
+          We learned about Advisors in Spring AI, and specifically, we studied two built-in advisors. Built-in means these advisors are provided by the Spring framework itself. There are many such built-in advisors available, but we can also create our own custom advisor if needed.
+
+Consider when a user sends a request through our app to an LLM (Large Language Model), we know that LLMs charge based on tokens consumed for input and output.
+Now, what do we want? We want to show the user how many tokens were consumed.
+So, we’ll create an advisor that calculates and displays the total number of tokens consumed. For now, we’ll print this information on the console, but in a real application, you can show it on the frontend—either total tokens, input tokens, or output tokens.
+
+Our application is already working fine. For example, if I type “Java 24” and send it, the request goes to our Spring Boot app, which forwards it to the LLM model. The model returns a response, and we display it.
+The response is partial because we set a max token limit.
+Now, in our Chat Client, we have two advisors registered:
+
+SimpleLoggerAdvisor – logs request and response details.
+SafeGuardAdvisor – blocks sensitive words (e.g., if you type “games,” it will stop the response).
+
+What are Advisors doing internally?
+When we looked at SimpleLoggerAdvisor, we saw it implements a method called adviceCall(ChatClientRequest, CallAdvisorChain).
+
+-ChatClientRequest holds the request data going to the model.
+-CallAdvisorChain forwards the request to the next advisor or the LLM.
+
+So, when we call callAdvisorChain.next(request), the request moves to the next advisor or the LLM if no advisors remain.
+After the response comes back, we can log or process it.
+
+Creating a Custom Advisor
+To create a custom advisor:
+
+-Make a class (e.g., TokenPrintAdvisor) inside the advisors package.
+-Implement CallAdvisor and optionally StreamAdvisor (for streaming responses).
+-Implement these methods:
+
+adviceCall(...)
+adviceStream(...) (optional for streaming)
+getName() – return advisor name.
+getOrder() – execution order (lower number runs first).
+
+In adviceCall, we’ll:
+
+Log that our advisor is called.
+Forward the request using callAdvisorChain.next(request).
+After getting the response, log token details.
+
+public class TokenPrintAdvisor implements CallAdvisor, StreamAdvisor {
+
+
+    private Logger logger = LoggerFactory.getLogger(TokenPrintAdvisor.class);
+
+
+    @Override
+    public ChatClientResponse adviseCall(ChatClientRequest chatClientRequest, CallAdvisorChain callAdvisorChain) {
+
+        this.logger.info("My Token Print Advisor is called:");
+        this.logger.info("Request: " + chatClientRequest.prompt().getContents());  //prints content from prompts
+
+        //forward the request 
+        ChatClientResponse chatClientResponse = callAdvisorChain.nextCall(chatClientRequest);
+
+        this.logger.info("Token advisor: Response received from the model:");
+
+        this.logger.info("Response: " + chatClientResponse
+                .chatResponse()
+                .getResult()
+                .getOutput()
+                .getText());
+
+        this.logger.info("Prompt Token : " + chatClientResponse.chatResponse().getMetadata().getUsage().getPromptTokens());  //getPromptTokens() → tokens in input.
+        this.logger.info("Completion Token : " + chatClientResponse.chatResponse().getMetadata().getUsage().getCompletionTokens());  //getCompletionTokens() → tokens in output.
+        this.logger.info("Total Token consumed: " + chatClientResponse
+                .chatResponse()
+                .getMetadata()
+                .getUsage()
+                .getTotalTokens());  //getTotalTokens() → sum of both.
+
+
+        return chatClientResponse;
+
+//Prompt Tokens = tokens in input (system + user messages + history + tools).
+//Completion Tokens = tokens in output (model’s generated response).
+//Total Tokens = Prompt Tokens + Completion Tokens.
+    }
+
+    @Override
+    public Flux<ChatClientResponse> adviseStream(ChatClientRequest chatClientRequest, StreamAdvisorChain streamAdvisorChain) {
+
+
+        Flux<ChatClientResponse> chatClientResponseFlux = streamAdvisorChain.nextStream(chatClientRequest);
+
+
+        return chatClientResponseFlux;
+
+
+    }
+
+    @Override
+    public String getName() {
+        return this.getClass().getName();
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
+    }
+}
+
+- Call TokenPrintAdvisior in ChatClient
+
+public ChatController(ChatClient.Builder builder) {
+		//this.chatClient = builder.build();
+		this.chatClient = builder.defaultAdvisors(new TokenPrintAdvisior(), new SafeGuardAdvisor(List.of("games")))
+				.defaultSystem("You are helpful coding assistant. You are good in coding")
+				.defaultOptions(AzureOpenAiChatOptions.builder()
+                 .temperature(0.3)  //Lower temperatures (e.g., 0.0–0.3) push the model to pick the most probable tokens, yielding focused, consistent answers—ideal for factual Q&A, code generation, text-to-SQL, or compliance-sensitive outputs. Higher temperatures (e.g., 0.8–1.0) flatten the probability distribution, encouraging diverse word choices—useful for brainstorming, copywriting, or story ideation
+                 .maxTokens(200)  //maximum token output will contains
+                 .build())
+				.build();
+	}
+
+- Start the appl, and run http://localhost:2222/chat?q=java new features 
+
+It will print all token information
+
+
+Now, every request going through the Chat Client will trigger our TokenPrintAdvisor.
+Other advisors will run based on their order.
+If multiple advisors have the same order, execution order is not guaranteed.
+
+
+Streaming Responses in Spring AI
+     So far, we’ve been using a synchronous, blocking approach, but now we’ll learn how to make it asynchronous, meaning non-blocking, and how to stream chunks of data continuously instead of sending everything at once.
+
+Why do we need streaming?
+   Until now, here’s what we were doing:
+- A user sends a request to our Spring Boot application (which uses Spring AI).
+- We process the request, add any additional prompts if needed, and then send the prompt to the LLM (Large Language Model).
+- The model could be OpenAI GPT, Anthropic, or any other provider.
+
+Now, imagine the model takes 5 minutes to generate the response. During this time:
+- Our application is blocked, waiting for the model’s response.
+- The user is also waiting, staring at the UI with no feedback.
+
+This is called blocking behavior, and it’s a bad user experience because the user sees nothing until the entire response is ready. Instead we could send partial data as soon as it’s generated? That’s where streaming comes in.
+
+What is streaming?
+With streaming:
+- The user sends a request as usual.
+- We build the prompt and send it to the model.
+- Instead of waiting for the full response, the model starts sending small chunks of data as they are generated.
+- For example, if the model needs to generate 1000 words, it won’t wait to finish all 1000 words. It will send the first chunk, then the next, and so on.
+- Our application can process these chunks and forward them to the user immediately.
+
+This way, the user sees the response progressively, without waiting for the entire output. This is streaming.
+
+Practical Example
+Previously, when we tested with Postman or a browser:
+
+If we hit the /chat endpoint, the client was blocked until the full response came back. Even though we had a token limit (e.g., 200 tokens), if we removed that limit, the delay would be noticeable.
+
+With streaming, we’ll create a new endpoint, say /stream-chat, which will return chunks of data using Flux (from Project Reactor). Flux allows us to stream multiple responses asynchronously.
+
+1. In ChatController we create a separate endpoint with Flux 
+
+ @GetMapping("/stream-chat")
+	public ResponseEntity<Flux<String>> streamChat(@RequestParam("q") String query) {
+		Flux<String> str = this.chatClient.prompt().system(system -> system.text(this.systemMessage))
+				.user(user -> user.text(this.userMessage).param("concept", query)).stream().content();
+		return ResponseEntity.ok(str);
+	}
+
+If you need more details (like metadata), you can use Flux<ChatResponse> or Flux<ChatClientResponse> instead of Flux<String>.
+
+2. Start the appl, run http://localhost:2222/stream-chat?q=java new features
+
+It will be showing error, since it is unblocking, since we are first calling TokenStringAdvisor which is blocking so we write logic for unblocking inside adviseStream()
+
+3. Inside adviseStream() of TokenPrintAdvisor
+
+@Override
+    public Flux<ChatClientResponse> adviseStream(ChatClientRequest chatClientRequest, StreamAdvisorChain streamAdvisorChain) {
+
+        Flux<ChatClientResponse> chatClientResponseFlux = streamAdvisorChain.nextStream(chatClientRequest);
+        return chatClientResponseFlux;
+    }
+
+4. Start the appl, run in browser http://localhost:2222/stream-chat?q=java new features
+
+So here the browser dosent wait, previously browser will wait until u get complete response
+
+Why is this better?
+- Non-blocking: The user doesn’t wait for the entire response.
+- Better UX: The user sees partial results immediately.
+- Scalable: Works well for large responses or slow models.
+
+This is extremely useful for chatbots, assistants, or any app where response time matters. Most of the time, streaming is the preferred approach because users hate waiting.
+
+
+Teaching LLMs to Remember with Spring AI (MessageChatMemoryAdvisor, PromptChatMemoryAdvisor)
+
+Memory in AI - Why do we need memory?
+First, we need to understand that LLMs (Large Language Models) are stateless.
+What does stateless mean? It means LLMs don’t remember anything from previous interactions. Whatever you said earlier—your name, your company details, or any other information—is not remembered. Every interaction is treated as a fresh one.
+
+For example:
+You send the first request: “My name is John.”
+The LLM knows your name during this request because you included it. 
+
+But if you send a second request: “What is my name?”
+The LLM will say: “I don’t know your name.” because you didn’t include it in this request.
+
+So, the problem is clear: LLMs have no memory of previous conversations.
+
+Why does ChatGPT seem to remember?
+You might wonder: “But ChatGPT remembers previous messages!”
+That’s because ChatGPT is an application built on top of LLMs. It acts as a wrapper around the model. When you interact with ChatGPT:
+
+You’re not directly talking to the LLM.
+The ChatGPT app manages memory, stores your conversation history, and sends the relevant context back to the LLM with each request.
+
+So, the memory feature is implemented at the application level, not by the LLM itself.
+
+How does Spring AI solve this?
+Spring AI provides APIs to manage memory and pass conversation context to the model. There are two key interfaces:
+
+1. ChatMemory – Represents what to store and how to manage memory (conversation history, strategies, etc.).
+2. ChatMemoryRepository – Responsible for storing and retrieving actual data (messages).
+
+What is ChatMemory?
+ChatMemory defines what to store (e.g., messages, conversation history) and strategies like:
+- Keep the last n messages.
+- Keep messages within a time period.
+- Keep messages within a token limit.
+
+It does not store data itself. It uses ChatMemoryRepository for actual storage.
+
+
+What is ChatMemoryRepository?
+This acts as the storage engine used to store data. It saves and retrieves messages from memory or a database. It provides methods like:
+- findConversationIds()
+- findByConversationId()
+- saveAll()
+- deleteByConversationId()
+
+ctrl+shift+T - Open ChatMemory which contains add() to add messages
+Ctrl+Click on ChatMemory - Open Implementation - Open MessageWindowChatMemory  which contains reference of ChatMemoryRepository to store messages
+
+ctrl+shift+T - Open ChatMemoryRepository 
+Ctrl+Click on ChatMemoryRepository - Open Implementation - Open InMemoryChatMemoryRepository which stores all msg inside memory 
+
+Implementations
+Both ChatMemory and ChatMemoryRepository are interfaces. Spring AI provides default implementations:
+
+1. MessageWindowChatMemory – Default implementation of ChatMemory. It keeps the last 20 messages by default.
+2. InMemoryChatMemoryRepository – Stores messages in memory using a ConcurrentHashMap where we key as conversationid and value as List of messages. Data is lost when the app restarts.
+3. JdbcChatMemoryRepository – Stores messages in a database using JDBC.
+4. You can also create custom implementations by implementing these interfaces.
+
+Why limit memory size?
+Because all stored messages are included in the prompt sent to the LLM. More messages = more tokens = higher cost and slower response. So, the default limit is 20 messages.
+
+Advisors for Memory
+To use memory effectively, Spring AI provides Advisors that automatically inject conversation history into prompts:
+
+MessageChatMemoryAdvisor – Adds messages with roles in prompt(system, user, assistant).
+PromptChatMemoryAdvisor – Adds messages as plain text (useful if the LLM doesn’t support roles).
+VectorStoreChatMemoryAdvisor – For vector-based memory using vector databases.
+
+These advisors intercept requests and add memory context before sending them to the LLM.
+
+1. Run the appl, http://localhost:2222/chat?q=my name is Ram
+
+2. Once again give http://localhost:2222/chat?q=what is my name. It will say "I dont know your name" because it does not have memory to remember previous history 
+
+Because LLMs are stateless. They don’t retain previous context unless we explicitly send it again. So, we need Chat Memory.
+
+Implementing Chat Memory
+Spring AI makes this easy using Advisors. We’ll use:
+
+1. MessageChatMemoryAdvisor – Adds memory context automatically to prompts.
+2. InMemoryChatMemoryRepository – Stores conversation history in memory (RAM).
+3. MessageWindowChatMemory – Default implementation of ChatMemory that keeps the last 20 messages.
+
+3. In ChatController class, we inject MessageChatMemoryAdvisor  and pass this advisor
+
+public ChatController(ChatClient.Builder builder, ChatMemory chatMemory) {
+		
+		MessageChatMemoryAdvisor messageChatMemoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory).build();
+
+		this.chatClient = builder.defaultAdvisors(messageChatMemoryAdvisor,new TokenPrintAdvisor(),new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("games")))
+				.defaultSystem("You are helpful coding assistant. You are good in coding")
+				.defaultOptions(AzureOpenAiChatOptions.builder().temperature(0.3).maxTokens(200).build())
+				.build();
+	}
+
+Since we use MessageChatMemoryAdvisor which use ChatMemory and it use implementation class MemoryWindowChatMemory to decide how many msg to store, adding message. For storing it uses InMemoryChatMemoryRepository which creates ConcurrentHashMap and store 20 messages
+
+4. Run the appl, http://localhost:2222/chat?q=my name is Ram
+
+check the console we can see the 
+request: ChatClientRequest[prompt=Prompt{messages=[SystemMessage{textContent='You are a helpful coding assistant, Explain the concept in detail with example.', messageType=SYSTEM, metadata={messageType=SYSTEM}}, UserMessage{content='Explain the coding concepts: My name is Amit.', metadata={messageType=USER}, messageType=USER}], modelOptions=org.springframework.ai.azure.openai.AzureOpenAiChatOptions@3114a918}, context={}]
+
+5. Once again give http://localhost:2222/chat?q=what is my name. Now it will remember my name and prints
+
+ request: ChatClientRequest[prompt=Prompt{messages=[UserMessage{content='Explain the coding concepts: My name is Amit.', metadata={messageType=USER}, messageType=USER}, AssistantMessage [messageType=ASSISTANT, toolCalls=[], textContent=Hello Amit! Let’s break down some fundamental coding concepts with clear explanations and examples. These concepts are essential for understanding how programming works.
+
+So whenever u send current request,old request also will be sent
+
+http://localhost:2222/chat?q=what is prime number? explain its logic
+
+http://localhost:2222/chat?q=write the program in Java
+
+It will remember previously we asked prime number and write prg on it
+
+Every time you send a request, the advisor adds:
+
+-System message (e.g., “You are a helpful coding assistant”)
+-Previous user messages
+-Previous assistant responses
+
+All of this goes to the LLM as part of the prompt. That’s why the model remembers.
+However, note that token usage increases because the entire conversation history is sent every time. For example:
+
+Prompt tokens: 254
+Completion tokens: 200
+Total: 454 tokens for a simple query like “What is my name?”
+
+This is why we’ll later optimize using vector databases for long-term memory.
+
+Currently, we’re using InMemoryChatMemoryRepository, which stores data in RAM. If the app restarts, memory is lost. Next, we’ll implement JDBCChatMemoryRepository to store memory in a database for persistence.
+
+
+Manage User Sessions - How multiple users can interact with LLM
+      Previously we are storing messages using MessageWindowChatMemory—how many messages to store in memory or in a database, and what the strategy should be.
+    When we were using Message Window Chat Memory, internally it was using InMemoryChatMemoryRepository. What was this doing? It was automatically storing messages in memory temporarily—meaning, as long as the application was running, the messages stayed. Once you stopped the application, the messages were deleted.
+
+Now, there are two problems here:
+1. Our application interacts with an LLM (Large Language Model) to get responses or use its intelligence.
+2. Users of our application are not limited to one person. There can be multiple users, and each user should have their own message history.
+
+That means sessions should be separate for each user. For example, if User 1 and User 2 are using the app, each should have their own message history maintained. Currently, we can only maintain one message history. Let’s understand the problem with an example before solving it.
+
+Suppose User 1 runs: http://localhost:2222/chat?q=My name is Harsh
+
+This message gets stored in memory using the concepts we discussed (via InMemoryChatMemoryRepository).
+
+If User 1 then runs: http://localhost:2222/chat?q=What is my name?
+
+The system correctly responds: “Your name is Harsh.”
+
+But now, if another user (User 2) uses the app and runs in browser:
+http://localhost:2222/chat?q=My name is Ankit
+
+The system responds: “Hello Ankit, nice to meet you.”
+
+Now, if User 1 again runs: http://localhost:2222/chat?q=What is my name?
+
+The system incorrectly says: “Your name is Ankit.”
+
+This happens because we are not managing sessions per user—the message history is shared.
+ 
+ctrl+shift+T - ChatMemory, MessageWindowChatMemory
+
+Currently, we are using Chat Memory to define strategies, and its implementation is MessageWindowChatMemory. By default, it stores 20 messages (maxMessages = 20). These messages are sent to the LLM to provide context for generating responses. This is important because sending too many messages increases token consumption, so we keep it limited.
+
+Internally, MessageWindowChatMemory uses ChatMemoryRepository, and we are using InMemoryChatMemoryRepository. This stores data in a ConcurrentHashMap with a key-value pair:
+
+Key = conversationId
+Value = list of messages
+
+Currently, the default conversationId is “default”, so all messages go under this single key. To fix this, we need to separate messages based on conversationId. That means, for each user, we will create a unique conversationId and store messages accordingly.
+
+How do we do this?
+We can take the conversationId from the user—like a userId—and pass it in the request header. For example, in the controller, we can use @RequestHeader to read the userId. This userId will act as the conversationId. If the same userId comes again, we’ll fetch the same session; otherwise, a new session will be created.
+
+	@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query,@RequestHeader("userId") String userId) {
+		String str = chatClient.prompt()
+				.advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,userId))			
+				.system(system -> system.text(this.systemMessage))
+				.user(user -> user.text(this.userMessage).param("concept", query)).call().content();
+		return ResponseEntity.ok(str);
+		
+	}
+
+Internally, Spring AI will use this conversationId to store messages in the ConcurrentHashMap under separate keys for each user.
+
+- Start the appl
+
+- Run http://localhost:2222/chat?q=My name is Harsh, in Headers
+
+key: userId   value: harshUser
+
+Now it will display "Hello Harsh"
+
+- Run http://localhost:2222/chat?q=can u tell me my name?, in Headers
+
+key: userId   value: harshUser
+
+Now it will display "Your name is Harsh"
+
+- In another tab, Run http://localhost:2222/chat?q=My name is ANKIT, in Headers
+
+key: userId   value: ankitUser
+
+Now it will display "Hello Ankit"
+
+- Run http://localhost:2222/chat?q=What is my name?, in Headers
+
+key: userId   value: ankitUser
+
+Now it will display "Your name is Ankit"
+
+This proves that sessions are now maintained separately for each user.
+
+Disadvantage:
+Currently, data is still stored in memory. If you restart the application, all data is lost. In the next video, we’ll solve this by storing chat history in a database instead of memory.
+
+
+Chat Conversations forever JdbcChatMemoryRepository
+    Previously we were using InMemoryChatMemoryRepository, which stores data in memory. While it maintained context, the problem is that you cannot rely on in-memory storage for large applications. For bigger applications, we need to store conversation history and messages in a database.
+
+Now we see how to use a database to store messages permanently. Here also we will now use ChatMemoryRepository. The MessageWindowChatMemory is still used for defining the strategy—like how many messages to keep. Currently, we store 20 messages, but you can change this strategy later. After 20 messages, older messages will be deleted. This is important because every message sent to the LLM must include context, and keeping fewer messages reduces token usage.
+
+Now, ChatMemoryRepository will directly interact with the database to store data. Spring AI provides a built-in implementation called JdbcChatMemoryRepository, which uses JDBC to store messages in a relational database. 
+
+Currently, we were using InMemoryChatMemoryRepository, which stores messages in memory using a ConcurrentHashMap. But now, we’ll use JdbcChatMemoryRepository, which stores messages in a relational database.
+
+
+1. Add JdbcChatMemoryRepository, mysql dependency in pom.xml
+
+<dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-chat-memory-repository-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.4.0</version>
+        </dependency>
+
+2. Configure db info in application.properties
+
+spring.datasource.url=jdbc:mysql://localhost:3306/demo
+spring.datasource.username=root
+spring.datasource.password=root
+
+#controls when to initialize schema - embedded,always, never 
+spring.ai.chat.memory.repository.jdbc.initialize-schema=ALWAYS
+
+3. Start the application
+
+we can see spring_ai_chat_memory table will be automatically created
+
+Spring AI provides auto-configuration for JdbcChatMemoryRepository, so you don’t need to manually create beans unless you want custom behavior. Once the dependency is added, Spring will automatically wire the repository and use it instead of the in-memory implementation.
+
+After running the application, Spring AI will create a table named spring_ai_chat_memory with columns like:
+
+-conversation_id
+-content
+-message_type
+-timestamp
+
+When you send messages, they will be stored permanently in this table. For example:
+
+User sends: “My name is Ankit.”
+LLM responds: “Hello Ankit, nice to meet you.”
+
+Both messages will appear in the table with their roles (user/assistant) and timestamps.
+
+You can also customize the strategy (e.g., store only 10 messages instead of 20) by creating a bean for MessageWindowChatMemory and setting maxMessages.
+
+- In controller prg, we configure
+
+@Bean
+	 public ChatMemory chatMemory(JdbcChatMemoryRepository jdbcChatMemoryRepository){
+	        return MessageWindowChatMemory.builder()
+	                .chatMemoryRepository(jdbcChatMemoryRepository)
+	                .maxMessages(10)
+	                .build();
+	 }
+
+This ensures only 10 messages are kept in context, reducing token usage.
+
+If you use a database that isn’t supported, you can implement your own repository by following the contract of ChatMemoryRepository and writing custom logic for findByConversationId, saveAll, and deleteByConversationId.
+
+Spring AI also supports automatic schema creation for supported databases. For custom databases, you can provide your own schema file and configure its location using:
+
+spring.ai.chat.memory.repository.jdbc.schema=classpath:/schema/custom-schema.sql
+
+Now, your chat history is permanent. Whenever a user interacts, the LLM will have the correct context based on the stored messages.
 
 
 
+What is RAG | Why RAG
+     Previously we discussed remembering chat conversations forever using JdbcChatMemoryRepository. In that case, we stored user messages and interactions in a database so that when we send a query to the LLM, we also send the conversation history as context. This helps the LLM understand what the user has been talking about so far.
+
+However, this approach has limitations. It works well for limited messages, but what if you need to handle large amounts of data? For example, imagine you’re building a chatbot for a company like Substring Technologies. You want the chatbot to answer questions about company policies and internal information. This means the LLM should respond based on company-specific data.
+Now, company data can be huge—documents, PDFs, even entire books. You can’t send all that data to the LLM every time a user asks a question. Why?
+
+Token limits: Every model has a context window limit. Sending too much data will exceed that limit.
+Cost: More tokens mean higher billing.
+Performance: Sending unnecessary data slows down responses.
+
+So, for small use cases, storing limited messages in a database works fine. But for data-heavy applications, we need a better approach. That’s where RAG (Retrieval-Augmented Generation) comes in.
+
+What is RAG?
+RAG stands for:
+
+R – Retrieval
+A – Augmented
+G – Generation
+
+Here’s what happens in RAG:
+
+Retrieval: Fetch the most relevant information from your database based on the user’s query.
+Augmentation: Combine that retrieved information with the user’s prompt to create context.
+Generation: Send this augmented prompt to the LLM, which then generates a response using the provided context.
+
+
+Why do we need RAG?
+Before implementing RAG, you need to prepare your data. Typically, this involves storing your data in a vector database. Why a vector database? Because it allows similarity search, which means when a user asks a question, you can quickly find the most relevant chunks of data instead of scanning everything.
+
+Here’s the flow:
+
+1. You feed your company data (or any domain-specific data) into a vector database in advance.
+2. When a user sends a query, your application retrieves similar data from the database using similarity search.
+3. This relevant data is combined with the user’s query and sent to the LLM.
+4. The LLM uses this context to generate an accurate response.
+5. Your application returns the response to the user.
+
+This way, the LLM doesn’t make up answers (reducing hallucinations) and provides accurate, fact-based responses from your private data.
+
+Why is RAG important?
+
+1. Limited memory: LLMs have a fixed context window and can’t handle huge knowledge bases in one go.
+2. Private data: LLMs are trained on public data, not your company’s private data. RAG lets you inject private, up-to-date information.
+3. Cost efficiency: Only relevant data is sent, reducing token usage.
+4. Accuracy: RAG reduces hallucinations by providing factual context.
+5. Dynamic updates: You can keep your database updated with the latest information without retraining the LLM.
+
+In short, RAG is one of the most powerful techniques companies use to make LLMs work with their own data. It enables you to build intelligent chatbots, support systems, and knowledge assistants that provide accurate answers based on your data.
+
+
+Vector Databases | Embeddings in AI
+      In AI/ML, a vector is simply an array of numbers, often represented as a matrix. These can be one-dimensional, two-dimensional, or even n-dimensional arrays (ND arrays).
+      In this context, a vector represents some kind of information—maybe text, an image, audio, or video—converted into a mathematical form. For example, the word “apple” can be represented as a vector like [0.12, 0.98, 0.45, ...]. Similarly, an image of a dog can be converted into a vector representation. These numeric arrays are called embeddings.
+      Embeddings are extremely important in AI because they allow us to represent complex data in a way that machines can process mathematically.
+
+Vector Databases
+    Databases that store these embeddings are called vector databases. Unlike traditional databases (MySQL, PostgreSQL), which store structured data and allow property-based searches, vector databases are optimized for storing embeddings and performing similarity searches.
+    Similarity search means that if you provide a query embedding, the database can find embeddings that are most similar to it. For example, if you search for “king,” the database will return vectors related to royalty, monarchy, etc. This is achieved using mathematical techniques like cosine similarity or Euclidean distance.
+    Behind the scenes, heavy mathematical operations are performed to calculate similarity scores, but as developers, we just see the results.
+
+Why is this important?
+     When you store data as embeddings in a vector database, you can perform semantic searches—searches based on meaning rather than exact keywords. For example, if a user asks:
+       “What are the top five policies of your company?”
+
+     You can retrieve relevant information from your vector database even if the wording doesn’t match exactly. This is much faster and more efficient than traditional keyword-based searches, especially when dealing with large datasets.
+
+Imagine a 3D space with X, Y, and Z axes. Objects that are similar are placed close together, while dissimilar objects are farther apart. In reality, embeddings exist in n-dimensional space, but for simplicity, think of it as 3D. When you search for something, you find the closest points (vectors) in this space based on similarity scores.
+
+For example, if you want the top 5 most similar items, you pick the ones with the highest similarity scores.
+
+How does this fit into RAG?
+Let’s revisit the RAG flow:
+
+1. The user sends a query to your application.
+2. Instead of sending the query directly to the LLM, you first convert the query into an embedding (a vector).
+3. You search for similar embeddings in your vector database.
+4. Retrieve the top N relevant pieces of information (knowledge).
+5. Combine this knowledge with the user’s query and send it to the LLM.
+6. The LLM uses this context to generate an accurate response.
+7. Return the response to the user.
+
+This is how RAG works. The key is converting both your stored data and incoming queries into embeddings, then using similarity search to find relevant context.
+
+Setup vector database
+    Now we’ll implement RAG, and for that, we need a vector database to store embeddings. The idea is simple: we’ll take a large document, break it into chunks, convert those chunks into vectors (embeddings), and store them in the database. Later, we’ll perform similarity searches on these vectors to retrieve relevant data.
+   Spring AI supports multiple vector databases such as Azure AI Search, Chroma, MariaDB Vector Store, Neo4j, Oracle, PGVector, Pinecone, Qdrant, Redis, and more.
+
+1. Create SpringAIRag project with web, azure ai, pgvector, lombok, vector store advisior(which provides advisor related to rag like QuestionAnswerAdvisor, VectorStoreChatMemoryAdvisor) dependency
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-advisors-vector-store</artifactId>
+		</dependency>
+
+
+2. Configure db info in application.properties
+
+spring.ai.vectorstore.pgvector.initialize-schema=true
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/test
+spring.datasource.username=postgres
+spring.datasource.password=root
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+server.port=1111
+
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+spring.ai.azure.openai.embedding.options.deployment-name=text-embedding-3-small
+
+logging.level.org.springframework.ai.chat.client.advisor=DEBUG
+
+
+3. Create helper class which contains comma separated document
+
+public class Helper {
+
+
+    public static List<String> getData(){
+        return List.of("Java is a platform-independent, object-oriented programming language.",
+                "JVM converts Java bytecode into machine code at runtime.",
+                "JDK includes the compiler (javac) and JVM tools.",
+                "Java supports garbage collection to manage memory automatically.",
+                "A class is a blueprint, while an object is an instance of that class.",
+                "public static void main(String[] args) is the entry point of a Java program.",
+                "Java supports multi-threading using the Thread class or Runnable interface.",
+                "synchronized keyword ensures thread safety.",
+                "Spring Boot simplifies Java backend development with auto-configuration.",
+                "Hibernate ORM maps Java objects to database tables.",
+                "JPA is a specification; Hibernate is an implementation.",
+                "Java 8 introduced Lambda expressions and Streams API.",
+                "The Optional class avoids null pointer exceptions.",
+                "In Spring, @Autowired injects dependencies automatically.",
+                "Spring Security handles authentication and authorization.",
+                "Spring Data JPA provides repository interfaces for database queries.",
+                "Microservices in Spring Boot often use Eureka for service discovery.",
+                "Spring Cloud Config provides centralized configuration.",
+                "Spring Boot applications typically run on an embedded Tomcat server.",
+                "REST APIs in Java use @RestController and @RequestMapping.");
+    }
+
+}
+
+4. Create Service class
+
+@Service
+public class ChatService {
+
+	@Autowired
+	private VectorStore vectorStore;
+
+	public void saveData(List<String> list) {
+		List<Document> documentList = list.stream().map(Document::new).toList();
+		this.vectorStore.add(documentList);
+	}
+}
+
+5. Create test db in postgres db
+
+- START THE APPL WE CAN SEE TABLE WILL BE AUTOMATICALLY CREATED INSIDE DB with id (UUID), content (text), metadata (JSON), embedding (vector) columns
+
+6. To test the appl, we create simple test case
+
+@SpringBootTest
+class FirstProjectApplicationTests {
+
+
+    @Autowired
+    private  ChatService chatService;
+    @Test
+    void saveDataToVectorDatabase(){
+        System.out.println("saving data to database");
+        this.chatService.saveData(Helper.getData());
+        System.out.println("data is saved successfully");
+    }
+
+}
+
+7. Run test case we can see data is inserted in table 
+
+Similarly Search and Passing data to LLM manually
+     For now, we converted the list of strings into a list of Document objects (from org.springframework.ai.document) and added them to the vector store using vectorStore.add().
+
+
+1. Change system message inside prompts folder
+
+You are a coding assistant. Explain concepts clearly with examples.
+Answer only from the DOCUMENTS section. If something is not in DOCUMENTS, reply with “This query in not in my database.”
+
+DOCUMENTS:
+{documents}
+
+2. Change user-message file 
+
+User query:
+{query}
+
+3. Create controller prg
+
+@RestController
+@Slf4j
+public class ChatController {
+
+	
+	private ChatClient chatClient;
+
+	@Value("classpath:/prompts/user-message.st")
+	private Resource userMessage;
+
+	@Value("classpath:/prompts/system-message.st")
+	private Resource systemMessage;
+	
+	private VectorStore vectorStore;
+
+	public ChatController(ChatClient.Builder builder, ChatMemory chatMemory, VectorStore vectorStore) {
+		//this.chatClient = builder.build();
+		/*this.chatClient = builder.defaultAdvisors(new TokenPrintAdvisor(), new SafeGuardAdvisor(List.of("games")))
+				.defaultSystem("You are helpful coding assistant. You are good in coding")
+				.defaultOptions(AzureOpenAiChatOptions.builder().temperature(0.3).maxTokens(200).build())
+				.build();*/
+		
+		MessageChatMemoryAdvisor messageChatMemoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory).build();
+		this.chatClient = builder.defaultAdvisors(messageChatMemoryAdvisor, new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("games")))
+				.defaultSystem("You are helpful coding assistant. You are good in coding")
+				.defaultOptions(AzureOpenAiChatOptions.builder().temperature(0.3).maxTokens(200).build())
+				.build();
+		this.vectorStore=vectorStore;
+	}
+
+	@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		//load data from vector database
+		SearchRequest searchRequest = SearchRequest.builder()
+				                      .topK(3)  //how many top results to return (e.g., 3 or 5). Avoid large numbers because more context means higher token usage and cost.
+				                      .similarityThreshold(0.6) //used to filter the response.  A value between 0.0 and 1.0, 1.0 means exact match only, 0.0 means very loose matching, A good range is 0.5–0.7 for balanced results.
+		                              .query(query)  //user’s query.
+		                              .build();
+		
+		 List<Document> documents = vectorStore.similaritySearch(searchRequest);
+		 List<String> documentList = documents.stream().map(Document::getText).toList();  //extract the text from these documents:
+		 String contextData = String.join(", ", documentList);  // contextData will contain all relevant sentences joined by commas.
+		 log.info("Context Data: {}", contextData);
+		 
+		String str = chatClient.prompt()
+				.system(system -> system.text(this.systemMessage).param("documents", contextData))
+				.user(user -> user.text(this.userMessage).param("query", query)).call().content();
+		
+		return ResponseEntity.ok(str);
+	}
+
+}
+
+
+4. Start the appl, run http://localhost:1111/chat?q=what is Java 
+
+Now we get response from data stored in db based on similarity search
+
+Run http://localhost:1111/chat?q=what is Python
+
+It will say "This query in not in my database."
+
+Currently, we manually implemented similarity search and context injection.
+
+
+When a user sent a request to our Spring Boot application, we did NOT directly send the query to the LLM. Because when a user sends only a query, the LLM does not have additional context.
+
+So what did we do?
+1. We used a Vector Database
+2. We stored context inside it (company data, personal data, PDF data—anything)
+3. Then, whenever a query arrived, we first performed a similarity search on the vector store
+4. We took the top 3–4 most relevant results
+5. We combined: Retrieved context and User query
+6. And then sent this combined prompt to the LLM
+7. We also wrote a strict system prompt telling LLM to answer ONLY using the provided context.
+If no answer matches → tell the user “This query is not in my database”.
+
+Previously, all similarity search and prompt-building was done manually.
+We wrote code ourselves for:
+1. Similarity search
+2. Building search requests
+3. Writing a system prompt
+4. Injecting context and building the final prompt
+
+But now, Spring AI provides Advisors that handle this entire process automatically. There are 2 main advisors:
+1. QuestionAnswerAdvisor
+2. RetrievalAugmentationAdvisor
+
+
+What QuestionAnswerAdvisor does ?
+It automatically:
+- Runs similarity search on the vector database
+- Retrieves relevant documents
+- Builds the prompt
+- Injects context
+- Adds instructions
+- Sends final prompt to LLM
+
+Meaning → you don’t need to write any of this manually anymore.
+
+Spring AI documentation clearly says:
+When a user sends a query, the QuestionAnswerAdvisor will query the vector database, fetch relevant documents, append them to the user query, and prepare the final prompt for the model.
+
+1. In your ChatController constructor, comment your manual system prompt.
+
+//.defaultSystem("You are helpful coding assistant. You are good in coding")
+
+and also comment @Value for system message
+
+//@Value("classpath:/prompts/system-message.st")
+	//private Resource systemMessage;
+
+2. We add QuestionAnswerAdvisor inside chat()
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		String str = chatClient.prompt()
+				.advisors(QuestionAnswerAdvisor.builder(vectorStore)
+                              .searchRequest(SearchRequest.builder()
+                                      .topK(3)
+                                      .similarityThreshold(0.5)
+                                      .build())
+                              .build())
+				.user(user -> user.text(this.userMessage).param("query", query)).call().content();
+		
+		return ResponseEntity.ok(str);
+	}
+
+So now the advisor will: Pick only top 3 results, Use threshold = 0.5 and
+Build prompt automatically
+
+3. Start the appl, run http://localhost:1111/chat?q=how to avoid null pointer  exception
+
+It will display the output
+
+
+Custom Prompt template
+   The QuestionAnswerAdvisor uses a default template to augment the user question with the retrieved documents. You can customize this behavior by providing your own PromptTemplate object via the .promptTemplate() builder method. The custom PromptTemplate can use any TemplateRenderer implementation (by default, it uses StPromptTemplate based on the StringTemplate engine).
+
+
+//custom prompt template
+	@GetMapping("/chat1")
+	public ResponseEntity<String> chat1(@RequestParam(value = "q", required = true) String query) {
+		
+
+		// 1) Build a StTemplateRenderer with custom delimiters and strict validation
+		        StTemplateRenderer stRenderer = StTemplateRenderer.builder()
+		                .startDelimiterToken('<')            // default is '{'
+		                .endDelimiterToken('>')              // default is '}'
+		                .validationMode(ValidationMode.THROW) // THROW, WARN, or IGNORE
+		                .validateStFunctions()               // allow ST built-ins during validation
+		                .build();
+
+		        // 2) Define your template (advisor will inject <context>)
+		        String templateText = """
+		            You are a helpful assistant. Use ONLY the provided context to answer
+
+		            [INSTRUCTIONS]
+		            - If the answer is not found in the context, reply exactly: "No grounded answer available."
+		            - Be concise; use bullets when appropriate.
+		            - Do not use prior knowledge beyond context.
+
+		            [QUESTION]
+		            <query>
+		            """;
+
+		        // 3) Create a PromptTemplate that uses StTemplateRenderer
+		        PromptTemplate promptTemplate = PromptTemplate.builder()
+		                .template(templateText)
+		                .renderer(stRenderer)
+		                .build();
+
+		        // 4) Build QuestionAnswerAdvisor with search tuning and your template
+		        var qaAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
+		                .searchRequest(SearchRequest.builder()
+		                    .topK(4)
+		                    .similarityThreshold(0.60d)
+		                    .build())
+		                .promptTemplate(promptTemplate)
+		          .build(); // advisor will inject <context> from vector search
+		   
+
+		
+		String str = chatClient.prompt()
+				.advisors(qaAdvisor)
+				.user(user -> user.text(this.userMessage).param("query", query)).call().content();
+		
+		return ResponseEntity.ok(str);
+	}
+
+
+3. Start the appl, run http://localhost:1111/chat?q=how to avoid null pointer  exception
+
+It will display the output
+
+
+Advance RAG Flow
+    Until now, we implemented only a simple RAG flow. Previously we used an advisor called QuestionAnswerAdvisor and we can easily implement a simple RAG pipeline using it.
+
+Simple RAG Flow 
+     Whenever a user sends a query to our Spring Boot application (which is enabled with Spring AI), we do NOT send the query directly to the LLM.
+Instead:
+
+1. First, we fetch context from our database.
+2. This context is stored previously inside a vector database.
+3. We perform a similarity search on this vector database.
+4. The top relevant documents are retrieved.
+5. We merge this context with the user’s query.
+6. Only then do we send the enriched prompt to the LLM.
+7. The LLM processes it and returns a response.
+8. We return that response back to the user.
+
+This is the simple RAG pipeline. We implemented in 2 ways:
+✔ Manually
+✔ Using QuestionAnswerAdvisor
+
+
+RetrievalAugmentationAdvisor
+    This advisor is designed for full modular RAG architecture, meaning it supports the complete multi-phase RAG flow out of the box. This advisor helps implement the typical modular architecture of RAG. This modular architecture has multiple phases:
+
+- Pre-Retrieval
+- Retrieval
+- Post-Retrieval
+- Generation
+
+Each of these phases contains separate components, and using those components, you can build very advanced RAG pipelines. This advisor allows you to plug into any phase and implement the exact behavior you want.
+
+1. To work with RetrievalAugmentationAdvisor we need spring-ai-rag(to use RAG)  dependency
+
+ <dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-rag</artifactId>
+		</dependency>
+
+2. Spring AI provides a built-in “Naive RAG” flow inside this advisor 
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		//Using RetrievalAugmentationAdvisor
+		 var advisor = RetrievalAugmentationAdvisor.builder()
+	                .documentRetriever(VectorStoreDocumentRetriever.builder()  //apply similaritysearch and extract document from vectorstore
+	                        .vectorStore(this.vectorStore)
+	                        .topK(3)
+	                        .similarityThreshold(0.5)
+	                        .build())
+	   	                .build();
+		 
+		 String str = chatClient.prompt()
+					 .advisors(advisor)
+					.user(user -> user.text(this.userMessage).param("query", query)).call().content();
+		
+		return ResponseEntity.ok(str);
+	}
+
+3. Start the appl, run http://localhost:1111/chat?q=how java support multithreading?
+
+It will display "Java supports multi-threading using the Thread class or Runnable interface." 
+
+Advanced RAG (Modular Architecture)
+    Everything we’ve done so far is still “simple RAG.” But the real power of Spring AI is in advanced modular RAG, which has multiple phases.
+
+1. Pre-Retrieval Phase
+This phase happens before fetching any document from the vector store.
+Here, we process the user query.
+
+Why?
+Because user queries can be messy:
+- Too long (500–1000 words)
+- Missing keywords
+- Contain irrelevant details
+- In wrong language
+
+Examples of Pre-Retrieval modules:
+✔ Query Transformer
+Modifies the user query before retrieval.
+
+Examples:
+a) RewriteQueryTransformer
+Rewrites/optimizes the query.
+User query:
+“I'm studying ML. What is LLM?”
+Rewritten:
+“Definition of LLM (Large Language Model)”
+
+b) TranslationQueryTransformer
+Translates queries from one language to another.
+
+User writes in Hindi:
+“जावा क्या है?”
+Transformer translates into English before sending to vector DB:
+“What is Java?”
+
+c) MultiQueryExpander
+Generates multiple versions of the same query for more robust retrieval.
+
+One query becomes multiple variations:
+
+“Java concurrency”
+“Java multithreading basics”
+“Thread class Java explanation”
+
+Better queries = better retrieval.
+
+
+
+2. Retrieval Phase
+    Once the query is transformed, retrieval happens.
+
+Components in this phase:
+✔ Document Retrievers
+      Like VectorStoreDocumentRetriever, which performs similarity search.
+
+✔ Document Joiners
+      Used when you fetch documents from multiple sources:
+- Vector DB
+- API
+- Web search
+- SQL DB
+
+Joiners merge results, remove duplicates, and produce one clean document list using ConcatenationDocumentJoiner
+
+3. Post-Retrieval Phase
+After retrieval, we process the fetched documents using DocumentPostProcessor. Post-processing tasks include:
+
+- Cleaning
+- Reordering
+- Removing duplicates
+- Removing irrelevant chunks
+- Compressing long documents
+- Reducing noise
+
+After post-processing, the data is now “clean” and ready to be sent to the LLM.
+
+4. Generation Phase
+In this phase:
+✔ The query and context are merged
+✔ Query augmenters enrich the final prompt
+✔ Example: ContextualQueryAugmenter
+
+It combines:
+final_query = user_question + retrieved_context
+
+This final enriched query is what is sent to the LLM. LLM generates the final answer. This completes the advanced RAG pipeline.
+
+
+Simple RAG = Query → Retrieval → Send to LLM
+Advanced Modular RAG = Pre‑Retrieval → Retrieval → Post‑Retrieval → Generation
+
+Spring AI gives you interfaces for every phase:
+- QueryTransformer
+- DocumentRetriever
+- DocumentPostProcessor
+- QueryAugmenter
+
+Using these, you can build extremely powerful AI applications.
+
+
+Implementation of Advanced RAG Flow
+1. Create SpringAI-AdvanceRAG with web, lombok,azure ai, PGVector, spring-ai-rag dependency
+
+2. copy code from previous project like Helper.java 
+
+@RestController
+@Slf4j
+public class ChatController {
+
+	
+	private ChatClient chatClient;
+
+	@Value("classpath:/prompts/user-message.st")
+	private Resource userMessage;
+
+	
+	private VectorStore vectorStore;
+
+	public ChatController(ChatClient.Builder builder, ChatMemory chatMemory, VectorStore vectorStore) {
+		
+		MessageChatMemoryAdvisor messageChatMemoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory).build();
+		this.chatClient = builder.defaultAdvisors(messageChatMemoryAdvisor, new SimpleLoggerAdvisor(), new SafeGuardAdvisor(List.of("games")))
+		.defaultOptions(AzureOpenAiChatOptions.builder().temperature(0.3).maxTokens(200).build())
+				.build();
+		this.vectorStore=vectorStore;
+	}
+
+	@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+       String str = chatClient.prompt().user(query).call().content();
+	
+	    return ResponseEntity.ok(str);
+	}
+	
+
+
+}
+
+
+@Service
+public class ChatService {
+
+	@Autowired
+	private VectorStore vectorStore;
+
+	public void saveData(List<String> list) {
+		List<Document> documentList = list.stream().map(Document::new).toList();
+		this.vectorStore.add(documentList);
+	}
+}
+
+3. Start the appl, run http://localhost:1111/chat?q=what is java
+
+It will display response from LLM
+
+Until now, the query was directly sent to the LLM without:
+- Any vector database retrieval
+- Any pre-processing
+- Any advanced RAG modules
+
+But now, we want to:
+- Transform the user query
+- Expand the query
+- Translate it if needed
+- Perform similarity search
+- Post-process documents
+- Augment the final query
+- Then call the LLM
+
+To do this, we will use the most important advisor: RetrievalAugmentationAdvisor
+      This advisor implements the Advanced Modular RAG Architecture.
+
+ctrl+shift+T - RetrievalAugmentationAdvisor
+
+When you open the class, you’ll notice many components inside it:
+
+Query Transformers
+Query Expanders
+Document Retrievers
+Document Joiners
+Document Post‑Processors
+Query Augmenters
+
+4. First we define RetrievalAugmentationAdvisor in controller prg
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		var advisor = RetrievalAugmentationAdvisor.builder()
+				
+				      .build();
+		
+		//actual call to LLM
+		String str = chatClient.prompt()
+				              .advisors(advisor)
+				              .user(query).call().content();
+	
+	    return ResponseEntity.ok(str);
+	}
+
+
+All of these correspond to the Modular RAG Phases.
+
+5. Pre‑Retrieval Phase
+      This phase happens before fetching documents. Here we can use:
+✔ Query Transformers
+
+Examples:
+1. RewriteQueryTransformer - used  to rewrite a user query to provide better results when querying a target system, such as a vector store or a web search engine.
+2. TranslationQueryTransformer - useful when the embedding model is trained on a specific language and the user query is in a different language.
+3. CompressionQueryTransformer -  Uses a large language model to compress a conversation history and a follow-up query into a standalone query that captures the essence of the conversation.
+
+These transformers use the LLM itself to rewrite or translate queries.
+
+Example:
+Rewrite transformer can convert:
+"What is java"
+
+into a cleaner version:
+"What is Java programming language?"
+
+You can pass multiple transformers because the builder accepts varargs.
+
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		var advisor = RetrievalAugmentationAdvisor.builder()
+				.queryTransformers(
+                        RewriteQueryTransformer.builder()
+                        .chatClientBuilder(chatClient.mutate().clone())
+                        .build()
+                 )
+             .queryExpander(MultiQueryExpander.builder().chatClientBuilder(chatClient.mutate().clone()).numberOfQueries(3).build())
+				      .build();
+		
+		//actual call to LLM
+		String str = chatClient.prompt()
+				              .advisors(advisor)
+				              .user(query).call().content();
+	
+	    return ResponseEntity.ok(str);
+	}
+	
+6. Retrieval Phase - Now we fetch documents using a DocumentRetriever.
+For vector DB, we use: VectorStoreDocumentRetriever
+
+This retriever performs the similarity search and returns documents for each expanded query.
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		var advisor = RetrievalAugmentationAdvisor.builder()
+				.queryTransformers(
+                        RewriteQueryTransformer.builder()
+                            .chatClientBuilder(chatClient.mutate().clone())
+                            .build()
+                 )
+              .queryExpander(MultiQueryExpander.builder().chatClientBuilder(chatClient.mutate().clone()).numberOfQueries(3).build())
+				 .documentRetriever(
+	                        VectorStoreDocumentRetriever.builder()
+	                                .vectorStore(vectorStore)
+	                                .topK(3)
+	                                .similarityThreshold(0.3)
+	                                .build()
+	                )
+				      .build();
+		
+		//actual call to LLM
+		String str = chatClient.prompt()
+				              .advisors(advisor)
+				              .user(query).call().content();
+	
+	    return ResponseEntity.ok(str);
+	}
+
+7. Document Joiner (Optional)
+		If multiple queries or multiple data sources are used, the joiner merges:
+- Duplicate chunks
+- Overlapping results
+
+Spring AI provides: ConcatenationDocumentJoiner (default)
+
+This results in a combined clean list of documents.
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		var advisor = RetrievalAugmentationAdvisor.builder()
+				.queryTransformers(
+                        RewriteQueryTransformer.builder()
+                                .chatClientBuilder(chatClient.mutate().clone())
+                                .build()
+                 )
+              .queryExpander(MultiQueryExpander.builder().chatClientBuilder(chatClient.mutate().clone()).numberOfQueries(3).build())
+				 .documentRetriever(
+	                        VectorStoreDocumentRetriever.builder()
+	                                .vectorStore(vectorStore)
+	                                .topK(3)
+	                                .similarityThreshold(0.3)
+	                                .build()
+	                )
+				    .documentJoiner(new ConcatenationDocumentJoiner())
+				      .build();
+		
+		//actual call to LLM
+		String str = chatClient.prompt()
+				              .advisors(advisor)
+				              .user(query).call().content();
+	
+	    return ResponseEntity.ok(str);
+	}
+	
+8. Generation Phase — QueryAugmenter
+This phase merges: The user’s original query + The retrieved + post‑processed documents into a final augmented prompt.
+
+The default augmenter is:
+ContextualQueryAugmenter
+
+@GetMapping("/chat")
+	public ResponseEntity<String> chat(@RequestParam(value = "q", required = true) String query) {
+		
+		var advisor = RetrievalAugmentationAdvisor.builder()
+				.queryTransformers(
+                        RewriteQueryTransformer.builder()
+                                .chatClientBuilder(chatClient.mutate().clone())
+                                .build()
+                 )
+              .queryExpander(MultiQueryExpander.builder().chatClientBuilder(chatClient.mutate().clone()).numberOfQueries(3).build())
+				 .documentRetriever(
+	                        VectorStoreDocumentRetriever.builder()
+	                                .vectorStore(vectorStore)
+	                                .topK(3)
+	                                .similarityThreshold(0.3)
+	                                .build()
+	                )
+				    .documentJoiner(new ConcatenationDocumentJoiner())
+				    .queryAugmenter(ContextualQueryAugmenter.builder().build())
+				      .build();
+		
+		//actual call to LLM
+		String str = chatClient.prompt()
+				              .advisors(advisor)
+				              .user(query).call().content();
+	
+	    return ResponseEntity.ok(str);
+	}
+	
+ctrl+shift+T - open RetrievalAugmentationAdvisor - You can see before() where it will be calling all respective module phases
+
+Let’s open the RetrievalAugmentationAdvisor, and if you look at its before() method, you will see that all the important logic happens there.
+a. First, a query object is created from the user’s input text.
+Then the original user query is transformed according to the chain of QueryTransformers you have added.
+     All the transformers you configured will be applied one by one, and finally, you will get the transformed query.
+
+b. After that comes the query expansion step.
+     The advisor will expand the query into one or multiple queries.
+This is where the QueryExpander works. we are going to use MultiQueryExpander.
+This expander uses the LLM internally to expand a query.
+So the expander will generate multiple variations of the same query.
+
+Why?
+Because sometimes a single sentence isn’t enough for accurate retrieval.
+Or maybe that one sentence cannot retrieve the best documents.
+In such cases, the expander generates multiple related queries that can retrieve better and more relevant information.
+Then retrieval happens on all those expanded queries.
+
+c. Then we receive a list of expanded queries (ie) the original user query becomes multiple queries — maybe 3, 4, or even more depending on configuration.
+
+d. Next comes the retrieval step.
+       For each expanded query, the advisor fetches similar documents from the database using the DocumentRetriever.
+      Each query runs through the DocumentRetriever, and for each query, relevant documents are fetched from the vector database.
+
+e. Since multiple queries will produce multiple document lists, we need to combine them.
+    This is where the Document Joiner is used. It takes all the document lists (from all queries and all sources) and merges them to form a compact, unified list of documents. These documents now represent the retrieved context.
+
+f. But we still have the post‑processing step left.
+If you have configured any DocumentPostProcessor, a loop runs and each post‑processor will execute its process() method.
+This step can include:
+
+cleaning
+reordering
+compressing
+removing redundant parts
+
+Once post‑processing completes, your context becomes clean and ready.
+
+g. Even after all this, the request still hasn’t been sent to the LLM.
+Next we reach the QueryAugmenter step, where the augmented query is finally created.
+The augmenter's augment() method is called, and it receives:
+- the original user query
+- the retrieved documents (context)
+
+The augmenter merges them into one enriched final query. This final augmented query contains:
+
+- The transformed query
+- The retrieved context
+- Any system rules or prompt instructions
+
+This augmented query is what will finally be sent to the LLM.
+
+9. Put breakpoint in RetrievalAugmentationAdvisor, line no 107
+
+10. Start the appl, run http://localhost:1111/chat?q=what is java
+
+It will display the response
+
+11. Sometimes it happens that we ask questions in a different language.
+For example, let’s take a practical example.
+Suppose we ask:
+
+http://localhost:1111/chat?q=java language kya hai?
+
+Now, if I search this and send it, the problem is this:
+The system may automatically rewrite or transform the query, so the LLM might still give a correct answer — something like “Java is a platform‑independent language.”
+
+But the real issue is:
+
+Before sending the query to the LLM, we must search inside the vector database, and for that the query must also be properly transformed into the target language used for indexing (usually English).
+
+you’ll see that the query “Java programming language” has appeared — which indicates some form of automatic transformation happened.
+
+But still, to correctly transform the query before retrieval, we must explicitly use a QueryTransformer called TranslationQueryTransformer, separated by a comma, in the transformer list. Once configured, the TranslationQueryTransformer will translate your query into English.
+
+.queryTransformers(
+                        RewriteQueryTransformer.builder()
+                          .chatClientBuilder(chatClient.mutate().clone())
+                                .build(),                 TranslationQueryTransformer.builder().chatClientBuilder(chatClient.mutate().clone()).targetLanguage("english").build()
+                 )
+
+12. Start the appl, run http://localhost:1111/chat?q=multithreading kya hoti kai?
+
+It will display "Java supports multi-threading using the Thread class or Runnable interface."
+
+If we check the logger output, you will see all steps:
+1. Rewrite transformer rewrites
+
+"text" : "Definition and explanation of multithreading in computer science"
+
+2. Translation transformer converts it to English
+
+Rewritten query:
+', metadata={messageType=USER}, messageType=USER}, AssistantMessage [messageType=ASSISTANT, toolCalls=[], textContent=Definition and explanation of multithreading in computer science, metadata={choiceIndex=0, finishReason=stop, id=chatcmpl-CxYbx59p24SMAI6WH20toEMLtuHR9, messageType=ASSISTANT}], UserMessage{content='Given a user query, translate it to english.
+
+3. After that, the QueryExpander is applied (if configured).These expanded queries fetch more relevant documents.
+
+Translated query:
+', metadata={messageType=USER}, messageType=USER}, AssistantMessage [messageType=ASSISTANT, toolCalls=[], textContent=Definition and explanation of multithreading in computer science, metadata={choiceIndex=0, finishReason=stop, id=chatcmpl-CxYbyU72Yi8opYtbI6r2xwNGbtMTn, messageType=ASSISTANT}], UserMessage{content='You are an expert at information retrieval and search optimization.
+Your task is to generate 3 different versions of the given query.
+
+Java supports multi-threading using the Thread class or Runnable interface.
+synchronized keyword ensures thread safety.
+
+Then, post retrieval:
+
+context documents retrieved from vector DB
+context merged into final prompt
+user’s question included
+LLM produces final answer
+
+All of this happens in Pre-Retrieval → Retrieval → Post-Retrieval phases.
+
+
+ETL Pipeline
+   The purpose of an ETL pipeline is to convert raw documents or raw data like pdf, json, text etc into AI‑ready documents and load them into a vector database.
+
+Why?
+Because before implementing RAG, we must first have documents stored in the vector database. And those documents come from some source — PDF files, text files, JSON files, DOC files, or any other raw data.
+
+So the goal is:
+How do we extract raw documents like PDF/JSON/TXT, transform them into chunks, and then load them into a vector store?
+
+This entire flow is what we call ETL.
+
+What is ETL?
+ETL stands for:
+
+E – Extract - Read the raw data from a source like pdf or json or text file
+T – Transform - Clean the text, Normalize it, Split it into chunks, Add metadata, Prepare it so vector DB storage becomes effective
+L – Load - Finally, we load the transformed documents into the vector database.
+
+Only after doing these three steps, we can execute RAG efficiently.
+
+How do we perform ETL in Spring AI?
+1. Our source contains raw data. To read data from the source, we use Document Readers.
+  A DocumentReader interface is a component that reads raw data and returns a document List.
+
+public interface DocumentReader {
+    default List<Document> read() {
+		return get();
+	}
+}
+
+
+Types of Document Readers
+Spring AI provides several readers. For example:
+1. JsonReader
+2. PagePdfDocumentReader
+3. ParagraphPdfDocumentReader
+4. TextReader
+These come from Spring AI’s document‑reader modules.
+
+2: Transform Documents
+       We cannot store raw documents directly into vector DB. We must transform them first. Spring AI provides Document Transformers.
+      A DocumentTransformer also takes a List as input and returns another list of transformed documents.
+
+public interface DocumentTransformer extends Function<List<Document>, List<Document>> {
+
+	default List<Document> transform(List<Document> transform) {
+		return apply(transform);
+	}
+
+}
+
+Some built‑in transformers:
+1. ContentFormatTransformer
+2. KeywordMetadataEnricher
+3. SummaryMetadataEnricher
+4. TextSplitter
+5. TokenTextSplitter
+
+Transformers mainly split large documents into chunks, Add metadata and
+Clean or normalize the content
+
+For RAG, chunking is extremely important.
+
+3: Load Documents into Vector Store
+      Once we have transformed/chunks of documents, we must save them into a database. For this, we use DocumentWriter.
+     DocumentWriter consumes the final list of documents and writes them to a target storage.
+
+Spring AI provides multiple writers:
+1. FileDocumentWriter
+2. MariaDbVectorStore
+3. SimpleVectorStore
+
+So the flow is:
+DocumentReader  →  DocumentTransformer  →  DocumentWriter (VectorStore)
+
+After this, our vector database is ready for RAG operations.
+
+What is a Document?
+    A Document in Spring AI contains: Content (text),Metadata (source, page number, author, tags…), optional media references
+    Documents are the heart of the ETL pipeline.
+
+We always work with List:
+1. Reader gives List<Document>
+2. Transformer returns List<Document>
+3. Writer accepts List<Document>
+
+ETL Implementation - PDF Text to Vector Database
+    So  we have a source, how document readers read documents and return a list of documents, how transformers modify the data, and how splitters break data into smaller chunks instead of pushing entire large files at once. Finally, document writers store this processed data into the database.
+
+1. Create sample_data.json and cricket_rules/pdf inside resources folder
+
+2. First we fetch data from JSON and store in vector db. Create interface DataLoader
+
+public interface DataLoader {
+    List<Document> loadDocumentsFromJson();
+    List<Document> loadDocumentsFromPdf();
+}
+
+3. Create DataLoaderImpl class
+
+@Service
+public class DataLoaderImpl implements DataLoader {
+
+	@Value("classpath:sample_data.json")
+	private Resource jsonResource;
+
+	@Override
+	public List<Document> loadDocumentsFromJson() {
+		System.out.println("started loading json");
+		var jsonReader = new JsonReader(jsonResource, "project");
+		return jsonReader.read();
+	}
+
+	@Override
+	public List<Document> loadDocumentsFromPdf() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}
+
+4. To test the loadDocumentsFromJson method of the DataLoader service, we’ll call it from within our test class.
+
+@SpringBootTest
+class SpringAiAdvanceRagApplicationTests {
+
+	@Autowired
+	DataLoader dataLoader;
+
+	@Test
+	void testDataLoader() {
+		var documents = dataLoader.loadDocumentsFromJson();
+		System.out.println(documents.size());
+
+		documents.forEach(item -> {
+		   System.out.println(item);
+		});
+
+	}
+
+}
+
+5. Run junit test, it will display the size and print the json 
+
+6. Now we read pdf and write into vector db, for that we add dependency
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-pdf-document-reader</artifactId>
+		</dependency>
+
+7. In DataLoaderImpl, we write implementation for loadDocumentsFromPdf()
+
+@Value("classpath:cricket_rules.pdf")
+    private Resource pdfResource;
+
+@Override
+	public List<Document> loadDocumentsFromPdf() {
+		 var pdfReader = new PagePdfDocumentReader(pdfResource,
+	                PdfDocumentReaderConfig.builder()
+	                        .withPageTopMargin(0)
+	                        .withPageExtractedTextFormatter(ExtractedTextFormatter.builder()
+	                        .withNumberOfTopTextLinesToDelete(0)
+	                        .build())
+                           // .withPagesPerDocument(1) //how many pages to put in single document, by default 1
+	                        .build()
+	        );
+	        return pdfReader.read();
+
+8. We will test in the test class
+
+@Test
+	 void testPdfDataLoader() {
+	        List<Document> documents = this.dataLoader.loadDocumentsFromPdf();
+	        System.out.println(documents.size());
+	        documents.forEach(item -> {
+	            System.out.println(item);
+	            System.out.println("__________________-");
+	        });
+	 }
+
+9. Run the test class, since pdf file have 2 pages, each page will be treated as one document
+
+Note:
+we can also use ParagraphPdfDocumentReader to split the input PDF into text paragraphs and output a single Document per paragraph.
+
+10. To fit our documents inside the AI model’s context window, we need to split them properly. This will ensure the documents fit into the model’s context. The usage is simple. We have a TokenTextSplitter — here you can see it. This TextSplitter is actually an abstract base class, and its implementation is TokenTextSplitter.
+We use this to transform our main document into chunks. With its help, we’ll be able to split our text into chunks based on token count using the given encoding.
+
+- create an interface
+
+public interface DataTransformer {
+
+    List<Document> transform(List<Document> documents);
+
+}
+
+- Create implementation class 
+
+@Service
+public class DataTransformerImpl implements DataTransformer {
+
+	@Override
+	public List<Document> transform(List<Document> documents) {
+		 var splitter = new TokenTextSplitter();  //This uses the  default configuration of TokenTextSplitter and splits text based on token size.
+	     return splitter.transform(documents);
+	}
+    
+}
+
+We will use TokenTextSplitter. This splits text into chunks of target size in tokens. The default chunk size is 800, minimum chunk size is 350 characters, minimum chunk length to embed is 5, etc. These are default values.
+If you use the default constructor, these values will be applied automatically. But if you want your own values, you can pass them manually.
+
+11. Write test case for transforming the document
+
+   @Autowired
+	DataTransformer dataTransformer;
+
+
+   @Test
+	 void testPdfDataLoader() {
+	        List<Document> documents = this.dataLoader.loadDocumentsFromPdf();
+	        System.out.println(documents.size());
+	        documents.forEach(item -> {
+	            System.out.println(item);
+	            System.out.println("__________________-");
+	        });
+	        
+	        System.out.println("Read__now going to transform");
+
+	        var transformedDocument = this.dataTransformer.transform(documents);
+	        System.out.println(transformedDocument.size());
+	 }
+
+12. Run the test case 
+
+Now we check the size. The size is 3 based on default configuration. Since the chunk size was 800, it split accordingly.
+
+13. Now we change the configuration in DataServiceImpl class
+
+var splitter = new TokenTextSplitter(300,400,10,5000,true);
+
+defaultChunkSize: The target size of each text chunk in tokens (default: 800).
+minChunkSizeChars: The minimum size of each text chunk in characters (default: 350).
+minChunkLengthToEmbed: The minimum length of a chunk to be included (default: 5).
+maxNumChunks: The maximum number of chunks to generate from a text (default: 10000).
+keepSeparator: Whether to keep separators (like newlines) in the chunks (default: true).
+
+14. Run the test case, now we can see the size is 6 based on configuration
+
+15. Once transforming is done, we can save the data using the vector store, so in test class
+
+ @Autowired
+ VectorStore vectorStore;
+
+  @Test
+    void testPdfDataLoader() {
+        List<Document> documents = this.dataLoader.loadDocumentsFromPdf();
+        System.out.println(documents.size());
+        documents.forEach(item -> {
+            System.out.println(item);
+            System.out.println("__________________-");
+        });
+
+        IO.println("Read__now going to transform");
+
+        var transformedDocument = this.dataTransformer.transform(documents);
+        System.out.println(transformedDocument.size());
+
+//        going to save the data into database
+
+        this.vectorStore.add(transformedDocument);
+        System.out.println("Done");
+
+
+    }
+
+- Run the test case 
+
+After running the test, the PDF file data gets embedded and stored in the DB. If you refresh the database, you’ll see the chunks.
+Each chunk has:
+
+content
+metadata
+embeddings
+
+These embeddings will be used during RAG search queries.
+
+
+Tool Calling in LLMs - How AI Gets Real-World Superpowers 
+    We see how we can allow an LLM to access external APIs, external systems, and external data sources. It’s not just about using an API like a weather API. The idea is that an LLM should be able to call that API itself and fetch real‑time data. To achieve this, today we are going to learn the concept of Tool Calling.
+
+What is Tool Calling?
+     You might have seen that ChatGPT is extremely powerful. It can:
+- Fetch data from the internet
+- Search the web when the “Web Access” option is enabled
+- Get current date/time
+- Provide live weather information
+- Access internal database‑like information
+… and much more.
+
+But we already know that LLMs are trained only on fixed data. For example, GPT‑4 or GPT‑5 models have only the data that was available during their training.
+
+So how do they fetch live information?
+That’s where Tool Calling comes in.
+
+Tool calling allows an LLM to interact with:
+- External APIs
+- External services
+- External systems
+- Realtime data sources
+
+1. Create SpringAI-ToolCalling with web, azure open ai, lombok dependency
+
+2. Configure ai keys in application.properties
+
+server.port=2222
+
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+
+logging.level.org.springframework.ai.chat.client.advisor=DEBUG
+
+3. Create Config class
+
+@Configuration
+public class Config {
+
+	@Bean
+	public ChatClient chatClient(ChatClient.Builder builder) {
+		return builder.defaultAdvisors(new SimpleLoggerAdvisor()).build();
+	}
+
+}
+
+- Create controller
+
+@RestController
+@RequestMapping("/chat")
+public class ChatController {
+
+	private ChatService chatService;
+
+	public ChatController(ChatService chatService) {
+		this.chatService = chatService;
+	}
+
+	@GetMapping
+	public String chat(@RequestParam(required = true) String q) {
+		return chatService.chat(q);
+	}
+
+}
+
+- Create service
+
+@Service
+public class ChatService {
+
+	private ChatClient chatClient;
+
+	public ChatService(ChatClient chatClient) {
+		this.chatClient = chatClient;
+	}
+
+	public String chat(String q) {
+		return chatClient.prompt().user(q).call().content();
+	}
+
+}
+
+4. Start the appl, run http://localhost:2222/chat?q=can you provide logic of prime number
+
+The LLM responds with an output, since it is plain LLM chat. But if we ask
+
+http://localhost:2222/chat?q=what is todays date?
+
+http://localhost:2222/chat?q=what is weather right now?
+
+LLMs normally cannot answer correctly because they don’t have real‑time data.
+But with tool calling, we can expose:
+- A function that returns today’s date
+- A function that returns the weather
+- A function that queries a database
+- A function that calls any external API
+- A function that triggers business logic in your system
+
+LLM will “decide” when to use a tool.
+
+
+Tool calling allows AI models to augment their capabilities by calling external tools. These external tools generally serve two main purposes:
+1. Information Retrieval
+Fetching information such as the current date, weather, database counts, etc.
+2. Action Taking
+Performing actions like setting an alarm, turning on a bulb, creating a table in a database, inserting data, and so on.
+
+How do we implement this?
+    In Spring AI, we can define a method as a tool. Spring AI does a lot of heavy lifting behind the scenes—it provides built-in support for specifying tools. With this support, we can declare the available tools so the AI model knows they exist. When the model decides a tool is needed, Spring AI will call it and then pass the result back to the chat model. The chat model uses that result to generate the final response.
+    Sometimes, we return the tool’s output directly to the user without sending it back to the chat model. But the basic flow of tool calling usually works as described above.
+
+Two Ways to Wire Tools in Spring AI
+We have two main ways to work with tools:
+1. Declarative approach
+Use annotations (e.g., @Tool) to declare tools and make them discoverable to chat models.
+2. Programmatic approach
+A more advanced, low-level callback method
+
+
+1. We’ll create a tool that returns the current date and time. So we Create the tool. Use Spring AI’s @Tool annotation (from org.springframework.ai.tool) to describe the tool, 
+e.g.: Description: “Get the current date and time in the user’s time zone.”
+If your tool accepts parameters, describe them using @ToolParam so the LLM knows what to pass when it calls the tool.
+
+@Slf4j
+public class SimpleDateTimeTool {
+
+    @Tool(description = "Get the current date and time in users zone.")
+    public String getCurrentDateTime() {
+        log.info("Tool calling");
+        log.info("Get the current date and time in users zone.");
+        return LocalDateTime.now()
+                .atZone(LocaleContextHolder.getTimeZone().toZoneId())
+                .toString();
+    }
+}
+
+2. Attach the tool to the ChatClient inside service prg- Pass an instance of SimpleDateTimeTool to the ChatClient so the LLM becomes aware of the tool
+
+public String chat(String q) {
+		return chatClient.prompt().tools(new SimpleDateTimeTool()).user(q).call().content();
+	}
+
+After this, when the LLM decides it needs the current date/time, Spring AI will invoke your tool, capture its output, and either return it directly or feed it back into the model to produce the final, enriched response.
+
+3. Start the appl, run http://localhost:2222/chat?q=What is the date today?
+
+Gives the correct date
+
+http://localhost:2222/chat?q=What is the date of tomorrow?
+
+http://localhost:2222/chat?q=What was the date last Sunday?
+
+http://localhost:2222/chat?q=My date of birth is 1998. What is my current age?
+
+we look at the console logs. First Request calls SimpleDateTimeTool — Tool Calling — get the current date and time in the user’s zone
+
+This means:
+
+The LLM received the request.
+It realized that to answer this question, it needs to call the tool.
+It informed the AI framework (Spring AI) that a tool must be invoked.
+Spring AI executed the tool and returned the result to the model.
+The model used the tool output to form the final response.
+
+4. We can also build action tools—tools that actually perform actions. create another tool—setAlarm—that demonstrates an action:
+
+@Slf4j
+public class SimpleDateTimeTool {
+
+	// information tool
+	@Tool(description = "Get the current date and time in users zone.")
+	public String getCurrentDateTime() {
+		log.info("Tool calling");
+		log.info("Get the current date and time in users zone.");
+		return LocalDateTime.now().atZone(LocaleContextHolder.getTimeZone().toZoneId()).toString();
+	}
+
+	// action tool: that i can take action
+	@Tool(description = "Set the alarm for given time.")
+	void setAlarm(@ToolParam(description = "Time in ISO-8601 format") String time) {
+		var dateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_DATE_TIME);
+		log.info("Set the alarm for given time. {}", dateTime);
+	}
+
+	@Tool(name = "fx_rate", description = "Get current FX rate from base to quote (e.g., USD->INR).", returnDirect = true)
+	public String getRate(@ToolParam(description = "Base currency code (e.g., 'USD')", required = true) String base,
+			@ToolParam(description = "Quote currency code (e.g., 'INR')", required = true) String quote) {
+		// TODO: Call your FX API and format the output
+		return String.format("Rate %s/%s = %.4f", base, quote, 83.2105);
+	}
+
+}
+
+
+returnDirect — Whether the tool’s result should be returned directly to the client instead of sending it back to the LLM to compose the final response.
+
+Default is false (i.e., tool result goes back to the LLM first).
+If you set it to true, the tool’s output is sent straight to the user.
+
+5. Start the appl, run
+
+http://localhost:2222/chat?q=set the alarm for today 9pm
+
+http://localhost:2222/chat?q=What is the FX rate USD to INR? 
+  - It will display The current FX rate from USD to INR is 83.2105 as the data is sending to LLM, since returnDirect = false
+
+http://localhost:2222/chat?q=What is the FX rate USD to INR? 
+  - It will display "Rate USD/INR = 83.2105" as the data is not sending to LLM and directly printing, since returnDirect = true
+
+So Whenever an AI agent works, it is always powered by backend logic—and that backend uses tool calling heavily.
+
+Practical examples of what an LLM can do with tools
+1. Database Operations - You can create a tool that queries your database.
+If the user says:
+“Show me the total sales today.”
+
+The LLM will:
+- Understand the intent
+- Identify the right tool
+- Provide the correct parameters
+- Call your tool to fetch the sales data
+- Return the final answer in natural language
+
+2. Sending Emails - You can build an email tool:
+
+“Send an email to all students who failed this exam.”
+
+The LLM will:
+- Understand the context (“failed students”)
+- Fetch the list from your DB (using another tool)
+- Call the email‑sending tool
+- Send emails to each user
+
+3. Weather API
+You can build a weather tool:
+
+“What’s the weather in Delhi today? And compare it with Lucknow.”
+
+Your weather tool fetches the data, and the LLM explains the comparison in human language.
+
+4. Stock Market Tools
+You can expose a stock API tool:
+
+“Tell me whether Apple stock went up today and what the expected movement is.”
+
+The LLM will:
+- Use your stock tool
+- Fetch real‑time data
+- Interpret it
+- Explain it
+
+
+Types of Tools
+There are two categories of tools
+1. Informational Tools - Tools that fetch information.
+Examples:
+- Get current date
+- Get weather
+- Get stock price
+- Fetch DB record
+
+2. Action Tools - Tools that perform an operation.
+Examples:
+- Send email
+- Insert data into the database
+- Update record
+- Trigger a workflow
+- Schedule a job
+
+Both types are extremely useful. You decide what tool you are building and give that context to the LLM using Spring AI’s tool-calling functionality.
+
+Where are tool-calling use cases most useful?
+   Tool calling is useful wherever your LLM needs to operate on external systems—for example:
+1. Data Querying
+Your bot receives messages like:
+
+“What are today’s sales?”
+“How many new users joined this week?”
+“Give me a comparison of last month vs. this month.”
+
+Your backend doesn’t have to manually parse this.
+The LLM does it, calls your tool, and returns the answer.
+
+2. E‑commerce Use Case
+A user interacts with your bot and says:
+
+“Search for the cheapest iPhone.”
+
+Now how will the LLM perform this search?
+
+The LLM will turn this natural sentence into a structured query.
+It will call your data query tool.
+That tool will fetch the matching iPhone from the database.
+The LLM will then return the answer.
+
+Next, the user may say:
+
+“Add that product to the cart.”
+
+The LLM will:
+
+Understand the context
+Identify the correct product
+Call your Add‑to‑Cart tool
+And add the item to the cart automatically
+
+3. For a finance app, you can:
+
+Fetch documents
+Retrieve examples
+Even execute code using a tool
+
+4. For a customer support system, the LLM can:
+
+Read and understand the user’s intent
+Call tools like
+
+“Send email to this user”
+“Send invoice”
+“Create invoice”
+“Retrieve this order”
+etc.
+
+
+
+The LLM reads the intent and calls backend APIs through tool calling.
+
+4. Conversational Interfaces
+Where users naturally ask:
+
+“Book an appointment at 4 PM tomorrow.”
+“Create a new Jira ticket.”
+“Delete all expired sessions.”
+
+
+Tool to call weather api
+
+1. Go to https://www.weatherapi.com/api-explorer.aspx - register and copy the api key and put in application.properties
+
+app.weather.api-key=b7565f85a8924271ae2145425242511
+
+2. Calling the Actual Weather API using RestClient bean in config class
+
+@Configuration
+public class Config {
+
+	@Bean
+	public ChatClient chatClient(ChatClient.Builder builder) {
+		return builder.defaultAdvisors(new SimpleLoggerAdvisor()).build();
+	}
+
+	@Bean
+	public RestClient weatherRestClient() {
+		return RestClient.builder().baseUrl("http://api.weatherapi.com/v1").build();
+	}
+}
+
+
+3. Create Weather Tool Logic
+
+@Service
+public class WeatherTool {
+
+	private RestClient restClient;
+
+	public WeatherTool(RestClient restClient) {
+		this.restClient = restClient;
+	}
+
+	@Value("${app.weather.api-key}")
+	private String weatherApiKey;
+
+	@Tool(description = "Get weather information of given city.")
+	public String getWeather(@ToolParam(description = "city of which we want to get weather information") String city) {
+
+		// external api to get the current weather information using RestClient
+		System.out.println("get weather information of given city.");
+
+		var response = restClient.get().uri(
+				builder -> builder.path("/current.json").queryParam("key", weatherApiKey).queryParam("q", city).build())
+				.retrieve().body(new ParameterizedTypeReference<Map<String, Object>>() {
+				});
+
+		return response.toString();
+
+	}
+
+}
+
+4. Configure WeatherTool in chatservice prg, it is also service so we can inject it 
+
+@Service
+public class ChatService {
+
+	private ChatClient chatClient;
+	private WeatherTool weatherTool;
+
+	public ChatService(ChatClient chatClient, WeatherTool weatherTool) {
+		this.chatClient = chatClient;
+		this.weatherTool = weatherTool;
+	}
+
+	public String chat(String q) {
+		return chatClient.prompt().tools(new SimpleDateTimeTool(), weatherTool).user(q).call().content();
+	}
+
+} 
+
+5. Start the application, run 
+
+http://localhost:2222/chat?q=What is current temperature in Chennai?
+
+http://localhost:2222/chat?q=Will it rain today in Lucknow?
+
+http://localhost:2222/chat?q=Compare the weather in Delhi and Chennai today.
+
+
+Audio to Text with Spring AI
+    when we talk about using LLMs inside a project, it’s not limited to text generation. There are many other capabilities you will need in real applications, such as:
+- Converting text into audio (Text‑to‑Speech)
+- Converting audio into text (Speech‑to‑Text / Transcription)
+- Generating images
+- Manipulating media
+
+What is Transcription?
+    Transcription means if you have an audio file (could be MP3 or any supported format) and you want to convert that audio into text using AI.
+
+For example, if we are using OpenAI, then we will use:
+
+OpenAI’s transcription API
+Spring AI will send the audio file to OpenAI
+OpenAI’s model (an LLM or a dedicated speech model) will process it
+The model will convert the audio into text
+The result will come back to us through Spring AI
+
+That is exactly what transcription means.
+
+1. Create SpringAI-AudioTranscription with web, azure open ai, lombok dependency
+
+2. We keep audio files with .m4a in resources folder. Multiple formats are supported (e.g., MP3, M4A), but always verify which formats your chosen model/API supports to avoid errors.
+
+3. Configure api keys in application.properties - use GPT‑4o‑transcribe, GPT‑4o‑mini‑transcribe or whisper
+
+4. Create controller prg
+
+@RestController
+@RequestMapping("/api/v1/audio")
+public class AudioController {
+
+	@Autowired
+	AudioService audioService;
+	
+	@Value("${claspath:sample-1.m4a}")
+	Resource inputResource;
+	
+	@PostMapping("/transcript") 
+	public ResponseEntity<String> transcriptAudio() {
+		return ResponseEntity.ok(audioService.convertAudioToText(inputResource));
+	}
+}
+
+5. Create AudioService prg using TranscriptionModel interface which transcript speech into text 
+     Spring AI’s TranscriptionModel provides a common interface across multiple providers. For example, various providers like OpenAI, Google Gemini, Anthropic etc support transcription and some of them do not support it.
+     So Spring AI’s TranscriptionModel is abstraction allows you to write portable code that works across different transcription providers (ie)
+If you switch your transcription provider tomorrow, your application code doesn’t need to change. You simply change the provider configuration.
+
+@Service
+public class AudioService {
+	
+	private final TranscriptionModel transcriptionModel;
+
+	public AudioService(TranscriptionModel transcriptionModel) {
+		this.transcriptionModel = transcriptionModel;
+	}
+
+
+	public String convertAudioToText(Resource inputResource) {
+		return transcriptionModel.transcribe(inputResource);
+	}
+
+}
+
+6. Start the appl, run with POST request, http://localhost:2222/api/v1/audio/transcript
+
+7. Now create transcription with options for audio file
+
+@PostMapping("/transcript-with-options") 
+	public ResponseEntity<String> transcriptAudioWithOptions() {
+		return ResponseEntity.ok(audioService.convertAudioToTextWithOptions(inputResource));
+	}
+
+8. Create service method to apply different options using AudioTranscriptionOptions interface and its implementation class is depends on the different provider AzureOpenAiAudioTranscriptionOptions
+
+public String convertAudioToTextWithOptions(Resource inputResource) {
+		return transcriptionModel.transcribe(inputResource, AzureOpenAiAudioTranscriptionModel.builder().language("en").temperature(0.7f).prompt("Springboot").build());
+	}
+
+9. Start the appl, run with POST request, http://localhost:2222/api/v1/audio/transcript-with-options
+
+10. Instead hardcoded audio file, we will pass the file as parameter
+
+@PostMapping("/speechToText") 
+	public ResponseEntity<String> speechToText(@RequestParam("audioFile") MultipartFile audioFile) {
+		return ResponseEntity.ok(audioService.convertAudioToText(audioFile.getResource()));
+	}
+
+11. Start the appl, run with POST request, http://localhost:2222/api/v1/audio/speechToText - Body - Form-data
+
+key: audioFile
+value: browse for audio file
+
+You may have seen many chat applications where people speak into the microphone, and the system converts that audio into text before processing it. This is one of the real‑world use cases of speech‑to‑text.
+You can build the same kind of solution—a chat box or chat application—where the user provides audio input, the backend converts that audio into text, and then you process the text however you want.
+
+----------------------------------------------------------------------------
+Model Context Protocol (MCP) 
+    Most people are building AI‑powered applications today. No matter what kind of product it is, AI is integrated into almost everything now.
+    When we build a Spring Boot application and want to add AI‑powered capabilities to it, we need to use an additional module — Spring AI. Spring AI is the module that helps our Spring Boot application interact with LLMs. So now, this application is AI‑powered.
+
+What does AI‑powered mean?
+It means the application has a brain.
+And whose brain is it?
+That brain is the LLM.
+
+Since we are using Spring AI, our application already has access to an LLM, and whenever required, Spring AI can interact with that LLM.
+That’s why we can say that the application you see here is an AI‑powered application.
+
+what is the problem with this setup?
+    We have a brain (ie) the LLM. Now, if a query comes into our application, what can the LLM do?
+
+The LLM can: Understand the query, Interpret its intent,Process the input logically
+
+But having a brain alone is not enough. Along with having a brain, our application must be able to interact with external resources or external systems. So Our AI‑powered application was not able to use external systems.
+
+What is external system?
+   External systems include almost everything that exists outside your application, such as:
+- Database‑related tools
+- Data tools like postgres sql, google drive
+- Productivity tools like maps, slack
+- Any external application
+
+So our application cannot directly interact with these external systems.
+Earlier we handle this communication using concepts like Function calling, tool calling etc
+
+But the problem is:
+- They are limited
+- They cause vendor lock‑in
+- They are not standardized
+
+You can use them, but they are not a standard way of doing things.
+
+Why We Need a Standard
+   What we really need is a standard mechanism that allows our AI‑powered applications to interact with external systems. So
+- Our AI‑powered application already has a brain
+- It already uses an LLM
+- But it is not capable of interacting with external systems
+
+And if an application cannot interact with external systems, then obviously it will not be able to do any meaningful real‑world work which is becomes a serious limitation.
+
+Introducing Model Context Protocol (MCP)
+     Because of this exact problem, a new protocol was created which defines set of rules and regulations. And this protocol is called the Model Context Protocol (MCP). Now we have:
+- Defined rules
+- Defined regulations
+- A common standard
+
+With the help of these rules and regulations:
+✅ Our AI‑powered application can now interact with external resources
+✅ It can now use external tools
+
+So we define MCP as:
+   A standard that allows AI‑powered applications to interact with external tools.
+
+Standard means:
+- Basic rules
+- Common regulations
+- A protocol that works for everyone
+
+If you have an external tool, using MCP:
+- You can expose that tool
+- Your AI‑powered application can consume and use it
+
+So, in simple terms: MCP is an open‑source protocol that allows AI‑powered applications to interact with external systems.
+
+Real‑World AI Examples 
+ If you look at:
+- ChatGPT Desktop
+- Claude Desktop
+
+These are also AI‑powered applications. And they also interact with external systems. For example:
+
+- You search something in chat. It fetches data from Google
+It retrieves data from the web
+
+Now, the LLM itself does not have this data. The LLM only has the knowledge it was trained on It does not natively have Google data or live internet data.
+So how does it fetch live data?
+✅ Because it has external tools available
+✅ And through those tools, it accesses external systems
+
+Example:
+   Think of MCP like a USB‑C port for AI applications.
+
+If you search for “USB‑C”, you’ll see that USB‑C has become a standard connector.
+If a device has a USB‑C port, it means:
+- It can connect universally with other devices
+- It follows a common standard
+
+Earlier, things were very different. Some phones used:
+- Lightning cables
+- Micro‑USB
+- USB‑B
+- Other proprietary connectors
+
+Because of this, devices could not easily connect with each other.
+For example, if a friend came to my house with an iPhone using a Lightning cable, and I didn’t have a Lightning cable, then there was no way to charge it. That means Lightning was not universal.
+
+Now, USB‑C has become a universal connector. You can find USB‑C in:
+- Laptops
+- Mobile phones
+- Tablets
+- iPads
+
+Because USB‑C is a standard, all these devices can easily connect with each other.
+
+In exactly the same way: MCP has become a universal standard for AI applications. You can think of MCP as:
+
+- A universal protocol
+- A standard interface
+- A common connector for AI applications
+
+Just like USB‑C enables devices to connect with each other, MCP enables AI applications to interact with external systems.
+
+What MCP enables ?
+Using MCP:
+- AI agents (AI applications) can use external systems
+- They can integrate with services like Google Calendar
+- They can access productivity tools
+- They can use design tools like Figma
+- They can generate entire web applications using external designs
+
+Why does MCP matter?
+   If your AI‑powered application cannot access external tools:
+- It won’t be able to solve real‑world problems
+- Nobody is interested in asking it only “2 + 2” or just passing static information
+
+An LLM has limited knowledge. It only knows what it was trained on. Without external systems:
+- It cannot access real‑time data
+- It cannot perform real‑world actions
+
+Benefits of MCP
+✅ For Developers
+
+Reduced development time
+Reduced complexity
+No vendor lock‑in
+Standardized integration
+
+✅ For AI Applications & Agents
+
+Much more powerful capabilities
+Real‑world task execution
+
+This means real use cases cannot be solved without external interaction.
+
+
+Core MCP Architecture Concepts 
+There are three key participants in the MCP architecture:
+
+MCP Host
+MCP Client
+MCP Server
+
+These three components form the foundation of MCP.
+
+MCP consists of two layers:
+- Data Layer
+- Transport Layer
+The Transport Layer supports two mechanisms:
+- Stdio Transport
+- Streamable Transport
+
+Why Another Protocol When HTTP Already Exists? 
+    MCP is specifically designed for AI applications. If you are building AI‑powered applications, and you want to interact with external tools and systems, MCP is the best‑suited protocol.
+
+How MCP Actually Works
+     Key Components in MCP Architecture
+
+1. External Systems - These can be anything:
+- Databases
+- Data tools
+- Google Drive
+- Slack
+- Maps
+- Any third‑party application
+
+2. LLM (The Brain)
+The LLM is responsible for:
+- Understanding the user’s query
+- Reasoning
+- Decision making
+
+3. MCP Server
+- All tools are defined and exposed here
+- The actual business logic and real code execute here
+- Tools interact with external systems
+
+4. Spring Boot AI Application (MCP Host)
+This application contains:
+- Spring AI
+- LLM integration
+- MCP Client
+This application acts as the MCP Host.
+
+MCP Client–Server Architecture
+MCP follows a client–server architecture.
+1. MCP Client
+The MCP client:
+- Acts as a translator
+- Knows the format of requests and responses
+- Fetches metadata about available tools from the MCP server
+- Creates requests and sends them using the MCP protocol
+
+2. MCP Host
+Any AI application that uses one or more MCP clients is called an MCP Host.
+Your Spring Boot + Spring AI application is the MCP Host.
+
+3. MCP Server
+- Stores tool definitions
+- Executes real logic
+- Calls external systems
+- Returns responses
+
+End‑to‑End Flow 
+Let’s understand the complete flow.
+Step 1: User Request
+A user sends a request containing a query.
+
+Step 2: LLM Understanding
+
+Spring AI forwards the query to the LLM
+The LLM understands the intent
+The LLM decides what action is required
+
+
+Step 3: Tool Metadata Already Available
+Before this:
+
+MCP client has already fetched all available tools from MCP server.
+Tool metadata is already cached
+
+Step 4: Tool Selection
+
+Based on the LLM’s response
+MCP client selects the correct tool
+Tool selection is done on the client side
+
+Step 5: Tool Invocation
+
+MCP client creates the request
+Sends it to MCP server using MCP protocol
+MCP server executes real code
+MCP server interacts with external systems
+
+
+Step 6: Response Handling
+
+MCP server sends the result back
+MCP client receives the response
+The application forwards the result to the LLM
+LLM converts it into natural language
+
+
+Step 7: Final User Response
+The AI‑powered application sends a user‑friendly response.
+
+
+So, the MCP implementation we are going to use here is the Java SDK.
+Which means behind the scenes, Spring AI is also using the Java MCP SDK.
+
+1. Create SpringAI-MCP project with web, azure ai, mcp client dependency
+
+2. Configure api keys in application.properties
+
+server.port=1000
+
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+
+logging.level.org.springframework.ai.chat.client.advisor=DEBUG
+
+3. Create controller prg
+
+@RestController
+@RequestMapping("/ai")
+public class AIController {
+	
+	private ChatClient chatClient;
+	
+	public AIController(ChatClient.Builder chatClient) {
+		this.chatClient=chatClient
+				.defaultAdvisors(new SimpleLoggerAdvisor())
+				.build();
+	}
+
+	@PostMapping("/chat")
+	public ResponseEntity<String> getAiResponse(@RequestParam("query") String query) {
+		String str=chatClient.prompt(query).call().content();
+		return ResponseEntity.ok(str);
+	}
+}
+
+4. Start the appl, run http://localhost:1000/ai/chat?query=create a file with name Test.java and write main method with hello world
+
+It will display the response
+
+5. Now we have implemented MCP host, now we are going to use Filesystem - Secure file operations with configurable access controls which is written in  Node.js 
+
+Features
+Read/write files
+Create/list/delete directories
+Move files/directories
+Search files
+Get file metadata
+Dynamic directory access control via Roots
+
+Refer https://github.com/modelcontextprotocol/servers - we can find different MCP server
+
+- Now we need to configure Filesystem MCP in application.properties which is started with help of Nodejs, so make sure nodejs is running in ur machine
+
+spring.ai.mcp.client.stdio.servers-configuration=classpath:servers.json
+
+our MCP server is going to run inside our local system itself, so we use the stdio transport mechanism.
+
+If you want communication between local processes, you should use stdio transport. Our MCP server and client are running on the same machine locally, so we use stdio transport.
+But suppose you are using a GitHub MCP server that is deployed on a different machine or online server.
+In that case, your client is local but the MCP server is remote — then you must use streamable HTTP transport.
+
+1. stdio transport uses standard input/output streams for direct process communication between local processes.
+2. Streamable HTTP transport is used for remote servers. It supports client-to-server messages and optional server-sent events, and it uses HTTP POST with standard HTTP authentication.
+
+- Now we create servers.json inside resources folder which contain MCP server information
+
+- create mcp and mcp_output folder inside springboot folder and pass that path in servers.json
+
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\SpringBoot\\mcp",
+        "C:\\SpringBoot\\mcp_output"
+      ]
+    }
+  }
+}
+
+Once you have added this configuration and set it in application.properties, as soon as you start the application, this file will be read and your MCP server will be set up automatically.
+
+6. Start the appl, in the console we can see "MCP server is started"
+
+7.  Now we want to use the MCP client through our chat client. For this, we need a bean, which we get automatically—there’s no need to create it manually.
+which is called as "ToolCallbackProvider" interface.
+
+    The ToolCallbackProvider represents tool callback instances for tools that are defined by different sources.
+    The Tool Callback Provider represents the set of tools exposed by the MCP server. Each MCP server exposes multiple tools (file operations, directory operations, etc.). This provider holds all those tool callbacks together.
+
+Using this provider, we can:
+- Retrieve the list of all available tools
+- Allow the LLM to automatically choose the correct tool
+
+	public AIController(ChatClient.Builder chatClient, ToolCallbackProvider toolCallbackProvider) {
+		this.chatClient=chatClient
+				.defaultAdvisors(new SimpleLoggerAdvisor())
+				.defaultToolCallbacks(toolCallbackProvider)
+				.build();
+	}
+
+
+How the Architecture Works 
+1. User enters a request (for example: “Create a file”).
+2. The LLM understands the intent of the request.
+3. The MCP client:
+- Looks at the list of tools exposed by the MCP server
+- Chooses the correct tool based on the user query
+4. A tool request is created.
+5. The request is sent to the MCP server using the MCP protocol.
+6. The MCP server executes the operation (file creation, read, write, edit, etc.).
+7. The response is sent back to the client and shown to the user.
+
+8. Start the appl, run http://localhost:1000/ai/chat?query=Create a file at C:\SpringBoot\mcp\Test1.java with a main method that prints "Hello World"
+
+Now it will create Test.java inside mcp folder 
+
+http://localhost:1000/ai/chat?query=Explain Spring AI concepts with examples. Write them in a Markdown file. Save the file as C:\SpringBoot\mcp\spring-ai.md
