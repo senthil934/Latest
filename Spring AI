@@ -136,6 +136,160 @@ so we just took a simple example and started with open AI gpt4 in this case, and
 talk to openAI 
 
 
+✔ What is ChatClient?
+ChatClient is a helper class (technically an interface) that makes it super easy to talk to AI models.
+Although it's an interface, we usually refer to its implementation class.
+It hides all the internal complexity like:
+
+making raw HTTP calls
+handling base URLs
+parsing JSON
+token handling
+formatting the request
+formatting the response
+
+You just call simple methods in a fluent API style.
+For example, 
+
+chatClient.prompt(prompt).call().content();
+
+This is a fluent API — you chain methods one after another.
+You pass the prompt, call the model, and get the content.
+
+
+✔ Why ChatClient is Powerful?
+
+1.Fluent API – very easy to use.
+2. Supports multiple modes – synchronous, blocking, non‑blocking, streaming, reactive.
+3. Flexible prompt building – prompts can be built in many styles.
+4. Supports different message types
+
+user messages
+system messages
+assistant messages
+tool/function messages
+
+5. Dynamic placeholders – you can pass variables inside prompts.
+6. Prompt options
+    - model selection
+    - temperature setting (controls randomness/creativity)
+low = factual
+high = creative
+
+
+What is "Temperature" in AI?
+Temperature controls how creative or predictable the model’s answers should be.
+
+🎯 Why do we use it?
+Because different tasks need different styles of output.
+
+🔽 1. Low Temperature (0.0 – 0.3) → Predictable & Accurate
+Use when you need:
+-factual answers
+-deterministic output
+-consistent responses
+-coding help, calculations, documentation
+
+Example:
+Prompt: Explain Spring Boot.
+Temperature 0.1 →
+➡ A very professional, structured, accurate explanation.
+
+🔼 2. Medium Temperature (0.4 – 0.6) → Balanced Output
+Good for:
+-general chat
+-balanced creativity + accuracy
+-brainstorming with some control
+
+
+🔥🔝 3. High Temperature (0.7 – 1.5) → Creative & Diverse
+Use when you need:
+-stories
+-poems
+-marketing copy
+-multiple unique ideas
+-creative rewriting
+
+Example:
+Prompt: Write a poem about Spring Boot.
+Temperature 1.2 →
+➡ You’ll get a fun, imaginative poem with creative wording.
+
+⚙ Why does Spring AI expose this setting?
+Because developers often need to fine-tune the model behavior depending on the use case.
+For example:
+
+Code generation 0.0–0.2
+Technical explanation 0.1–0.3
+Chat/everyday QnA 0.4–0.6
+Creative writing 0.8–1.2
+Wild brainstorming 1.2–1.5
+
+
+✔ ChatModel API
+So far, we discussed ChatClient, which is high-level.
+Below ChatClient, there is another API — the ChatModel API.
+ChatModel represents a specific chat model provider, e.g.:
+
+OpenAI
+Azure OpenAI
+Hugging Face
+etc.
+
+Spring AI supports all these providers using the ChatModel interface.
+Each provider has its own implementation:
+
+OpenAiChatModel
+AzureOpenAiChatModel
+OllamaChatModel
+MistralChatModel
+AnthropicChatModel
+etc.
+
+ChatModel defines a simple contract:
+
+“Given some messages, return the model output.”
+
+The provider-specific implementation handles the vendor-specific logic internally.
+
+✔ Do we use ChatModel directly?
+Usually NO.
+We do NOT directly use ChatModel in our business code.
+ChatClient internally uses ChatModel.
+ChatClient is the abstraction that gives us convenience.
+ChatModel is the lower-level layer that ChatClient delegates to.
+Spring Boot auto‑configures everything:
+
+When you add the OpenAI dependency, Spring creates the OpenAiChatModel automatically.
+ChatClient internally uses that model.
+
+However, if needed, we can create a custom ChatModel manually and inject it into ChatClient.
+
+
+Internal working
+    When we create a project, we use a controller where our request comes,
+inside the controller we call the chatclient. So chatClient internally
+uses ChatModel API because this lower level of abstraction and ChatClient is a higher level of abstraction. Each ChatModel has its own implementation, Now through chat model we can interact with LLM and llm will respond from here.
+
+Controller
+    ↓ uses
+ChatClient
+    ↓ uses
+ChatModel (implementation based on the provider)
+    ↓ calls
+LLM (OpenAI, Mistral, Anthropic, etc.)
+    ↓ returns
+Response → back to ChatClient → Controller → Client
+
+1. As soon as we create a new project, we add a starter for openai or azure ai, as soon as it is added its dependency will be added in classpath since springboot autoconfigures and all the beans will be autoconfigured 
+2. So it will loaded automatically the  AzureOpenAiAutoConfiguration class, so it binds ur properties from application.properties file and create AzureOpenAiChatModel bean
+3. If we are using ChatClient, ctrl+T open ChatClient and keep cursor on ChatClient and press ctrl - open implementation
+   We can see DefaultChatClient where the object for this class is created which is a higher level object which we will be using
+4. Now open ChatModel interface which represent a chat provider, and its implementation will be given differently based on the model. So keep cursor on ChatModel and press ctrl - open implementation. Now it will open AzureOpenAiChatModel since we are using Azure AI. So based on the dependency we provided, the chatmodel will be automatically changed and the object will be created 
+5. Now we see how object is created, as we know based on starter project it will load AzureOpenAiAutoConfiguration class
+  Give ctrl+T and open AzureOpenAiAutoConfiguration class, now it will call AzureOpenAiChatModel bean where it will be containing AzureOpenAiChatProperties class, open that class which will contain all the properties and returns chatModel
+
+
 Working with Prompts in Spring AI
      Prompts serve as the foundation for the language based inputs that guide an AI model to produce specific outputs. For those of you familiar with chat gpt, a prompt might seem merely like some text you put into a dialogue box and that's sent to the API. In many AI models, the text for the prompt is not just a simple string
 
@@ -171,6 +325,50 @@ Roles help the LLM generate more accurate and context-aware responses.
 
 - In browser, Prompt class 
       A Prompt class has a few different constructors, it doesn't just pass a string it actually creates a new UserMessage. You will also see some of these constructors take a message and again UserMessage is a specific type of message. If we look at the implementations of this Message there are a few things like an AssistantMessage, ChatMessage, SystemMessage and UserMessage
+
+Modern LLMs (OpenAI, Anthropic, Mistral, etc.) understand conversations using different message types.
+These message types define who is speaking and what role that message plays in shaping the AI’s response.
+Below are the main message types used in Chat Models and supported by Spring AI.
+
+1️⃣ System Message
+🎯 Purpose:
+Defines the behavior, tone, and role of the AI.
+✔ Example:
+System: You are a senior Java and Spring Boot expert. Explain everything with clarity.
+
+Use Case:
+
+Set AI personality
+Command AI to follow specific rules
+Set domain expertise
+
+
+2️⃣ User Message
+🎯 Purpose:
+Represents the actual input / question / instruction from the end user.
+✔ Example:
+User: Explain how Dependency Injection works in Spring Boot.
+
+Use Case:
+
+User queries
+Commands
+Questions
+Inputs
+
+
+3️⃣ Assistant Message
+🎯 Purpose:
+Represents previous responses given by the AI.
+These help maintain conversation context.
+✔ Example:
+Assistant: Dependency Injection allows you to delegate object creation to Spring.
+
+Use Case:
+
+Multi-turn conversation
+When replaying past conversation to AI
+Maintaining chat history
 
 1. Create Spring boot project with web and open ai dependency
 
@@ -270,6 +468,123 @@ List 10 of the most popular YouTubers in {genre} along with their last known sub
     }
 
 - When we run the appl we will get the same output
+
+
+In Spring AI, a Prompt is a container of ordered messages. The model’s behavior depends on both the roles and the order.
+
+
+1) Minimal: build a Prompt with System + User (+Assistant for context)
+
+import org.springframework.ai.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+public class DemoController {
+
+    private final ChatClient chatClient;
+
+    public DemoController(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
+    }
+
+    @GetMapping("/explain-di")
+    public String explainDI() {
+        var system = new SystemMessage(
+            "You are a senior Java & Spring Boot expert. Be precise and pragmatic."
+        );
+
+        var assistantContext = new AssistantMessage(
+            "Dependency Injection lets Spring manage object wiring via the container."
+        );
+
+        var user = new UserMessage(
+            "Give me a concise, real-world example of DI in Spring Boot."
+        );
+
+        var prompt = new Prompt(List.of(system, assistantContext, user));
+
+        return chatClient
+                .prompt(prompt)
+                .call()
+                .content();   // -> model’s final answer
+    }
+}
+
+
+Why this order?
+system sets behavior → assistant provides prior context (optional) → user asks the current question.
+If you don’t have history, you can omit the assistant message.
+
+2) Add ChatOptions (temperature, model, maxTokens)
+
+import org.springframework.ai.chat.model.ChatOptions;
+
+var options = ChatOptions.builder()
+        .withModel("gpt-4o-mini")   // provider-specific
+        .withTemperature(0.2)       // low = factual/predictable
+        .withMaxTokens(400)
+        .build();
+
+var prompt = new Prompt(
+        List.of(
+            new SystemMessage("You are a Spring Boot expert. Prefer runnable code."),
+            new UserMessage("Create a simple REST Controller that returns server time.")
+        ),
+        options // attach options to this Prompt only
+);
+
+var result = chatClient.prompt(prompt).call().content();
+``
+
+Tip: Attach ChatOptions to the Prompt when you need per‑request tuning.
+If you want global defaults, set options on the ChatClient.Builder.
+
+
+3) PromptTemplate: system + user with dynamic placeholders
+
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+
+var systemTpl = new PromptTemplate(
+    "You are a domain expert in {domain}. Keep answers short and actionable."
+);
+var system = systemTpl.createMessage(Map.of("domain", "Spring AI"));
+
+var userTpl = new PromptTemplate(
+    "Explain {topic} with one short example."
+);
+var user = userTpl.createMessage(Map.of("topic", "ChatClient vs ChatModel"));
+
+var prompt = new Prompt(List.of(system, user));
+
+var content = chatClient.prompt(prompt).call().content();
+
+What happened?
+PromptTemplate#createMessage returns the right role-specific message automatically:
+
+If your template is meant for system content, wrap it using new SystemMessage(theText) instead of createMessage—or keep a small helper to ensure roles are explicit.
+
+
+4) Carrying history: include prior assistant & user turns
+
+var messages = List.of(
+    new SystemMessage("You are a helpful architect. Use bullet points."),
+    new UserMessage("What is RAG in the context of Spring AI?"),
+    new AssistantMessage("RAG augments an LLM with external retrieval to answer grounded questions."),
+    new UserMessage("Show a minimal code outline to wire a RAG flow.")
+);
+
+var prompt = new Prompt(messages);
+var answer = chatClient.prompt(prompt).call().content();
+
+Include only relevant history. Long histories cost tokens and may dilute focus
 
 Output Parsers to structure the response from LLMs
        When we get a response from the LLM how do we turn it into something useful, something that we can work with the response. From a generative llm the response is simply a String, even if you ask for Json that's a Json string so how can we turn this into something useful, well Spring AI provides us a tool or an interface called the OutputParser and there are three
@@ -5159,6 +5474,8 @@ Audio to Text with Spring AI
 - Generating images
 - Manipulating media
 
+we need to convert an audio into text? So  think like a situation where we are going   to or we're trying to build an AI agent where  in WhatsApp or in chat people instead of typing   they will do a voice over. So they will pass a  voice which will become as an audio and in our  AI agent we need to actually transform  into text and then based on that text we can   do rest of the work. 
+
 What is Transcription?
     Transcription means if you have an audio file (could be MP3 or any supported format) and you want to convert that audio into text using AI.
 
@@ -5178,73 +5495,76 @@ That is exactly what transcription means.
 
 3. Configure api keys in application.properties - use GPT‑4o‑transcribe, GPT‑4o‑mini‑transcribe or whisper
 
+server.port=1000
+
+spring.ai.azure.openai.api-key=5dybDYhuneBNKEJVJPRCQMJJ75UQj7bQ7ELv1Tev1VT5tGyeRmsAJQQJ99CBACHYHv6XJ3w3AAABACOGlER4
+spring.ai.azure.openai.endpoint=https://fullstack-ui-azureopenai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+spring.ai.azure.openai.audio.transcription.options.deployment-name=whisper
+
+4. Create a class to exposes an OpenAIClient bean for the entire Spring application.
+
+Spring AI officially supports: Chat,Embeddings,Images,Vector stores
+For audio, Spring AI delegates to the underlying Azure SDK. It is part of the Azure OpenAI Java SDK, which Microsoft provides as an idiomatic Java wrapper over Azure OpenAI REST APIs. 
+
+@Configuration
+public class AzureOpenAiClientConfig {
+
+    @Bean
+    public OpenAIClient openAIClient(
+            @Value("${spring.ai.azure.openai.endpoint}") String endpoint,
+            @Value("${spring.ai.azure.openai.api-key}") String apiKey) {
+
+        return new OpenAIClientBuilder()
+                .endpoint(endpoint)
+                .credential(new AzureKeyCredential(apiKey))
+                .buildClient();
+    }
+}
+
 4. Create controller prg
 
 @RestController
-@RequestMapping("/api/v1/audio")
+@RequestMapping("/audio")
 public class AudioController {
 
-	@Autowired
-	AudioService audioService;
-	
-	@Value("${claspath:sample-1.m4a}")
-	Resource inputResource;
-	
-	@PostMapping("/transcript") 
-	public ResponseEntity<String> transcriptAudio() {
-		return ResponseEntity.ok(audioService.convertAudioToText(inputResource));
+	private final OpenAIClient openAIClient;
+
+	@Value("${spring.ai.azure.openai.audio.transcription.options.deployment-name}")
+	private String deploymentName;
+
+	public AudioController(OpenAIClient openAIClient) {
+		this.openAIClient = openAIClient;
+	}
+
+	@GetMapping("/transcribe")
+	public String transcribeAudio(@RequestParam("filename") String name) throws IOException {
+
+      //Loads file from classpath
+		ClassPathResource audioResource = new ClassPathResource(name);
+
+      //Audio is now loaded as raw byte[] which Azure OpenAI expects
+		try (InputStream in = audioResource.getInputStream()) {
+			byte[] bytes = in.readAllBytes();
+
+//use AudioTranscriptionOptions because Azure OpenAI requires a structured request object to describe how the audio should be transcribed, not just the audio bytes themselves.
+			AudioTranscriptionOptions opts = new AudioTranscriptionOptions(bytes).setFilename("sample.m4a") 
+					.setResponseFormat(AudioTranscriptionFormat.VERBOSE_JSON);
+
+//Calling Azure OpenAI
+			return openAIClient.getAudioTranscription(deploymentName, audioResource.getFilename(), opts).getText();
+
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
 	}
 }
 
-5. Create AudioService prg using TranscriptionModel interface which transcript speech into text 
-     Spring AI’s TranscriptionModel provides a common interface across multiple providers. For example, various providers like OpenAI, Google Gemini, Anthropic etc support transcription and some of them do not support it.
-     So Spring AI’s TranscriptionModel is abstraction allows you to write portable code that works across different transcription providers (ie)
-If you switch your transcription provider tomorrow, your application code doesn’t need to change. You simply change the provider configuration.
 
-@Service
-public class AudioService {
-	
-	private final TranscriptionModel transcriptionModel;
+5. Start the appl, run with POST request, http://localhost:2222/audio/transcribe?filename=sample.m4a
+http://localhost:2222/audio/transcribe?filename=sample2.m4a
 
-	public AudioService(TranscriptionModel transcriptionModel) {
-		this.transcriptionModel = transcriptionModel;
-	}
-
-
-	public String convertAudioToText(Resource inputResource) {
-		return transcriptionModel.transcribe(inputResource);
-	}
-
-}
-
-6. Start the appl, run with POST request, http://localhost:2222/api/v1/audio/transcript
-
-7. Now create transcription with options for audio file
-
-@PostMapping("/transcript-with-options") 
-	public ResponseEntity<String> transcriptAudioWithOptions() {
-		return ResponseEntity.ok(audioService.convertAudioToTextWithOptions(inputResource));
-	}
-
-8. Create service method to apply different options using AudioTranscriptionOptions interface and its implementation class is depends on the different provider AzureOpenAiAudioTranscriptionOptions
-
-public String convertAudioToTextWithOptions(Resource inputResource) {
-		return transcriptionModel.transcribe(inputResource, AzureOpenAiAudioTranscriptionModel.builder().language("en").temperature(0.7f).prompt("Springboot").build());
-	}
-
-9. Start the appl, run with POST request, http://localhost:2222/api/v1/audio/transcript-with-options
-
-10. Instead hardcoded audio file, we will pass the file as parameter
-
-@PostMapping("/speechToText") 
-	public ResponseEntity<String> speechToText(@RequestParam("audioFile") MultipartFile audioFile) {
-		return ResponseEntity.ok(audioService.convertAudioToText(audioFile.getResource()));
-	}
-
-11. Start the appl, run with POST request, http://localhost:2222/api/v1/audio/speechToText - Body - Form-data
-
-key: audioFile
-value: browse for audio file
 
 You may have seen many chat applications where people speak into the microphone, and the system converts that audio into text before processing it. This is one of the real‑world use cases of speech‑to‑text.
 You can build the same kind of solution—a chat box or chat application—where the user provides audio input, the backend converts that audio into text, and then you process the text however you want.
@@ -5631,3 +5951,567 @@ How the Architecture Works
 Now it will create Test.java inside mcp folder 
 
 http://localhost:1000/ai/chat?query=Explain Spring AI concepts with examples. Write them in a Markdown file. Save the file as C:\SpringBoot\mcp\spring-ai.md
+
+-----------------------------------------------------------------------------
+Convert REST API to MCP Server using Spring AI (https://www.youtube.com/watch?v=DO91djWmudU)
+     We start with creating simple REST API, then transform that into a MCP complaint server with just a few steps using Spring A. Once converted, your API become discoverable and callable through the MCP, allowing advanced tools like GitHub Copilot to interact directly with your endpoints. 
+     Before MCP, every application like Slack, Google Drive or GitHub had its own unique API. Large language model had to integrate with each API separately leading to custom code complexity and duplication of code. But after introducing MCP, everything changes. Now the LLM can interact with a single unified API layer through MCP. 
+
+1. Create SpringAI-MCP2 project with web, lombok dependency
+
+2. Create model class
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Customer {
+   private Long id;
+   private String name;
+   private String email;
+}
+
+
+- Create controller prg
+
+@RestController
+@RequestMapping("/api/customers")
+public class CustomerController {
+	
+	@Autowired
+	CustomerService custService;
+
+    @GetMapping("/{id}")
+    public Customer getCustomer(@PathVariable Long id) {
+        return custService.getCustomerById(id);
+    }
+
+    @PostMapping
+    public Customer createCustomer(@RequestBody Customer customer) {
+        return custService.createCustomer(customer);
+    }
+}
+
+- Create service
+
+@Service
+public class CustomerService {
+
+    public Customer getCustomerById(Long id) {
+        return new Customer(id, "Roopa", "roopa@email.com");
+    }
+
+    public Customer createCustomer(Customer customer) {
+        return customer;
+    }
+}
+
+
+3. Transform REST API to MCP Tool
+     MCP does not expose REST endpoints directly. You map business logic as MCP tools.
+
+a. Add MCP server dependency in pom.xml
+
+b. Now we transform our traditional rest endpoints into MCP tool. Using the @McpTool annotation provided by spring AI, we can easily expose any methods as a callable tool in the MCP ecosystem
+
+ @Component
+public class CustomerMcpTools {
+
+    private final CustomerService customerService;
+
+    public CustomerMcpTools(CustomerService customerService) {
+        this.customerService = customerService;
+    }
+
+    @McpTool(
+        name = "get_customer_by_id",
+        description = "Fetch customer details using customer ID"
+    )
+    public Customer getCustomer(Long id) {
+        return customerService.getCustomerById(id);
+    }
+
+    @McpTool(
+        name = "create_customer",
+        description = "Create a new customer"
+    )
+    public Customer createCustomer(Customer customer) {
+        return customerService.createCustomer(customer);
+    }
+}
+
+
+Now we annotated both the methods with the @McpTool along with the description. This tells MCP server to register their method as available tools. With just one simple annotation, our API becomes smart that can now be accessible by AI agents, copilot or any MCP compliant clients.
+
+4. Converting to MCP server
+        In Spring AI, MCP server ToolCallbackProvider is a Java interface used internally to provide the logic needed to actually invoke your tool methods when a tool is called. 
+
+@RestController
+public class ToolsController {
+
+    private final ToolCallbackProvider toolCallbackProvider;
+
+    public ToolsController(ToolCallbackProvider toolCallbackProvider) {
+        this.toolCallbackProvider = toolCallbackProvider;
+    }
+
+    @GetMapping("/tools")
+    public ToolsResponse tools() {
+
+        // Spring AI ToolCallbackProvider returns ToolCallback[] in many implementations
+        ToolCallback[] callbacks = toolCallbackProvider.getToolCallbacks();  
+        List<ToolCallback> toolList = (callbacks == null) ? List.of() : Arrays.asList(callbacks);
+
+        return new ToolsResponse(toolList.size(), toolList);
+    }
+}
+
+Here we inject ToolCallbackProvider which contains a list of all
+registered tool call backs. It expose a new API that simply list all available
+tools along with the count of total number of tools available. 
+
+5. Start the application, run http://localhost:2000/api/customer/1 and also on console it will say tools are registered in mcp
+
+6. Open VS Code, open springboot appl in vscode
+
+Initially there is no tools will listed. We are going to add MCP server. Here the MCP server is http://localhost:2000/sse. The communication happens over HTTP using streamed response. So it's a one way that server push data to the client then client just listens.
+
+- create .vscode folder - create mcp.json file
+
+{
+   "servers": {
+      "customer-mcp": {
+           "url":"http://localhost:2000/sse"
+       }
+   }
+}
+
+- On top of server, we can see start button where it will start mcp server
+
+Once the server starts successfully we can see the tools whichever we have created and exposed. 
+
+-  Next in the chat window, 
+Get customer details for customer id 10
+Copilot will:
+1.	Identify the MCP tool
+2.	Call get_customer_by_id
+3.	Show structured output from your API
+
+Another example:
+Create a customer with id 5, name Roopa, email roopa@email.com
+Copilot → calls create_customer.
+
+
+7.  MCP interceptor act like a middleman. It sits between the client request and the tool execution allowing you to modify, validate or log the request and response. 
+
+- Run in cmd prompt
+>npx @modelcontextprotocol/inspector node build/index.js
+
+- Run http://localhost:6274/
+
+- Click connect
+
+we can see all the tools whatever we have exposed. 
+
+- Click on that one - Click "Run tool" and you can see the request and response. 
+
+------------------------------------------------------------------------------
+Wallet Payment API as MCP 
+
+1. Create SpringAI-MCP3 project with web,lombok, mcp server dependency
+
+2. Create model classes
+
+public record Wallet(
+    Long walletId,
+    String customerName,
+    String currency,
+    double balance
+) {}
+public record PaymentRequest(
+    Long walletId,
+    double amount,
+    String currency,
+    String merchant
+) {}
+public record PaymentResponse(
+    String status,
+    String message,
+    double remainingBalance
+) {}
+
+3. Create controller prg
+
+@RestController
+@RequestMapping("/api/wallet")
+public class WalletController {
+
+    private final WalletService walletService;
+
+    public WalletController(WalletService walletService) {
+        this.walletService = walletService;
+    }
+
+    @GetMapping("/{walletId}")
+    public Wallet getWallet(@PathVariable Long walletId) {
+        return walletService.getWallet(walletId);
+    }
+
+    @PostMapping("/pay")
+    public PaymentResponse pay(@RequestBody PaymentRequest request) {
+        return walletService.processPayment(request);
+    }
+}
+
+4. Create service prg
+
+@Service
+public class WalletService {
+
+    private static final Map<Long, Wallet> WALLET_DB = new HashMap<>();
+
+    static {
+        WALLET_DB.put(1L, new Wallet(1L, "Roopa", "INR", 5000));
+    }
+
+    public Wallet getWallet(Long walletId) {
+        return WALLET_DB.get(walletId);
+    }
+
+    public PaymentResponse processPayment(PaymentRequest request) {
+
+        Wallet wallet = WALLET_DB.get(request.walletId());
+
+        if (wallet == null) {
+            return new PaymentResponse("FAILED", "Wallet not found", 0);
+        }
+
+        if (!wallet.currency().equalsIgnoreCase(request.currency())) {
+            return new PaymentResponse("FAILED", "Invalid currency", wallet.balance());
+        }
+
+        if (wallet.balance() < request.amount()) {
+            return new PaymentResponse("FAILED", "Insufficient balance", wallet.balance());
+        }
+
+        double updatedBalance = wallet.balance() - request.amount();
+
+        WALLET_DB.put(
+            wallet.walletId(),
+            new Wallet(wallet.walletId(), wallet.customerName(), wallet.currency(), updatedBalance)
+        );
+
+        return new PaymentResponse(
+            "SUCCESS",
+            "Payment to " + request.merchant() + " completed",
+            updatedBalance
+        );
+    }
+}
+
+5. Convert wallet api to mcp tool
+
+@Component
+public class WalletMcpTools {
+
+    private final WalletService walletService;
+
+    public WalletMcpTools(WalletService walletService) {
+        this.walletService = walletService;
+    }
+
+    @McpTool(
+        name = "get_wallet_details",
+        description = "Fetch wallet details using wallet ID"
+    )
+    public Wallet getWallet(Long walletId) {
+        return walletService.getWallet(walletId);
+    }
+
+    @McpTool(
+        name = "initiate_wallet_payment",
+        description = "Initiate a wallet payment after validating balance and currency"
+    )
+    public PaymentResponse pay(PaymentRequest request) {
+        return walletService.processPayment(request);
+    }
+}
+
+6. Enable mcp server in application.yml
+
+spring:
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: wallet-mcp-server
+        version: 1.0.0
+
+7. Start the application, run http://localhost:2000/api/customer/1 and also on console it will say tools are registered in mcp
+
+8. Open VS Code, open springboot appl in vscode
+
+Initially there is no tools will listed. We are going to add MCP server. Here the MCP server is http://localhost:2001/sse. The communication happens over HTTP using streamed response. So it's a one way that server push data to the client then client just listens.
+
+- create .vscode folder - create mcp.json file
+
+{
+   "servers": {
+      "customer-mcp": {
+           "url":"http://localhost:2001/sse"
+       }
+   }
+}
+
+- On top of server, we can see start button where it will start mcp server
+
+Once the server starts successfully we can see the tools whichever we have created and exposed. 
+
+-  Next in the chat window, 
+
+Prompt 1 – Read Wallet
+Get wallet details for wallet id 1
+Copilot → calls:
+get_wallet_details(walletId=1)
+________________________________________
+Prompt 2 – Successful Payment
+Pay 1000 INR to Amazon from wallet id 1
+Copilot → calls:
+{
+  "walletId": 1,
+  "amount": 1000,
+  "currency": "INR",
+  "merchant": "Amazon"
+}
+Response:
+{
+  "status": "SUCCESS",
+  "message": "Payment to Amazon completed",
+  "remainingBalance": 4000
+}
+________________________________________
+Prompt 3 – Insufficient Balance
+Pay 10000 INR to Flipkart from wallet id 1
+Response:
+{
+  "status": "FAILED",
+  "message": "Insufficient balance",
+  "remainingBalance": 4000
+}
+💡 AI now respects business rules
+________________________________________
+
+AI Agent IN JAVA SPRING BOOT APP (https://www.youtube.com/watch?v=ey0uDJ7ySoQ)
+
+1. Create SpringAIAgent project with web, lombok, data jpa, h2 db, azure ai dependency
+
+2. Configure db and api keys in application.properties
+
+server.port=1000
+
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto= update
+
+spring.h2.console.enabled=true
+# default path: h2-console
+spring.h2.console.path=/h2-ui
+
+3. Create entity and repository prg
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Employee {
+	@Id
+    private Integer id;
+    private String name;
+    private Integer age;
+    private String address;
+    private Double salary;
+}
+
+public interface EmployeeRepository extends JpaRepository<Employee, Integer>{
+
+}
+
+4. Create service prg
+
+@Service
+public class EmployeeService {
+
+	@Autowired
+	EmployeeRepository empRepo;
+	
+	public List<Employee> getAllEmployees() {
+		return empRepo.findAll();
+	}
+	
+	public Employee getEmployeeById(Integer id) {
+		return empRepo.findById(id).get();
+	}
+	
+	public Employee updateEmployeeById(Employee emp,Integer id) {
+		Employee e=empRepo.findById(id).get();
+		if(!ObjectUtils.isEmpty(emp.getAddress()))
+			e.setAddress(emp.getAddress());
+		if(!ObjectUtils.isEmpty(emp.getAge()))
+			e.setAge(emp.getAge());
+		if(!ObjectUtils.isEmpty(emp.getName()))
+			e.setName(emp.getName());
+		if(!ObjectUtils.isEmpty(emp.getSalary()))
+			e.setSalary(emp.getSalary());
+		return empRepo.save(e);
+	}
+	
+	public Employee save(Employee e) {
+		return empRepo.save(e);
+	}
+	
+	public void deleteEmployeeById(Integer id) {
+		empRepo.deleteById(id);
+	}
+}
+
+5. Create controller prg
+
+@RestController
+@RequestMapping("/employee")
+public class EmployeeController {
+
+	@Autowired
+	EmployeeService empService;
+	
+	@PostMapping("/save")
+	public Employee save(@RequestBody Employee e) {
+		return empService.save(e);
+	}
+	
+	@GetMapping("/getAll")
+	public List<Employee> getAllEmployee(){
+		return empService.getAllEmployees();
+	}
+	
+	@GetMapping("/getEmployee/{id}")
+	public Employee getEmployeeById(@PathVariable("id") Integer id){
+		return empService.getEmployeeById(id);
+	}
+	
+	@PutMapping("/updateEmployee/{id}")
+	public Employee updateEmployee(@RequestBody Employee e,@PathVariable("id") Integer id) {
+		return empService.updateEmployeeById(e, id);
+	}
+	
+	@DeleteMapping("/deleteEmployee/{id}")
+	public String deleteEmployeeById(@PathVariable("id") Integer id){
+		empService.deleteEmployeeById(id);
+		return "Deleted Successfully";
+	}
+	
+}
+
+6. Start the appl, run endpoint
+
+7. Now create the tool to enhances how AI models interact with external tools
+
+@Component
+public class AITools {
+
+	@Autowired
+	EmployeeService empService;
+	
+	@Tool(description="Retrieves information about an existing Employee, such as the employee name, age, address and salary, and Employee class.")
+	public Employee getEmployeeDetails(int id) {
+		return empService.getEmployeeById(id);
+	}
+	
+	@Tool(description="Retrieve information of all employee, such as the employee name, age, address and salary, and Employee class.")
+	public List<Employee> getAllEmployee(){
+		return empService.getAllEmployees();
+	}
+	
+	@Tool(description="Update information of an Employee, such as the employee name, age, address and salary, and Employee class.")
+	public Employee updateEmployee(String name,String address,double salary,int age, int id) {
+		Employee e=new Employee(id,name,age,address,salary);
+		return empService.updateEmployeeById(e, id);
+	}
+	
+	@Tool(description="Retrieves the id from the text and delete the employee record from the DB")
+	public void deleteEmployee(int id) {
+		empService.deleteEmployeeById(id);
+	}
+}
+
+8. Create AIService to call the tools 
+
+@Service
+public class AIService {
+
+	private final ChatClient chatClient;
+	private final AITools tools;
+	
+	public AIService(ChatClient.Builder chatClientBuilder, AITools tools) {
+		this.chatClient=chatClientBuilder.build();
+		this.tools=tools;
+	}
+	
+	public String getAIResponse(String prompt, String system) {
+		String response=chatClient.prompt().user(prompt).tools(tools).system(system).call().content();
+		return response;
+	}
+}
+
+9. Create AgentAIController 
+
+@RestController
+public class AgentAIController {
+
+	@Autowired
+	public AIService aiService;
+	
+	@GetMapping("/message")
+	public String getMessage(@RequestParam String prompt, @RequestParam String system) {
+		return aiService.getAIResponse(prompt, system);
+	}
+	
+}
+
+10. Start the application, now post some employee in db
+
+http://localhost:2001/employee/save
+
+{
+  "id": 100,
+  "name": "Ram",
+  "age": 25,
+  "address": "Chennai",
+  "salary": 20000.0
+}
+{
+  "id": 101,
+  "name": "Sam",
+  "age": 26,
+  "address": "Bengaluru",
+  "salary": 30000.0
+}
+{
+  "id": 102,
+  "name": "Tam",
+  "age": 27,
+  "address": "Mumbai",
+  "salary": 35000.0
+}
+
+11. Use AI, fetch all employee, with GET request http://localhost:1000/message?prompt=Share me the list of all employees&system=Act as a project assistance
+
+Now it will fetch the data with the help of AI agent 
+
+http://localhost:1000/message?prompt=Share me the details of employee whose id is 101&system=Act as a project assistance
