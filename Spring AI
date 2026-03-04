@@ -6208,6 +6208,8 @@ public class WalletService {
     }
 }
 
+- Add mcp server dependency
+
 5. Convert wallet api to mcp tool
 
 @Component
@@ -6300,7 +6302,511 @@ Response:
 💡 AI now respects business rules
 ________________________________________
 
+MCP Server & MCP Client with Spring AI using SSE(Server Sent Events) mode
+     Previously we had seen how to create MCP Server and MCP client using Standard IO transport mode. Now we will be focused on creation of MCP servers and MCP client using Server Sent Events. In this mode MCP server and MCP client, they both run on different processes.
+
+1. Create SpringAI-MCPServer project with mcp server dependency.
+      We have to replace the spring-ai-starter-mcp server dependency with the webflux one. Webflux dependency is required when you want to create MCP server and client in Server Sent Events transport mode.
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-mcp-server-webflux</artifactId>
+		</dependency>
+
+2. In application.properties we will declare the server name and the server version
+
+spring.ai.mcp.server.name=my-server-sse
+spring.ai.mcp.version=1.0.0
+
+logging.level.org.springframework.ai=DEBUG
+server.port=8040
+
+3. create a tool called StockService is to provide the user with the latest
+stock price given the company name. Now for the sake of the demo, this is going
+to be a dummy service giving the dummy stock prices.
+
+@Service
+public class StockService {
+
+    @Tool(description = "Get the stock price for company")
+    public String getStockPrice(String companyName) {
+        if (companyName.equalsIgnoreCase("infosys")) {
+            return "The stock price of Infosys in Rs 100. Valuations are attractive now.";
+        }
+        if (companyName.equalsIgnoreCase("TCS")) {
+            return "The stock price of TCS in Rs 200. Valuations are expensive.";
+        }
+        return "I don't have the information about this company.";
+    }
+}
+
+In real time we use HTTP client to communicate with stock api to return actual data
+
+4. We have to create a Bean for the service that we just created. And we will register our Tool so that the MCP Client can discover it with the help of MethodToolCallbackProvider.
+
+In main class,
+
+@SpringBootApplication
+public class SpringAiMcpServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringAiMcpServerApplication.class, args);
+	}
+
+	 @Bean
+	 public ToolCallbackProvider stockTools(StockService stockService) {
+	        return MethodToolCallbackProvider.builder().toolObjects(stockService).build();
+	 }
+}
+
+5. Create SpringAI-MCPClient project with web, mcp client, azure ai dependency. Mcp client again we have to replace to webflux because I'm creating the client in SSE mode. 
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-mcp-client-webflux</artifactId>
+		</dependency>
+
+6. Configure api keys in application.properties
+
+server.port=8050
+
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+
+logging.level.org.springframework.ai.chat.client.advisor=DEBUG
+
+# Configure your MCP client to connect to your MCP server, same server name we have to provide
+spring.ai.mcp.client.sse.connections.my-mcp-server.url=http://localhost:8040
+
+# Enable the mcp client tool-callback auto-configuration
+spring.ai.mcp.client.toolcallback.enabled=true
+
+7. Create controller
+
+@RestController
+public class ChatController {
+
+	private final ChatClient chatClient;
+
+	public ChatController(ChatClient.Builder chatClient, ToolCallbackProvider tools) {
+		this.chatClient=chatClient.defaultSystem("Please prioritize context information for answering queries. Give short, concise and to the point answer")
+				.defaultToolCallbacks(tools)
+				.build();
+	}
+	
+	@GetMapping("/chat")
+	public String chat(@RequestParam String query) {
+		PromptTemplate pt=new PromptTemplate(query);
+		Prompt p=pt.create();
+		ChatClient.CallResponseSpec res=chatClient.prompt(p).call();
+		return res.content();
+	}
+	
+	
+}
+
+8. Start MCP server appl, since we have made one tool, it is saying that I have
+registered one tool.
+
+9. Start MCP client appl, in the console logs we will able to identify and discover the MCP server that we just created which contains server name and it's a version number. It will be the same that we had mentioned in the properties file. 
+
+Run with GET request, http://localhost:8050/chat?query=what is the stock price of TCS. Should I buy it now?
+
+This request will go to MCP client. And the MCP client's large language model is going to decide whether it should make a call to the tool or not. Over here in the application logs of the client
+we see it is executing a tool call for get stock price. MCP server starts executing tool, on successful execution of tool it gave the response also to the client. Once the response reaches the MCP client, the large language model adds it to its context and uses that information
+to give you or generate the response. 
+
+-----------------------------------------------------------------------------------------------
+Why use MCP resources and Why not RAG?
+     RAG also known as Retrieval Augmented Generation, is a technique where we take documents and split them into chunks, convert those chunks into vector embeddings. Store them in a vector database like Pinecone or Weaviate. And when a user asks a question, we embed the question, search the vector database for similar chunks using semantics similarity. And pass those relevant chunks to LLM as a context. The LLM generates an answer based on that context.
+
+Advantages of RAG. 
+1. RAG is incredibly powerful. When we want AI to work with a large collection of documents
+2. It can search and retrieve the semantically similar content, even if the wording is different.  
+3. It a great choice for building Q&A systems, or for retrieving knowledge from big text repositories with accuracy and speed. 
+
+Disadvantage
+1. First is infrastructure overhead, to make RAG work, we need embeddings, chunking, a vector database, and a full document ingestion pipeline. That's a lot of setup so that AI can read and recall information.
+2. Real-time updates are also difficult. If a document changes, we must re-chunk, re-embed, and update the index. For large documents, this takes times, so RAG isn't ideal when you need instant updates.
+3. Loss of structure. Chunking breaks documents into small pieces, meaning
+the model can lose context, like page order, section hierarchy, or relationships
+between parts of the content. And it is not ideal for structured
+or dynamic data. RAG works best with static unstructured text,
+for things like database records, API responses or fast changing sensor data, it doesn't
+shine as much. This is where MCP
+
+When to use RAG or MCP?
+1. RAG is the right choice when you're dealing with a large number of documents, and needs semantic search (IE) the AI can find context based on meaning and not exact wording. It's well suited for relatively static information, like knowledge base or Q&A systems, and it helps reduce token usage by retrieving only the most relevant chunks. 
+
+2.  MCP resources make more sense when your data is smaller, constantly changing or needs real-time access. It works great with structured formats like JSON, logs or CSV files. And since the AI reads the entire context instead of chunks, it keeps full context without complicated infrastructure. 
+
+We are going to build an MCP server that exposes documents from a directory, makes
+them available to AI applications, and automatically detects and sends updates whenever
+those files change.
+
+1. Create MCPServer-SSE project with MCP server dependency, we have to replace to webflux because I'm creating the client in SSE mode. 
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-mcp-server-webflux</artifactId>
+		</dependency>
+
+and also commons.io dependency since we want to set up a File Watcher
+
+<dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.16.1</version>
+        </dependency>
+
+2. In application.properties, we give server name
+
+spring.ai.mcp.server.name=my-mcpserver-resources
+spring.ai.mcp.server.version=1.0.0
+spring.ai.mcp.server.resource-change-notification=true
+
+logging.level.org.springframework.ai=DEBUG
+server.port=8040
+
+resource.directory.path=C:\\SpringBoot\\mcp_output
+
+3. Now we create a bean for exposing resources. This bean is going to return a List of SyncMCPResourceSpecification (ie) for every file present in the directory,it will return sync resources specification. And since there can be multiple files in the directory. It has to return a list of sync resource specification.
+
+So in main class
+
+
+@SpringBootApplication
+public class McpServerSseApplication {
+	
+	@Value("${resource.directory.path}")
+    private String directoryPath;
+
+	public static void main(String[] args) {
+		SpringApplication.run(McpServerSseApplication.class, args);
+	}
+
+	
+	@Bean
+    public List<McpServerFeatures.SyncResourceSpecification> myResources() {
+		//access the path from the application properties
+		String path = directoryPath;
+		
+		//find out all the files which are present in this directory.
+		Path folderPath = Paths.get(path);
+		
+		// Iterate through them and find out the syncResourceSpecification for all of the files. 
+		//So I am going to stream on the path and for each path we call a method which give me syncresourcespecification. 
+		try(Stream<Path> paths = Files.list(folderPath)) {
+            List<McpServerFeatures.SyncResourceSpecification> resources = paths
+                    .map(this::getResourceSpecification)
+                    .collect(Collectors.toList());
+
+            return resources;
+        } catch (IOException e) {
+            return Collections.emptyList();
+        }
+	}
+}
+
+- Create getResourceSpecification() which return syncresourcespecification and takes path of the
+file as argument. 
+
+private McpServerFeatures.SyncResourceSpecification getResourceSpecification(Path filePath) {
+	        String fileName = filePath.getFileName().toString();
+	        
+	        //generate metadata for this method like file name, absolute path name, file uri and we are going to use when we are creating the document resource
+	        Path absolutePath = filePath.toAbsolutePath();
+	        String fileUri = "file://" + absolutePath;
+	        String mimeType = "text/plain";
+	        
+	        //Documentresource is a container which holds the metadata for a particular file, created using McpSchema.Resource and we use builder pattern
+	        McpSchema.Resource documentResource = McpSchema.Resource.builder()
+	                .uri(fileUri)
+	                .name(fileName)
+	                .description("Document: " + fileName)
+	                .mimeType(mimeType).build();
+	        
+	        //We use SyncResourceSpecification constructor which takes documentresource and BiFunction which takes Exchange, Request and returns ReadResourceResult
+	        McpServerFeatures.SyncResourceSpecification spec = new McpServerFeatures.SyncResourceSpecification(documentResource,
+	                (exchange, request) -> {
+	                    try {
+	                    	//read the file
+	                        String textContent = Files.readString(absolutePath);
+	                        
+	                        //generate text resources contents
+	                        McpSchema.TextResourceContents textContents = new McpSchema.TextResourceContents(request.uri(), mimeType, textContent);
+
+	                        // return read resource result
+	                        return new McpSchema.ReadResourceResult(List.of(textContents));
+	                    } catch (IOException e) {
+	                        throw new RuntimeException(e);
+	                    }
+	                });
+	        return spec;
+	 }
+
+First, we had created a document resource using the metadata of the file like file name, file uri,
+mime type, etc. And then we had implemented the bi-function using exchange, request and we returned ReadResourceResult. And finally, we got the sync resource specification that we had to return for that particular file.
+
+4. We implement a FileWatcher which used to watch the file if we made any kind of changes. So that
+if any change happens, we can notify the MCP client. For this reason only we had added commons-io dependency.
+
+@Component
+public class ResourceWatcher {
+
+    @Value("${resource.directory.path}")
+    private String directoryPath;
+
+    @Autowired
+    private McpSyncServer mcpSyncServer;  //used to notify the client
+
+    //set up a watcher 
+    @PostConstruct
+    public void start() throws Exception {
+
+    	//to monitor the changes in this directory that we had specified in the application properties.
+        FileAlterationObserver observer = new FileAlterationObserver(directoryPath);
+        observer.addListener(new FileAlterationListenerAdaptor() {
+
+            @Override
+            public void onFileChange(final File file) {
+                System.out.println("File created: " + file.getName());
+                mcpSyncServer.notifyResourcesListChanged();  //once the file update, we will be notifying the MCP client that something has changed for this file
+            }
+
+        });
+        
+        //setting up this monitor so that it can run after every 2 seconds.
+        new FileAlterationMonitor(2000, observer).start();
+    }
+
+}
+
+This observer will keep on observing files after every 2 seconds. 
+
+5. Start the appl, in the console logs, you will see Registered resources as 1. Because in the directory that we had specified that directory had 1 file. 
+
+6. Start MCP Inspector which is a tool that helps us in testing and debugging our MCP server.
+
+MCP interceptor act like a middleman. It sits between the client request and the tool execution allowing you to modify, validate or log the request and response. 
+
+- Run in cmd prompt
+C:\SpringBoot\MCPServer-SSE>npx @modelcontextprotocol/inspector 
+
+- Run http://localhost:6274/
+
+Transport type: SSE
+URL: http://localhost:8040/sse
+
+Click Connet
+
+- We can see all resources - Click List resources - we can see all files - open document.txt file
+
+- Now we make some changes in that file
+
+- Click Refresh on MCP Inspector, now we can see the changes are reflected
+
+We see a server notification - list changed (ie) the MCP server was able to successfully notify that the resource was changed. Now the MCP client will receive this notification and it is going to refresh the resource which it loaded previously. After refreshing we see that we were able to fetch the latest data
+
+7. Next  we are going to be creating an MCP client which is going to use the resource
+which was exposed by the MCP server. We will also be handling the notifications which are
+getting sent from the MCP server. 
+
+Create MCPClient-SSE project with web, MCP Client, azure ai dependency, we have to replace to webflux because I'm creating the client in SSE mode. 
+
+<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-mcp-client-webflux</artifactId>
+		</dependency>
+
+
+8. In application.properties we configure api keys
+
+server.port=8041
+
+spring.ai.mcp.client.enabled=true
+spring.ai.mcp.client.type=sync
+spring.ai.mcp.client.initialized=true
+
+#declare URL of my MCP server since we creating the MCP client to connect MCP server in SSE mode.
+spring.ai.mcp.client.sse.connections.my-mcpserver-resources.url=http://localhost:8040
+logging.level.org.springframework.ai=DEBUG
+
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
+spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
+
+9. Create a controller, we will create an endpoint which is going to list out all the files which exposed by our MCP server.
+
+@RestController
+public class BasicController {
+
+    private final ChatClient chatClient;
+
+    //during startup,the controller should have information how many MCP sync clients does it have
+    private final List<McpSyncClient> mcpSyncClients;
+
+    public BasicController(ChatClient.Builder chatClientBuilder, List<McpSyncClient> mcpSyncClients) {
+        this.mcpSyncClients = mcpSyncClients;
+        this.chatClient = chatClientBuilder.build();
+    }
+
+    @GetMapping("/documents")
+    public Map<String, Object> listAvailableDocuments() {
+        if (mcpSyncClients.isEmpty()) {
+            return Map.of("error", "No MCP clients available");
+        }
+        try {
+        	//getting the first MCP client
+            McpSyncClient client = mcpSyncClients.get(0);
+            
+            //return the list of the resources which have been exposed
+            McpSchema.ListResourcesResult resourcesList = client.listResources();
+
+            //return the metadata of each file that has been exposed by the MCP server
+            List<Map<String, String>> documents = resourcesList.resources().stream()
+                    .map(r -> Map.of(
+                            "name", r.name(),
+                            "uri", r.uri(),
+                            "description", r.description() != null ? r.description() : ""
+                    ))
+                    .toList();
+
+            //return the number of resources exposed and the actual documents 
+            return Map.of(
+                    "total", documents.size(),
+                    "documents", documents
+            );
+
+        } catch (Exception e) {
+            return Map.of("error", e.getMessage());
+        }
+    }
+    
+    
+    @Autowired
+    private ResourceService resourceService;
+
+    //we also want this content to be there when the application starts, when the MCP client starts.
+    //So we create a postconstruct method and during startup itself, we will invoke this populatetextcontent 
+    //so that the variable inside the controller, it will actually will have the text content.
+    @PostConstruct
+    public void init() {
+        resourceService.populateTextContent();
+    }
+    
+    //take an input from the user and use the resource to generate a response from the large language model.
+    //This is kind of similar that we had been doing in RAG, but here rather than using vector,
+    //DB and generation of embeddings, we are going to directly embed the entire resource
+    //into the context of large language model. 
+    @GetMapping("/chat")
+    public String chat(@RequestParam String query) {
+
+        return chatClient.prompt()
+                .user(u -> u
+                            .text("Based on this file content: {content}\n\nAnswer this question: {question}")
+                            .param("content", this.resourceService.getTextContent())
+                            .param("question", query)
+                )
+                .call()
+                .content();
+    }
+
+}
+
+
+10. create a new resource service to get the latest content of the file.
+
+
+@Service
+public class ResourceService {
+
+    //hold the latest value of document.txt. 
+    private String textContent;
+    
+    public String getTextContent() {
+        return this.textContent;
+    }
+    
+    //getting object of MCP sync clients
+    private final ApplicationContext applicationContext;
+
+    public ResourceService(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    //return actual content of the file.
+    public void populateTextContent() {
+
+    	//we will receive the beans of MCP sync client which is a list
+        List<McpSyncClient> clients = applicationContext.getBean("mcpSyncClients", List.class);
+        
+        //return first McpSyncClient
+        McpSyncClient client = clients.get(0);
+
+        //get all the resources
+        McpSchema.ListResourcesResult resourcesList = client.listResources();
+        
+        //we have only one resource which is exposed. So we get first from the resources
+        McpSchema.Resource resource = resourcesList.resources().get(0);
+        
+        // read the resource
+        McpSchema.ReadResourceResult result = client.readResource(new McpSchema.ReadResourceRequest(resource.uri()));
+
+        //read the content
+        this.textContent = result.contents().stream()
+                .filter(c -> c instanceof McpSchema.TextResourceContents)
+                .map(c -> ((McpSchema.TextResourceContents) c).text())
+                .findFirst()
+                .orElse("");
+    }
+
+  
+
+}
+
+11. Inorder to handle when the MCP server is sending notifications when the file gets changed. So we create a new class ResourceChangeService which implements McpSyncClientCustomizer and override 
+customize() which serves as a listener.
+   So whenever the MCP server publishes a notification that the resource has changed, the control will come here or this listener would get activated. 
+
+@Service
+public class ResourceChangedService implements McpSyncClientCustomizer {
+
+    private final ResourceService resourceService;
+
+    public ResourceChangedService(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
+    // we just logging that resource changed and we invoke the populateTextContent because this method is responsible for keeping the
+    //textcontent variable up to date
+    @Override
+    public void customize(String name, McpClient.SyncSpec spec) {
+        spec.resourcesChangeConsumer((List<McpSchema.Resource> resources) -> {
+            System.out.println("Resource changed! Count: " + resources.size());
+            resourceService.populateTextContent();
+        });
+    }
+
+
+}
+
+12. Start MCP Server
+
+13. Start MCP Client
+
+14. Now run http://localhost:8041/documents - which list out all the resources exposed by the MCP server like URI, name and description.
+
+http://localhost:8041/chat?query=what is Java? - It read the file via MCP server and told me about Java
+
+- When we change the document.txt file, then MCP server was able to send out this notification
+and the client received this notification and in the console logs of client, you see resource changed (ie) client also received it and it invoked populatetextcontent and check in MCP Inspector now our data also should get updated.
+
+---------------------------------------------------------------------------------------------
 AI Agent IN JAVA SPRING BOOT APP (https://www.youtube.com/watch?v=ey0uDJ7ySoQ)
+
+An AI Agent is a goal‑driven AI system that can reason and take actions using tools without constant human input.
 
 1. Create SpringAIAgent project with web, lombok, data jpa, h2 db, azure ai dependency
 
@@ -6535,8 +7041,8 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 server.port=1111
 
-spring.ai.azure.openai.api-key=
-spring.ai.azure.openai.endpoint=
+spring.ai.azure.openai.api-key=95Vr7R9yanlbyBqKZXsVO0DaK24IRrfXqHkYw1SqCZj8f3Qk3lPvJQQJ99BKACYeBjFXJ3w3AAABACOGPz8K
+spring.ai.azure.openai.endpoint=https://fullstack-ui-openai.openai.azure.com/
 spring.ai.azure.openai.chat.options.deployment-name=gpt-4.1
 spring.ai.azure.openai.embedding.options.deployment-name=text-embedding-3-small
 
