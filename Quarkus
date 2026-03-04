@@ -1,0 +1,5563 @@
+Before learning any framework, it is very important to understand why that framework was created. It is also important to understand that Quarkus is not the first Java framework. Before Quarkus, there were many Java frameworks. So the question is:
+
+What is so new and special in Quarkus that makes it different from other frameworks?
+   Let’s first goto the official Quarkus website https://quarkus.io/
+We can see Quarkus has emphasized these two points, the first one is Supersonic and the second one is Super Atomic
+    First, let’s understand what Supersonic means.It means that the execution speed of Quarkus applications is very fast, because Quarkus only compiles the classes that are actually needed and ignores the unnecessary ones. 
+   Now let’s understand Super Atomic. We know that an atom is very small, so Super Atomic means the final application size is very small compared to other frameworks. Since the size is small and fewer classes are loaded, the execution speed becomes faster and the application loads very quickly.
+   So, Quarkus provides us with two major advantages. So whenever we build any software, we mainly focus on two things:
+1. Time
+2. Memory
+
+So Quarkus projects consume less memory and have a faster startup time. Because of these two advantages, we get a very smooth live reloading experience in Quarkus projects compared to Spring Boot.
+
+What live reloading ?
+     Suppose we are developing a Quarkus project and also a Spring Boot project. We run both applications and they start producing output.
+Now, if we make any change in a file in the Quarkus project, that change is immediately reflected in the output, without recompiling the project and without stopping and restarting the application. The changes are reflected live. Whereas in the case of Spring Boot, we usually need to restart the application to see the changes or we have to add dev tool dependency 
+    You will notice that the live reloading speed in Quarkus is so fast that we won’t even realize your project has been recompiled and reloaded.
+Whereas in the case of Spring Boot, we usually have to wait for some time before the changes are reflected. Because of this live reloading feature, during the project development phase, we get a very smooth development experience, because Quarkus compiles only the required class files, resulting in fewer compiled classes.
+
+Both Spring Boot and Quarkus are excellent frameworks in their own ways. However, since Quarkus was introduced after Spring Boot, it naturally comes with new and improved features
+
+Comparison
+- Create quarkus project and Springboot project. In both projects, we have created the same “\hello” endpoint
+
+- Create jar for both project 
+>mvn clean package
+
+- Once both JAR files are built, we run them from the target folder using:
+java -jar <jar-name>
+
+After execution, both projects are running successfully. We then open the browser and verify the endpoints—both applications are responding correctly.
+
+- To measure performance and memory usage, we use a tool called Java Console (JConsole), which comes with the JDK installation and is used to monitor Java applications.
+- Goto C:\Softwares\openjdk-21.0.2_windows-x64_bin\jdk-21.0.2\bin - Double click jconsole.exe - Select springboot jar - click connect
+- Goto C:\Softwares\openjdk-21.0.2_windows-x64_bin\jdk-21.0.2\bin - Double click jconsole.exe - Select quarkus jar - click connect
+
+- Now, the difference is clearly visible.
+1. Class Loading - Under classes graph
+    Spring Boot project loaded 7,117 classes
+    Quarkus project loaded 5,598 classes
+Even in such a small project, there is a significant difference.
+
+2. Memory Usage - Under Heap memory graph
+    Spring Boot consumes around 15 MB of memory 
+    Quarkus consumes noticeably less
+3. Threads - Under threads graph
+    Springboot uses 28 live threads
+    Quarkus uses 18 live threads 
+
+This clearly shows that the Quarkus project is much more optimized compared to Spring Boot. Today, we want two things in our applications:
+- Better performance
+- Lower memory consumption
+and Quarkus provides both.
+
+
+Features of Quarkus
+1. Developed by RedHat
+2. Open Source - use it freely, You don’t have to pay anything
+It has strong community support
+3. Quarkus supports both programming models: Imperative(blocking and synchronous) and Reactive(non blocking and asynchronous)
+
+
+Springboot
+1. It is known as an opinionated framework, for creating standalone and production-ready Spring applications. Spring Boot gets rid of a lot of boilerplate code when developing Java applications.
+2. Spring Boot is generally used to speed up the time to market
+for working with Java applications.
+
+3. Performance
+Both of these can compile applications using both the JVM, which is like running our apps through an interpreter and natively, which is compiling an application for a specific machine.
+  So during the build time, this is the packaging of the application
+using tool like Maven to get the application ready, and then during runtime,
+different tasks are happening. So we're working with configuration files,
+we're working with scanning for class paths and initializing components.
+And this is happening every time that we start our application.
+
+4. Developer experience 
+It abstracts a lot of the complexity of building out a Java application, because of auto configuration, uses of annotations, things like code constructs.
+
+5. Ecosystem
+Originally was created in 2014 for building enterprise Java applications, because of this, it has a quite a large community, documentation and resources for building applications with Spring Boot and debugging.
+
+Prerequistes
+1. JDK21
+2. Maven 3.9.8
+
+Quarkus
+1. Quarkus is made for delivering container-optimized and cloud native applications that have a faster boot time and better resource utilization.
+It also combines both the imperative and reactive programing models and
+has a lot of tools for developer productivity.
+2. It is made for optimized cloud ready images and applications as well.
+
+3. It tries to do as much preprocessing as possible. So this results during the build time and the packaging of our application and all the other tasks.
+And then when we actually go to run our application, we have what's known as a pre-warmed image that has a faster boot time and better resource utilization.
+
+4. Quarkus also brings in some great components known as Quarkus's "developer joy" which includes  a bunch of different components, such as live coding
+and continual testing integrated by default. The Quarkus developer UI,
+which is a great way to visualize your dependencies, documentation, things like swagger, and also the Quarkus CLI for interacting with our projects from the command line.
+
+5. Quarkus was created in 2019 and has been rising in popularity ever since, due to the popularization of Kubernetes as a container orchestration system,
+and because of its extensibility, with over 800 different extensions
+that you can use for your projects.
+
+How do you really pick which one to use for your project?
+    Use Quarkus, if you're working with serverless or containerized applications with minimal resource consumption. Quarkus has a highly active community, a lot of up to date and comprehensive documentation
+and growing support from a lot of leading tech companies who have adopted Quarkus.
+    If you're looking for a mature framework with a vast ecosystem,
+then Spring Boot will probably be your best bet. Spring Boot is well known,
+it's very well adopted, and it's a complete and universal solution
+for any task right out of the box.
+
+What is Quarkus?
+
+1. "Traditional Java stacks were engineered for monolithic applications with long startup times and large memory requirements, in a world where cloud containers and Kubernetes did not exist."
+
+Now let’s understand what this means.
+     When we used to develop applications in Java in the traditional way, without using modern frameworks, and relied only on Servlets, JSP, and similar technologies, we typically built monolithic applications.
+    For example, suppose I am building an application. I place all the code in a single application and deployed on one server.
+
+What happens in this case?
+Because the application is very large, it takes a long time to start, and it also requires a lot of memory. Now here is where the problem begins.
+
+Today, we live in a cloud-based environment. In the cloud:
+- If an application needs 50 MB of memory, we can allocate exactly that
+- If the load increases, we can scale it up
+- If demand reduces, we can scale it down
+
+But traditional Java applications were not designed this way. At that time, cloud, containers, and Kubernetes did not exist. As we know, whenever a new technology is introduced, it is because there are limitations in the existing approach.
+
+- Now let’s look at the next part of the definition
+"Quarkus was created to enable Java developers to create applications for modern cloud‑native environments"
+
+Today, cloud infrastructure is extremely advanced.
+If we need:
+- 50 MB → we can allocate 50 MB
+- 1 GB → we can allocate 1 GB
+- Even 50 GB → we can scale up dynamically
+
+So our applications must be capable of scaling up and down easily, based on requirements, this is where Quarkus comes in. 
+
+3. Now comes the most technical and important part of the definition
+Quarkus is described as a “Kubernetes‑native Java framework tailored for GraalVM and Hotspot,crafted from the best breed of Java libraries and standrads. The goal is to make Java the leading platform in Kubernetes and serverless environments.”
+
+What does this mean?
+It means that when we build an application using Quarkus, it is designed in such a way that:
+- It can easily run on Kubernetes
+- Quarkus applications can be easily deployed and executed on containers. We can create container images, push them into containers, and run them smoothly without any issues.
+
+Let me explain what GraalVM and HotSpot are.
+     Whenever we write Java code, it runs on the JVM. The Java source code is compiled into bytecode, which is then executed by the JVM. However, the traditional JVM is comparatively slower. To improve performance, Oracle introduced HotSpot.
+    HotSpot is part of OpenJDK, and it optimizes Java execution significantly.
+Beyond HotSpot, there is an even more optimized runtime called GraalVM.
+So, HotSpot and GraalVM are both virtual machines, but they are highly optimized compared to the traditional JVM. Applications running on these environments have:
+- Very low startup time
+- Very low memory consumption
+
+So If we build applications that can run on GraalVM, their performance is significantly better than traditional JVM-based applications.
+
+Next we explain "crafted from the best breed of Java libraries and standrads"
+   - This means Quarkus supports all standard Java libraries and features.
+
+Next we explain "The goal is to make Java the leading platform in Kubernetes and serverless environments”
+     Earlier, we had: Traditional JSP and Servlets (now outdated) and then came Spring, which improved things significantly
+     But even Spring-based projects tend to be heavy in size. Quarkus is built specifically for the modern cloud-native world, where applications:
+- Run as binaries
+- Execute efficiently on GraalVM and HotSpot
+- Start extremely fast
+- Consume minimal memory
+
+What makes Quarkus different ?
+1. Developer Joy
+       Developer joy means that when a developer learns Quarkus and starts building applications with it, they truly enjoy the development experience.
+
+Why?
+Because Quarkus provides:
+- All the tools required to support cloud environments
+- Easy application creation and deployment on the cloud
+- A powerful extension-based architecture
+
+We want to write less code and let the framework handle most of the work. Quarkus is designed with this philosophy in mind.
+
+2. Native
+Native means Quarkus applications are specifically built for cloud environments. So there is no doubt whether they will support modern cloud infrastructure or not. They perform best on the cloud, scale easily, and are simple to maintain.
+
+3. Best-in-Class Performance
+Quarkus provides top-level performance compared to traditional frameworks.
+
+4. Imperative and Reactive Programming
+       Quarkus supports both imperative and reactive programming models.
+
+Software requistes
+1. Eclipse
+2. JDK 11 or above
+3. Maven 
+
+Creating First Quarkus application
+1. Create imperative style quarkus project from code.quarkus.io
+
+group: com.pack
+artifact: Quarkus1
+Build tool: Maven
+Java version: 21
+Starter code: yes
+
+Add dependency: RESTEasy classic(create REST endpoints), RESTEasy classic Jackson(convert output to JSON)
+
+- Click Generate ur appl - Download Zip
+
+2. Extract zip file and import in eclipse, where we can see 3 dependency quarkus-resteasy,quarkus-resteasy-jackson,quarkus-arc(manages dependency injection)
+
+- In pom.xml, change <packaging>jar<packaging> instead of quarkus to avoid the error 
+
+3. Install Quarkus tool in Eclipse marketplace - so that directly we can create the project (like STS in springboot)
+
+4. Inside main, there are important folder
+1. Java
+This folder contains all our Java source files. Currently, we have a file named GreetingResource.
+    As I mentioned earlier, if you selected Include Starter Code, this file is generated automatically.
+This file contains dummy code that returns a “Hello RESTEasy” output.
+
+2. Resources
+Inside resources, we have application.properties. This file is used for application configuration.
+
+
+5. To run the appl, in cmd prompt
+
+- By default quarkus will run on 8080 port no, we can change port no in applictaion.properties file as
+
+quarkus.http.port=8081
+
+- Run the appl
+C:\Microservice\quarkus1>mvnw quarkus:dev
+
+- Now run http://localhost:8081, where it will open quarkus dashboard where it will display all endpoints
+
+- Now run endpoint http://localhost:8081/hello which displays the response
+
+- Now we change something in GreetingResource, once we save and refresh the browser, the changes will be automatically affected because of Live reloading feature 
+
+- To stop the appl, in cmd prompt, give option h then option q
+
+Add new dependency / extension in Quarkus 
+      In a Quarkus project, dependencies are also referred to as extensions.
+The easiest way to add any dependency or extension is by using a Maven command.
+
+- To check how many dependencies or extensions Quarkus provides.
+>mvn quarkus:list-extensions
+
+- To add new dependencies or extensions Quarkus 
+>mvn quarkus:add-extension -Dextensions=”quarkus-mutiny”
+
+
+Create REST endpoints in Quarkus
+   First We create a resource
+           In Spring Boot, When an endpoint is hit, the request first goes to the controller From the controller, we call the service layer.
+In Quarkus, a controller is called a Resource.
+
+Using this resource, we will:
+- Add a new mobile to the list (post)
+- update mobile (put)
+- Fetch and print the entire list (GET)
+- Delete a mobile name from the list (delete)
+
+1. Create first-quarkus-app with resteasy classic, resteasy classic jackson dependency
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+           <plugin>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+
+to
+     <plugin>
+				<groupId>${quarkus.platform.group-id}</groupId>
+				<artifactId>quarkus-maven-plugin</artifactId>
+				<version>${quarkus.platform.version}</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build</goal>
+							<goal>generate-code</goal>
+							<goal>generate-code-tests</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Create MobileResource file 
+- First, we need to make this class a RESTful endpoint (ie) when our Quarkus application is running and we hit a URL, Quarkus should know which class contains the endpoint by using @Path
+
+@Path("/mobile")
+public class MobileResource {
+	
+	List<String> mobileList=new ArrayList<>();
+
+	//Get request does not take any input and returns a list of mobile names. So  we use @Produces where we specify the media type of the response as TEXT_PLAIN
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public List<String> getMobileList() {
+		return mobileList;
+	}
+	
+	//POST method will not return anything but it will accept input, because we are adding a new mobile for that, we use @Consumes and specify that this API will accept simple plain text as input.
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	public void addNewMobile(String mobileName) {
+		mobileList.add(mobileName);
+	}
+}
+
+5. Run the appl
+C:\Microservice\first-quarkus-app>mvnw quarkus:dev
+
+- Run Thunderclient
+
+POST - http://localhost:8082/mobile - In body - Text - Redmi 5
+POST - http://localhost:8082/mobile - In body - Text - Samsung
+GET - http://localhost:8082/mobile - it returns [Redmi 5,Samsung]
+
+6. Currently, we are directly returning a List. But in real REST APIs, we don’t just return data but we return HTTP status codes by using a Response object.
+
+@Path("/mobile")
+public class MobileResource {
+	
+	List<String> mobileList=new ArrayList<>();
+
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response getMobileList() {
+		return Response.ok(mobileList).build();
+	}
+
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+   @Produces(MediaType.TEXT_PLAIN)
+	public Response addNewMobile(String mobileName) {
+		mobileList.add(mobileName);
+      return Response.ok(mobileName).build();
+	}
+}
+
+6. Run Thunderclient
+
+POST - http://localhost:8082/mobile - In body - Text - Redmi 5
+POST - http://localhost:8082/mobile - In body - Text - Samsung
+GET - http://localhost:8082/mobile - it returns [Redmi 5,Samsung]
+
+7. Now we perform update operation
+
+@PUT
+	@Path("/{oldMobileName}")
+	@Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+	public Response updateMobile(@PathParam("oldMobileName")String oldMobileName,@QueryParam("newMobileName") String newMobileName ) {
+		mobileList=mobileList.stream().map(mobile -> {
+			if(mobile.equals(oldMobileName))
+				return newMobileName;
+			else 
+				return mobile;
+		}).collect(Collectors.toList());
+		return Response.ok(mobileList).build();
+	}
+
+8. Run Thunderclient
+
+POST - http://localhost:8082/mobile - In body - Text - Redmi
+POST - http://localhost:8082/mobile - In body - Text - Samsung
+GET - http://localhost:8082/mobile - it returns [Redmi,Samsung]
+PUT - http://localhost:8082/mobile/Redmi?newMobileName=iPhone
+
+9. We perform delete operation
+
+@DELETE
+	@Path("/{mobileToDelete}")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response deleteMobile(@PathParam("mobileToDelete")String mobileToDelete) {
+		boolean isRemoved=mobileList.remove(mobileToDelete);
+		if(isRemoved) {
+			return Response.noContent().build();
+		} else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+
+10. Run Thunderclient
+
+POST - http://localhost:8082/mobile - In body - Text - Redmi
+POST - http://localhost:8082/mobile - In body - Text - Samsung
+GET - http://localhost:8082/mobile - it returns [Redmi,Samsung]
+DELETE - http://localhost:8082/mobile/Samsung
+GET - http://localhost:8082/mobile - it returns [Redmi]
+
+11. Previously we created our first RESTful web service, where we used a List of Strings. But in the real world, we never work with just a single string. Instead, we work with complete objects.
+
+Create Mobile class
+
+public class Mobile {
+    int id;
+    String name;
+    String brand;
+    int ram;
+    int externalStorage;
+    //getters and setters
+}
+
+12. Update MobileResource to return Mobile object
+
+@Path("/mobile")
+public class MobileResource {
+	
+	List<Mobile> mobileList=new ArrayList<>();
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getMobileList() {
+		return Response.ok(mobileList).build();
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+	public Response addNewMobile(Mobile mobile) {
+		mobileList.add(mobile);
+      return Response.ok(mobile).build();
+	}
+	
+	@PUT
+	@Path("/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+	public Response updateMobile(@PathParam("id") Integer id, Mobile mobileToUpdate) {
+		mobileList=mobileList.stream().map(mobile -> {
+			if(mobile.getId()==id)
+				return mobileToUpdate;
+			else 
+				return mobile;
+		}).collect(Collectors.toList());
+		return Response.ok(mobileList).build();
+	}
+	
+	@DELETE
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteMobile(@PathParam("id")Integer id) {
+		Optional<Mobile> mobileToDelete=mobileList.stream().filter(mobile -> mobile.getId()==id).findFirst();
+		if(mobileToDelete.isPresent()) {
+			mobileList.remove(mobileToDelete.get());
+			return Response.ok(mobileList).build();
+		} else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getMobileById(@PathParam("id")Integer id) {
+		Optional<Mobile> optionalMobile=mobileList.stream().filter(mobile -> mobile.getId()==id).findFirst();
+		if(optionalMobile.isPresent()) {
+			return Response.ok(optionalMobile.get()).build();
+		} else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	
+}
+
+
+13. Run the appl
+C:\Microservice\first-quarkus-app>mvnw quarkus:dev
+
+- In Thunderclient 
+POST - http://localhost:8082/mobile - Body - JSON
+{
+  "id": 1,
+  "name": "Realme 9",
+  "brand": "Realme",
+  "ram": 8,
+  "externalStorage": 128
+}
+{
+  "id": 2,
+  "name": "Samsung Galaxy",
+  "brand": "Samsung",
+  "ram": 12,
+  "externalStorage": 512
+}
+
+GET - http://localhost:8082/mobile
+PUT - http://localhost:8082/mobile/2
+
+{
+  "id": 2,
+  "name": "Galaxy",
+  "brand": "Samsung",
+  "ram": 12,
+  "externalStorage": 512
+}
+DELETE - http://localhost:8082/mobile/2
+GET - http://localhost:8082/mobile/1
+
+
+How to use Swagger ui in Quarkus ?
+     With the help of Swagger, we can see:
+1. How many APIs exist in our project
+2. Their complete documentation
+3. What input they expect
+4. What output they return
+5. we can also test the APIs directly from there
+
+
+1. We list the extension available in quarkus
+C:\Microservice\first-quarkus-app>mvn quarkus:list-extensions
+
+To enable Swagger, we need to add an extension, which is basically a dependency  called "quarkus-smallrye-openapi"
+
+2. We add the extension
+C:\Microservice\first-quarkus-app>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-openapi"
+
+We can see that the dependency has been added successfully in pom.xml 
+
+3. Run the application
+C:\Microservice\first-quarkus-app>mvn quarkus:dev
+
+4. Now run swagger, http://localhost:8082/q/swagger-ui
+
+Now we can test the appl
+
+- By default, Swagger is accessible on its default path. But suppose you want to access it using a custom path like /abc. In application.properties file
+
+quarkus.swagger-ui.path=/abc
+
+Now we can run swagger, http://localhost:8082/q/abc
+
+- If we want to disable Swagger in production env, then in application.properties file
+
+quarkus.swagger-ui.always-include=false
+
+
+Microprofile Rest-Client with Quarkus 
+      MicroProfile REST Client provides a type-safe approach using proxies and annotations to invoke RESTful web services.
+
+We created a project, and inside that project we created APIs. We were calling these APIs from the browser. The browser was sending HTTP requests to our server, and the server was responding. Now suppose you want to call APIs created by someone else inside your project.
+    Suppose another team has created an application, and you want to access their APIs from your project. Obviously, your end user will call your project, not the other team’s project directly. But internally, you want to consume their APIs.
+     For example, imagine you are building a train reservation application.
+You know that you will need train information. But you don’t own the railway database, and you will never get direct access to it. So what do you do?
+You call the APIs exposed by the railway system. They must have created APIs that return train data, and you consume those APIs in your application.
+
+Steps
+1. First we create resources
+2. Next we will create a proxy interface which will call the remote API and annotated with  @RegisterRestClient, and we will inject it using @RestClient
+
+1. Create microprofile-rest-client project with RESTEasy classic, RESTEasy classic jackson, RESTeasy classic rest Client(to call remote api) dependency 
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+           <plugin>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+
+to
+     <plugin>
+				<groupId>${quarkus.platform.group-id}</groupId>
+				<artifactId>quarkus-maven-plugin</artifactId>
+				<version>${quarkus.platform.version}</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build</goal>
+							<goal>generate-code</goal>
+							<goal>generate-code-tests</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. We add the swagger extension
+C:\Microservice\microprofile-rest-client>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-openapi"
+
+5. Now we are going to access api for testing purpose. So run  https://jsonplaceholder.typicode.com/todos/1 with GET request, it returns 
+
+{
+  "userId": 1,
+  "id": 1,
+  "title": "delectus aut autem",
+  "completed": false
+}
+
+- Now we create a Todo class to store this response,
+
+public class Todo {
+	  Integer userId;
+	  Integer id;
+	  String title;
+	  boolean completed;
+     //getters and setters
+}
+
+- Create a TodoResource class, inside we access remote api by create proxy interface and inject it using @RestClient
+
+@Path("/todos")
+public class TodoResource {
+	
+	  @RestClient
+      TodoProxy proxy;
+
+	    @GET
+	    @Path("/{id}")
+	    public Response getTodosById(@PathParam("id") int id){
+	        return Response.ok(proxy.getTodosById(id)).build();
+	    }
+
+}
+
+
+- Create TodoProxy interface
+
+@Path("/")
+@RegisterRestClient(baseUri = "https://jsonplaceholder.typicode.com")
+public interface TodoProxy {
+
+    @GET
+    @Path("todos/{id}")
+    Todo getTodosById(@PathParam("id") int id);
+
+}
+
+6. Run the appl
+C:\Microservice\microprofile-rest-client>mvn quarkus:dev
+
+Run swagger, http://localhost:8082/q/swagger-ui
+
+Now we can see whenever we execute http://localhost:8082/todos/1, internally it will call remote api https://jsonplaceholder.typicode.com/todos/1 and generate the response
+
+7. Now we access another call https://jsonplaceholder.typicode.com/comments?postId=1, to perform we can create another proxy interface or we can use same one
+
+- Create TodoProxyComments interface
+       Here the data will be passed as a query parameter using @QueryParam.
+Now this method returns a list, because one postid can be associated with multiple comments. Now the response structure does not match the Todo class fields. To fix this, instead of returning a List<Todo>, we return a generic JSON response using JsonArray
+
+@Path("/")
+@RegisterRestClient(baseUri = "https://jsonplaceholder.typicode.com")
+public interface TodoProxyComments  {
+  
+    @GET
+    @Path("/comments")
+    String  getCommentsByPostId(@QueryParam("postId") Integer postId);
+}
+
+- Now inject this interface inside Resource class
+
+      @RestClient
+	    TodoProxyComments proxy1;
+
+// here client return String, and convert it using JSON using JsonArray	    
+	@GET
+	@Path("/comments/{postId}")
+	public JsonArray getCommentsByPostId(@PathParam("postId") Integer postId) {
+		String json = proxy1.getCommentsByPostId(postId);
+		try (JsonReader reader = Json.createReader(new StringReader(json))) {
+			return reader.readArray();
+		}
+	}
+
+7. Save and run the appl
+
+8. Instead of creating multiple proxy interfaces, we can use one single REST client with multiple methods in the same interface.
+
+@Path("/")
+@RegisterRestClient(baseUri = "https://jsonplaceholder.typicode.com")
+public interface TodoProxy {
+
+    @GET
+    @Path("todos/{id}")
+    Todo getTodosById(@PathParam("id") int id);
+    
+    @GET
+    @Path("/comments")
+    String  getCommentsByPostId(@QueryParam("postId") Integer postId);
+
+}
+
+
+@Path("/todos")
+public class TodoResource {
+
+	@RestClient
+	TodoProxy proxy;
+
+	@GET
+	@Path("/{id}")
+	public Response getTodosById(@PathParam("id") int id) {
+		return Response.ok(proxy.getTodosById(id)).build();
+	}
+
+	@GET
+	@Path("/comments/{postId}")
+	public JsonArray getCommentsByPostId(@PathParam("postId") Integer postId) {
+		String json = proxy.getCommentsByPostId(postId);
+		try (JsonReader reader = Json.createReader(new StringReader(json))) {
+			return reader.readArray();
+		}
+	}
+
+}
+
+
+Enable CORS filter in Quarkus 
+     Previously in our project we were calling an API hosted on another server—for example, the jsonplaceholder.typicode.com. We called it inside our project and received responses such as todos related data and that communication was happening internally on the backend
+    But whenever we call our own Quarkus API from the frontend. Suppose our frontend is built using Angular. When Angular (or any frontend application) tries to call our Quarkus API, we may see a CORS error in the browser.
+     It means, we are trying to access resources from another server
+But we don’t have permission to do so. So when one server tries to access another server’s APIs, the target server must explicitly allow it.
+
+quarkus.http.cors=true
+quarkus.http.cors.origin=*
+quarkus.http.cors.methods=GET,POST
+
+
+Microprofile fault tolerance with Quarkus
+       Suppose in our project, we are calling someone else’s API on another project. But due to some reason, the server is down, or they changed their API path. In that case we get 404 – Page Not Found, because that API no longer exists. So that error will be visible to our application and to our end user.
+       So we create a method with @FallbackMethod, so if any error occurs—whether the API path changes or the server does not respond—then immediately the fallback method will be executed and return any message, such as
+“Site is under maintenance” or any custom message we want
+       The fallback method’s signature must be exactly the same as the original method.
+
+1. We need to add extension called "quarkus-smallrye-fault-tolerance"
+C:\Microservice\microprofile-rest-client>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-fault-tolerance"
+
+2. Now in resource class we add fallback methods
+
+@Path("/todos")
+public class TodoResource {
+
+	@RestClient
+	TodoProxy proxy;
+
+	@GET
+	@Fallback(fallbackMethod = "getTodosByIdFallback")
+	@Path("/{id}")
+	public Response getTodosById(@PathParam("id") int id) {
+		return Response.ok(proxy.getTodosById(id)).build();
+	}
+
+	public Response getTodosByIdFallback(int id){
+        return Response.ok("Site is under maintenance").build();
+    }
+	
+}
+
+3. Run the application, and run http://localhost:8082/todos/300000, it will show Site is under maintainence
+
+Fault Tolerance Annotations
+1. @Fallback
+2. @Retry(maxRetries = 3)
+         When method calls some other API. If the first call fails, it retries again and if it fails again, it retries again. It will retry 3 times.
+If after 3 retries there is still no response, then if a fallback method is defined fallback is executed, otherwise error is returned
+        So with @Retry, the application does not give up immediately.
+
+3. @Timeout.
+       Suppose API takes 10–12 seconds to respond. During this time, the user keeps seeing “Loading…”, and thinks “Something is wrong, the app is not working.” To avoid this, we define a timeout.
+
+@Timeout(2000)
+
+This means we wait 2 seconds, if no response comes within 2 seconds → execution stops and then fallback logic is triggered
+
+Retry + Timeout Together
+If you use both Retry and Timeout, then:
+- First, the system waits for the timeout duration
+- If no response arrives, it retries
+- This process repeats for the retry count
+- If it still fails → fallback method executes
+
+
+4. @CircuitBreaker
+       Suppose we built a Cricket Score App. This app shows live cricket scores. We do not have our own data, so we call Cricbuzz API. Now imagine
+Cricbuzz API goes down, our app keeps calling it continuously
+Retry → fallback → retry → fallback → retry…
+      This creates unnecessary load on our application. We already know the service is down, so why keep hitting it repeatedly?
+
+When a dependent service keeps failing:
+- We break the circuit
+- Stop calling the service for some time
+- After a delay, we try again
+This prevents unnecessary load.
+
+@CircuitBreaker(
+    requestVolumeThreshold = 4,
+    failureRatio = 0.5,
+    delay = 10s
+)
+
+Suppose we make the first call and we do not get any response. At this point, this annotation does not do anything special; the execution simply continues. 
+Then we call again—still no response. We call again—still no response.
+We call again—still no response. So we have called it four times, and we have not received any response at all.
+    So we called it four times and How many times did we get a response? Zero times. So what is the probability of getting a response? Zero, right?
+    Now let’s understand another case. You call it once—no response.
+You call it again—no response. You call it again—no response. You call it a fourth time—and this time you do get a response.
+   So out of four calls, you got one successful response. What is the probability now? 0.25 (25%)
+   Now suppose our failure threshold is 0.5. If the success ratio is less than 0.5, then:
+- In the first case, it was 0
+- In the second case, it was 0.25
+Both are below 0.5.
+
+So in this situation, what will happen? We will NOT send the next (fifth) request. Instead, we will wait for 10 seconds.
+
+How Request Volume Threshold Works
+     You define a value in requestVolumeThreshold. Before sending any new request, the system checks:
+    What was the status of the previous four requests?
+
+If the success ratio of those four requests is below the defined threshold, then the circuit remains open means stop sending requests
+
+1. Create microprofile-restclient project with RESTEasy classic, RESTEasy classic jackson, RESTeasy classic rest Client(to call remote api) dependency 
+where we define some api so that another project can access it to get weather details
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+           <plugin>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+
+to
+     <plugin>
+				<groupId>${quarkus.platform.group-id}</groupId>
+				<artifactId>quarkus-maven-plugin</artifactId>
+				<version>${quarkus.platform.version}</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build</goal>
+							<goal>generate-code</goal>
+							<goal>generate-code-tests</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. In application.properties, change port number
+quarkus.http.port=8085
+
+5. Create Resource class
+
+@Path("/api")
+public class WeatherResource {
+
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("weather_by_country/{country}")
+	public Response weatherByCountry(@PathParam("country")String country) {
+		return Response.ok("Weather of "+country+":"+new Random().nextInt(100)).build();
+	}
+}
+
+6. Create Weather-quarkus project with with RESTEasy classic, RESTEasy classic jackson dependency 
+
+7. Import the project and change packaging to jar in pom.xml and update plugin section
+
+8. Delete default files from project (ie) GreetingResource and test files
+
+9. We add the swagger extension
+C:\Microservice\weather-quarkus>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-openapi"
+
+
+10. Create Resource class
+
+@Path("/")
+@Produces(MediaType.TEXT_PLAIN)
+public class Resource {
+
+    @RestClient
+    WeatherRestClient weatherRestClient;
+
+    @GET
+    @Path("weather/{country}")
+    public Response getWeatherByCountry(@PathParam("country") String country){
+        Response response=weatherRestClient.weatherByCountry(country);
+        return response;
+    }
+
+}
+
+11. Create Rest client interface
+
+@RegisterRestClient(baseUri="http://localhost:8085")
+@Path("/api")
+public interface WeatherRestClient {
+     
+   @GET
+   @Produces(MediaType.TEXT_PLAIN)
+   @Path("weather_by_country/{country}")
+   Response weatherByCountry(@PathParam("country")String country);
+}
+
+12. Run microprofile-restclient appl
+
+C:\Microservice\microprofile-restclient>mvn quarkus:dev
+
+- Run weather-quarkus appl
+
+C:\Microservice\weather-quarkus>mvn quarkus:dev
+
+13. Run http://localhost:8084/q/swagger-ui, give the country and we can see the log info in the console
+
+14. Stop both appl
+
+15. Add fault tolerance extension in weather-quarkus appl
+
+C:\Microservice\weather-quarkus>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-fault-tolerance"
+
+16. Create fallback method
+
+@GET
+    @Fallback(fallbackMethod = "getWeatherByCountryFallback")
+    @Path("weather/{country}")
+    public Response getWeatherByCountry(@PathParam("country") String country) {
+     Response response=weatherRestClient.weatherByCountry(country);
+     return response;
+    }
+
+    public Response getWeatherByCountryFallback(String country) {
+    	return Response.ok("Server is down Please wait").build();
+    }
+
+17. Run weather-quarkus appl
+
+C:\Microservice\weather-quarkus>mvn quarkus:dev
+
+18. Run http://localhost:8084/q/swagger-ui, give the country and we can see fallback response "Server is down Please wait"
+
+19.  Now we hit three times, if we get a response within those three tries, everything is fine. If we do not get a response, the fallback method will execute using @Retry
+
+@Path("/")
+@Produces(MediaType.TEXT_PLAIN)
+public class Resource {
+
+	public static final Logger log=Logger.getLogger(Resource.class);
+	
+    @RestClient
+    WeatherRestClient weatherRestClient;
+
+    @GET
+    @Fallback(fallbackMethod = "getWeatherByCountryFallback")
+    @Retry(maxRetries = 3)
+    @Path("weather/{country}")
+    public Response getWeatherByCountry(@PathParam("country") String country) {
+     log.info("Calling Resource getWeatherByCountry");
+     Response response=weatherRestClient.weatherByCountry(country);
+     return response;
+    }
+
+    public Response getWeatherByCountryFallback(String country) {
+    	return Response.ok("Server is down Please wait").build();
+    }
+}
+
+20. Run http://localhost:8084/q/swagger-ui, give the country and we can see fallback response "Server is down Please wait"
+
+Now check the logs. Here you can see that the log message was printed our times. After 1 initial call is failed, 3 retries are performed, so total calls is 4
+   If you configured 3 retries, then after the first failure it will retry 3 times. If a response comes in any of those retries, everything is fine.
+Otherwise, the fallback method will execute.
+
+21. In WeatherResource, we use @Timeout
+       We make the API sleep for a while when it is called, and it will return the response after 2 seconds using Thread.sleep()
+
+@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	@Path("weather_by_country/{country}")
+	public Response weatherByCountry(@PathParam("country")String country) throws Exception {
+		log.info("Calling WeatherResource::weatherByCountry for country:"+country);
+		Thread.sleep(2000);
+		return Response.ok("Weather of "+country+":"+new Random().nextInt(100)).build();
+	}
+
+22. In Resource class, we calculate the total time
+
+ @GET
+    @Fallback(fallbackMethod = "getWeatherByCountryFallback")
+    @Retry(maxRetries = 3)
+    @Path("weather/{country}")
+    public Response getWeatherByCountry(@PathParam("country") String country) {
+     log.info("Calling Resource getWeatherByCountry");
+     Long startTime=System.currentTimeMillis();
+     Response response=weatherRestClient.weatherByCountry(country);
+     Long endTime=System.currentTimeMillis();
+     String resp=response.readEntity(String.class);
+     resp=resp+">>>"+((endTime-startTime)/100);
+     return response.ok(resp).build();
+    }
+
+23. Run both the appl
+
+24. Run http://localhost:8084/q/swagger-ui, give the country and we can see
+ the response time is around 2 seconds
+
+25. Now we do not want to wait more than 1 second. If our project does not receive a response from appl within 1 second, then the fallback method should execute. So we apply the @Timeout annotation.
+
+@GET
+    @Fallback(fallbackMethod = "getWeatherByCountryFallback")
+    @Retry(maxRetries = 3)
+    @Timeout(1000)
+    @Path("weather/{country}")
+    public Response getWeatherByCountry(@PathParam("country") String country) {
+     log.info("Calling Resource getWeatherByCountry");
+     Long startTime=System.currentTimeMillis();
+     Response response=weatherRestClient.weatherByCountry(country);
+     Long endTime=System.currentTimeMillis();
+     String resp=response.readEntity(String.class);
+     resp=resp+">>>"+((endTime-startTime)/100);
+     return response.ok(resp).build();
+    }
+
+26. Run http://localhost:8084/q/swagger-ui, give the country and we can see
+fallback response "Server is down Please wait"
+
+So If the response does not come within 1 second, it will retry 3 more times
+If in any retry it gets a response within 1 second, it will return successfully. Otherwise, the fallback method will execute
+
+27. Now we implement Circuit breaker in Resource class
+
+@GET
+    @Fallback(fallbackMethod = "getWeatherByCountryFallback")
+    @Retry(maxRetries = 3)
+    @Timeout(1000)
+    @CircuitBreaker(requestVolumeThreshold = 4,failureRatio = 0.5,delay = 10000)
+    @Path("weather/{country}")
+    public Response getWeatherByCountry(@PathParam("country") String country) {
+     log.info("Calling Resource getWeatherByCountry");
+     return weatherRestClient.weatherByCountry(country);
+     /*Long startTime=System.currentTimeMillis();
+     Response response=weatherRestClient.weatherByCountry(country);
+     Long endTime=System.currentTimeMillis();
+     String resp=response.readEntity(String.class);
+     resp=resp+">>>"+((endTime-startTime)/100);
+     return response.ok(resp).build();*/
+    }
+
+We will send 4 requests, if the success ratio is 50% (ie) out of 4 requests, 2 requests are successful. Then when the next request comes, we will still allow the API call. But if out of 4 requests, only 1 request succeeds And 3 requests fail. Then in that case, we will wait for 10 seconds, and after that, we will try hitting the API again.
+
+28. Run only weather-quarkus
+
+29. To test the appl, open gitbash and run 
+
+senthil.kumart@LP-5CD151G7GC MINGW64 /c
+$ while true; do sleep 1; curl http://localhost:8084/weather/india; echo -e '\n';done
+
+We know that, it will send 4 requests. After that, it will wait for 10 seconds
+Then it will send the next request. You can see that we are getting the fallback message, but the request is not actually being sent to the server.It means that we are not putting unnecessary load on the server. The user keeps seeing the message “Service is down”, but internally, we are not calling the actual API.
+
+ @CircuitBreaker(requestVolumeThreshold = 4,failureRatio = 0.5,delay = 60, delayUnit=ChronoUnit.SECONDS)
+
+This time it will wait 60 seconds. You can see that no API calls are being made, and the fallback message is still shown to the user.
+
+
+Hibernate-ORM PanacheEntity with MySQL
+    Inside Quarkus, we can use Hibernate ORM in two ways:
+1. By extending an Entity base class
+2. By implementing an interface. Normally, when we follow MVC architecture, we use the second approach.
+
+1. By extending an Entity base class PanacheEntity
+1. Create Hibernate-Quarkus project with RestEasy classic,RestEasy classic jackson, Hibernate orm with panache, jdbc driver - mysql dependency
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Create entity class and we will give power to this entity by extending with the entity base class called PanacheEntity, so that it can interact with the database, fetch data from the database, and allow us to perform CRUD operations on it.
+    we did not create an id field inside this class. But an id field will come automatically from this entity base class.
+
+@Entity
+public class Laptop extends PanacheEntity{
+     String name;
+     String brand;
+     int ram;
+     int externalStorage;
+     //getters and setters
+}
+
+5. Create Resource class  to perform CRUD operations.
+
+@Path("/laptop")
+public class LaptopResource {
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllLaptop() {
+		List<Laptop> laptopList=Laptop.listAll();
+		return Response.ok(laptopList).build();
+	}
+	
+	@POST
+   @Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response saveLaptop(Laptop laptop) {
+		Laptop.persist(laptop);
+		if(laptop.isPersistent()) {
+			return Response.created(URI.create("/laptop"+laptop.id)).build(); //When our Laptop is saved, we return an output from where that laptop can be accessed.
+		}else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	//Return laptop based on id
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getLaptopById(@PathParam("id")Long id) {
+		Laptop laptop=Laptop.findById(id);
+		return Response.ok(laptop).build();
+	}
+	
+	@PUT
+   @Transactional
+	@Path("/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateLaptop(@PathParam("id")Long id,Laptop updateLaptop) {
+		Optional<Laptop> optionalLaptop=Laptop.findByIdOptional(id);
+		if(optionalLaptop.isPresent()) {
+			Laptop dbLaptop=optionalLaptop.get();
+			
+			if(Objects.nonNull(updateLaptop.getName())) {
+				dbLaptop.setName(updateLaptop.getName());
+			}
+			if(Objects.nonNull(updateLaptop.getBrand())) {
+				dbLaptop.setBrand(updateLaptop.getBrand());
+			}
+			if(Objects.nonNull(updateLaptop.getRam())) {
+				dbLaptop.setRam(updateLaptop.getRam());
+			}
+			if(Objects.nonNull(updateLaptop.getExternalStorage())) {
+				dbLaptop.setExternalStorage(updateLaptop.getExternalStorage());
+			}
+			dbLaptop.persist();
+			if(dbLaptop.isPersistent()) {
+				return Response.created(URI.create("/laptop"+id)).build(); 
+			}else {
+				return Response.status(Response.Status.BAD_REQUEST).build();
+			}
+		}else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	@DELETE
+   @Transactional
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteLaptopById(@PathParam("id")Long id) {
+		boolean isDeleted=Laptop.deleteById(id);
+		if(isDeleted)
+		    return Response.noContent().build();
+		else
+			return Response.status(Response.Status.BAD_REQUEST).build();
+	}
+}
+
+6. We define database configuration in application.properties. First we goto https://quarkus.io/guides/datasource
+
+quarkus.datasource.db-kind=mysql
+quarkus.datasource.jdbc.url=jdbc:mysql://localhost:3306/demo
+quarkus.datasource.username=root
+quarkus.datasource.password=root
+
+#Since Hibernate is executing queries internally, those queries will also be printed in the logs.
+quarkus.hibernate-orm.log.sql=true
+
+#drop all existing tables in the database and create new tables automatically
+quarkus.hibernate-orm.database.generation=drop-and-create
+
+1. none - Hibernate does nothing to the database schema
+No table creation, No table update ,No table drop
+
+When to use:
+-Production environments
+-When schema is managed manually or via Flyway/Liquibase
+
+2. create - Creates database tables if they do not exist, Does NOT drop existing tables
+
+When to use:
+- Fresh databases
+- Controlled test environments
+
+3. drop - Drops the database schema on application shutdown. Does not recreate tables automatically
+
+When to use:
+- Rarely used
+- Mostly for experimentation
+
+4. drop-and-create - Drops all existing tables. Recreates the schema at application startup
+- All existing data is lost
+
+When to use:
+- Local development
+- Learning and demos
+- First-time schema testing
+
+5. update - Updates the database schema to match entity change
+Attempts to add missing columns/tables
+Does NOT safely handle complex schema changes
+
+
+7. We add the swagger extension
+C:\Microservice\hibernate-quarkus>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-openapi"
+
+8. Run the application
+C:\Microservice\hibernate-quarkus>mvn quarkus:dev
+
+9. Run the swagger, http://localhost:1000/q/swagger-ui
+
+- Save new laptop
+{
+   "name":"Latitude3210",
+   "brand":"Dell",
+   "ram":16,
+   "externalStorage":128
+}
+
+Now data will be inserted into mysql table
+
+
+Hibernate-ORM PanacheRepository with MySQL
+1. In Laptop class we remove "extends PanacheEntity" and we have to manually create a primary key
+
+@Entity
+public class Laptop  {
+	 @Id
+	 @GeneratedValue(strategy=GenerationType.AUTO)
+	 Long id;
+     String name;
+     String brand;
+     int ram;
+     int externalStorage;
+     //getters and setters
+}
+
+2. Create a class that implements PanacheRepository with @ApplicationScopedso we can inject this class anywhere inside your entire application.
+
+@ApplicationScoped
+public class LaptopRepository implements PanacheRepository<Laptop>{
+
+}
+
+3. Now we inject this class in LaptopResource class
+
+@Path("/laptop")
+public class LaptopResource {
+	
+	@Inject
+	LaptopRepository laptopRepository;
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllLaptop() {
+		List<Laptop> laptopList=laptopRepository.listAll();
+		return Response.ok(laptopList).build();
+	}
+	
+	@POST
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response saveLaptop(Laptop laptop) {
+		laptopRepository.persist(laptop);
+		if(laptopRepository.isPersistent(laptop)) {
+			return Response.created(URI.create("/laptop"+laptop.id)).build(); //When our Laptop is saved, we return an output from where that laptop can be accessed.
+		}else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	//Return laptop based on id
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getLaptopById(@PathParam("id")Long id) {
+		Laptop laptop=laptopRepository.findById(id);
+		return Response.ok(laptop).build();
+	}
+	
+	@PUT
+	@Path("/{id}")
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateLaptop(@PathParam("id")Long id,Laptop updateLaptop) {
+		Optional<Laptop> optionalLaptop=laptopRepository.findByIdOptional(id);
+		if(optionalLaptop.isPresent()) {
+			Laptop dbLaptop=optionalLaptop.get();
+			
+			if(Objects.nonNull(updateLaptop.getName())) {
+				dbLaptop.setName(updateLaptop.getName());
+			}
+			if(Objects.nonNull(updateLaptop.getBrand())) {
+				dbLaptop.setBrand(updateLaptop.getBrand());
+			}
+			if(updateLaptop.getRam()!=0) {
+				dbLaptop.setRam(updateLaptop.getRam());
+			}
+			if(updateLaptop.getExternalStorage()!=0) {
+				dbLaptop.setExternalStorage(updateLaptop.getExternalStorage());
+			}
+			laptopRepository.persist(dbLaptop);
+			if(laptopRepository.isPersistent(dbLaptop)) {
+				return Response.created(URI.create("/laptop"+id)).build(); 
+			}else {
+				return Response.status(Response.Status.BAD_REQUEST).build();
+			}
+		}else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	@DELETE
+	@Transactional
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteLaptopById(@PathParam("id")Long id) {
+		boolean isDeleted=laptopRepository.deleteById(id);
+		if(isDeleted)
+		    return Response.noContent().build();
+		else
+			return Response.status(Response.Status.BAD_REQUEST).build();
+	}
+}
+
+4. Run the application
+C:\Microservice\hibernate-quarkus>mvn quarkus:dev
+
+5. Run the swagger, http://localhost:1000/q/swagger-ui
+
+- Save new laptop
+{
+   "name":"Latitude3210",
+   "brand":"Dell",
+   "ram":16,
+   "externalStorage":128
+}
+
+Now data will be inserted into mysql table
+
+
+OneToOne Mapping with Hibernate ORM in Quarkus
+         We take an example One Citizen has one Aadhaar and One Aadhaar belongs to one Citizen using foreign concept
+        If the Citizen record is deleted, the Aadhaar record pointing to that Citizen becomes invalid. So we usually configure the database such that if a Citizen is deleted, the related Aadhaar is automatically deleted. This is called Cascade Delete.
+
+
+1. Create quarkus-onetoone with RestEasy classic,RestEasy classic jackson, Hibernate orm with panache, jdbc driver - mysql dependency
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Configure db info in application.properties
+
+5. Create Aadhar and Citizen entity class. 
+     Whether it is the Aadhaar table or the Citizen table, we need to add one extra column in any one of the two tables to map its primary key 
+
+@Entity
+public class Aadhar {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+    Long aadharNumber;
+    String Company;
+
+    @OneToOne
+    Citizen citizen;
+
+    //getters and setter
+}
+
+@Entity
+public class Citizen {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+    String name;
+    String gender;
+
+    @OneToOne(mappedBy = "citizen", cascade = CascadeType.ALL)
+    Aadhar aadhar;
+
+    //getters and setter
+}
+
+6. Create repository class
+
+@ApplicationScoped
+public class AadharRepository implements PanacheRepository<Aadhar> {
+}
+
+@ApplicationScoped
+public class CitizenRepository implements PanacheRepository<Citizen> {
+}
+
+7. Create resource class
+
+@Path("/")
+public class ExampleResource {
+
+    @Inject
+    CitizenRepository citizenRepository;
+    @Inject
+    AadharRepository aadharRepository;
+
+    @GET
+    @Path("save")
+    @Transactional
+    public Response saveCitizen(){
+
+
+
+        Citizen citizen = new Citizen();
+        citizen.setGender("M");
+        citizen.setName("Rahul");
+
+        Aadhar aadhar = new Aadhar();
+        aadhar.setAadharNumber(2133L);
+        aadhar.setCompany("UIDAI");
+        aadhar.setCitizen(citizen);
+
+        citizen.setAadhar(aadhar);
+
+        citizenRepository.persist(citizen);
+
+
+
+        return  Response.ok("Saved").build();
+
+    }
+}
+
+8. Run the appl, run http://localhost:1000/save, now the data will stored in db
+
+mysql> select * from citizen;
++----+--------+-------+
+| id | gender | name  |
++----+--------+-------+
+|  1 | M      | Rahul |
++----+--------+-------+
+1 row in set (0.00 sec)
+
+mysql> select * from aadhar;
++--------------+------------+----+---------+
+| aadharNumber | citizen_id | id | Company |
++--------------+------------+----+---------+
+|         2133 |          1 |  1 | UIDAI   |
++--------------+------------+----+---------+
+1 row in set (0.00 sec)
+
+
+
+OneToMany Mapping with Hibernate ORM in Quarkus
+    - One person have many phones
+
+1. Create Person and Phone entity class
+
+@Entity
+public class Person {
+	@Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+    String name;
+    String gender;
+    
+    @OneToMany(mappedBy="person",cascade = CascadeType.ALL)
+    List<Phone> phone;
+
+    //getter and setter
+}
+
+@Entity
+public class Phone {
+	@Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+	Long number;
+	String provider;
+	boolean isActive;
+	
+	@ManyToOne
+	Person person;
+}
+
+2. Create repository class
+
+@ApplicationScoped
+public class PersonRepository implements PanacheRepository<Person> {
+}
+
+@ApplicationScoped
+public class PhoneRepository implements PanacheRepository<Phone> {
+}
+
+3. Create resource class
+
+@Path("/")
+public class Resource1 {
+
+    @Inject
+    PersonRepository personRepository;
+    
+    @GET
+    @Path("save1")
+    @Transactional
+    public Response savePerson(){
+        Person p=new Person();
+        p.setName("Ram");
+        p.setGender("M");
+        
+        Phone p1=new Phone();
+        p1.setActive(true);
+        p1.setNumber(1234L);
+        p1.setProvider("Jio");
+        p1.setPerson(p);
+        
+        Phone p2=new Phone();
+        p2.setActive(true);
+        p2.setNumber(4567L);
+        p2.setProvider("Airtel");
+        p2.setPerson(p);
+        
+        Phone p3=new Phone();
+        p3.setActive(true);
+        p3.setNumber(4234L);
+        p3.setProvider("Vodophone");
+        p3.setPerson(p);
+        
+        p.setPhone(List.of(p1,p2,p3));
+        
+        personRepository.persist(p);
+        
+        if(personRepository.isPersistent(p))
+        	return Response.ok(new String("Person with phone no saved")).build();
+        else
+        	return Response.ok(new String("Something went wrong")).build();
+    }
+}
+
+4. Start the appl
+
+5. Run http://localhost:1000/save1
+
+mysql> select * from person;
++----+--------+------+
+| id | gender | name |
++----+--------+------+
+|  1 | M      | Ram  |
++----+--------+------+
+1 row in set (0.00 sec)
+
+mysql> select * from phone;
++--------------------+----+--------+-----------+-----------+
+| isActive           | id | number | person_id | provider  |
++--------------------+----+--------+-----------+-----------+
+| 0x01               |  1 |   1234 |         1 | Jio       |
+| 0x01               |  2 |   4567 |         1 | Airtel    |
+| 0x01               |  3 |   4234 |         1 | Vodophone |
++--------------------+----+--------+-----------+-----------+
+3 rows in set (0.01 sec)
+
+
+ManyToMany Mapping with Hibernate ORM in Quarkus
+    A User can open account in many bank. A bank can have many user
+
+1. Create User and Bank entity class
+
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+    String name;
+    String gender;
+
+    @ManyToMany
+    List<Bank> bankList=new ArrayList<>();
+    //getter and setter
+}
+
+@Entity
+public class Bank {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+    String name;
+    String branch;
+    String ifsccode;
+    
+    @ManyToMany(mappedBy="bankList")
+    List<User> userList=new ArrayList<>();
+
+    //getter, setter, toString
+}
+
+2. Create repository class
+
+@ApplicationScoped
+public class UserRepository implements PanacheRepository<User> {
+}
+
+@ApplicationScoped
+public class BankRepository implements PanacheRepository<Bank> {
+}
+
+3. Create resource class
+
+@Path("/")
+public class Resource2 {
+
+    @Inject
+    BankRepository bankRepository;
+    
+    @Inject
+    UserRepository userRepository;
+    
+    @GET
+    @Path("save_user")
+    @Transactional
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response saveUser(){
+        String[] bankNames= {"SBI","PNB","AXIS","HDFC","ICICI","KOTAK"};
+        
+        Bank SBIBank=bankRepository.find("name",bankNames[0]).firstResult();
+        Bank PNBBank=bankRepository.find("name",bankNames[1]).firstResult();
+        Bank AXISBank=bankRepository.find("name",bankNames[2]).firstResult();
+        Bank HDFCBank=bankRepository.find("name",bankNames[3]).firstResult();
+        Bank ICICIBank=bankRepository.find("name",bankNames[4]).firstResult();
+        Bank KOTAKBank=bankRepository.find("name",bankNames[5]).firstResult();
+        
+        System.out.println(">>>>>>>>>>>>>>"+PNBBank);
+        
+        User u1=new User();
+        u1.setName("Ram");
+        u1.setGender("Male");
+        u1.setBankList(List.of(SBIBank,AXISBank,ICICIBank,PNBBank));
+        
+        User u2=new User();
+        u2.setName("Sam");
+        u2.setGender("Male");
+        u2.setBankList(List.of(SBIBank,AXISBank,KOTAKBank));
+        
+        User u3=new User();
+        u3.setName("Lim");
+        u3.setGender("Female");
+        u3.setBankList(List.of(HDFCBank));
+        
+        userRepository.persist(u1);
+        userRepository.persist(u2);
+        userRepository.persist(u3); 
+        
+        return Response.status(Response.Status.OK).build();
+    }
+    
+    @GET
+    @Path("save_bank")
+    @Transactional
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response saveBank(){
+        String[] bankNames= {"SBI","PNB","AXIS","HDFC","ICICI","KOTAK"};
+        
+        for(String bankName: bankNames) {
+        	Bank bank=new Bank();
+        	bank.setBranch("IT Park,SEZ");
+        	bank.setName(bankName);
+        	bank.setIfsccode("IFSC22"+bankName);
+        	
+        	bankRepository.persist(bank);
+        }
+        return Response.status(Response.Status.OK).build();
+    }
+}
+
+4. Run the appl
+
+5. Run http://localhost:1000/save_bank, http://localhost:1000/save_user
+
+mysql> select * from bank;
++----+-------------+-------------+-------+
+| id | branch      | ifsccode    | name  |
++----+-------------+-------------+-------+
+|  1 | IT Park,SEZ | IFSC22SBI   | SBI   |
+|  2 | IT Park,SEZ | IFSC22PNB   | PNB   |
+|  3 | IT Park,SEZ | IFSC22AXIS  | AXIS  |
+|  4 | IT Park,SEZ | IFSC22HDFC  | HDFC  |
+|  5 | IT Park,SEZ | IFSC22ICICI | ICICI |
+|  6 | IT Park,SEZ | IFSC22KOTAK | KOTAK |
++----+-------------+-------------+-------+
+6 rows in set (0.00 sec)
+
+mysql> select * from user;
++----+--------+------+
+| id | gender | name |
++----+--------+------+
+|  1 | Male   | Ram  |
+|  2 | Male   | Sam  |
+|  3 | Female | Lim  |
++----+--------+------+
+3 rows in set (0.00 sec)
+
+mysql> select * from user_bank;
++-------------+-------------+
+| bankList_id | userList_id |
++-------------+-------------+
+|           1 |           1 |
+|           3 |           1 |
+|           5 |           1 |
+|           2 |           1 |
+|           1 |           2 |
+|           3 |           2 |
+|           6 |           2 |
+|           4 |           3 |
++-------------+-------------+
+8 rows in set (0.00 sec)
+
+
+Important methods of PanacheRepository for database query in Quarkus
+          PanacheRepository  is an interface that provides all the required methods through which we can perform all database operations.
+          Any work you can do using PanacheRepository, you can also do using PanacheEntity.
+we will always use PanacheRepository, so  PanacheEntity is Class-based and  PanacheRepository is Interface-based
+
+1. Create Hibernate-Quarkus-repositorymethods project with RestEasy classic,RestEasy classic jackson, Hibernate orm with panache, jdbc driver - mysql dependency
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Create entity class
+
+public enum Status {
+    Alive,
+    Deceased
+}
+
+
+@Entity
+public class Person  {
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	public Long id;
+    public String name;
+    public LocalDate birth;
+    public Status status;
+    
+    //getter and setter, toString
+}
+
+5. Create repository class
+
+public class PersonRepository implements PanacheRepository<Person> {
+
+}
+
+6. Create Resource class
+
+@Path("/api")
+public class PersonResource {
+	
+	@Inject
+	PersonRepository personRepository;
+	
+	@POST
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response savePerson(Person person) {
+		personRepository.persist(person);
+		if(personRepository.isPersistent(person)) {
+			return Response.ok("Person saved successfully").build(); //When our Laptop is saved, we return an output from where that laptop can be accessed.
+		}else {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+	}
+	
+	// getting a list of all Person entities
+	List<Person> allPersons = Person.listAll();
+
+	// finding a specific person by ID
+	person = Person.findById(personId);
+
+	// finding specific persons by their IDs
+	List<Person> personsById = Person.findByIds(List.of(personId1, personId2));
+
+	// finding a specific person by ID via an Optional
+	Optional<Person> optional = Person.findByIdOptional(personId);
+	person = optional.orElseThrow(() -> new NotFoundException());
+
+	// finding all living persons
+	List<Person> livingPersons = Person.list("status", Status.Alive);
+
+	// counting all persons
+	long countAll = Person.count();
+
+	// counting all living persons
+	long countAlive = Person.count("status", Status.Alive);
+
+	// delete all living persons
+	Person.delete("status", Status.Alive);
+
+	// delete all persons
+	Person.deleteAll();
+
+	// delete by id
+	boolean deleted = Person.deleteById(personId);
+
+	// set the name of all living persons to 'Mortal'
+	Person.update("name = 'Mortal' where status = ?1", Status.Alive);
+	
+
+}
+
+7. Add custom queries on your entities inside the entities themselves
+
+public class PersonRepository implements PanacheRepository<Person> {
+	   public Person findByName(String name){
+	       return find("name", name).firstResult();
+	   }
+
+	   public List<Person> findAlive(){
+	       return list("status", Status.Alive);
+	   }
+
+	   public void deleteStefs(){
+	       delete("name", "Stef");
+	  }
+}
+
+8. Paging 
+
+// create a query for all living persons
+PanacheQuery<Person> livingPersons = Person.find("status", Status.Alive);
+
+// make it use pages of 25 entries at a time
+livingPersons.page(Page.ofSize(25));
+
+// get the first page
+List<Person> firstPage = livingPersons.list();
+
+// get the second page
+List<Person> secondPage = livingPersons.nextPage().list();
+
+// get page 7
+List<Person> page7 = livingPersons.page(Page.of(7, 25)).list();
+
+// get the number of pages
+int numberOfPages = livingPersons.pageCount();
+
+// get the total number of entities returned by this query without paging
+long count = livingPersons.count();
+
+// and you can chain methods of course
+return Person.find("status", Status.Alive)
+    .page(Page.ofSize(25))
+    .nextPage()
+    .stream()
+
+9. Using a range instead of pages
+
+// create a query for all living persons
+PanacheQuery<Person> livingPersons = Person.find("status", Status.Alive);
+
+// make it use a range: start at index 0 until index 24 (inclusive).
+livingPersons.range(0, 24);
+
+// get the range
+List<Person> firstRange = livingPersons.list();
+
+// to get the next range, you need to call range again
+List<Person> secondRange = livingPersons.range(25, 49).list();
+
+10. Sorting
+
+List<Person> persons = Person.list(Sort.by("name").and("birth"));
+
+// and with more restrictions
+List<Person> persons = Person.list("status", Sort.by("name").and("birth"), Status.Alive);
+
+// and list first the entries with null values in the field "birth"
+List<Person> persons = Person.list(Sort.by("birth", Sort.NullPrecedence.NULLS_FIRST));
+
+11. Named queries
+
+@Entity
+@NamedQueries({
+    @NamedQuery(name = "Person.getByName", query = "from Person where name = ?1"),
+    @NamedQuery(name = "Person.countByStatus", query = "select count(*) from Person p where p.status = :status"),
+    @NamedQuery(name = "Person.updateStatusById", query = "update Person p set p.status = :status where p.id = :id"),
+    @NamedQuery(name = "Person.deleteById", query = "delete from Person p where p.id = ?1")
+})
+
+public class Person extends PanacheEntity {
+    public String name;
+    public LocalDate birth;
+    public Status status;
+
+    public static Person findByName(String name){
+        return find("#Person.getByName", name).firstResult();
+    }
+
+    public static long countByStatus(Status status) {
+        return count("#Person.countByStatus", Parameters.with("status", status).map());
+    }
+
+    public static long updateStatusById(Status status, long id) {
+        return update("#Person.updateStatusById", Parameters.with("status", status).and("id", id));
+    }
+
+    public static long deleteById(long id) {
+        return delete("#Person.deleteById", id);
+    }
+}
+
+12. Query parameters
+
+1. You can pass query parameters by index (1-based) as shown below:
+
+Person.find("name = ?1 and status = ?2", "stef", Status.Alive);
+
+2. By name using a Map:
+
+Map<String, Object> params = new HashMap<>();
+params.put("name", "stef");
+params.put("status", Status.Alive);
+Person.find("name = :name and status = :status", params);
+
+
+3. using the convenience class Parameters either as is or to build a Map:
+
+// generate a Map
+Person.find("name = :name and status = :status",
+         Parameters.with("name", "stef").and("status", Status.Alive).map());
+
+// use it as-is
+Person.find("name = :name and status = :status",
+         Parameters.with("name", "stef").and("status", Status.Alive));
+
+
+13. Query projection
+          Query projection can be done with the project(Class) method on the PanacheQuery object that is returned by the find() methods. You can use it to restrict which fields will be returned by the database.
+          The projection class needs to have a constructor that contains all its attributes, this constructor will be used to instantiate the projection DTO instead of using the entity class. This class must have a matching constructor with all the class attributes as parameters.
+
+@RegisterForReflection 
+public class PersonName {
+    public final String name; 
+
+    public PersonName(String name){ 
+        this.name = name;
+    }
+}
+
+// only 'name' will be loaded from the database
+PanacheQuery<PersonName> query = Person.find("status", Status.Alive).project(PersonName.class);
+
+
+- If in the DTO projection object you have a field from a referenced entity, you can use the @ProjectedFieldName annotation to provide the path for the SELECT statement.
+
+
+import jakarta.persistence.ManyToOne;
+import io.quarkus.hibernate.orm.panache.common.ProjectedFieldName;
+
+@Entity
+public class Dog extends PanacheEntity {
+    public String name;
+    public String race;
+    public Double weight;
+    @ManyToOne
+    public Person owner;
+}
+
+@RegisterForReflection
+public class DogDto {
+    public String name;
+    public String ownerName;
+
+    public DogDto(String name, @ProjectedFieldName("owner.name") String ownerName) {  
+        this.name = name;
+        this.ownerName = ownerName;
+    }
+}
+
+PanacheQuery<DogDto> query = Dog.findAll().project(DogDto.class);
+
+
+- In case you want to project an entity in a class with nested classes, you can use the @NestedProjectedClass annotation on those nested classes.
+
+
+@RegisterForReflection
+public class DogDto {
+    public String name;
+    public PersonDto owner;
+
+    public DogDto(String name, PersonDto owner) {
+        this.name = name;
+        this.owner = owner;
+    }
+
+    @NestedProjectedClass 
+    public static class PersonDto {
+        public String name;
+
+        public PersonDto(String name) {
+            this.name = name;
+        }
+    }
+}
+
+PanacheQuery<DogDto> query = Dog.findAll().project(DogDto.class);
+
+- It is also possible to specify a HQL query with a select clause. In this case, the projection class must have a constructor matching the values returned by the select clause:
+
+
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
+public class RaceWeight {
+    public final String race;
+    public final Double weight;
+
+    public RaceWeight(String race) {
+        this(race, null);
+    }
+
+    public RaceWeight(String race, Double weight) { 
+        this.race = race;
+        this.weight = weight;
+    }
+}
+
+// Only the race and the average weight will be loaded
+PanacheQuery<RaceWeight> query = Person.find("select d.race, AVG(d.weight) from Dog d group by d.race").project(RaceWeight.class);
+
+
+- If you need to have multiple constructors in your DTO, you must annotate the constructor intended to generate a SELECT clause with @ProjectedConstructor:
+
+
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.quarkus.hibernate.orm.panache.common.ProjectedConstructor;
+
+@RegisterForReflection
+public class PersonName {
+    public final String name;
+
+    @ProjectedConstructor 
+    public PersonName(String name) {
+        this.name = name;
+    }
+
+    public PersonName(String name, String otherField) {
+        this.name = name;
+    }
+}
+
+// only 'name' will be loaded from the database
+PanacheQuery<PersonName> query = Person.find("status", Status.Alive).project(PersonName.class);
+
+
+Testing Quarkus application with RestAssured
+        We need the Rest Assured dependency, so whenever we download a Quarkus project, this dependency is automatically added
+       To test our APIs, we must keep the following points in mind:
+1. Create a test class
+2. Annotate the test class with @QuarkusTest which tells Quarkus that we are doing integration testing
+3.  A test class can contain multiple test methods. We can define the order in which these methods execute
+
+Whenever we test a method, it must contain three parts: Given, When, Then
+
+1. Create Quarkus-testing project with RestEasy classic,RestEasy classic jackson, Hibernate orm with panache, jdbc driver - mysql dependency (Rest Assured dependency is added automatically)
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Create entity class
+
+@Entity
+public class Student {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long StudentId;
+    String name;
+    String branch;
+    //getter and setter
+}
+
+5. Create repository class
+
+@ApplicationScoped
+public class StudentRepository implements PanacheRepository<Student> {
+}
+
+6. Create resource class
+
+@Path("/")
+public class StudentResource {
+
+    @Inject
+    StudentRepository studentRepository;
+    
+    @POST
+    @Path("addStudent")
+    @Transactional
+    @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public Response addStudent(@RequestBody Student student) {
+        studentRepository.persist(student);
+        if (studentRepository.isPersistent(student)) {
+            //localhost:8080/student/id
+            return Response.created(URI.create("/student/" + student.getStudentId())).build();
+        }
+        return Response.ok(Response.status(Response.Status.BAD_REQUEST)).build();
+    }
+    
+    @GET
+    @Path("student/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Response getStudentById(@PathParam("id") Long id) {
+        Student student = studentRepository.findById(id);
+        if (student == null)
+            return Response.ok(Response.status(Response.Status.NOT_FOUND)).build();
+        else
+            return Response.ok(student).build();
+    }
+
+
+    @GET
+    @Path("getStudentList")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStudentList(){
+        List<Student> studentList = studentRepository.listAll();
+        return Response.ok(studentList).build();
+    }
+
+    @GET
+    @Path("getCSStudentList")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCSStudentList(){
+        List<Student> csStudentList =  new ArrayList<>();
+        List<Student> studentList = studentRepository.listAll();
+        studentList.forEach(s->{
+            if(s.getBranch().equalsIgnoreCase("CS")){
+                csStudentList.add(s);
+            }
+        });
+        return Response.ok(csStudentList).build();
+    }
+}
+
+7. We add the swagger extension
+C:\Microservice\quarkus-testing>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-openapi"
+
+8. Run the appl
+C:\Microservice\quarkus-testing>mvn quarkus:dev
+
+In swagger, run http://localhost:1000/q/swagger-ui first post some data and check all endpoints are working
+
+9. Write the test case with @QuarkusTest and we need to use an @Tag annotation to provide information about what type of testing this is.
+
+@QuarkusTest
+@Tag("integration")
+public class StudentResourceTest {
+	
+	    @Order(1)
+	    @Test
+	    @Disabled
+	    public void addStudent() {
+	        JsonObject jsonObject = Json.createObjectBuilder()
+	                .add("StudentId", 10L)
+	                .add("name", "Elon Musk")
+	                .add("branch", "CS")
+	                .build();
+
+	        RestAssured.given()
+	                .contentType(MediaType.APPLICATION_JSON)
+	                .body(jsonObject.toString())
+	                .when()
+	                .post("addStudent")
+	                .then()
+	                .statusCode(Response.Status.CREATED.getStatusCode());
+	    }
+
+	    @Order(2)
+	    @Test
+	    public void getStudentById() {
+	        RestAssured
+	            .given()
+	                .accept(ContentType.JSON)
+	            .when()
+	                .get("/student/101")
+	            .then()
+	                .statusCode(200)
+	                .contentType(ContentType.JSON)
+	                .body("studentId", equalTo(101))
+	                .body("name", equalTo("Elon Musk"))
+	                .body("branch", equalTo("CS"));
+	    }
+
+
+	@Test
+	public void testGetStudentList() {
+		RestAssured
+        .given()
+        .when()
+        .get("/getStudentList")
+        .then()
+        .body("size()", equalTo(7))
+        .body("name", hasItems("Ram","Sam"))
+        .body("branch",hasItems("CS","EE"));
+	}
+	
+	@Test
+    public void getCSStudentList() {
+        RestAssured
+                .given()
+                .when()
+                .get("/getCSStudentList")
+                .then()
+                .body("size()", equalTo(4))
+                .body("name", hasItems("Ram","Sam","Elon Musk","Elon Musk"));
+    }
+}
+
+
+- But before running test cases, make sure to stop the application and then run test cases
+
+10. Run test case 
+>mvn clean test
+
+
+Testing Quarkus application with JUnit 5 and Mockito
+        Previously we learned how to test a Quarkus application using the REST Assured dependency. When we added the REST Assured dependency
+- We created a test class
+- Inside it, we wrote a test method
+- Inside the test method, we followed the Given – When – Then structure
+- In the "then" section, we validated the response body
+
+Now we test a Quarkus application using the JUnit5 and Mockito
+1. Entity class - No testing required. It’s just a data holder
+
+2. Repository class testing
+       The Repository class does not inject any other object. So it can be tested independently
+No mocking is required here
+
+3. Resource class testing - The Resource class injects the Repository
+      When testing the Resource class, we do NOT use the real repository We mock the repository
+Because we are testing only the Resource logic, not the database
+
+
+       
+1. Add Mockito dependency in pom.xml
+
+<dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+2. Create a custom query to list student based on branch
+
+@ApplicationScoped
+public class StudentRepository implements PanacheRepository<Student> {
+	
+	public List<Student> getStudentListByBranch(String branch) {
+        return list("Select s from Student s where s.branch=?1", branch);
+    }
+}
+
+3. Now we test repository class
+
+@QuarkusTest
+public class StudentRepositoryTest {
+
+    @Inject
+    StudentRepository studentRepository;
+
+    @Test
+    public void listAll(){
+        List<Student> studentList = studentRepository.listAll();
+
+        assertFalse(studentList.isEmpty());
+        assertEquals(studentList.size(),7);
+        assertEquals(studentList.get(0).getName(),"Ram");
+    }
+
+    @Test
+    public void findById(){
+        Student student = studentRepository.findById(4L);
+
+        assertNotNull(student);
+        assertEquals(student.getStudentId(),4L);
+        assertEquals(student.getName(),"Jam");
+        assertEquals(student.getBranch(),"EE");
+
+    }
+
+    @Test
+    public void getStudentListByBranch(){
+        List<Student> studentList = studentRepository.getStudentListByBranch("EE");
+
+        assertFalse(studentList.isEmpty());
+        assertEquals(studentList.size(),3);
+
+    }
+}
+
+4. Run test case
+>mvn clean test
+
+5. Now we test resource class
+     We tested the Repository class very easily. But inside the Resource class, we inject the Repository class object, and then we call multiple methods of that repository.
+So we have a Resource class and this Resource class depends on another class, which is the Repository class
+
+@Path("/student")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class StudentResource1 {
+
+    @Inject
+    StudentRepository studentRepository;
+
+    @POST
+    public Response createStudent(@RequestBody Student student) {
+        studentRepository.persist(student);
+        if (studentRepository.isPersistent(student))
+            //localhost:8080/student/id
+            return Response.created(URI.create("/student/" + student.getStudentId())).build();
+        else
+            return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
+    @GET
+    public Response getAllStudent() {
+        List<Student> studentList = studentRepository.listAll();
+        return Response.ok(studentList).build();
+    }
+
+    @GET
+    @Path("branch/{branch}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCSStudentList(@PathParam("branch") String branch) {
+        List<Student> studentList = studentRepository.list("branch", branch);
+        return Response.ok(studentList).build();
+    }
+
+    @GET
+    @Path("{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStudentById(@PathParam("id") Long id) {
+        Student student = studentRepository.findById(id);
+        if (student != null)
+            return Response.ok(student).build();
+        else
+            return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    @POST
+    @Path("update/{id}")
+    public Response updateStudent(@RequestBody Student studentUpdate, @PathParam("id") Long id) {
+        Student student = studentRepository.findById(id);
+        if (student != null) {
+            student.setName(studentUpdate.getName());
+            return Response.ok(student).build();
+        } else
+            return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
+    @POST
+    @Path("delete/{id}")
+    public Response deleteStudent(@PathParam("id") Long id) {
+        boolean isDeleted = studentRepository.deleteById(id);
+        if (isDeleted) {
+            return Response.status(Response.Status.NO_CONTENT).build();
+        } else
+            return Response.status(Response.Status.NOT_FOUND).build();
+    }
+}
+
+6. Create test case for resource class
+
+@QuarkusTest
+public class StudentResource1Test {
+
+    @Inject
+    StudentResource1 studentResource;
+
+    @InjectMock
+    StudentRepository studentRepository;
+
+    Student student;
+
+    @BeforeEach
+    public void setUp() {
+        student = new Student();
+        student.setName("Aakash");
+        student.setBranch("CS");
+    }
+
+    @Test
+    public void createStudent() {
+        Student s = new Student(1L,"Rahul","CS");
+
+        Mockito.doNothing().when(studentRepository).persist(s);
+        Mockito.when(studentRepository.isPersistent(s)).thenReturn(true);
+
+        Response response = studentResource.createStudent(s);
+
+        assertNotNull(response);
+        assertNull(response.getEntity());
+        assertEquals(response.getStatus(), Response.Status.CREATED.getStatusCode());
+        assertNotNull(response.getLocation());
+    }
+
+    @Test
+    public void getAllStudent() {
+        List<Student> studentList =  new ArrayList<>();
+        studentList.add(new Student(1L,"Shruti","CS"));
+        studentList.add(new Student(2L,"Rahul","CS"));
+        studentList.add(new Student(3L,"Aakanksha","ME"));
+
+        Mockito.when(studentRepository.listAll()).thenReturn(studentList);
+
+        Response response = studentResource.getAllStudent();
+
+        assertNotNull(response);
+        assertNotNull(response.getEntity());
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+
+        List<Student> studentList1 = (List<Student>) response.getEntity();
+
+        assertEquals(studentList1.size(),3);
+
+
+    }
+
+
+    @Test
+    public  void getStudentById() {
+        Student student1 = new Student(4L,"Rajesh","ME");
+
+        Mockito.when(studentRepository.findById(ArgumentMatchers.any(Long.class))).thenReturn(student1);
+
+        Response response = studentResource.getStudentById(4L);
+
+        assertNotNull(response);
+        assertNotNull(response.getEntity());
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+
+        Student sr = (Student) response.getEntity();
+
+        assertEquals(sr.getName(),"Rajesh");
+        assertEquals(sr.getBranch(),"ME");
+
+    }
+
+    @Test
+    public void getStudentByIdKO() {
+
+        Mockito.when(studentRepository.findById(ArgumentMatchers.any(Long.class))).thenReturn(null);
+
+        Response response = studentResource.getStudentById(5L);
+
+        assertNotNull(response);
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+
+
+    }
+
+    @Test
+    public void updateStudent() {
+        Student student1 = new Student(4L,"Rajesh","ME");
+        Mockito.when(studentRepository.findById(ArgumentMatchers.any(Long.class))).thenReturn(student1);
+
+        Student newUpdateStudent= new Student();
+        newUpdateStudent.setName("Mahesh");
+        Response response = studentResource.updateStudent(newUpdateStudent, 4L);
+
+        assertNotNull(response);
+        assertNotNull(response.getEntity());
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+
+        Student sr = (Student) response.getEntity();
+
+        assertEquals(sr.getName(),"Mahesh");
+        assertEquals(sr.getBranch(),"ME");
+    }
+
+
+    @Test
+    public void deleteStudent_whenDeleted_shouldReturn204() {
+        // arrange
+        when(studentRepository.deleteById(10L)).thenReturn(true);
+
+        // act
+        Response response = studentResource.deleteStudent(10L);
+
+        // assert
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+        verify(studentRepository).deleteById(10L);
+    }
+
+    @Test
+    public void deleteStudent_whenNotFound_shouldReturn404() {
+        // arrange
+        when(studentRepository.deleteById(10L)).thenReturn(false);
+
+        // act
+        Response response = studentResource.deleteStudent(10L);
+
+        // assert
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        verify(studentRepository).deleteById(10L);
+    }
+}
+
+7. Run test cases
+>mvn clean test
+
+
+MicroProfile Configuration with Quarkus
+     Suppose we are building a banking application, the bank name usually remains the same, but the CEO of the bank can change. If the CEO changes, will the core banking logic change like
+Interest calculation logic, Loan calculation logic, Balance validation logic. Obviously the logic does not change, but  interest rate value, minimum balance requirement might change
+     Another scenario, consider today your application uses Microsoft SQL Server and database configuration is hardcoded in Java code. Tomorrow if we move to Oracle Database, then database structure dosent change, business logic dosent change, but only database configuration changed
+But if these values are hardcoded, then you must change Java code, recompile the project and 
+redeploy the application
+    So in every application, there are some values that are used by logic, but are not part of the logic. These are called configuration properties like Interest rate, Minimum balance, Database URL
+Username, Password. That’s why we have application.properties which stores all configurable values, can be changed without recompiling and can be updated even when the application is running
+    So we can access property from application.properties file to resource class using @ConfigProperty annotation
+
+1. In quarkus1 project, we define some properties in application.properties file
+
+interest_rate=890
+CEO="Anand Kumar"
+branch_list=Jaipur,Jodhpur,Bikaner,Nagaur
+
+2. Create resource class
+
+@Path("/")
+public class ProfileResource {
+
+	@ConfigProperty(name = "interest_rate",defaultValue = "10")
+    int interestRate;
+
+    @GET
+    @Path("calc_interest/{amount}")
+    public Response calcInterest(@PathParam("amount") int amount){
+        return Response.ok(amount*interestRate/100 ).build();
+    }
+
+	
+}
+
+3. Run the appl
+>mvn quarkus:dev
+
+and in browser run http://localhost:8081/calc_interest/10000
+
+4. Consider we have more configuration properties. Let’s assume that the interest rate differs based on branch. For example:
+
+jaipur_interest_rate=40
+jodhpur_interest_rate=30
+bikaner_interest_rate=10
+nagaur_interest_rate=40
+
+These values are defined in application.properties.
+
+Now we will dynamically build the property key using Java code using ConfigProvider
+
+ @GET
+    @Path("calc_interest/{branch}/{amount}")
+    public Response calcInterest(@PathParam("branch") String branch,@PathParam("amount") int amount){
+
+
+        Integer value = ConfigProvider
+                .getConfig().
+                getOptionalValue(branch.toLowerCase() + "_interest_rate", Integer.class)
+                .orElse(5);
+
+        return Response.ok(amount*value.intValue()/100 ).build();
+    }
+
+5. Start the appl and run http://localhost:8081/calc_interest/jaipur/10000
+
+6. Instead of accessing property individually we can use map to separate java class using @ConfigProperties
+
+@ApplicationScoped
+@ConfigProperties(prefix = "quarkus.datasource")
+public class CustomConfig {
+
+    @ConfigProperty(name="db-kind")
+    public String dbKind;
+
+    @ConfigProperty(name ="username")
+    public String username;
+
+    @ConfigProperty(name ="password")
+    public String password;
+}
+
+7. Now we can inject into Resource class and use it
+
+@Path("/")
+@Produces(MediaType.TEXT_PLAIN)
+public class Resource {
+
+    @Inject
+    CustomConfig customConfig;
+
+}
+
+
+
+How to use YAML Configuration with Quarkus
+1. We need to add a dependency or an extension called quarkus-config-yaml
+
+<dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-config-yaml</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+2. Create application.yaml
+
+quarkus:
+  datasource:
+    db-kind: postgresql
+    username: etuscyav
+    password: RCMImwuUdOvNqtSiaIJr0L9oWrMuuyiX
+    jdbc:
+      url: jdbc:postgresql://mouse.db.elephantsql.com:5432/etuscyav
+  hibernate-orm:
+    log:
+      sql: true
+    database:
+      generation: drop-and-create
+
+  http:
+    port: 9999
+
+
+Profile in Quarkus
+    When we build an application, it does not go directly to production. It passes through multiple stages like Development, Unit Testing (done along with development), System Integration Testing (SIT), User Acceptance Testing (UAT) and production. At every stage the business logic remains the same but the environment and configuration change
+    A profile means a set of configuration values, used for a specific environment
+
+1. In Quarkus1 project, in application.properties
+
+quarkus.http.port=8081
+interest_rate=90
+CEO="Anand Kumar"
+
+2. Create resource class
+
+@Path("/")
+public class Resource {
+
+    @ConfigProperty(name="CEO",defaultValue = "CodeHouse")
+    String ceo;
+
+    @ConfigProperty(name="quarkus.http.port",defaultValue = "NONE")
+    Integer port;
+
+    @ConfigProperty(name="interest_rate",defaultValue = "5")
+    String interestRate;
+
+    @GET
+    @Path("ceo")
+    public Response getCEOName(){
+        return Response.ok(ceo + " " + port +  interestRate).build();
+    }
+
+}
+
+3. Run the appl and 
+>mvn quarkus:dev
+
+- In the console we can see profile dev is activated 
+
+- Now access http://localhost:8081/ceo and it will access dev profile
+
+4.  Now we are defining properties for a new profile, so when the application runs under that profile, it should refer only to those properties.
+    Inside application.properties, we explicitly tell Quarkus, these properties belong to this specific profile. To do this we write the profile name and prefix it with a percentage (%) symbol. This % symbol tells Quarkus this is a profile-specific configuration.
+
+profile=DEFAULT
+%local.CEO=Shruti Hasan
+%local.quarkus.http.port=8087
+
+These values are used only when the local profile is active. when we run mvn quarkus:dev, by default dev profile is active
+
+5. To Run the appl in different profile
+>mvn -Dquarkus.profile=local compile quarkus:dev
+
+we can see Profile local activated in console and when we run  http://localhost:8087/ceo and it will access all local profile data
+
+6. Instead of writing everything in one file, we can also create separate property files.
+
+application-uat.properties
+
+quarkus.http.port=8890
+
+CEO="UAT CEO"
+profile=UAT_Profile
+
+7. To Run the appl in different profile
+>mvn -Dquarkus.profile=uat compile quarkus:dev
+
+we can see Profile uat activated in console and when we run  http://localhost:8890/ceo and it will access all uat profile data
+
+
+Exception Handling using ExceptionMapper
+     In our project, mainly we face two types of exceptions:
+1. Technical Exceptions
+2. Business Exceptions
+
+1. Technical Exceptions
+As the name suggests, technical exceptions occur due to technical issues, such as NullPointerException, Database exceptions, SQL errors, Wrong queries, Configuration issues
+
+2. Business Exceptions
+Business exceptions are project- or domain-specific. Suppose you are building a banking application. When adding a new user, name is mandatory, PAN card is mandatory
+These are business-related rules, so such exceptions are called Business Exceptions.
+
+To handle exceptions properly in Quarkus, we mainly do three things.
+
+Step 1: Create an Error Message Class
+   So whenever an exception occurs we return a Response object. So inside the response entity, instead of returning the actual exception, we return this ErrorMessage object. So the client (Postman, frontend, mobile app) will not see the actual exception, instead they will see a clean error response
+
+Step 2: Create Custom Exception Classes
+
+Step 3: Create ExceptionMapper class which used to catch any custom exception that is thrown
+and return a Response object, inside the response, it returns an ErrorMessage object
+
+
+1. Refer Quarkus-testing project with Student entity, StudentRepository  
+
+2. Create StudentResource2 class
+
+@Path("/")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
+public class StudentResource2 {
+
+    @Inject
+    StudentRepository studentRepository;
+
+    @POST
+    @Path("addStudent")
+    @Transactional
+    public Response addStudent(@RequestBody Student student) {
+        studentRepository.persist(student);
+        if (studentRepository.isPersistent(student)) {
+            //localhost:8080/student/id
+            return Response.created(URI.create("/student/" + student.getStudentId())).build();
+        }
+        return Response.ok(Response.status(Response.Status.BAD_REQUEST)).build();
+    }
+
+    @GET
+    @Path("student/{id}")
+    @Transactional
+    public Response getStudentById(@PathParam("id") Long id) {
+    	 Student student = studentRepository.findById(id);
+         if (student != null)
+             return Response.ok(student).build();
+         else
+             return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    @GET
+    @Path("getAllStudent")
+    @Transactional
+    public Response getStudentList() {
+        return Response.ok(studentRepository.listAll()).build();
+    }
+}
+
+3. Create ErrorMessage Class which returned to the end user as a response.
+
+public class ErrorMessage {
+    int status;
+    String message;
+    //getter and setter
+}
+
+4. Create our custom exception class.
+
+public class BusinessException extends RuntimeException {
+
+    int status;
+
+    public BusinessException() {
+    }
+
+    public BusinessException(int status, String message) {
+        super(message);
+        this.status = status;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+}
+
+
+5. Create ExceptionMapper class which catches a specific type of exception and converts it into a Response object and sends it back to the client
+
+//This annotation tells Quarkus it is a provider class for BusinessException.”
+@Provider
+public class BusinessExceptionMapper implements ExceptionMapper<BusinessException> {
+
+    @Override
+    public Response toResponse(BusinessException exception) {
+        ErrorMessage error = new ErrorMessage();
+        error.setStatus(exception.getStatus());
+        error.setMessage(exception.getMessage());
+
+        return Response.status(exception.getStatus())
+                .entity(error)
+                .type(MediaType.APPLICATION_JSON)
+                .build();
+    }
+}
+
+When a BusinessException is thrown in our project, this Exception Mapper is responsible for catching that exception. 
+
+At this point, the exception handling flow should be very clear:
+- Exception is thrown
+- ExceptionMapper catches it
+- ErrorMessage is created
+- Response is returned to the client
+
+6. Now we define exception in Resource class
+
+    @POST
+    @Path("addStudent")
+    @Transactional
+    public Response addStudent(Student student) throws BusinessException {
+        if (student == null || student.getName() == null || student.getName().isBlank()) {
+            throw new BusinessException(Response.Status.BAD_REQUEST.getStatusCode(),
+                    "Student Name cannot be empty");
+        }
+
+        studentRepository.persist(student);
+
+        if (studentRepository.isPersistent(student)) {
+            return Response.created(URI.create("/student/" + student.getStudentId())).build();
+        }
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
+    @GET
+    @Path("student/{id}")
+    @Transactional
+    public Response getStudentById(@PathParam("id") Long id) throws BusinessException {
+        Student student = studentRepository.findById(id);
+        if (student == null) {
+            throw new BusinessException(Response.Status.NOT_FOUND.getStatusCode(),
+                    "Student with ID: " + id + " does not exist in DB");
+        }
+        return Response.ok(student).build();
+    }
+
+7. Since we are using quarkus-resteasy, quarkus-resteasy-jackson, we have to register the mapper
+
+@ApplicationPath("/")
+public class RestApplication extends Application {
+
+    @Override
+    public Set<Class<?>> getClasses() {
+        Set<Class<?>> classes = new HashSet<>();
+        classes.add(StudentResource2.class);
+        classes.add(BusinessExceptionMapper.class);   
+        return classes;
+    }
+}
+
+If we are using quarkus-rest, quarkus-rest-jackson, then above step is not needed, quarkus will automatically register the mapper class by just providing @Provider 
+
+8. Start the appl
+>mvn quarkus:dev
+
+Run swagger, if we run getStudentById without a proper id, then it will display error messages
+
+9. Handling Technical Exceptions (Divide by Zero Example)
+
+- Create TechnicalException
+
+public class TechnicalException extends RuntimeException {
+
+    int status;
+
+    public TechnicalException() {
+    }
+
+    public TechnicalException(int status, String message) {
+        super(message);
+        this.status = status;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+}
+
+- Create mapper class
+
+@Provider
+public class TechnicalExceptionMapper implements ExceptionMapper<TechnicalException> {
+    @Override
+    public Response toResponse(TechnicalException exception) {
+        ErrorMessage errorMessage = new ErrorMessage();
+
+        errorMessage.setStatus(exception.getStatus());
+        errorMessage.setMessage(exception.getMessage());
+
+        return Response.
+                status(Response.Status.INTERNAL_SERVER_ERROR).
+                entity(errorMessage)
+                .type(MediaType.APPLICATION_JSON)
+                .build();
+    }
+}
+
+- Create endpoint
+
+@GET
+    @Path("divide/{i}")
+    @Transactional
+    public Response testApi(@PathParam("i") int i) throws TechnicalException {
+        try{
+            int out = 8 / i;
+            return Response.ok("Output after dividing " + out).build();
+        }catch (Exception e){
+            throw new TechnicalException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                    e.getMessage());
+
+        }
+    }
+
+- Register the mapper
+
+@ApplicationPath("/")
+public class RestApplication extends Application {
+
+    @Override
+    public Set<Class<?>> getClasses() {
+        Set<Class<?>> classes = new HashSet<>();
+        classes.add(StudentResource2.class);
+        classes.add(BusinessExceptionMapper.class);   
+        classes.add(TechnicalExceptionMapper.class);   
+        return classes;
+    }
+}
+
+10. Run the application, if we wrong id, then it will display the error message
+
+
+How to use Lombok library inside Quarkus application
+    
+Best Practice :For Entity classes - Avoid @Data (since it generate getter,setter,constructor, tostring, equals and hashcode)
+Prefer:
+@Getter
+@Setter
+Explicit toString() if needed
+
+For DTOs / Models - @Data is perfectly fine
+
+- Add lombok dependency in pom.xml
+
+<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.32</version>
+			<optional>true</optional>
+		</dependency>
+
+
+Quarkus Application Initialization and Termination 
+    When your Quarkus application starts, if at that time you want to execute some business logic,
+initialize some resources, start some threads. And when your application ends at that time you want to execute some code, free all the resources and stop all the running threads
+
+1. @QuarkusMain
+      You can apply it on any class, inside this class, you write a normal Java main method.
+Now this class becomes the main class and when you execute this class all logic inside it runs
+and after that, the Quarkus project starts automatically. You don’t need to write Maven commands manually. Just run this class, and the entire project starts.
+      You should not write all your business logic directly inside this class, because that code may execute before Quarkus is fully started
+
+@QuarkusMain
+public class MyMainClass {
+    public static void main(String[] args) {
+       Quarkus.run(args);
+    }
+}
+
+As soon as you apply @QuarkusMain, this becomes the main class for Quarkus. Just like Java has only one main method, Quarkus also allows only one @QuarkusMain class. If you apply it on two classes, you will get an error.
+
+2. @Startup
+      When you apply this annotation on a class the methods inside that class can be executed during application startup by using @PostConstruct(Database initialization
+Creating connections) and @PreDestroy
+
+For example as soon as the application starts we need to initialize resources and start background tasks
+
+3. @Observes StartupEvent
+      when your application is fully started, when all the resources in your project are fully initialized, only then this method will be executed. At this stage, you write the logic which is not initialization logic, but your actual business logic and your main functionality
+
+4. @Observes ShutdownEvent
+       The appl has not stopped yet, but it is about to stop, at that time, the Shutdown Event comes. After that, when you finally stop the appl, then @PreDestroy is executed.
+
+When you execute the class:
+- First, startup-related annotations come into action
+- Initialization logic runs
+- When the application is fully initialized, the Startup Event is fired
+- When all work is done and the application is about to stop, the Shutdown Event is fired
+- After that, the application is destroyed in @PreDestroy
+
+1. Refer Quarkus1 project, Create java main class
+
+- This is a normal Java main class. If we run it normally, it will run like a Java program.
+But in Quarkus’ eyes, this is still not a main class. To make it a main class in Quarkus, we use 
+@QuarkusMain
+
+@QuarkusMain
+public class Main {
+	public static void main(String[] args) {
+		
+
+	}
+}
+
+- Now if we execute this class, only the code inside the main method will execute. After that, the project will stop. So Quarkus will not start fully, to start the Quarkus application, we must write
+
+@QuarkusMain
+public class Main {
+	public static void main(String[] args) {		
+         Quarkus.run(args);
+	}
+}
+
+Now if you only write logic inside the main method, it will execute and then the application will stop. But we want logic to execute and the application to keep running continuously. 
+
+- So for that, we create another class which implements QuarkusApplication interface and pass it as an argument and override run()
+
+@QuarkusMain
+public class Main {
+	public static void main(String[] args) {		
+         Quarkus.run(MainQuarkus.class,args);
+	}
+	public static class MainQuarkus implements QuarkusApplication {
+
+		@Override
+		public int run(String... args) throws Exception {
+			System.out.println(">>>>> Application is starting....");
+            Quarkus.waitForExit();
+            return 0;
+		}
+		
+	}
+}
+
+So when we run the main class, the message prints, the application start and the server runs
+
+2. Run Main.java prg
+
+we can see ">>>>> Application is starting...." in console and run http://localhost:8081 where we can see our appl is running
+
+3. Create service class
+
+@Startup
+public class ApplService {
+
+    @PostConstruct
+    public void startAppl(){
+        System.out.println("Starting the appl........");
+    }
+
+    @PreDestroy
+    public void stopAppl(){
+        System.out.println("Stopping the appl........");
+    }
+
+}
+
+Now when we run the project:
+- First, Application is starting
+- Then, Starting the appl, then the application becomes fully available
+- When we stop the application, it prints "Stopping the appl" and then the application shuts down
+
+4. Run Main.java, it prints 
+Starting the appl
+>>>>> Application is starting....
+
+5. Create class
+
+public class CarFunction {
+
+    public void setRace(@Observes StartupEvent startupEvent){
+        System.out.println("Car is running....");
+    }
+
+    public void setBreak(@Observes ShutdownEvent startupEvent){
+        System.out.println("Applying the break......");
+    }
+}
+
+6. Run Main.java
+
+we can see the order
+1. startup event
+2. Before app starts → Initialization → @PostConstruct
+3. After app starts → Main logic 
+4. Shutdown event
+5. Before app stops → Cleanup → @PreDestroy
+
+Quarkus waitForExit() only returns when shutdown is initiated either by:
+- an external signal (example: Ctrl+C / SIGINT), or
+- calling one of Quarkus exit methods (asyncExit, blockingExit, etc.) [javadoc.io]
+
+If you stop the app using an IDE “Stop” button, many IDEs kill the process abruptly (or sometimes leave it running). In such cases the JVM doesn’t get a graceful shutdown signal, so:
+- ShutdownEvent won’t fire
+- @PreDestroy won’t run
+
+
+
+How to use Hibernate Validator Extension to validate Entities in Qaurkus
+
+@NotNull - This annotation is used to validate that a value is not null.
+@NotEmpty - This annotation is used to validate that a string, collection, map, or array is not empty.
+@NotBlank - This annotation is used to validate that a string is not null or whitespace.
+@Size - This annotation is used to validate that a string, collection, map, or array is of a specified size.
+@Digits - This annotation is used to validate that a number has a specified number of digits.
+@Pattern - This annotation is used to validate that a string matches a regular expression.
+@Min - This annotation is used to validate that a number is greater than or equal to a specified value.
+@Max - This annotation is used to validate that a number is less than or equal to a specified value.
+@Range - This annotation is used to validate that a number is within a specified range.
+@Email - This annotation is used to validate that a string is a valid email address.
+@CreditCardNumber - This annotation is used to validate that a string is a valid credit card number.
+@URL - This annotation is used to validate that a string is a valid URL.
+
+1. We need to add the Quarkus Hibernate Validator dependency if you want to apply validation on your Entity.
+
+ <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+
+2. In hibernate-quarkus project, create entity class with validation for each properties
+
+@Entity
+@Data
+public class Citizen {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+    @NotBlank(message = "Name cannot be blank")
+    @Length(min = 10, max = 50,message = "Name should be between 10 char to 50 char max")
+    String name;
+    @Pattern(regexp = "[MF]",message = "Value can be either M or F")
+    String gender;
+    @Length(min = 12, max = 12, message = "Aadhar number must be 12 char")
+    String aadharNo;
+    @Min(value = 10,message = "Min age should be 10 yr")
+    @Max(value = 24,message = "Max age should be 24 yr")
+    int age;
+
+
+}
+
+3. Create repository class
+
+@ApplicationScoped
+public class CitizenRepository implements PanacheRepository<Citizen> {
+}
+
+4. Create resource class, so when you are saving a Citizen, before saving it, you must first check whether the Citizen object has passed all validations or not. If it passes, then save it, otherwise, show a error message. For this, first you need to inject a Validator.
+
+@Path("")
+public class CitizenResource {
+
+    @Inject
+    CitizenRepository citizenRepository;
+
+    @Inject
+    Validator validator;
+
+    @POST
+    @Transactional
+    @Path("/save")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response saveCitizen(Citizen citizen) {
+
+         Set<ConstraintViolation<Citizen>> validate = validator.validate(citizen);
+
+        if (validate.isEmpty()) {
+            citizenRepository.persist(citizen);
+            if (citizenRepository.isPersistent(citizen)) {
+                return Response.ok(citizen).build();
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+        } else {
+            String errorMsg = validate.stream().map(citizenConstraintViolation -> citizenConstraintViolation.getMessage())
+                    .collect(Collectors.joining(", "));
+
+            return Response.status(Response.Status.BAD_REQUEST).entity(errorMsg).build();
+        }
+    }
+}
+
+If we pass valid data, it will save the data into the database. If we pass invalid data, we will get proper error messages
+
+
+5. Run the appl
+>mvn quarkus:dev
+
+In swagger, try to save the data
+
+{
+  "name": "senthilkumarraj",
+  "gender": "M",
+  "aadharNo": "123456789012",
+  "age": 20
+}
+
+But if we try to give some wrong data then we get validation message
+
+{
+
+  "name": "senthil",
+  "gender": "Male",
+  "aadharNo": "123456789012",
+  "age": 2
+}
+
+6. If you want all validation information automatically, instead of simple messages, you can @Valid
+
+@POST
+    @Transactional
+    @Path("/saveValid")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response saveCitizenValid(@Valid Citizen citizen) {
+
+        citizenRepository.persist(citizen);
+        if (citizenRepository.isPersistent(citizen)) {
+            return Response.ok(citizen).build();
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+    }
+
+7.  Run the appl
+>mvn quarkus:dev
+
+If we provide with wrong values then it will display all error messages in json format
+
+8. Validation Groups.
+Suppose your entity is used in two different places (ie) in one place, the name length should be 10 to 50 characters and in another place, the name length should be 20 to 100 characters
+
+For example:
+You have an application where a subscribed user can add up to 2000 songs. But a non-subscribed user is allowed to add only 100 songs. So for such cases, you can create Validation Groups.
+
+-  Create validation group interfaces
+
+public interface BasicNameGroup {}     // name length: 10..50
+public interface ExtendedNameGroup {}  // name length: 20..100
+
+- Update your Citizen entity to use groups for name length
+
+@Entity
+@Data
+@Table(name="citizen200")
+public class Citizen {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
+
+    @NotBlank(message = "Name cannot be blank", groups = {BasicNameGroup.class, ExtendedNameGroup.class})
+    @Length(min = 10, max = 50, message = "Name should be between 10 and 50 characters",
+            groups = BasicNameGroup.class)
+    @Length(min = 20, max = 100, message = "Name should be between 20 and 100 characters",
+            groups = ExtendedNameGroup.class)
+    String name;
+
+    
+    @Pattern(regexp = "[MF]",message = "Value can be either M or F")
+    String gender;
+    @Length(min = 12, max = 12, message = "Aadhar number must be 12 char")
+    String aadharNo;
+    @Min(value = 10,message = "Min age should be 10 yr")
+    @Max(value = 24,message = "Max age should be 24 yr")
+    int age;
+
+
+}
+
+- Add two separate endpoints that validate different groups
+
+@Path("")
+public class CitizenResource1 {
+
+    @Inject
+    CitizenRepository citizenRepository;
+
+    @Inject
+    Validator validator;
+
+    private Response validateAndPersist(Citizen citizen, Class<?> group) {
+        Set<ConstraintViolation<Citizen>> violations = validator.validate(citizen, group);
+
+        if (!violations.isEmpty()) {
+            String errorMsg = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            return Response.status(Response.Status.BAD_REQUEST).entity(errorMsg).build();
+        }
+
+        citizenRepository.persist(citizen);
+        return Response.ok(citizen).build();
+    }
+
+    // name length 10..50
+    @POST
+    @Transactional
+    @Path("/save-basic")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response saveCitizenBasic(Citizen citizen) {
+        return validateAndPersist(citizen, BasicNameGroup.class);
+    }
+
+    // name length 20..100
+    @POST
+    @Transactional
+    @Path("/save-extended")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response saveCitizenExtended(Citizen citizen) {
+        return validateAndPersist(citizen, ExtendedNameGroup.class);
+    }
+}
+
+- Run the appl
+>mvn quarkus:dev
+
+For /save-basic, name should be between 10 to 50 char
+For /save-extended, name should be between 10 to 50 char
+
+9. We can create endpoints where the parameter uses @ConvertGroup to switch from Default to a specific group.
+
+@Path("")
+public class CitizenResource2 {
+	
+	@Inject
+    CitizenRepository citizenRepository;
+
+	@POST
+	@Path("/save-basic-auto")
+	@Transactional
+	public Response saveBasicAuto(
+			@Valid @ConvertGroup(from = Default.class, to = BasicNameGroup.class) Citizen citizen) {
+		citizenRepository.persist(citizen);
+		return Response.ok(citizen).build();
+	}
+
+	@POST
+	@Path("/save-extended-auto")
+	@Transactional
+	public Response saveExtendedAuto(
+			@Valid @ConvertGroup(from = Default.class, to = ExtendedNameGroup.class) Citizen citizen) {
+		citizenRepository.persist(citizen);
+		return Response.ok(citizen).build();
+	}
+
+}
+
+10. Run the appl and in swagger run the endpoint with less char for names, then it will produce 
+error messages
+
+11. Instead of returning a plain string, return as JSON error response for that we use ExceptionMapper<ConstraintViolationException> to customize the error response
+
+- Create exception mapper
+
+@Provider
+public class ConstraintViolationExceptionMapper
+        implements ExceptionMapper<ConstraintViolationException> {
+
+    @Override
+    public Response toResponse(ConstraintViolationException exception) {
+
+        List<Violation> violations = exception.getConstraintViolations()
+                .stream()
+                .map(this::toViolation)
+                .collect(Collectors.toList());
+
+        ValidationErrorResponse errorResponse = new ValidationErrorResponse(
+                400,
+                "Validation Failed",
+                violations
+        );
+
+        return Response.status(Response.Status.BAD_REQUEST)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(errorResponse)
+                .build();
+    }
+
+    private Violation toViolation(ConstraintViolation<?> violation) {
+        String field = violation.getPropertyPath().toString();
+
+        // Clean field name for REST input
+        // Example: saveCitizen.citizen.name → name
+        if (field.contains(".")) {
+            field = field.substring(field.lastIndexOf('.') + 1);
+        }
+
+        return new Violation(field, violation.getMessage());
+    }
+}
+
+- Create ValidationErrorResponse class
+
+public class ValidationErrorResponse {
+
+    public int status;
+    public String error;
+    public List<Violation> violations;
+
+    public ValidationErrorResponse(int status, String error, List<Violation> violations) {
+        this.status = status;
+        this.error = error;
+        this.violations = violations;
+    }
+}
+
+
+- Create Violation class
+
+public class Violation {
+
+    public String field;
+    public String message;
+
+    public Violation(String field, String message) {
+        this.field = field;
+        this.message = message;
+    }
+}
+
+- Run quarkus appl
+>mvn quarkus:dev
+
+If validation fails, then Quarkus throws ConstraintViolationException, your ExceptionMapper intercepts it and custom JSON response is returned. It works will all endpoints
+
+
+MicroProfile Health with Quarkus
+     Whenever we build a Quarkus application, we connect it to a database, and inside the application we also call some external pages or APIs. So you can understand that our application is never completely independent. We connect it to a database or external servers or external APIs.
+Suppose if any one of these goes down then our application breaks, because it depends on external resources.
+    Now we go into the error logs, debug the issue, and finally realize that the database is down 
+or the external API we are calling is down or the API path has changed. To avoid this situation, we use MicroProfile Health.
+
+Why MicroProfile Health?
+     In Microprofile we monitor all the external resources that affect our application’s health.
+For example we monitor whether the database is live and ready and we monitor whether the external API is up and running
+    So when our project goes down for any reason, the first thing we check whether any of the external resources down?. If something is down, we can immediately identify it and fix it.
+But if we don’t know what is down, we waste a lot of time debugging. That’s why this is a very important feature.
+
+First, we need to add a dependency called SmallRye-Health  to our project.Once we add this dependency, it gives us two important annotations:
+1. @Liveness
+This tells us whether the application (or external API) is alive
+Meaning: if we call it now, will it respond or not?
+
+2. @Readiness
+This tells us whether the application is ready to serve requests
+Meaning: are all required resources (database, APIs) initialized and ready?
+
+1. Create quarkus-health project with restclient, rest client jackson,SmallRye-Health dependency
+
+<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-smallrye-health</artifactId>
+		</dependency>
+
+2. Create DTO class called Post with 4 fields
+
+@Data
+public class Post {
+    int id;
+    int userId;
+    String title;
+    String body;
+}
+
+3. Since we are using RestClient for communicating with other api, we add a dependency
+
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-rest-client-jackson</artifactId>
+</dependency>
+
+
+4. Create Restclient for JSONPlaceholder which returns dummy data, to store that we created Post class with 4 fields 
+
+
+@Path("")
+@RegisterRestClient(baseUri = "https://jsonplaceholder.typicode.com")
+public interface JsonPlaceholderRestClient {
+
+    @GET
+    @Path("/posts")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Post> getAllPost();
+}
+
+5. Since we are using DataSource for communicating with db, we add a database dependency
+
+<dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-mysql</artifactId>
+        </dependency>
+
+- Configure db info in application.properties
+
+quarkus.datasource.db-kind=mysql
+quarkus.datasource.jdbc.url=jdbc:mysql://localhost:3306/demo
+quarkus.datasource.username=root
+quarkus.datasource.password=root
+quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.database.generation=drop-and-create
+
+6. Here we are using two external resources mysql database and external REST API (JSONPlaceholder, so either of these can go down or change, so now we implement Health Checks.
+
+- Create class ReadinessHealthCheck which checks whether database is ready and external resources are initialized
+1. Annotate the class with @Readiness
+2. Implement HealthCheck
+3. Override the call() method and try to get a database connection, check if the connection is valid. If valid → return UP and if invalid or exception occurs → return DOWN
+4. Inject DataSource
+
+So when the project runs, the readiness endpoint tells us database is UP or DOWN
+
+@Readiness
+public class ReadinessHealthCheck implements HealthCheck {
+
+    @Inject
+    DataSource dataSource;
+
+    @Override
+    public HealthCheckResponse call() {
+
+        try {
+            Connection connection = dataSource.getConnection();
+            if (connection.isValid(1)) {
+                return HealthCheckResponse
+                        .named("Database Readiness Health")
+                        .up()
+                        .build();
+            } else {
+                return HealthCheckResponse
+                        .named("Database Readiness Health")
+                        .down()
+                        .build();
+            }
+
+        } catch (SQLException e) {
+            return HealthCheckResponse
+                    .named("Database Readiness Health")
+                    .down()
+                    .build();
+        }
+    }
+}
+
+- Create class LivenessHealthCheck which checks whether external API is alive and responding, annotate the class with @Liveness, implement HealthCheck  and inject the REST Client. Inside call() call the external API, if response is successful → UP and if exception occurs → DOWN
+
+@Liveness
+public class LivenessHealthCheck implements HealthCheck {
+
+    @RestClient
+    JsonPlaceholderRestClient restClient;
+
+    @Override
+    public HealthCheckResponse call() {
+        restClient.getAllPost();
+        return HealthCheckResponse.named(" JsonPlaceHolder APIs Health").up().build();
+    }
+}
+
+7. Run the appl
+>mvn quarkus:dev
+
+8. Now we can access the health of appl by http://localhost:1111/q/health in JSON format
+
+/q/health - Overall health
+/q/health/live - Liveness
+/q/health/ready - Readiness
+
+- we can also access the status from http://localhost:1111/q/health-ui 
+
+
+Authentication and Authorization using JWT Token and Roles-Based Access Control with Quarkus
+1. Create quarkus-jwt project with quarkus rest, quarkus rest jackson, hibernate validator, hibernate orm with panache, jdbc-mysql, smallrye openapi(for swagger), lombok dependency
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Configure db info in application.properties
+
+quarkus.http.port=2000
+
+quarkus.datasource.db-kind=mysql
+quarkus.datasource.jdbc.url=jdbc:mysql://localhost:3306/demo
+quarkus.datasource.password=root
+quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.database.generation=update
+
+5. Create entity class
+
+@Entity
+@Table(name = "books", uniqueConstraints = @UniqueConstraint(columnNames = "isbn"))
+@Data
+public class Book extends PanacheEntityBase {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long id;
+
+    @Column(nullable = false)
+    public String title;
+
+    @Column(nullable = false)
+    public String author;
+
+    @Column(nullable = false, unique = true)
+    public String isbn;
+
+    public LocalDate publishedOn;
+
+    public BigDecimal price;
+}
+
+6. Create DTO class where the validation happens 
+
+@Data
+public class BookRequest {
+
+    @NotBlank
+    @Size(max = 200)
+    private String title;
+
+    @NotBlank
+    @Size(max = 120)
+    private String author;
+
+    @NotBlank
+    @Pattern(regexp = "^[0-9-]{10,17}$", message = "ISBN must be 10-17 chars, digits/hyphen only")
+    private String isbn;
+
+
+    @NotNull(message = "Published date is required")
+    @PastOrPresent(message = "Published date cannot be in the future")
+    private LocalDate publishedOn;
+
+    // ✅ Must not be null
+    // ✅ Must be >= 0
+    // ✅ Max 10 digits total, 2 after decimal (e.g. 99999999.99)
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be positive")
+    @Digits(integer = 8, fraction = 2, message = "Price must have up to 2 decimal places")
+    private BigDecimal price;
+
+}
+
+
+@Data
+public class BookResponse {
+    public Long id;
+    public String title;
+    public String author;
+    public String isbn;
+    public LocalDate publishedOn;
+    public BigDecimal price;
+
+    public static BookResponse of(Book b) {
+        BookResponse r = new BookResponse();
+        r.id = b.id;
+        r.title = b.title;
+        r.author = b.author;
+        r.isbn = b.isbn;
+        r.publishedOn = b.publishedOn;
+        r.price = b.price;
+        return r;
+    }
+}
+
+7. Create repository for custom method
+
+@ApplicationScoped
+public class BookRepository implements PanacheRepository<Book> {
+
+    public Optional<Book> findByIsbn(String isbn) {
+        return find("isbn", isbn).firstResultOptional();
+    }
+}
+
+8. Create ErrorResponse class 
+
+public class ErrorResponse {
+    public String errorId;           
+    public List<ErrorMessage> errorMessages;
+
+    public ErrorResponse(String errorId, List<ErrorMessage> errorMessages) {
+        this.errorId = errorId;
+        this.errorMessages = errorMessages;
+    }
+
+    public static ErrorResponse single(String message) {
+        return new ErrorResponse(null, List.of(new ErrorMessage(null, message)));
+    }
+
+    public record ErrorMessage(String path, String message) {}
+}
+
+
+- Create custom exception
+
+
+public class NotFoundException extends RuntimeException {
+    public NotFoundException(String message) { super(message); }
+}
+
+
+public class DuplicateResourceException extends RuntimeException {
+    public DuplicateResourceException(String message) { super(message); }
+}
+
+- Create ExceptionMapper for the custom exception
+
+@Provider
+public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundException> {
+    @Override
+    public Response toResponse(NotFoundException e) {
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(ErrorResponse.single(e.getMessage()))
+                .build();
+    }
+}
+
+@Provider
+public class DuplicateResourceExceptionMapper implements ExceptionMapper<DuplicateResourceException> {
+    @Override
+    public Response toResponse(DuplicateResourceException e) {
+        return Response.status(Response.Status.CONFLICT)
+                .entity(ErrorResponse.single(e.getMessage()))
+                .build();
+    }
+}
+
+- Validation error mapper  for @Valid failures
+
+@Provider
+public class ConstraintViolationMapper implements ExceptionMapper<ConstraintViolationException> {
+    @Override
+    public Response toResponse(ConstraintViolationException e) {
+        List<ErrorResponse.ErrorMessage> messages = e.getConstraintViolations().stream()
+                .map(v -> new ErrorResponse.ErrorMessage(
+                        v.getPropertyPath() != null ? v.getPropertyPath().toString() : null,
+                        v.getMessage()))
+                .toList();
+
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new ErrorResponse(null, messages))
+                .build();
+    }
+}
+
+
+@Provider
+public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
+    @Override
+    public Response toResponse(Throwable e) {
+        String errorId = UUID.randomUUID().toString();
+        // In real apps log: errorId + stacktrace
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new ErrorResponse(errorId,
+                        java.util.List.of(new ErrorResponse.ErrorMessage(null,
+                                "Unexpected error. Reference: " + errorId))))
+                .build();
+    }
+}
+
+
+@Provider
+public class BadRequestExceptionMapper
+        implements ExceptionMapper<BadRequestException> {
+
+    @Override
+    public Response toResponse(BadRequestException ex) {
+        String errorId = UUID.randomUUID().toString();
+
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new ErrorResponse(
+                        errorId,
+                        List.of(new ErrorResponse.ErrorMessage(null, ex.getMessage()))
+                ))
+                .build();
+    }
+}
+
+@Provider
+public class NotAuthorizedExceptionMapper
+        implements ExceptionMapper<NotAuthorizedException> {
+
+    @Override
+    public Response toResponse(NotAuthorizedException ex) {
+        String errorId = UUID.randomUUID().toString();
+
+        return Response.status(Response.Status.UNAUTHORIZED)
+                .entity(new ErrorResponse(
+                        errorId,
+                        List.of(new ErrorResponse.ErrorMessage(null, ex.getMessage()))
+                ))
+                .build();
+    }
+}
+
+@Provider
+public class ForbiddenExceptionMapper
+        implements ExceptionMapper<ForbiddenException> {
+
+    @Override
+    public Response toResponse(ForbiddenException ex) {
+        String errorId = UUID.randomUUID().toString();
+
+        return Response.status(Response.Status.FORBIDDEN)
+                .entity(new ErrorResponse(
+                        errorId,
+                        List.of(new ErrorResponse.ErrorMessage(null, ex.getMessage()))
+                ))
+                .build();
+    }
+}
+
+9. Create resource class for book api
+
+@Path("/api/books")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class BookResource {
+
+    private final BookService service;
+
+    public BookResource(BookService service) {
+        this.service = service;
+    }
+
+    // READ: user or admin
+    @GET
+    public List<BookResponse> list() {
+        return service.listAll().stream().map(BookResponse::of).toList();
+    }
+
+    @GET
+    @Path("/{id}")
+    public BookResponse get(@PathParam("id") long id) {
+        return BookResponse.of(service.get(id));
+    }
+
+    // WRITE: admin only
+    @POST
+    public Response create(@Valid BookRequest req) {
+        var created = service.create(req);
+        return Response.status(Response.Status.CREATED).entity(BookResponse.of(created)).build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    public BookResponse update(@PathParam("id") long id, @Valid BookRequest req) {
+        return BookResponse.of(service.update(id, req));
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response delete(@PathParam("id") long id) {
+        service.delete(id);
+        return Response.noContent().build();
+    }
+}
+
+10. Create service class
+
+@ApplicationScoped
+public class BookService {
+
+    private final BookRepository repo;
+
+    public BookService(BookRepository repo) {
+        this.repo = repo;
+    }
+
+    public List<Book> listAll() {
+        return repo.listAll();
+    }
+
+    public Book get(long id) {
+        return repo.findByIdOptional(id)
+                .orElseThrow(() -> new NotFoundException("Book not found: " + id));
+    }
+
+    @Transactional
+    public Book create(BookRequest req) {
+        repo.findByIsbn(req.getIsbn()).ifPresent(b -> {
+            throw new DuplicateResourceException("ISBN already exists: " + req.getIsbn());
+        });
+
+        Book b = new Book();
+        b.title = req.getTitle();
+        b.author = req.getAuthor();
+        b.isbn = req.getIsbn();
+        b.publishedOn = req.getPublishedOn();
+        b.price = req.getPrice();
+
+        repo.persist(b);
+        return b;
+    }
+
+    @Transactional
+    public Book update(long id, BookRequest req) {
+        Book b = get(id);
+
+        // If ISBN changes, ensure uniqueness
+        if (req.getIsbn() != null && !req.getIsbn().equals(b.isbn)) {
+            repo.findByIsbn(req.getIsbn()).ifPresent(existing -> {
+                throw new DuplicateResourceException("ISBN already exists: " + req.getIsbn());
+            });
+        }
+
+        b.title = req.getTitle();
+        b.author = req.getAuthor();
+        b.isbn = req.getIsbn();
+        b.publishedOn = req.getPublishedOn();
+        b.price = req.getPrice();
+
+        return b;
+    }
+
+    @Transactional
+    public void delete(long id) {
+        Book b = get(id);
+        repo.delete(b);
+    }
+}
+
+11. Run the appl
+>mvn quarkus:dev
+
+Run swagger http://localhost:1000/q/swagger-ui, insert books 
+
+12. To perform authentication purpose we have to create user with roles and stored into db with encrypted password
+
+- To Bcrypt the password we add dependency
+
+<dependency>
+  <groupId>io.quarkus</groupId>
+  <artifactId>quarkus-elytron-security-common</artifactId>
+</dependency>
+
+- We create bcrypt pwd for that we create a service
+
+@ApplicationScoped
+public class PasswordService {
+
+    // Increase cost to 10-12 for production (balance with performance)
+    private static final int COST = 10;
+
+    public String hash(String rawPassword) {
+        // returns bcrypt hash string like $2a$10$....
+        return BcryptUtil.bcryptHash(rawPassword, COST);
+    }
+
+    public boolean matches(String rawPassword, String bcryptHash) {
+        return BcryptUtil.matches(rawPassword, bcryptHash);
+    }
+}
+
+- Create User entity class
+
+@Entity
+@Table(name = "users")
+@Data
+public class User extends PanacheEntity {
+
+    @Column(nullable = false, unique = true)
+    public String username;
+
+    @Column(nullable = false, length = 100)
+    public String passwordHash; // <-- store bcrypt hash only
+
+    @Column(nullable = false)
+    public String role;
+
+    @Column(nullable = false)
+    public boolean active = true;
+}
+
+- Create a request DTO that accepts a raw password only on creation.
+
+public class CreateUserRequest {
+    @NotBlank
+    @Size(min = 3, max = 50)
+    public String username;
+
+    @NotBlank
+    @Size(min = 8, max = 72) // bcrypt best practice: 72 max
+    public String password;
+
+    @NotBlank
+    @Pattern(regexp = "^(admin|user)$", message = "role must be admin or user")
+    public String role;
+}
+
+- Create UserService
+
+@ApplicationScoped
+public class UserService {
+
+    private final PasswordService passwordService;
+
+    public UserService(PasswordService passwordService) {
+        this.passwordService = passwordService;
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return User.find("username", username).firstResultOptional();
+    }
+
+    @Transactional
+    public User create(CreateUserRequest req) {
+        // unique check (simple)
+        findByUsername(req.username).ifPresent(u -> {
+            throw new IllegalArgumentException("Username already exists");
+        });
+
+        User u = new User();
+        u.username = req.username;
+        u.passwordHash = passwordService.hash(req.password); // ✅ hash here
+        u.role = req.role;
+        u.active = true;
+
+        u.persist();
+        return u;
+    }
+}
+
+- Create UserResource
+
+@Path("/api/users")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@PermitAll
+public class UserResource {
+
+    private final UserService userService;
+
+    public UserResource(UserService userService) {
+        this.userService = userService;
+    }
+
+    @POST
+    public User create(@Valid CreateUserRequest req) {
+        return userService.create(req);
+    }
+}
+
+
+13. Add smallrye-jwt(validates tokens & exposes identity/roles), smallrye-jwt-build (creates tokens) for JWT purpose
+
+C:\Microservice\quarkus-jwt>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-jwt"
+
+C:\Microservice\quarkus-jwt>mvn quarkus:add-extension -Dextensions="quarkus-smallrye-jwt-build"
+
+14. Generate JWT RSA keys for authentication purpose - open gitbash under quarkus-jwt
+
+senthil.kumart@LP-5CD151G7GC MINGW64 /c/Microservice/quarkus-jwt
+$ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out src/main/resources/privateKey.pem
+
+
+senthil.kumart@LP-5CD151G7GC MINGW64 /c/Microservice/quarkus-jwt
+$ openssl rsa -in src/main/resources/privateKey.pem -pubout -out src/main/resources/publicKey.pem
+
+- Refresh project we can see privatekey.pem, publickey.pem in resources folder
+
+
+15. Configure jwt keys in application.properties
+
+# Enable Swagger UI in dev
+quarkus.swagger-ui.always-include=true
+
+
+# JWT VERIFY 
+mp.jwt.verify.publickey.location=publicKey.pem
+mp.jwt.verify.issuer=book-api
+
+# JWT SIGN
+smallrye.jwt.sign.key.location=privateKey.pem
+
+
+JWT VERIFY → Check the token (using a public/secret key) and verification happens on every request.
+
+JWT verification is checking:
+- Is the signature valid?
+- Was the token issued by a trusted issuer?
+- Is it expired?
+- Is it intended for this service?
+
+JWT SIGN → Create the token (using a private/secret key), Signing happens once (when user logs in).
+
+JWT signing is the act of:
+- Taking header + payload
+- Applying a cryptographic algorithm
+- Using a secret or private key
+- Producing a signature
+
+This signature proves who created the token and that it was not modified
+
+16. Create AuthResource class to authenticate a user and issue a JWT token.
+
+@Path("/api/auth")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class AuthResource {
+
+    //input from client
+    public record LoginRequest(String username, String password) {}
+    //output to client
+    public record TokenResponse(String token) {}
+
+    @Inject UserService userService;
+    @Inject PasswordService passwordService;
+
+    @POST
+    @Path("/login")
+    @PermitAll
+    public TokenResponse login(LoginRequest req) {
+
+        if (req.username() == null || req.password() == null) {
+            throw new BadRequestException("username/password required");
+        }
+
+        User user = userService.findByUsername(req.username())
+                .orElseThrow(() -> new NotAuthorizedException("Invalid credentials"));
+
+        if (!user.active) {
+            throw new ForbiddenException("User is inactive");
+        }
+
+        // ✅ BCrypt verify
+        if (!passwordService.matches(req.password(), user.passwordHash)) {
+            throw new NotAuthorizedException("Invalid credentials");
+        }
+
+        // ✅ JWT issue with role from DB
+        String token = Jwt.issuer("book-api")  //Identifies who issued the token
+                .upn(user.username)  //Sets the authenticated principal
+                .groups(Set.of(user.role))  //Roles for RBAC
+                .expiresAt(Instant.now().plus(Duration.ofHours(1)))  //token expiration
+                .sign();   //Cryptographically signs JWT
+
+        return new TokenResponse(token);
+    }
+}
+
+
+17. Now set roles in BookResource to access the endpoint
+
+// READ: user or admin
+    @GET
+    @RolesAllowed({"user", "admin"})
+    public List<BookResponse> list() {
+        return service.listAll().stream().map(BookResponse::of).toList();
+    }
+
+    @GET
+    @Path("/{id}")
+    @RolesAllowed({"user", "admin"})
+    public BookResponse get(@PathParam("id") long id) {
+        return BookResponse.of(service.get(id));
+    }
+
+    // WRITE: admin only
+    @POST
+    @RolesAllowed("admin")
+    public Response create(@Valid BookRequest req) {
+        var created = service.create(req);
+        return Response.status(Response.Status.CREATED).entity(BookResponse.of(created)).build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    @RolesAllowed("admin")
+    public BookResponse update(@PathParam("id") long id, @Valid BookRequest req) {
+        return BookResponse.of(service.update(id, req));
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @RolesAllowed("admin")
+    public Response delete(@PathParam("id") long id) {
+        service.delete(id);
+        return Response.noContent().build();
+    }
+
+18. Run the appl
+>mvn quarkus:dev
+
+Now run swagger, http://localhost:1000/q/swagger-ui/
+
+- First register user /api/users
+
+{
+  "username": "Ram",
+  "password": "abcd1234",
+  "role": "admin"
+}
+
+- Generate the token  /api/auth/login
+
+{
+  "username": "Ram",
+  "password": "abcd1234"
+}
+It will generate the token 
+
+- When do you get BadRequestException
+
+{
+  "username": "admin"
+}
+
+or {}
+
+-  When do you get NotAuthorizedException 
+
+{
+  "username": "unknownUser",
+  "password": "password123"
+}
+
+- When do you get ForbiddenException
+
+{
+  "username": "blockedUser",
+  "password": "correctPassword"
+}
+
+- Next authorize user with token, then u can add the books, get book information
+
+
+
+19. To write test cases we need mockito dependency 
+
+<!-- Mockito -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Needed for mocking static methods like Jwt.issuer(...) -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<scope>test</scope>
+			<version>5.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.27.7</version>
+			<scope>test</scope>
+		</dependency
+
+20. Create BookResourceTest
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.pack.entity.Book;
+import com.pack.entity.BookRequest;
+import com.pack.entity.BookResponse;
+import com.pack.resource.BookResource;
+import com.pack.service.BookService;
+
+import jakarta.ws.rs.core.Response;
+
+@ExtendWith(MockitoExtension.class)
+public class BookResourceTest {
+
+    @Mock
+    BookService bookService;
+
+    @InjectMocks
+    BookResource bookResource;
+
+    @Test
+    void list_returnsMappedResponses() {
+        Book b1 = new Book();
+        b1.id = 1L; b1.title = "T1"; b1.author = "A1"; b1.isbn = "123-456-7890";
+        Book b2 = new Book();
+        b2.id = 2L; b2.title = "T2"; b2.author = "A2"; b2.isbn = "123-456-7891";
+
+        when(bookService.listAll()).thenReturn(List.of(b1, b2));
+
+        List<BookResponse> result = bookResource.list();
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).id).isEqualTo(1L);
+        assertThat(result.get(1).id).isEqualTo(2L);
+
+        verify(bookService).listAll();
+        verifyNoMoreInteractions(bookService);
+    }
+
+    @Test
+    void get_returnsBookResponse() {
+        Book b = new Book();
+        b.id = 10L; b.title = "Quarkus"; b.author = "Someone"; b.isbn = "123-456-7890";
+
+        when(bookService.get(10L)).thenReturn(b);
+
+        BookResponse result = bookResource.get(10L);
+
+        assertThat(result.id).isEqualTo(10L);
+        assertThat(result.title).isEqualTo("Quarkus");
+
+        verify(bookService).get(10L);
+        verifyNoMoreInteractions(bookService);
+    }
+
+    @Test
+    void create_returns201_andEntity() {
+        BookRequest req = new BookRequest();
+        req.setTitle("New");
+        req.setAuthor("Auth");
+        req.setIsbn("123-456-7890"); 
+        req.setPublishedOn(LocalDate.now()); 
+        req.setPrice(BigDecimal.valueOf(100.50)); 
+
+        Book created = new Book();
+        created.id = 5L;
+        created.title = req.getTitle();
+        created.author = req.getAuthor();
+        created.isbn = req.getIsbn();
+        created.publishedOn = req.getPublishedOn();
+        created.price = req.getPrice();
+
+        when(bookService.create(req)).thenReturn(created);
+
+        Response resp = bookResource.create(req);
+
+        assertThat(resp.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+        BookResponse body = (BookResponse) resp.getEntity();
+        assertThat(body.id).isEqualTo(5L);
+
+        verify(bookService).create(req);
+        verifyNoMoreInteractions(bookService);
+    }
+
+    @Test
+    void update_returnsUpdatedResponse() {
+        BookRequest req = new BookRequest();
+        req.setTitle("Upd"); 
+        req.setAuthor("UpdA"); 
+        req.setIsbn("123-456-7890"); 
+
+        Book updated = new Book();
+        updated.id = 7L;
+        updated.title = "Upd";
+        updated.author = "UpdA";
+        updated.isbn = "123-456-7890";
+
+        when(bookService.update(7L, req)).thenReturn(updated);
+
+        BookResponse result = bookResource.update(7L, req);
+
+        assertThat(result.id).isEqualTo(7L);
+        assertThat(result.title).isEqualTo("Upd");
+
+        verify(bookService).update(7L, req);
+        verifyNoMoreInteractions(bookService);
+    }
+
+    @Test
+    void delete_returns204() {
+        doNothing().when(bookService).delete(9L);
+
+        Response resp = bookResource.delete(9L);
+
+        assertThat(resp.getStatus()).isEqualTo(Response.Status.NO_CONTENT.getStatusCode());
+
+        verify(bookService).delete(9L);
+        verifyNoMoreInteractions(bookService);
+    }
+}
+
+21. Create UserResourceTest
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.pack.entity.CreateUserRequest;
+import com.pack.entity.User;
+import com.pack.resource.UserResource;
+import com.pack.service.UserService;
+
+@ExtendWith(MockitoExtension.class)
+public class UserResourceTest {
+
+    @Mock
+    UserService userService;
+
+    @InjectMocks
+    UserResource userResource;
+
+    @Test
+    void createUser_callsService_andReturnsUser() {
+        // arrange
+        CreateUserRequest req = new CreateUserRequest();
+        req.username = "admin";
+        req.password = "P@ssw0rd123";
+        req.role = "admin";
+
+        User created = new User();
+        created.id = 1L;
+        created.username = "admin";
+        created.role = "admin";
+        created.active = true;
+        created.passwordHash = "$2a$10$dummyhash"; // should never return in real API
+
+        when(userService.create(req)).thenReturn(created);
+
+        // act
+        User result = userResource.create(req);
+
+        // assert
+        assertThat(result).isNotNull();
+        assertThat(result.username).isEqualTo("admin");
+        assertThat(result.role).isEqualTo("admin");
+
+        // verify interaction
+        ArgumentCaptor<CreateUserRequest> captor = ArgumentCaptor.forClass(CreateUserRequest.class);
+        verify(userService, times(1)).create(captor.capture());
+        assertThat(captor.getValue().username).isEqualTo("admin");
+        verifyNoMoreInteractions(userService);
+    }
+}
+
+22. Create AuthResourceTest
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.pack.entity.User;
+import com.pack.resource.AuthResource;
+import com.pack.service.PasswordService;
+import com.pack.service.UserService;
+
+import io.quarkus.security.ForbiddenException;
+import io.smallrye.jwt.build.Jwt;
+import io.smallrye.jwt.build.JwtClaimsBuilder;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAuthorizedException;
+
+@ExtendWith(MockitoExtension.class)
+public class AuthResourceTest {
+
+    @Mock
+    UserService userService;
+
+    @Mock
+    PasswordService passwordService;
+
+    @InjectMocks
+    AuthResource authResource;
+
+    @Test
+    void login_whenUsernameOrPasswordNull_returns400() {
+        assertThatThrownBy(() -> authResource.login(new AuthResource.LoginRequest(null, "x")))
+                .isInstanceOf(BadRequestException.class);
+
+        assertThatThrownBy(() -> authResource.login(new AuthResource.LoginRequest("u", null)))
+                .isInstanceOf(BadRequestException.class);
+
+        verifyNoInteractions(userService, passwordService);
+    }
+
+    @Test
+    void login_whenUserNotFound_returns401() {
+        when(userService.findByUsername("nope")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authResource.login(new AuthResource.LoginRequest("nope", "pw")))
+                .isInstanceOf(NotAuthorizedException.class)
+                .satisfies(ex -> {
+                    NotAuthorizedException nae = (NotAuthorizedException) ex;
+                    assertThat(nae.getResponse().getStatus()).isEqualTo(401);
+                });
+
+        verify(userService).findByUsername("nope");
+        verifyNoMoreInteractions(userService);
+        verifyNoInteractions(passwordService);
+    }
+
+    @Test
+    void login_whenInactive_returns403() {
+        User user = new User();
+        user.username = "admin";
+        user.active = false;
+
+        when(userService.findByUsername("admin")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> authResource.login(new AuthResource.LoginRequest("admin", "pw")))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("inactive");
+
+        verify(userService).findByUsername("admin");
+        verifyNoInteractions(passwordService);
+    }
+
+
+    @Test
+    void login_whenPasswordMismatch_returns401() {
+        User user = new User();
+        user.username = "admin";
+        user.active = true;
+        user.role = "admin";
+        user.passwordHash = "$2a$10$hash";
+
+        when(userService.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(passwordService.matches("wrong", user.passwordHash)).thenReturn(false);
+
+        assertThatThrownBy(() -> authResource.login(new AuthResource.LoginRequest("admin", "wrong")))
+                .isInstanceOf(NotAuthorizedException.class)
+                .satisfies(ex -> {
+                    NotAuthorizedException nae = (NotAuthorizedException) ex;
+                    assertThat(nae.getResponse().getStatus()).isEqualTo(401);
+                });
+
+        verify(userService).findByUsername("admin");
+        verify(passwordService).matches("wrong", user.passwordHash);
+        verifyNoMoreInteractions(userService, passwordService);
+    }
+    @Test
+    void login_success_returnsToken() {
+        User user = new User();
+        user.username = "admin";
+        user.active = true;
+        user.role = "admin";
+        user.passwordHash = "$2a$10$hash";
+
+        when(userService.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(passwordService.matches("pw", user.passwordHash)).thenReturn(true);
+
+        // Mock static Jwt.issuer(...) chain
+        JwtClaimsBuilder builder = mock(JwtClaimsBuilder.class);
+        when(builder.upn(anyString())).thenReturn(builder);
+        when(builder.groups(anySet())).thenReturn(builder);
+        when(builder.expiresAt(any(Instant.class))).thenReturn(builder);
+        when(builder.sign()).thenReturn("fake-jwt-token");
+
+        try (MockedStatic<Jwt> jwt = mockStatic(Jwt.class)) {
+            jwt.when(() -> Jwt.issuer("book-api")).thenReturn(builder);
+
+            AuthResource.TokenResponse resp =
+                    authResource.login(new AuthResource.LoginRequest("admin", "pw"));
+
+            assertThat(resp).isNotNull();
+            assertThat(resp.token()).isEqualTo("fake-jwt-token");
+
+            verify(userService).findByUsername("admin");
+            verify(passwordService).matches("pw", user.passwordHash);
+            verify(builder).upn("admin");
+            verify(builder).groups(Set.of("admin"));
+            verify(builder).sign();
+        }
+    }
+}
+
+23. Create BookServiceTest
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.pack.entity.Book;
+import com.pack.entity.BookRequest;
+import com.pack.exception.DuplicateResourceException;
+import com.pack.exception.NotFoundException;
+import com.pack.repository.BookRepository;
+import com.pack.service.BookService;
+
+@ExtendWith(MockitoExtension.class)
+public class BookServiceTest {
+
+    @Mock
+    BookRepository repo;
+
+    @InjectMocks
+    BookService service;
+
+    @Test
+    void listAll_returnsRepoList() {
+        Book b1 = new Book(); b1.id = 1L;
+        when(repo.listAll()).thenReturn(List.of(b1));
+
+        List<Book> result = service.listAll();
+
+        assertThat(result).hasSize(1);
+        verify(repo).listAll();
+        verifyNoMoreInteractions(repo);
+    }
+
+    @Test
+    void get_whenFound_returnsBook() {
+        Book b = new Book(); b.id = 10L;
+        when(repo.findByIdOptional(10L)).thenReturn(Optional.of(b));
+
+        Book result = service.get(10L);
+
+        assertThat(result.id).isEqualTo(10L);
+        verify(repo).findByIdOptional(10L);
+    }
+
+    @Test
+    void get_whenNotFound_throwsNotFoundException() {
+        when(repo.findByIdOptional(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.get(99L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Book not found");
+
+        verify(repo).findByIdOptional(99L);
+    }
+
+    @Test
+    void create_whenDuplicateIsbn_throwsDuplicateResourceException() {
+        BookRequest req = mock(BookRequest.class);
+        when(req.getIsbn()).thenReturn("123-456-7890");
+        when(repo.findByIsbn("123-456-7890")).thenReturn(Optional.of(new Book()));
+
+        assertThatThrownBy(() -> service.create(req))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessageContaining("ISBN already exists");
+
+        verify(repo).findByIsbn("123-456-7890");
+        verify(repo, never()).persist(any(Book.class));
+    }
+
+    @Test
+    void create_whenOk_persistsAndReturnsEntity() {
+        BookRequest req = mock(BookRequest.class);
+        when(req.getTitle()).thenReturn("T");
+        when(req.getAuthor()).thenReturn("A");
+        when(req.getIsbn()).thenReturn("123-456-7890");
+        when(req.getPublishedOn()).thenReturn(LocalDate.of(2020, 1, 1));
+        when(req.getPrice()).thenReturn(BigDecimal.valueOf(10.5));
+        when(repo.findByIsbn("123-456-7890")).thenReturn(Optional.empty());
+
+        Book created = service.create(req);
+
+        ArgumentCaptor<Book> captor = ArgumentCaptor.forClass(Book.class);
+        verify(repo).persist(captor.capture());
+        Book persisted = captor.getValue();
+
+        assertThat(persisted.title).isEqualTo("T");
+        assertThat(persisted.author).isEqualTo("A");
+        assertThat(persisted.isbn).isEqualTo("123-456-7890");
+        assertThat(persisted.publishedOn).isEqualTo(LocalDate.of(2020, 1, 1));
+        assertThat(persisted.price).isEqualTo(BigDecimal.valueOf(10.5));
+
+        assertThat(created).isSameAs(persisted);
+    }
+
+    @Test
+    void update_whenIsbnChangedAndExists_throwsDuplicateResourceException() {
+        Book existing = new Book();
+        existing.id = 1L;
+        existing.isbn = "111";
+
+        BookRequest req = mock(BookRequest.class);
+        when(req.getIsbn()).thenReturn("222"); // change
+
+        when(repo.findByIdOptional(1L)).thenReturn(Optional.of(existing));
+        when(repo.findByIsbn("222")).thenReturn(Optional.of(new Book()));
+
+        assertThatThrownBy(() -> service.update(1L, req))
+                .isInstanceOf(DuplicateResourceException.class);
+
+        verify(repo).findByIdOptional(1L);
+        verify(repo).findByIsbn("222");
+    }
+
+    @Test
+    void update_whenOk_updatesFields() {
+        Book existing = new Book();
+        existing.id = 1L;
+        existing.isbn = "111";
+
+        BookRequest req = mock(BookRequest.class);
+        when(req.getTitle()).thenReturn("NewT");
+        when(req.getAuthor()).thenReturn("NewA");
+        when(req.getIsbn()).thenReturn("222");
+        when(req.getPublishedOn()).thenReturn(LocalDate.of(2021, 2, 2));
+        when(req.getPrice()).thenReturn(BigDecimal.valueOf(99.99));
+
+        when(repo.findByIdOptional(1L)).thenReturn(Optional.of(existing));
+        when(repo.findByIsbn("222")).thenReturn(Optional.empty());
+
+        Book updated = service.update(1L, req);
+
+        assertThat(updated.title).isEqualTo("NewT");
+        assertThat(updated.author).isEqualTo("NewA");
+        assertThat(updated.isbn).isEqualTo("222");
+        assertThat(updated.publishedOn).isEqualTo(LocalDate.of(2021, 2, 2));
+        assertThat(updated.price).isEqualTo(BigDecimal.valueOf(99.99));
+    }
+
+    @Test
+    void delete_whenOk_deletesEntity() {
+        Book existing = new Book();
+        existing.id = 1L;
+
+        when(repo.findByIdOptional(1L)).thenReturn(Optional.of(existing));
+
+        service.delete(1L);
+
+        verify(repo).delete(existing);
+    }
+}
+
+24. Create PasswordServiceTest
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+
+import com.pack.service.PasswordService;
+
+public class PasswordServiceTest {
+
+    PasswordService service = new PasswordService();
+
+    @Test
+    void hash_generatesBcryptHash_andMatches() {
+        String raw = "P@ssw0rd123";
+
+        String hash = service.hash(raw);
+
+        assertThat(hash).isNotBlank();
+        // bcrypt hashes commonly start with $2a$ / $2b$ / $2y$
+        assertThat(hash).startsWith("$2");
+
+        assertThat(service.matches(raw, hash)).isTrue();
+        assertThat(service.matches("wrong", hash)).isFalse();
+    }
+}
+
+25. Create UserServiceTest
+
+
+
+Quarkus Reactive SQL Clients with Mysql
+     Because Quarkus is designed for high‑throughput, cloud‑native, non‑blocking applications, and traditional JDBC is fundamentally blocking.
+
+What the Reactive SQL Client actually gives you
+✅ Non‑blocking DB access
+Reactive SQL client:
+- Uses async socket I/O
+- No thread waits for the DB
+- The event loop is free to serve other requests
+
+That’s why methods return:
+- Uni<T> (0 or 1 result)
+- Multi<T> (stream of results)
+
+This matches the Mutiny programming model Quarkus is built on. 
+
+     Reactive SQL in Quarkus is:
+- Client-based, not ORM-based
+- Uses SQL directly
+- Uses Uni / Multi
+- Uses pool injection via @Inject
+
+1. Create quarkus-reactive-sql project with Resteasy classic, Resteasy classic jackson,lombok dependency
+
+ <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-mutiny</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-reactive-mysql-client</artifactId>
+        </dependency>
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Configure db info for reactive prg in application.properties
+
+quarkus.http.port=2000
+
+quarkus.datasource.db-kind=mysql
+quarkus.datasource.reactive.url=mysql://localhost:3306/demo
+quarkus.datasource.password=root
+quarkus.datasource.username=root
+
+5. Create model class
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Movie {
+	private Long id;
+	private String title;
+}
+
+6. Create Resource class to create all schema and insert few values into the table at time of starting the appl using @PostConstruct
+
+@Path("movies")
+public class MovieResource {
+
+	@Inject
+	MySQLPool mysqlPool;
+
+	//1. create all the table
+	@PostConstruct
+	void config() {
+		initdb();
+	}
+
+	private void initdb() {
+	    mysqlPool.query("DROP TABLE IF EXISTS movies").execute()
+	        .flatMap(ignored ->
+	            mysqlPool.query(
+	                "CREATE TABLE movies (" +
+	                "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+	                "title VARCHAR(255) NOT NULL" +
+	                ")"
+	            ).execute()
+	        )
+	        .flatMap(ignored ->
+	            mysqlPool.query("INSERT INTO movies (title) VALUES ('The Lord of the Rings')").execute()
+	        )
+	        .flatMap(ignored ->
+	            mysqlPool.query("INSERT INTO movies (title) VALUES ('Harry Potter')").execute()
+	        )
+	        .await().indefinitely();
+	}
+
+}
+
+7. Now we get all movies from table
+
+- In MovieResource, we create
+
+    @GET
+    public Multi<Movie> getAll() {
+        return Movie.findAll(client);
+    }
+
+- In Movie class, we create findAll()
+
+public static Multi<Movie> findAll(MySQLPool client) {
+		    return client
+		            .query("SELECT id, title FROM movies ORDER BY title DESC")
+		            .execute()
+		            .onItem()
+		            .transformToMulti(set -> Multi.createFrom().iterable(set))
+		            .onItem()
+		            .transform(Movie::from); //transform each row into movie, so we create from() method
+     }
+	 
+	 private static Movie from(Row row) {
+		    return new Movie(row.getLong("id"), row.getString("title"));
+	 }
+
+8. Run the appl
+>mvn quarkus:dev and run http://localhost:2000/movies
+
+9. Find the movie based on id
+
+- In Movie class, we create findById()
+
+public static Uni<Movie> findById(MySQLPool client, Long id) {
+		    return client
+		            .preparedQuery("SELECT id, title FROM movies WHERE id = ?")
+		            .execute(Tuple.of(id))
+		            .onItem()
+		            .transform(m -> m.iterator().hasNext() ? from(m.iterator().next()) : null);
+		  }
+
+In case if we pass multiple parameters, then
+
+
+public static Uni<Movie> findById(MySQLPool client, Long id, Integer age) {
+    return client
+        .preparedQuery("SELECT id, title FROM movies WHERE id = ? AND age = ?")
+        .execute(Tuple.of(id, age))   // ✅ order matters
+        .onItem()
+        .transform(rows ->
+            rows.iterator().hasNext() ? from(rows.iterator().next()) : null
+        );
+}
+
+
+- In MovieResource, create a endpoint
+
+ 		@GET
+	    @Path("{id}")
+	    public Uni<Response> get(@PathParam("id") Long id) {
+	        return Movie.findById(mysqlPool, id)
+	                .onItem()
+	                .transform(movie -> movie != null ? Response.ok(movie) : Response.status(Response.Status.NOT_FOUND))
+	                .onItem()
+	                .transform(Response.ResponseBuilder::build);
+	    }
+
+10. Run the appl
+>mvn quarkus:dev and run http://localhost:2000/movies/2
+
+11. Building dynamic queries with optional parameters
+
+public class MovieRepository {
+
+  public static Uni<List<Movie>> search(
+      MySQLPool client,
+      Long id,                // optional (nullable)
+      Integer age,            // optional (nullable)
+      String titleContains,   // optional (nullable/blank)
+      int limit,
+      int offset
+  ) {
+
+    StringBuilder sql = new StringBuilder(
+        "SELECT id, title FROM movies WHERE 1=1"
+    );
+
+    List<Object> params = new ArrayList<>();
+
+    if (id != null) {
+      sql.append(" AND id = ?");
+      params.add(id);
+    }
+
+    if (age != null) {
+      sql.append(" AND age = ?");
+      params.add(age);
+    }
+
+    if (titleContains != null && !titleContains.isBlank()) {
+      sql.append(" AND title LIKE ?");
+      params.add("%" + titleContains + "%");
+    }
+
+    // Always apply deterministic order when paginating
+    sql.append(" ORDER BY title DESC");
+
+    // Pagination (MySQL supports LIMIT/OFFSET
+    sql.append(" LIMIT ? OFFSET ?");
+    params.add(limit);
+    params.add(offset);
+
+    Tuple tuple = Tuple.from(params); 
+
+    return client
+        .preparedQuery(sql.toString())
+        .execute(tuple) // PreparedQuery.execute(Tuple) 
+        .onItem()
+        .transform(rows -> {
+          List<Movie> list = new ArrayList<>();
+          for (Row row : rows) {
+            list.add(Movie.from(row)); 
+          }
+          return list;
+        });
+  }
+}
+
+
+12. Now we save a new movie inside the database using reactive sql
+
+- In Movie class, we create save()
+
+public static Uni<Long> save(PgPool client, String title) {
+    return client
+            .preparedQuery("INSERT INTO movies (title) VALUES (?) RETURNING id")
+            .execute(Tuple.of(title))
+            .onItem()
+            .transform(m -> m.iterator().next().getLong("id"));
+  }
+
+- In MovieResource, create a endpoint
+
+    public static Uni<Long> save(MySQLPool client, String title) {
+    return client
+        .preparedQuery("INSERT INTO movies (title) VALUES (?)") 
+        .execute(Tuple.of(title))
+        .onItem()
+        .transform(result ->
+            result.property(MySQLClient.LAST_INSERTED_ID) 
+        );
+    }
+
+13. Run the appl
+>mvn quarkus:dev and run http://localhost:2000/movies with POST request
+
+{
+  "title":"Robot"
+}
+
+14. Now we delete the movie based on id
+
+- In Movie class, we create delete()
+
+public static Uni<Boolean> delete(MySQLPool client, Long id) {
+	    return client
+	            .preparedQuery("DELETE FROM movies WHERE id = ?")
+	            .execute(Tuple.of(id))
+	            .onItem()
+	            .transform(m -> m.rowCount() == 1);
+	  }
+
+- In MovieResource, create a endpoint
+
+@DELETE
+	    @Path("{id}")
+	    public Uni<Response> delete(@PathParam("id") Long id) {
+	        return Movie.delete(mysqlPool, id)
+	                .onItem()
+	                .transform(deleted -> deleted ? Response.Status.NO_CONTENT : Response.Status.NOT_FOUND)
+	                .onItem()
+	                .transform(status -> Response.status(status).build());
+	    }
+
+15. Run the appl
+>mvn quarkus:dev and run http://localhost:2000/movies/1 with DELETE request
+
+
+Complex JOINs in Quarkus Reactive MySQL
+Example schema (realistic)
+movies(id, title, category_id)
+categories(id, name)
+reviews(id, movie_id, rating)
+users(id, name)
+
+Simple Inner Join
+
+public static Uni<List<MovieView>> findMoviesWithCategory(MySQLPool client) {
+    return client
+        .query("""
+            SELECT m.id, m.title, c.name AS category
+            FROM movies m
+            JOIN categories c ON m.category_id = c.id
+        """)
+        .execute()
+        .onItem()
+        .transform(rows -> {
+            List<MovieView> list = new ArrayList<>();
+            for (Row r : rows) {
+                list.add(new MovieView(
+                    r.getLong("id"),
+                    r.getString("title"),
+                    r.getString("category")
+                ));
+            }
+            return list;
+        });
+}
+
+✅ JOIN logic is pure SQL
+✅ Mapping is explicit and safe
+✅ Works exactly as described in the Quarkus Reactive SQL Client guide [quarkus.io]
+
+
+Left Join
+Use case: Movies may not have reviews, but we still want them.
+
+public static Uni<List<MovieRatingView>> findMoviesWithRatings(MySQLPool client) {
+    return client
+        .query("""
+            SELECT m.id, m.title, r.rating
+            FROM movies m
+            LEFT JOIN reviews r ON m.id = r.movie_id
+        """)
+        .execute()
+        .onItem()
+        .transform(rows -> {
+            List<MovieRatingView> list = new ArrayList<>();
+            for (Row r : rows) {
+                list.add(new MovieRatingView(
+                    r.getLong("id"),
+                    r.getString("title"),
+                    r.getInteger("rating") // may be null
+                ));
+            }
+            return list;
+        });
+}
+
+Multi‑table JOIN with aggregation (GROUP BY)
+Use case: Movie + category + average rating
+
+public static Uni<List<MovieStats>> findMovieStats(MySQLPool client) {
+    return client
+        .query("""
+            SELECT m.id, m.title, c.name AS category,
+                   AVG(r.rating) AS avg_rating
+            FROM movies m
+            JOIN categories c ON m.category_id = c.id
+            LEFT JOIN reviews r ON r.movie_id = m.id
+            GROUP BY m.id, m.title, c.name
+        """)
+        .execute()
+        .onItem()
+        .transform(rows -> {
+            List<MovieStats> list = new ArrayList<>();
+            for (Row r : rows) {
+                list.add(new MovieStats(
+                    r.getLong("id"),
+                    r.getString("title"),
+                    r.getString("category"),
+                    r.getDouble("avg_rating")
+                ));
+            }
+            return list;
+        });
+}
+
+JOIN with parameters (WHERE on joined table)
+
+public static Uni<List<MovieReviewerView>> findByReviewer(
+    MySQLPool client, Long userId
+) {
+    return client
+        .preparedQuery("""
+            SELECT m.id, m.title, u.name AS reviewer
+            FROM movies m
+            JOIN reviews r ON m.id = r.movie_id
+            JOIN users u ON r.user_id = u.id
+            WHERE u.id = ?
+        """)
+        .execute(Tuple.of(userId))
+        .onItem()
+        .transform(rows -> {
+            List<MovieReviewerView> list = new ArrayList<>();
+            for (Row r : rows) {
+                list.add(new MovieReviewerView(
+                    r.getLong("id"),
+                    r.getString("title"),
+                    r.getString("reviewer")
+                ));
+            }
+            return list;
+        });
+}
+
+
+JOIN + pagination (real‑world pattern)
+
+public static Uni<List<MovieView>> findPaged(
+    MySQLPool client, int limit, int offset
+) {
+    return client
+        .preparedQuery("""
+            SELECT m.id, m.title, c.name AS category
+            FROM movies m
+            JOIN categories c ON m.category_id = c.id
+            ORDER BY m.title
+            LIMIT ? OFFSET ?
+        """)
+        .execute(Tuple.of(limit, offset))
+        .onItem()
+        .transform(rows -> {
+            List<MovieView> list = new ArrayList<>();
+            for (Row r : rows) list.add(MovieView.from(r));
+            return list;
+        });
+}
+
+Java bean mappings with MapStruct and Quarkus
+    A DTO(Data Transfer Object) is used to transfer data between different layers or modules of an application, such as:
+ - Between the REST layer and the service layer
+ - Between the service layer and the client
+ - Between different microservices
+A DTO:
+- Is a simple Java class
+- Contains only fields and getters/setters
+- Has no business logic
+- Is used only for input and output
+
+What is a DAO (Data Access Object)?
+     A DAO(Data Access Object) is responsible for interacting with the data storage layer, performing CRUD operations (Create, Read, Update, Delete) and isolating database logic from business logic
+
+Why use DTOs and DAOs together?
+Using DTOs and DAOs helps to:
+- Keep a clean architecture
+- Avoid exposing database entities directly
+- Make applications easier to maintain and extend
+- Improve security and flexibility
+
+
+What is MapStruct?
+    MapStruct is a Java annotation processor that automatically generates mapping code. Instead of writing manual mapping logic like this:
+
+dto.setTitle(entity.getTitle());
+dto.setDescription(entity.getDescription());
+
+1. Create quarkus-mapstruct project with resteasy classic jsonb, hibernate with orm panache, mysql, lombok dependency
+
+2. Import the project and change packaging to jar in pom.xml and update plugin section
+
+3. Delete default files from project (ie) GreetingResource and test files
+
+4. Configure db info for reactive prg in application.properties
+
+quarkus.http.port=1000
+
+quarkus.datasource.db-kind=mysql
+quarkus.datasource.jdbc.url=jdbc:mysql://localhost:3306/demo
+quarkus.datasource.username=root
+quarkus.datasource.password=root
+quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.database.generation=update
+
+5. Create Movie entity (JPA entity mapped to the database), A Panache repository (MovieRepository)
+and REST endpoints for create, read, update, and delete operations
+
+@Entity
+@Data
+public class Movie {
+
+  @Id @GeneratedValue private Long id;
+
+  @Column(length = 100)
+  private String title;
+
+  @Column(length = 200)
+  private String description;
+
+  private String director;
+
+  private String country;
+
+}
+
+
+@ApplicationScoped
+public class MovieRepository implements PanacheRepository<Movie> {
+
+  public List<Movie> findByCountry(String country) {
+    return list("SELECT m FROM Movie m WHERE m.country = ?1 ORDER BY id DESC", country);
+  }
+}
+
+@Path("/movies")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class MovieResource {
+
+  @Inject 
+  MovieRepository movieRepository;
+
+
+  @GET
+  public Response getAll() {
+    List<Movie> movies = movieRepository.listAll();
+    return Response.ok(movies).build();
+  }
+
+  @GET
+  @Path("{id}")
+  public Response getById(@PathParam("id") Long id) {
+    return movieRepository
+        .findByIdOptional(id)
+        .map(movie -> Response.ok(movie).build())
+        .orElse(Response.status(Response.Status.NOT_FOUND).build());
+  }
+
+  @GET
+  @Path("title/{title}")
+  public Response getByTitle(@PathParam("title") String title) {
+    return movieRepository
+        .find("title", title)
+        .singleResultOptional()
+        .map(movie -> Response.ok(movie).build())
+        .orElse(Response.status(Response.Status.NOT_FOUND).build());
+  }
+
+  @GET
+  @Path("country/{country}")
+  public Response getByCountry(@PathParam("country") String country) {
+    List<Movie> movies =
+        movieRepository.findByCountry(country);
+    return Response.ok(movies).build();
+  }
+
+  @POST
+  @Transactional
+  public Response create(Movie movie) {
+    movieRepository.persist(movie);
+    if (movieRepository.isPersistent(movie)) {
+      return Response.created(URI.create("/movies/" + movie.getId())).build();
+    }
+    return Response.status(Response.Status.NOT_FOUND).build();
+  }
+
+
+  @DELETE
+  @Path("{id}")
+  @Transactional
+  public Response deleteById(@PathParam("id") Long id) {
+    boolean deleted = movieRepository.deleteById(id);
+    return deleted ? Response.noContent().build() : Response.status(Response.Status.BAD_REQUEST).build();
+  }
+}
+
+6. Create DTO file
+
+@Data
+public class MovieDTO {
+    private Long id;
+    private String title;
+    private String description;
+    private String country;
+    private String director;
+    private String promotion;
+}
+
+7. Afterwards, we use the MovieDTO instead of working directly with the Movie entity every time when data is transferred., so we have to add MapStruct dependency 
+
+<dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>1.5.5.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct-processor</artifactId>
+      <version>1.5.5.Final</version>
+      <scope>provided</scope>
+    </dependency>
+
+8. Create a interface called MovieMapper which contains the necessary configuration for mapping between the Movie entity and MovieDTO with @Mapper
+
+@Mapper(componentModel = "cdi")
+public interface MovieMapper {
+
+	  // --- DAO to DTO, where promotion field is the concatenation of title and director by using expression property
+	  @Mapping(target = "promotion", expression = "java(movie.getTitle() + ' ' + movie.getDirector())")
+	  MovieDTO toDTO(Movie movie);
+
+	  // -- DTO to DAO, here we not take id into consideration by using ignore property
+	  @Mapping(target = "id", ignore = true)
+	  Movie toDAO(MovieDTO movieDTO);
+
+}
+
+While mapping from MovieDTO to Movie entity, some fields should not be taken into consideration.
+For example fields such as id should not be mapped from the DTO and these values are always managed internally by the Movie entity. Using the MapStruct ignore property, we ensure that such fields are excluded from the mapping process.
+
+Once the configuration is complete, MapStruct automatically generates the implementation of the MovieMapper.
+
+9. Next inject MovieMapper into MovieResource and update the endpoints
+
+@Path("/movies")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class MovieResource {
+
+  @Inject 
+  MovieRepository movieRepository;
+  
+  @Inject 
+  MovieMapper mapper;
+
+
+  @GET
+  public Response getAll() {
+    List<MovieDTO> movies =
+        movieRepository.listAll().stream()
+            .map(movie -> mapper.toDTO(movie))
+            .collect(Collectors.toList());
+    return Response.ok(movies).build();
+  }
+
+  @GET
+  @Path("{id}")
+  public Response getById(@PathParam("id") Long id) {
+    return movieRepository
+        .findByIdOptional(id)
+        .map(movie -> Response.ok(mapper.toDTO(movie)).build())
+        .orElse(Response.status(NOT_FOUND).build());
+  }
+
+  @GET
+  @Path("title/{title}")
+  public Response getByTitle(@PathParam("title") String title) {
+    return movieRepository
+        .find("title", title)
+        .singleResultOptional()
+        .map(movie -> Response.ok(mapper.toDTO(movie)).build())
+        .orElse(Response.status(NOT_FOUND).build());
+  }
+
+  @GET
+  @Path("country/{country}")
+  public Response getByCountry(@PathParam("country") String country) {
+    List<MovieDTO> movies =
+        movieRepository.findByCountry(country).stream()
+            .map(movie -> mapper.toDTO(movie))
+            .collect(Collectors.toList());
+    return Response.ok(movies).build();
+  }
+
+  @POST
+  @Transactional
+  public Response create(MovieDTO movieDTO) {
+    Movie movie = mapper.toDAO(movieDTO);
+    movieRepository.persist(movie);
+    if (movieRepository.isPersistent(movie)) {
+      return Response.created(URI.create("/movies/" + movie.getId())).build();
+    }
+    return Response.status(NOT_FOUND).build();
+  }
+
+  @DELETE
+  @Path("{id}")
+  @Transactional
+  public Response deleteById(@PathParam("id") Long id) {
+    boolean deleted = movieRepository.deleteById(id);
+    return deleted ? Response.noContent().build() : Response.status(BAD_REQUEST).build();
+  }
+}
+
+10. Start the appl
+
+>mvn quarkus:dev and run http://localhost:2000/movies with POST request
+
+{
+  "title":"Robot",
+  "description":"SciFi movie",
+  "director":"Shankar",
+  "country":"India"
+}
+
+GET - http://localhost:2000/movies/1 and return 
+
+{
+  "country": "India",
+  "description": "SciFi movie",
+  "director": "Shankar",
+  "id": 1,
+  "promotion": "Robot Shankar",
+  "title": "Robot"
+}
+
+we can see promotion as concatenation of title and director 
+
+This DTO is used as input when creating or updating a movie and used as output when returning movie data to the client. The database entity (Movie) is never exposed directly.
+
+
+
+
+
+
+
+
+
+
+
+
