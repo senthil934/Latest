@@ -6042,32 +6042,6 @@ public class CustomerMcpTools {
 
 Now we annotated both the methods with the @McpTool along with the description. This tells MCP server to register their method as available tools. With just one simple annotation, our API becomes smart that can now be accessible by AI agents, copilot or any MCP compliant clients.
 
-4. Converting to MCP server
-        In Spring AI, MCP server ToolCallbackProvider is a Java interface used internally to provide the logic needed to actually invoke your tool methods when a tool is called. 
-
-@RestController
-public class ToolsController {
-
-    private final ToolCallbackProvider toolCallbackProvider;
-
-    public ToolsController(ToolCallbackProvider toolCallbackProvider) {
-        this.toolCallbackProvider = toolCallbackProvider;
-    }
-
-    @GetMapping("/tools")
-    public ToolsResponse tools() {
-
-        // Spring AI ToolCallbackProvider returns ToolCallback[] in many implementations
-        ToolCallback[] callbacks = toolCallbackProvider.getToolCallbacks();  
-        List<ToolCallback> toolList = (callbacks == null) ? List.of() : Arrays.asList(callbacks);
-
-        return new ToolsResponse(toolList.size(), toolList);
-    }
-}
-
-Here we inject ToolCallbackProvider which contains a list of all
-registered tool call backs. It expose a new API that simply list all available
-tools along with the count of total number of tools available. 
 
 5. Start the application, run http://localhost:2000/api/customer/1 and also on console it will say tools are registered in mcp
 
