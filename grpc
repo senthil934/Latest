@@ -1,0 +1,3260 @@
+Spring Boot + gRPC - Unary RPC Server 
+     We create two different GRPC application, one is your server and other one is your client. Now we create
+a Proto file and define the message and services, so that client and server can communicate with each other using protobuf file
+    In the server side application we'll create a RPC service or method to get the stock based on the stock name or
+stock symbol, now when the client send the request, the server will fetch the stock information from database and
+return it back to the client
+
+1. Create gRPC-Unary-Server with grpc server, data jpa, MySQL, lombok dependency
+
+2. Create proto file inside proto folder
+
+-  First we create the service in the Proto file which is similar to the interface in Java, define a
+RPC method getStockPrice which takes StockRequest as input and StockResponse as output
+
+service StockTradingService{
+
+  // UNARY - RPC -> get current stock price
+  rpc getStockPrice(StockRequest) returns (StockResponse);
+
+}
+
+- Create StockRequest with stock_symbol as field and StockResponse with stock_symbol, price and timestamp as field  using  message
+
+message StockRequest{
+  string stock_symbol=1;
+}
+
+message StockResponse{
+  string stock_symbol=1;
+  double price=2;
+  string timestamp=3;
+
+}
+
+- we want grpc to generate these these classes as a individual class with package
+
+package stocktrading;
+option  java_multiple_files=true;
+
+-  we want to define a package for each my request and response option 
+
+option java_package="com.pack.grpc";
+
+-since you want each class or each message generated as a individual class, we want to Club them in a single class after create the individual class, so for that we can define outer class name
+
+option  java_outer_classname="StockTradingProto";
+
+
+syntax = "proto3";
+
+package stocktrading;
+option  java_multiple_files=true;
+option java_package="com.pack.grpc";
+option  java_outer_classname="StockTradingProto";
+
+
+service StockTradingService{
+
+  // UNARY - RPC -> get current stock price
+  rpc getStockPrice(StockRequest) returns (StockResponse);
+
+}
+
+
+message StockRequest{
+  string stock_symbol=1;
+}
+
+message StockResponse{
+  string stock_symbol=1;
+  double price=2;
+  string timestamp=3;
+
+}
+
+3. we need to generate the Java class out of this Proto file
+
+>mvn clean install
+
+Goto target - generated-source folder - so here grpc give you the template of your RPC methods
+
+we have defined in our Proto file something called stocktradingProto as a outer class name which contain everything all the request, response, Service name
+
+4. Right click ProtoBuf folder - Build path - Add as source folder 
+
+4. create our own service class and we'll use this particular RPC method and we'll provide our own implementation to fetch the information from the database
+
+Create  StockTradingServiceImpl with @GrpcService so that it will exposed as gRPC service by grpc server, here we want to use the RPC method defined in the service from proto file. So we extend the class StockTradingServiceImplBase which implement AsyncService which is having your method RPC getStockPrice() from StockTradingServiceGrpc
+
+Now we override the method
+
+@GrpcService
+public class StockTradingServiceImpl extends StockTradingServiceImplBase {
+
+
+    @Override
+    public void getStockPrice(StockRequest request,
+                              StreamObserver<StockResponse> responseObserver) {
+ 
+    }
+}
+
+The method return type is void, so when we access this particular grpc service from Postman or from the client, how it will return StockResponse because the return type itself is void. In rpc service we defined one parameter to getStockPrice, but in code we can see it added another parameter called StreamObserver which play the
+role to stream the data to the client
+
+Ctrl+Shift+T - StreamObserver class have onNext(), onError(), onCompleted(), so whenever you will send
+the response you will use the onnext() so that it will keep emit the response to the client, if there is any error you can use onerror(),  oncomplete will signal to the client saying that task is done. So onnext() will emit the event or message or response from server to the client that is the reason we have this responseObserver which is of type StreamObserver 
+
+So we have the request in that request you will find stock symbol or stock name then pass that stock name and get the stock object from database then map the response object and return it back to the stream Observer
+
+5. Create entity class and repository intf
+
+@Entity
+@Table(name = "stocks")
+@Data
+@NoArgsConstructor
+public class Stock {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "stock_symbol", unique = true, nullable = false)
+    private String stockSymbol;
+
+    private double price;
+
+    @Column(name = "last_updated")
+    private LocalDateTime lastUpdated;
+
+	public Stock(String stockSymbol, double price, LocalDateTime lastUpdated) {
+		super();
+		this.stockSymbol = stockSymbol;
+		this.price = price;
+		this.lastUpdated = lastUpdated;
+	}
+
+}
+
+public interface StockRepository extends JpaRepository<Stock,Long> {
+    Stock findByStockSymbol(String stockSymbol);
+
+}
+
+6. Configure db info in application.properties
+
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url = jdbc:mysql://localhost:3306/demo
+spring.datasource.username = root
+spring.datasource.password = root
+spring.jpa.show-sql = true
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+7. Now in getStockPrice(), we fetch stock from db and send as reponse to client
+
+
+@Autowired
+StockRepository stockRepository;
+
+    @Override
+    public void getStockPrice(StockRequest request,
+                              StreamObserver<StockResponse> responseObserver) {
+
+        //stockName -> DB -> map response -> return
+
+        // first get the symbol name which you will get from the request getSymbol 
+        String stockSymbol = request.getStockSymbol();
+
+        //call the repository to fetch stock from db
+        Stock stockEntity = stockRepository.findByStockSymbol(stockSymbol);
+
+        //we can use the Builder class given by grpc and map the stockentity information to stockresponse
+        StockResponse stockResponse = StockResponse.newBuilder()
+                .setStockSymbol(stockEntity.getStockSymbol())
+                .setPrice(stockEntity.getPrice())
+                .setTimestamp(stockEntity.getLastUpdated().toString())
+                .build();
+
+        //send this stockresponse object to this responseObserver 
+        responseObserver.onNext(stockResponse);
+        responseObserver.onCompleted();
+
+    }
+
+8. We need to tell to the spring framework hey run this application as a grpc server, so we have to specify port info
+
+grpc.server.port=9090
+grpc.server.enable-reflection=true
+
+if you added enable reflection true then only you can test it through Postman or any third party command line tool so that way it will expose the service outside to the application
+
+The default port no is 9090, so in case if we want to change the portnumber we use
+
+spring.grpc.server.port=9000
+
+9. Create dummy data in stock table by implementing commandlinerunner in main class
+
+@SpringBootApplication
+public class GrpcUnaryServerApplication implements CommandLineRunner {
+
+	@Autowired
+	StockRepository stockRepo;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(GrpcUnaryServerApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		List<Stock> l=new ArrayList<>();
+		
+		Stock s1=new Stock("AAPL",175.50,LocalDateTime.now());
+		l.add(s1);
+		Stock s2=new Stock("GOOGL",2800.50,LocalDateTime.now());
+		l.add(s2);
+		Stock s3=new Stock("AMZN",3400.00,LocalDateTime.now());
+		l.add(s3);
+		
+		stockRepo.saveAll(l);
+	}
+
+}
+
+
+10. Start the appl, now gRPC server will be started at 9090
+
+
+Spring Boot + gRPC Client - Consume gRPC Unary Service 
+     We build the client application and see how it can communicate with the server to consume the grpc services. We have server side application using grpc, we are exposing only one single RPC method called getStockPrice
+and we're giving the input as a stocksymbol 
+
+Create gRPC-unary-client with gRPC client, Lombok dependency
+
+2. we have already our server application which is up and running, but how client can communicate with the server they needs a contract, so the contract is nothing your Proto file which we already created in our server side application, now let's use the same Proto file in client to generate the classes
+
+Copy proto file inside proto folder from server appl
+
+3. Generate the class using >mvn clean install
+
+Right click ProtoBuf folder - Build path - Add as source folder
+
+4. since this is grpc as it's not REST we cannot do the restclient or webclient call because we don't have specific URL for grpc service, then from this client how we access to the server, so for that reason grpc will give you one proxy object or stub object 
+
+Open StockTradingServiceGrpc - search for Stub we can see so many stubs object will be created by grpc
+
+
+- To access the grpc server using stub, we need to inject the blockingstub which is correct fit for unary because we are relaying on the request and response model in unary, now we call any rpc method with that service, for that we create a configuration class for stub 
+
+@Configuration
+public class StockGrpcClientConfig {
+
+   @Bean
+   public StockTradingServiceGrpc.StockTradingServiceBlockingStub stockTradingBlockingStub(GrpcChannelFactory channels) {
+       return StockTradingServiceGrpc.newBlockingStub(channels.createChannel("stock"));
+   }
+}
+
+
+-Create service class StockClientService  with @Service  and inject the stub
+
+@Service
+public class StockClientService {
+
+    @Autowired
+    private StockTradingServiceGrpc.StockTradingServiceBlockingStub serviceBlockingStub;
+
+    public StockResponse getStockPrice(String stockSymbol) {
+        StockRequest request = StockRequest.newBuilder().setStockSymbol(stockSymbol).build();
+        return serviceBlockingStub.getStockPrice(request);
+    }
+}
+
+5. We can test the appl by implementing commandlineRunner in main class
+
+@SpringBootApplication
+public class StockTradingClientApplication implements CommandLineRunner {
+
+        @Autowired
+	private StockClientService stockClientService;
+
+	public static void main(String[] args) {
+		SpringApplication.run(StockTradingClientApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		System.out.println("Grpc client response : "+stockClientService.getStockPrice("AAPL"));
+	}
+}
+
+when you call stockClientService.getStockPrice("AAPL") it will use the stub defined in our client class and  communicate to your server side application and executing the logic, it will take the stocksymbol then it will fetch from the DB
+
+6. Now how your client will know that my server is running on port 9090, so we need to tell to your client that where server is up and running
+
+grpc.server.port=9091
+
+spring.grpc.client.channels.stock.address=static://localhost:9090
+spring.grpc.client.channels.stock.negotiation-type=plaintext
+
+7. Start the appl
+
+Now u can see in the client console it will call service in server and display the information
+
+
+Spring Boot + gRPC Server Streaming Explained
+      So previously, we understood gRPC unary communication where you send a single request and receive a single response which is similar to the traditional restful request and response
+model. 
+     Now we discuss about server streaming, imagine you are building an application that needs to
+show live updates like tracking stock prices or cricket score. In such cases, server streaming is your best choice. In server streaming pattern, the client send a single request. For example, give
+me an update for stock symbol XYZ, then the server respond with a continuous stream of data sending updates as they happen. 
+    So in actual server streaming implementation where the value will keep updating the
+page without refresh it manually. Your server will emit the event once there is
+update happened then your client will face that and will display the value. 
+
+1. In server application we have stock_trading.proto and define a method for server streaming
+
+service StockTradingService{
+
+  // UNARY - RPC -> get current stock price
+  rpc getStockPrice(StockRequest) returns (StockResponse);
+
+  //server streaming - we want our server to send stream of data. So instead of sending the single response we'll tell to this gRPC server to send me the stream of stockresponse
+  rpc subscribeStockPrice(StockRequest) returns (stream StockResponse);
+
+}
+
+Now client send the request by giving the stockrequest, whenever there will be update on the stock he will get the stream of response 
+
+2. Now run >mvn clean install to generate corresponding Java classes. So, build is succeeded. Now u can search subscribeStockPrice in generated service class
+
+3. Now let's use the same service class and provide our own implementation to return the response. 
+
+
+  @Override
+    public void subscribeStockPrice(StockRequest request, StreamObserver<StockResponse> responseObserver) {
+        //get the symbol from the request
+        String symbol=request.getStockSymbol();
+
+//Now We loop 10 times and for every 1 second will emit one stock response event specific to that stock symbol and simulate to validate the behavior of server streaming
+        try {
+            for (int i = 0; i <= 10; i++) {
+                //Each loop will send one stockresponse object, we are not fetching it from
+the DB, so we dynamically build it
+                StockResponse stockResponse = StockResponse.newBuilder()
+                        .setStockSymbol(symbol)
+                        .setPrice(10 + (200 - 10) * new Random().nextDouble())
+                        .setTimestamp(Instant.now().toString())
+                        .build();
+
+				//now we emit one response to the client 
+                responseObserver.onNext(stockResponse);
+               //my thread will sleep for 1 second. and the loop continue till 10 times 
+                TimeUnit.SECONDS.sleep(1);
+            }
+             //we tell to the responseobserver the task is completed
+            responseObserver.onCompleted();
+        }
+        //if any error we can catch it
+        catch (Exception ex){
+            responseObserver.onError(ex);
+        }
+    }
+
+4. Start the appl
+
+5. In client appl, add rpc method in client proto file
+
+rpc subscribeStockPrice(StockRequest) returns (stream StockResponse);
+
+6. Next generate the Java classes by using 
+>mvn clean install
+
+It will generate all the classes and also corresponding stub 
+
+7. we use blockingstub for unary where you will send a request you will expect only one response, but in server streaming we use StockTradingServiceStub which allow client to do a asynchronous RPC calls, so we configure the bean StockTradingServiceStub to perform server streaming 
+
+ @Bean
+     public StockTradingServiceGrpc.StockTradingServiceStub stockTradingServiceStub(
+             GrpcChannelFactory channels) {
+
+         return StockTradingServiceGrpc.newStub(channels.createChannel("stock"));
+     }
+
+8. Now we invoke subscribeStockPrice method from the server application, 
+
+@Autowired
+    private StockTradingServiceGrpc.StockTradingServiceStub stockTradingServiceStub;
+    
+    public void subscribeStockPrice(String symbol) {
+        //build the request object 
+        StockRequest request = StockRequest.newBuilder()
+                .setStockSymbol(symbol)
+                .build();
+
+        //call the method from stub
+        stockTradingServiceStub.subscribeStockPrice(request, new StreamObserver<StockResponse>() {
+
+            //when your server will emit some messages onnext will execute
+            @Override
+            public void onNext(StockResponse response) {
+                System.out.println("Stock Price Update: " + response.getStockSymbol() +
+                        " Price: " + response.getPrice() + " " +
+                        " Time: " + response.getTimestamp());
+            }
+
+            //if any error occur
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Error : " + throwable.getMessage());
+            }
+
+           //once the everything is completed server send the acknowledgement
+            @Override
+            public void onCompleted() {
+                System.out.println("stock price stream live update completed !");
+            }
+        });
+    }
+
+9. Call subscribeStockPrice() in main class 
+
+@SpringBootApplication
+public class GrpcUnaryClientApplication implements CommandLineRunner {
+
+	@Autowired
+	StockClientService service;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(GrpcUnaryClientApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		//System.out.println("Grpc client response : "+service.getStockPrice("AAPL"));
+		service.subscribeStockPrice("AAPL");
+	}
+
+}
+
+10. Start the client appl
+
+We see here for every 1 second we are getting the message from our server and once everything is completed then oncompleted() is executed 
+   So this is what the server streaming, server is keep sending the stream of data when there
+is any update, currently we are forcefully sending in every 1 second.
+
+Springboot + gRPC Client streaming
+     We explored server streaming communication where the client send a single request like give me update for stock symbol and then the server respond with continuous stream of data. Now we discuss client streaming, so imagine you want to design an application where your server
+will give you a response once it process all the incoming request. In such cases client streaming is your best choice. 
+    In client streaming pattern the client send a stream of stock symbol, then the server listen to the stream, process all the inputs and finally respond with a summary result after it receive
+everything. 
+
+1. In server appl, we add service method bulkStockOrder in proto file which takes stockorder as input and ordersummary as output, create those message classes also with different fields
+
+service StockTradingService{
+
+  // UNARY - RPC -> get current stock price
+  rpc getStockPrice(StockRequest) returns (StockResponse);
+
+  //server streaming
+  rpc subscribeStockPrice(StockRequest) returns (stream StockResponse);
+
+  //Client streaming - place multiple stock orders
+  rpc bulkStockOrder(stream StockOrder) returns (OrderSummary);
+
+}
+
+//stream of request to server
+message StockOrder{
+  string order_id=1;
+  string stock_symbol=2;
+  int32 quantity=3;
+  double price=4;
+  string order_type=5;// BUY or SELL
+}
+
+//single response from server
+message OrderSummary{
+  int32  total_orders=1;
+  double total_amount=2;
+  int32 success_count=3;
+}
+
+
+2. Generate the java class using
+>mvn clean install
+
+Now it will generate StockOrder and OrderSummary class, inside service class we can see bulkStockOrder
+
+3.  Now in StockTradingServiceImpl class we override bulkStockOrder() with request as StockOrder and response as OrderSummary
+
+@Override
+    public StreamObserver<StockOrder> bulkStockOrder(StreamObserver<OrderSummary> responseObserver) {
+
+        //build responseobserver
+        return new StreamObserver<StockOrder>() {
+
+            private int totalOrders = 0;
+            private double totalAmount = 0;
+            private int successCount = 0;
+
+            //Every request coming from client this onnext() will execute and we need to map these value results.
+            @Override
+            public void onNext(StockOrder stockOrder) {
+                //every time this method execute total order increase it one by one
+                totalOrders++;
+                totalAmount += stockOrder.getPrice() * stockOrder.getQuantity();
+                successCount++;
+                System.out.println("Received order : " + stockOrder);
+            }
+
+            //execute when there will be any failure
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Server unable to process the request : "+throwable.getMessage());
+            }
+
+            //when everything is completed then oncomplete will give the acknowledge to
+the client and here we need to build your ordersummary response 
+            @Override
+            public void onCompleted() {
+                OrderSummary summary = OrderSummary.newBuilder()
+                        .setTotalOrders(totalOrders)
+                        .setSuccessCount(successCount)
+                        .setTotalAmount(totalAmount)
+                        .build();
+                //send ordersummary from your server to the client
+                responseObserver.onNext(summary);
+                responseObserver.onCompleted();
+
+            }
+        };
+
+    }
+
+So from client you will get n number of request, we are evalating each and every field and then at the end we are sending. Once everything is completed then oncomplete method will execute and we are building the order summary. Once we build the summary result we are sending it back to the request user or client.
+
+4. Start the appl
+
+5. To test server code, we gRPC utility or gRPC CURL command line interface 
+
+a. Download grpc curl from https://github.com/fullstorydev/grpcurl/releases - grpcurl_1.9.3_windows_x86_64.zip
+
+b. Extract the folder
+
+c. Set env variables as Path = C:\Softwares\grpcurl_1.9.3_windows_x86_64\
+
+d. Open cmd prompt
+
+C:\Users\senthil.kumart>grpcurl --version
+grpcurl v1.9.3
+
+e. To test the appl, we create a dummy orders.txt file which contains different order objects which will give as input to this server 
+
+{"order_id":"1","order_type":"SELL","price":93,"quantity":7,"stock_symbol":"META"}
+{"order_id":"2","order_type":"BUY","price":88,"quantity":7,"stock_symbol":"META"}
+
+f. To test the server we run
+
+C:\Training>grpcurl -d @ -plaintext -import-path C:\Microservice\grpc-unary-server\src\main\proto -proto stock_trading.proto localhost:9090 stocktrading.StockTradingService/bulkStockOrder < orders.txt
+{
+  "totalOrders": 2,
+  "totalAmount": 1267,
+  "successCount": 2
+}
+
+Now we get the response after completing all 2 order in text file and success count is 2 and the total price. Now if we check in your console each request you received from the first to last
+
+6. In client appl, we copy the same protofile. 
+
+7. Generate the class using >mvn clean install
+
+8. Now we define another method placeBulkOrders() in service class and we use stub to call the method
+
+
+ public void placeBulkOrders() {
+
+        //capture the ordersummary which is the response we receive from the server code
+        StreamObserver<OrderSummary> responseObserver = new StreamObserver<OrderSummary>() {
+            @Override
+            public void onNext(OrderSummary summary) {
+                System.out.println("Order Summary Received from Server:");
+                System.out.println("Total Orders: " + summary.getTotalOrders());
+                System.out.println("Successful Orders: " + summary.getSuccessCount());
+                System.out.println("Total Amount: $" + summary.getTotalAmount());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Order Summary Receivedn error from Server:" + throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Stream completed , server is done sending summary !");
+            }
+        };
+
+//using stub we gave the response which get from the server code and need to pass from client 
+        StreamObserver<StockOrder> requestObserver = stockTradingServiceStub.bulkStockOrder(responseObserver);
+
+        //build some dummy multiple request
+        try {
+
+            requestObserver.onNext(StockOrder.newBuilder()
+                    .setOrderId("1")
+                    .setStockSymbol("AAPL")
+                    .setOrderType("BUY")
+                    .setPrice(150.5)
+                    .setQuantity(10)
+                    .build());
+
+            requestObserver.onNext(StockOrder.newBuilder()
+                    .setOrderId("2")
+                    .setStockSymbol("GOOGL")
+                    .setOrderType("SELL")
+                    .setPrice(2700.0)
+                    .setQuantity(5)
+                    .build());
+
+            requestObserver.onNext(StockOrder.newBuilder()
+                    .setOrderId("3")
+                    .setStockSymbol("TSLA")
+                    .setOrderType("BUY")
+                    .setPrice(700.0)
+                    .setQuantity(8)
+                    .build());
+
+            //done sending orders
+            requestObserver.onCompleted();
+        } catch (Exception ex) {
+            requestObserver.onError(ex);
+        }
+
+    }
+
+9. Now to test it directly from the client without using UI, we call the method in main class
+
+@SpringBootApplication
+public class GrpcUnaryClientApplication implements CommandLineRunner {
+
+	@Autowired
+	StockClientService service;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(GrpcUnaryClientApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		//System.out.println("Grpc client response : "+service.getStockPrice("AAPL"));
+		//service.subscribeStockPrice("AAPL");
+		service.placeBulkOrders();
+	}
+
+}
+
+10. Start the appl, when you run the client application, it gives you the order summary
+response what you are capturing in your code while consuming it.
+
+Now if you go to the server console, we can see three request, since client send these three
+request. But server return single response
+
+Springboot + gRPC Bidirectional Streaming
+    In birectional streaming, imagine the client and server are both in a conversation like a WhatsApp chat. For example, client sends stock symbol one by one and the server keep responding in real time with updates. Now if you observe client and server sends and receive stream of data
+at the same time without blocking each other, here no one waits for the others to finish. Client will keep sending the request and server will keep giving you the response back. 
+
+1. In server appl, we add rpc method liveTrading in proto file with input as StockOrder and output as TradeStatus, so we create message for TradeStatus. Here client will send stream of stockorder request and the server will keep sending the tradestatus update. 
+
+service StockTradingService{
+
+  // UNARY - RPC -> get current stock price
+  rpc getStockPrice(StockRequest) returns (StockResponse);
+
+  //server streaming
+  rpc subscribeStockPrice(StockRequest) returns (stream StockResponse);
+
+  //Client streaming - place multiple stock orders
+  rpc bulkStockOrder(stream StockOrder) returns (OrderSummary);
+
+  //Bidirectional streaming - live trading.
+  rpc liveTrading(stream StockOrder) returns (stream TradeStatus);
+
+}
+
+message TradeStatus {
+  string order_id = 1;
+  string status = 2; // e.g., "EXECUTED", "FAILED", "PENDING"
+  string message = 3; // reason if failed or success message
+  string timestamp = 4;
+}
+
+2. Generate java class for proto file using
+>mvn clean install
+
+Now we can see the TradeStatus and service name 
+
+3. Now let's define the implementation for this particular RPC methods. 
+
+Now if you observe from the Java perspective what we are returning here stream of stockorder and the input is Stream of tradestatus that is not the reality in gRPC. Whatever there in your method argument that will be your response (ie) TradeStatus and StockOrder will take as a input, that is the rule follow in gRPC. 
+
+@Override
+    public StreamObserver<StockOrder> liveTrading(StreamObserver<TradeStatus> responseObserver) {
+        
+//Since we getting the stockorder asynchronously and we keep sending the tradestatus as response, we return streamobserver with stockorder as a input. We create a dummy tradestatus object because we are not going to connect to the DB or there is no external call
+          return new StreamObserver<>() {
+
+            //For every request,we want to return the tradestatus object, so we build TradeStatus
+            @Override
+            public void onNext(StockOrder order) {
+                System.out.println("Received order: " + order);
+
+                String status = "EXECUTED";
+                String message = "Order processed successfully";
+                if (order.getQuantity() <= 0) {
+                    status = "FAILED";
+                    message = "Invalid quantity";
+                }
+                TradeStatus response = TradeStatus.newBuilder()
+                        .setOrderId(order.getOrderId())
+                        .setStatus(status)
+                        .setMessage(message)
+                        .setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                        .build();
+                responseObserver.onNext(response);
+            }
+
+           //If any error, I'll just add some messages
+            @Override
+            public void onError(Throwable throwable) {
+                System.err.println("Error " + throwable.getMessage());
+            }
+
+           //add when task is completed
+            @Override
+            public void onCompleted() {
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+4. Start the appl
+
+5. To test we use gRPC curl command, we use orders.txt file
+
+c:training>grpcurl -d @ -plaintext -import-path C:\Microservice\grpc-unary-server\src\main\proto -proto stock_trading.proto localhost:9090 stocktrading.StockTradingService/liveTrading < orders.txt
+
+Client will send stream of request and response should be stream of response. From order.txt, it trigger 100 request concurrently and my server is able to respond. 
+
+6. In client appl, copy the proto file
+
+7. Generate java class using >mvn clean install
+
+8. In our client implementation we use stub to call our server RPC methods. 
+
+
+public void startLiveTrading() throws InterruptedException {
+
+       //we use the stub reference to call the server RPC method for livetrading.Now whatever the response your server will return you can capture in onnext from the client side.
+        StreamObserver<StockOrder> requestObserver = stockTradingServiceStub.liveTrading(new StreamObserver<>() {
+
+            //printing all the trade status you are getting from your server
+            @Override
+            public void onNext(TradeStatus tradeStatus) {
+                System.out.println("server response : " + tradeStatus);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("error : " + throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("stream completed. ");
+            }
+        });
+
+        //it is birectional streaming, so client also sending multiple order request
+       //loop 10 dummy request to the server and we'll see whether the onnext of the
+client is capturing those response or not.
+        for (int i = 1; i <= 10; i++) {
+            StockOrder stockOrder = StockOrder.newBuilder()
+                    .setOrderId("ORDER-" + i)
+                    .setStockSymbol("APPL")
+                    .setQuantity(i * 10)
+                    .setPrice(150.0 + i)
+                    .setOrderType("BUY")
+                    .build();
+            requestObserver.onNext(stockOrder);
+            Thread.sleep(500);
+        }
+        requestObserver.onCompleted();
+    }
+
+9. Next call stockTrading method from your main class 
+
+@SpringBootApplication
+public class GrpcUnaryClientApplication implements CommandLineRunner {
+
+	@Autowired
+	StockClientService service;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(GrpcUnaryClientApplication.class, args);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		//System.out.println("Grpc client response : "+service.getStockPrice("AAPL"));
+		//service.subscribeStockPrice("AAPL");
+		//service.placeBulkOrders();
+		service.startLiveTrading();
+	}
+
+}
+
+10. Start the client appl
+
+All the 10 request sent by the client, now after getting this request from the
+client, the server returns the trade status which we are capturing in client code (ie)Server response, Order place successfully these are the messages we are setting in our
+server code. 
+
+
+SpringBoot + gRPC implementation (https://github.com/DevProblems/grpc-with-springboot)
+
+1. Create gRPC-Book-server project with lombok, spring grpc server dependency 
+
+2. Create schema.proto file inside src/main/proto folder 
+
+- First thing we mention the syntax that you're gonna use as there are three versions so we're gonna use the latest 
+
+syntax="proto3";
+
+- we have to mention in which package you want to generate the files
+
+package com.pack;
+
+- we need the files to be created in a different files, so we use
+
+option java_multiple_files = true;
+
+- Now we create schema called book and author, using message
+
+message Book {
+  int32 book_id = 1;
+  string title = 2;
+  float price = 3;
+  int32 pages = 4;
+  int32 author_id = 5;
+}
+
+message Author {
+  int32 author_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string gender = 4;
+  int32 book_id = 5;
+}
+
+- we want to create a service file
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+}
+
+
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+package com.pack;
+
+message Book {
+  int32 book_id = 1;
+  string title = 2;
+  float price = 3;
+  int32 pages = 4;
+  int32 author_id = 5;
+}
+
+message Author {
+  int32 author_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string gender = 4;
+  int32 book_id = 5;
+}
+
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+
+}
+
+3. Now we generate java class for proto file
+
+>mvn clean install
+
+Now inside target - generated-sources folder we can see different classes for proto schema
+
+- Right click protoBuf - Build path - Move as source folder
+
+4. Now we create implementation of grpc service class called BookAuthorServerService which extends BookAuthorServiceImplBase and override getAuthor() where we provide author  object and we will we will return again the author which will be wrapped in this streamobserver
+
+@GrpcService
+public class BookAuthorServerService extends BookAuthorServiceImplBase{
+
+	@Override
+	public void getAuthor(Author request, StreamObserver<Author> responseObserver) {
+		
+	}
+}
+
+-  we create a dummy database to return book and author details  
+
+public class TempDB {
+
+    public static List<Author> getAuthorsFromTempDb() {
+        return new ArrayList<Author>() {
+            {
+                add(Author.newBuilder().setAuthorId(1).setBookId(1).setFirstName("Charles").setLastName("Dickens").setGender("male").build());
+                add(Author.newBuilder().setAuthorId(2).setFirstName("William").setLastName("Shakespeare").setGender("male").build());
+                add(Author.newBuilder().setAuthorId(3).setFirstName("JK").setLastName("Rowling").setGender("female").build());
+                add(Author.newBuilder().setAuthorId(4).setFirstName("Virginia").setLastName("Woolf").setGender("female").build());
+            }
+        };
+    }
+
+    public static List<Book> getBooksFromTempDb() {
+        return new ArrayList<Book>() {
+            {
+                add(Book.newBuilder().setBookId(1).setAuthorId(1).setTitle("Oliver Twist").setPrice(123.3f).setPages(100).build());
+                add(Book.newBuilder().setBookId(2).setAuthorId(1).setTitle("A Christmas Carol").setPrice(223.3f).setPages(150).build());
+                add(Book.newBuilder().setBookId(3).setAuthorId(2).setTitle("Hamlet").setPrice(723.3f).setPages(250).build());
+                add(Book.newBuilder().setBookId(4).setAuthorId(3).setTitle("Harry Potter").setPrice(423.3f).setPages(350).build());
+                add(Book.newBuilder().setBookId(5).setAuthorId(3).setTitle("The Casual Vacancy").setPrice(523.3f).setPages(450).build());
+                add(Book.newBuilder().setBookId(6).setAuthorId(4).setTitle("Mrs. Dalloway").setPrice(623.3f).setPages(550).build());
+            }
+        };
+    }
+}
+
+- Now we write implementation for fetching the author details
+
+@Override
+    public void getAuthor(Author request, StreamObserver<Author> responseObserver) {
+        TempDB.getAuthorsFromTempDb()
+                .stream()
+                .filter(author -> author.getAuthorId() == request.getAuthorId())
+                .findFirst()
+                .ifPresent(responseObserver::onNext);
+        responseObserver.onCompleted();
+    }
+
+From TempDB we are getting author and we are filtering it with the author id that we get in a request and we are finding it and if present we are calling the responseobserver onnext method because onnext we send the response back to the client and oncompleted should be called at the end when we have successfully done the operation 
+
+5. Set grpc server port in application.properties
+
+spring.grpc.server.port=9000
+
+6. Start the application
+
+7. Now we can test the server using grpc curl command
+
+C:\Microservice\gRPC-Book-server>grpcurl -plaintext -d "{\"authorId\":1}" localhost:9000 com.pack.BookAuthorService/getAuthor
+{
+  "author_id": 1,
+  "first_name": "Charles",
+  "last_name": "Dickens",
+  "gender": "male",
+  "book_id": 1
+}
+
+8. Create grpc-Book-Client with spring grpc client, spring web, lombok dependency, this client service will have the controllers which expose some rest api and using that we will invoke this method, and this client service will invoke the method which is present in a different micro service which is a grpc-server-service 
+
+9. Copy schema.port file and generate Java class for proto file using
+>mvn clean install
+
+It will generate all classes
+
+- Right click protoBuf - Build path - Move as source folder
+
+10. Create a service class to call grpc server info using stub, and here it is synchronous so we use blocking stub
+
+@Service
+public class BookAuthorClientService {
+
+    //in order to make a call from this client service to this grpc service using blockingstub
+    @Autowired
+    BookAuthorServiceGrpc.BookAuthorServiceBlockingStub synchronousClient;
+
+    public Map<Descriptors.FieldDescriptor, Object> getAuthor(int authorId) {
+        //based on authorId build Author object
+        Author authorRequest = Author.newBuilder().setAuthorId(authorId).build();
+        //using the synchronous client i'm gonna make a call to this grpc service and return response
+        Author authorResponse = synchronousClient.getAuthor(authorRequest);
+        return authorResponse.getAllFields();
+    }
+}
+
+previously in order to do the inter-service communication we have to add the rest template or web client etc and it has been eliminated by this grpc ,because everything has been
+auto generated ,all the communications that we need to do it has been handled by the library
+which is a protocol buffer
+
+11. create a configuration class for stub
+
+@Configuration
+public class BookGrpcClientConfig {
+
+    @Bean
+    public BookAuthorServiceGrpc.BookAuthorServiceBlockingStub bookAuthorBlockingStub(
+            GrpcChannelFactory channels) {
+        // "bookAuthor" must match the name used in properties: spring.grpc.client.channels.bookAuthor.*
+        return BookAuthorServiceGrpc.newBlockingStub(channels.createChannel("bookAuthor"));
+    }
+}
+
+12. Configure channel name in application.properties
+
+server.port=9001
+spring.grpc.client.channels.bookAuthor.address=static://localhost:9000
+spring.grpc.client.channels.bookAuthor.negotiation-type=plaintext
+
+
+13. create a controller 
+
+@RestController
+public class BookAuthorController {
+
+    @Autowired
+    BookAuthorClientService bookAuthorClientService;
+
+    @GetMapping("/author/{id}")
+    public Map<Descriptors.FieldDescriptor, Object> getAuthor(@PathVariable String id) {
+        return bookAuthorClientService.getAuthor(Integer.parseInt(id));
+    }
+
+}
+
+14. Start the appl and run http://localhost:9001/author/1, it will display author info whose id=1
+
+when we give the request it will call getAuthor() which calls bookAuthorClientService and internally this service will make a call to the another service which is a grpc service basically it's going to make a remote procedure call to a another service and the logic to call the different service has been auto generated in BookAuthorSrviceGrpc class 
+
+
+Server Streaming
+
+1. In server appl, create service method in proto file related to server streaming
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+  
+  //sever streaming - Asynchronous
+  //client will send one request and server will send stream of response to the client (ie) we send one author id and returns mutliple books for that author
+  rpc getBooksByAuthor(Author) returns(stream Book){}
+
+}
+
+2. Generate Java class based on protofile 
+>mvn clean install
+
+3. In service, we need to write generated override method
+
+   @Override
+    public void getBooksByAuthor(Author request, StreamObserver<Book> responseObserver) {
+        //we get books from TempDB then stream and filter the book based on author id and stream each book to the client
+        TempDB.getBooksFromTempDb()
+                .stream()
+                .filter(book -> book.getAuthorId() == request.getAuthorId())
+                .forEach(responseObserver::onNext);
+        responseObserver.onCompleted();
+    }
+
+4. Copy service method in proto file
+
+rpc getBooksByAuthor(Author) returns(stream Book){}
+
+- Generate java class using >mvn clean install
+
+5. Create implementation in service class using streaming way, so we use 
+
+@Autowired
+BookAuthorServiceGrpc.BookAuthorServiceStub asynchronousClient;
+
+//return multiple books so List
+public List<Map<Descriptors.FieldDescriptor, Object>> getBooksByAuthor(int authorId) throws InterruptedException {
+        //build author from authorid
+        final Author authorRequest = Author.newBuilder().setAuthorId(authorId).build();
+   
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        final List<Map<Descriptors.FieldDescriptor, Object>> response = new ArrayList<>();
+
+        //since it is asynchronous client we have to provide the implementation of a streamobserver and the server is going to stream the books to the client in onnext() 
+        asynchronousClient.getBooksByAuthor(authorRequest, new StreamObserver<Book>() {
+            @Override
+            public void onNext(Book book) {
+                response.add(book.getAllFields());
+            }
+
+            // if there is any error we will countdown the latches so that main thread doesn't wait for so long
+            @Override
+            public void onError(Throwable throwable) {
+                countDownLatch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                countDownLatch.countDown();
+            }
+        });
+
+//stream observer will be running on a different thread so the main thread should be waiting for 
+the other thread to complete, so for that we use a countdownlatch because since we are exposing a rest api and the rest api should get the response quickly. So we will await for one thread to complete for a minute
+        boolean await = countDownLatch.await(1, TimeUnit.MINUTES);
+        return await ? response : Collections.emptyList();
+    }
+
+6. create a configuration class for stub
+
+@Bean
+    public BookAuthorServiceGrpc.BookAuthorServiceStub bookAuthorAsyncStub(
+            GrpcChannelFactory channels) {
+        // "bookAuthor" must match the name used in properties: spring.grpc.client.channels.bookAuthor.*
+        return BookAuthorServiceGrpc.newStub(channels.createChannel("bookAuthorAsync"));
+    }
+
+7. Configure channel name in application.properties
+
+spring.grpc.client.channels.bookAuthorAsync.address=static://localhost:9000
+spring.grpc.client.channels.bookAuthorAsync.negotiation-type=plaintext
+
+
+8. Create rest endpoint in controller
+
+ @GetMapping("/book/{author_id}")
+    public List<Map<Descriptors.FieldDescriptor, Object>> getBookByAuthor(@PathVariable String author_id) throws InterruptedException {
+        return bookAuthorClientService.getBooksByAuthor(Integer.parseInt(author_id));
+    }
+
+9. Start both the appl, run http://localhost:9001/book/1
+
+So when we trigger this rest api, internally we're going to make the call to bookAuthorClientService.getBooksByAuthor() and this method is going to make a rpc call to a different microservice (ie) grpc-server which is going to the stream the messages to the client 
+and the client, so whenever the book object is available it will stream and invoke this onnext method of a client and pass the book object and we are adding to all the books in the response list 
+
+Client Streaming
+    Now the client will send a multiple request to the server and the server will respond with one
+response (ie)  the client is gonna send the stream of books and the server will check and send the one book which is expensive among all 
+
+1. In server appl, create service method in proto file
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+  
+  //sever streaming - Asynchronous
+  //client will send one request and server will send stream of response to the client.
+  rpc getBooksByAuthor(Author) returns(stream Book){}
+
+  //client streaming - Asynchronous
+  //client will stream of request and server will respond with one response.
+  rpc getExpensiveBook(stream Book) returns(Book){}
+}
+
+- Generate Java class using >mvn clean install
+
+2. Create implementation for getExpensiveBook method in service class 
+
+ @Override
+    public StreamObserver<Book> getExpensiveBook(StreamObserver<Book> responseObserver) {
+
+     //we have to return the streamobserver of books because the client will send multiple books to the server
+        return new StreamObserver<Book>() {
+
+ //we have to find the expensive book so we initialize Book=null and also keep a pricetrack variable since we're gonna get many books.
+            Book expensiveBook = null;
+            float priceTrack = 0;
+
+           //whenever the client will send multiple book, each book will be coming into onnext() 
+ //Now we will check the book which the client is sending, we get the prize of that book and if it's greater than the pricetrack, we update expensivebook as a book
+            @Override
+            public void onNext(Book book) {
+                if (book.getPrice() > priceTrack) {
+                    priceTrack = book.getPrice();
+                    expensiveBook = book;
+                }
+            }
+
+           //send the error using onerror
+            @Override
+            public void onError(Throwable throwable) {
+                responseObserver.onError(throwable);
+            }
+
+       //when all the books has been consumed by onnext and oncompleted would be called and we will again call onnext because since the server has to send one book
+            @Override
+            public void onCompleted() {
+                responseObserver.onNext(expensiveBook);
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+So first all the books will be consumed by onnext method and when client will send acknowledgement that all the books has been sent by the client then the server oncompleted method will be invoked and here to send that expensive book we have to call the responseobserver onnext method and pass the expensive book so that client will receive that book
+
+3. In client appl, create service method in proto file
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+  
+  //sever streaming - Asynchronous
+  //client will send one request and server will send stream of response to the client.
+  rpc getBooksByAuthor(Author) returns(stream Book){}
+
+  //client streaming - Asynchronous
+  //client will stream of request and server will respond with one response.
+  rpc getExpensiveBook(stream Book) returns(Book){}
+}
+
+- Generate Java class using >mvn clean install
+
+4. Create implementation on client to send a stream of books 
+
+ public Map<String, Map<Descriptors.FieldDescriptor, Object>> getExpensiveBook() throws InterruptedException {
+
+     //6. create CountDownLatch because it's a rest api
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        
+//4. create object for map
+        final Map<String, Map<Descriptors.FieldDescriptor, Object>> response = new HashMap<>();
+
+//1. use asynchronousclient since the client sends multiple stream of messages
+        StreamObserver<Book> responseObserver = asynchronousClient.getExpensiveBook(new StreamObserver<Book>() {
+            @Override
+            public void onNext(Book book) {
+           //5. save that one book in this map with all fields
+                response.put("Expensive Book", book.getAllFields());
+            }
+
+            //9. if any error
+            @Override
+            public void onError(Throwable throwable) {
+                countDownLatch.countDown();
+            }
+
+            //10. once it is completed
+            @Override
+            public void onCompleted() {
+                countDownLatch.countDown();
+            }
+        });
+
+        //2. from the tempdb we will get all the books,and for each book we have to send it to the
+server using onnext
+        TempDB.getBooksFromTempDb().forEach(responseObserver::onNext);
+        //3. once we send it we have to invoke oncompleted
+        responseObserver.onCompleted();
+
+        //7. call countdown.await and wait for one thread to complete
+        boolean await = countDownLatch.await(1, TimeUnit.MINUTES);
+       //8. return if await is true return the response else return the empty map
+        return await ? response : Collections.emptyMap();
+    }
+
+5. Create rest api in controller
+
+ @GetMapping("/book")
+    public Map<String, Map<Descriptors.FieldDescriptor, Object>> getExpensiveBook() throws InterruptedException {
+        return bookAuthorClientService.getExpensiveBook();
+    }
+
+6. Start both the appl and run http://localhost:9001/book
+
+first we get all the books from TempDB and using the responseobserver that we have initialized here we will send the books to the server, since it's a client streaming the client will send multiple books to the server, so whenever we want to exchange any messages you have to call the onnext method which invoke onnext in the server side (ie) BookAuthorServerService and the server will get the book and find the expensive among all the books. Since the server has to exchange the message once it is completed, the server will invoke the onnext inside oncompleted() and send the expensive book 
+
+
+Bi-directional streaming 
+    The client will send multiple requests and the server will also send the stream of
+messages back to the client, so it's a bi-directional so the both the client and server will send multiple requests and response together 
+
+1. In server appl, create service method in proto file
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+  
+  //sever streaming - Asynchronous
+  //client will send one request and server will send stream of response to the client.
+  rpc getBooksByAuthor(Author) returns(stream Book){}
+
+  //client streaming - Asynchronous
+  //client will stream of request and server will respond with one response.
+  rpc getExpensiveBook(stream Book) returns(Book){}
+
+  //bi-directional streaming - Asynchronous
+  //client will send stream of request and server will respond with stream of response based on gender.
+  rpc getBooksByGender(stream Book) returns (stream Book) {}
+}
+
+- Generate Java class using >mvn clean install
+
+2. Create implementation for getBooksByGender method in service class 
+
+ @Override
+    public StreamObserver<Book> getBooksByGender(StreamObserver<Book> responseObserver) {
+        
+   //1.since we send stream of msg we return the implementation of a streamobserver
+       return new StreamObserver<Book>() {
+            //2. create booklist
+            List<Book> bookList = new ArrayList<>();
+
+            @Override
+            public void onNext(Book book) {
+            //3. fetch books from db and filter based on the author id, and add into list
+                TempDB.getBooksFromTempDb()
+                        .stream()
+                .filter(bookFromDb -> bookFromDb.getAuthorId() == book.getAuthorId())
+                        .forEach(bookList::add);
+            }
+
+            //3. if any error
+            @Override
+            public void onError(Throwable throwable) {
+                responseObserver.onError(throwable);
+            }
+
+         
+            @Override
+            public void onCompleted() {
+  //4. since server will send the message, we have to exchange message between client and server so we call onnext() method. we will loop the list and we will call onnext which send the data to the client and once all the books has been sent we will call oncompleted method
+                bookList.forEach(responseObserver::onNext);
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+3. In client appl, create service method in proto file
+
+service BookAuthorService {
+
+  //unary - synchronous
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+  
+  //sever streaming - Asynchronous
+  //client will send one request and server will send stream of response to the client.
+  rpc getBooksByAuthor(Author) returns(stream Book){}
+
+  //client streaming - Asynchronous
+  //client will stream of request and server will respond with one response.
+  rpc getExpensiveBook(stream Book) returns(Book){}
+
+  //bi-directional streaming - Asynchronous
+  //client will send stream of request and server will respond with stream of response based on gender.
+  rpc getBooksByGender(stream Book) returns (stream Book) {}
+}
+
+- Generate Java class using >mvn clean install
+
+4. Create implementation on client to send a stream of books 
+
+//since we get a list of books from the server side 
+public List<Map<Descriptors.FieldDescriptor, Object>> getBooksByGender(String gender) throws InterruptedException {
+
+        //5. create CountDownLatch 
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        //3. create a list
+        final List<Map<Descriptors.FieldDescriptor, Object>> response = new ArrayList<>();
+
+//1. create the server using asyncclient
+        StreamObserver<Book> responseObserver = asynchronousClient.getBooksByGender(new StreamObserver<Book>() {
+            @Override
+            public void onNext(Book book) {
+             //4. add book into response
+                response.add(book.getAllFields());
+            }
+
+            //8. if any error
+            @Override
+            public void onError(Throwable throwable) {
+                countDownLatch.countDown();
+            }
+
+            //9. if it is completed
+            @Override
+            public void onCompleted() {
+                countDownLatch.countDown();
+            }
+        });
+
+//2. From db get all the genders of authors (ie) the genders that we have had mentioned in a request using filter
+        TempDB.getAuthorsFromTempDb()
+                .stream()
+                .filter(author -> author.getGender().equalsIgnoreCase(gender))
+//for each author we create a new book and set the author id 
+                .forEach(author -> responseObserver.onNext(Book.newBuilder().setAuthorId(author.getAuthorId()).build()));
+        responseObserver.onCompleted();
+//whenever the server stream back it will invoke the client onnext 
+
+       //6. we will wait for that thread for one minute to complete
+        boolean await = countDownLatch.await(1, TimeUnit.MINUTES);
+       //7. if it's a true then we return a response else we return empty list
+        return await ? response : Collections.emptyList();
+    }
+
+5. Create rest endpoint 
+
+ @GetMapping("/book/author/{gender}")
+    public List<Map<Descriptors.FieldDescriptor, Object>> getBookByGender(@PathVariable String gender) throws InterruptedException {
+        return bookAuthorClientService.getBooksByGender(gender);
+    }
+
+6. Start both the appl, run http://localhost:9001/book/author/male
+
+First the client will go to the database and fetch all the gender specific author and we will add those order id in a book and stream it to the another microservice (ie) grpc-server and when we stream that to different microservice the onnext would be invoked in BookAuthorServerService and it will receive the book, using this book we will get the books of that specific author and onCompleted() we are streaming it back we have to again invoke the onnext method of the server
+
+
+gRPC Microservice with using Interceptor based JWT authentication with Springboot 4.0.1 and spring grpc version 1.0.2
+    Interceptor‑based JWT auth means JWT authentication and authorization are enforced by a gRPC ServerInterceptor, before the request reaches any gRPC service method.
+In simple words, every gRPC call passes through an interceptor → JWT is validated there → only then the call reaches your service logic.
+
+Request flow (visual)
+grpc client (grpcurl / app)
+        │
+        ▼
+ gRPC ServerInterceptor  ✅  ← JWT validation happens HERE
+        │
+        ▼
+ gRPC Service Method     ✅  ← business logic
+
+If JWT is missing / invalid / unauthorized, the request never reaches your service.
+
+Interceptor‑based JWT vs REST filter‑based JWT
+REST                                 gRPC
+Servlet Filter                    ServerInterceptor 
+HTTP headers                      Metadata 
+SecurityContext                   gRPC Context 
+Controller executes after filter  Service executes after interceptor 
+
+✅ Why Spring Security is NOT used here
+In Spring gRPC 1.0.2:
+
+❌ No @PreAuthorize
+❌ No SecurityFilterChain
+❌ No GrpcSecurityMetadataSource
+
+So:
+✅ Interceptor‑based JWT is the ONLY supported, correct approach
+
+
+1. Create gRPC-JWT with grpc-server, spring security, jwt  dependency
+
+<dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+
+2. Create proto file schema.proto
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_outer_classname = "SecurityProto";
+
+package com.pack;
+
+service AuthService {
+  rpc Login(AuthRequest) returns (AuthResponse);
+}
+
+message AuthRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  string token = 1;
+  string tokenType = 2;      // "Bearer"
+  int64 expiresInSec = 3;
+  repeated string roles = 4;
+}
+
+service EmployeeService {
+  rpc GetEmployeeInfo(EmployeeRequest) returns (EmployeeResponse);
+}
+
+message EmployeeRequest {
+  int32 employeeId = 1;
+}
+
+message EmployeeResponse {
+  int32 employeeId = 1;
+  string name = 2;
+  string role = 3;
+  string requestedBy = 4;
+}
+
+3. Generate java class
+
+>mvn clean install
+
+Right click protobuf - Build path - Use as source folder
+
+
+4. Configure server port
+
+spring.grpc.server.port=9000
+
+
+5. Create JwtService class to generate token, extract claims, validate signature.
+
+@Component
+public class JwtService {
+
+    // For HS256: use a 32+ char secret.
+    // In real projects, load from env/secret manager.
+    private static final String SECRET =
+            "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
+
+    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+
+    public String generateToken(String subject, List<String> roles, long expiresInSeconds) {
+        Instant now = Instant.now();
+        Instant exp = now.plusSeconds(expiresInSeconds);
+
+        return Jwts.builder()
+                .setSubject(subject)
+                .addClaims(Map.of("roles", roles))
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(exp))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public Claims validateAndGetClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> rolesFromClaims(Claims claims) {
+        Object rolesObj = claims.get("roles");
+        if (rolesObj instanceof List<?> list) {
+            return (List<String>) list;
+        }
+        return List.of();
+    }
+}
+
+6. Create GrpcJwtServerInterceptor which is  Interceptors used for standard mechanism of server-side authn/authz and other common behavior in gRPC.
+
+
+@Component
+public class GrpcJwtServerInterceptor implements ServerInterceptor {
+
+    // Reads: authorization: Bearer <token>
+    private static final Metadata.Key<String> AUTHORIZATION =
+            Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER);
+
+    // Context keys to pass authenticated details to service impl
+    public static final Context.Key<String> CTX_USER = Context.key("user");
+    public static final Context.Key<List<String>> CTX_ROLES = Context.key("roles");
+
+    private final JwtService jwtService;
+
+    // Open endpoints (no JWT required)
+
+private static final Set<String> openMethods = Set.of(
+        // ✅ allow grpcurl reflection
+        "grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+
+        // ✅ allow login
+        "com.pack.AuthService/Login"
+);
+
+
+    public GrpcJwtServerInterceptor(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
+
+    @Override
+    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
+            ServerCall<ReqT, RespT> call,
+            Metadata headers,
+            ServerCallHandler<ReqT, RespT> next) {
+
+        String fullMethod = call.getMethodDescriptor().getFullMethodName();
+
+System.out.println("Incoming method = " +
+        call.getMethodDescriptor().getFullMethodName());
+
+        // Allow open methods
+        if (openMethods.contains(fullMethod)) {
+            return next.startCall(call, headers);
+        }
+
+        // Require Authorization header for other methods
+        String authHeader = headers.get(AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            call.close(Status.UNAUTHENTICATED.withDescription("Missing Bearer token"), new Metadata());
+            return new ServerCall.Listener<>() {};
+        }
+
+        String token = authHeader.substring("Bearer ".length()).trim();
+
+        try {
+            Claims claims = jwtService.validateAndGetClaims(token);
+            String user = claims.getSubject();
+            List<String> roles = jwtService.rolesFromClaims(claims);
+
+            // ---- Authorization rules (role checks) ----
+            // Example: EmployeeService/GetEmployeeInfo requires USER role
+            if (fullMethod.equals("com.pack.EmployeeService/GetEmployeeInfo")
+                    && !roles.contains("USER")) {
+                call.close(Status.PERMISSION_DENIED.withDescription("ROLE USER required"), new Metadata());
+                return new ServerCall.Listener<>() {};
+            }
+
+            // Put user/roles in gRPC context so service can read them
+            Context ctx = Context.current()
+                    .withValue(CTX_USER, user)
+                    .withValue(CTX_ROLES, roles);
+
+            return Contexts.interceptCall(ctx, call, headers, next);
+
+        } catch (Exception ex) {
+            call.close(Status.UNAUTHENTICATED.withDescription("Invalid/expired token"), new Metadata());
+            return new ServerCall.Listener<>() {};
+        }
+    }
+}
+
+7. Create GrpcServerConfig class to register interceptor globally
+
+@Configuration
+public class GrpcServerConfig {
+
+	@Bean
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	public ServerBuilderCustomizer jwtInterceptorCustomizer(GrpcJwtServerInterceptor interceptor) {
+	    return (builder) -> ((io.grpc.ServerBuilder) builder).intercept(interceptor);
+	}
+}
+
+8. Create AuthGrpcService which issues JWT token while login 
+
+@Service
+public class AuthGrpcService extends AuthServiceImplBase {
+
+    private final JwtService jwtService;
+
+    // Demo users (replace with DB/LDAP in real apps)
+    private final Map<String, UserRecord> users = Map.of(
+            "user1", new UserRecord("pass1", List.of("USER")),
+            "admin1", new UserRecord("adminpass", List.of("ADMIN", "USER"))
+    );
+
+    public AuthGrpcService(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
+
+    @Override
+    public void login(AuthRequest request, StreamObserver<AuthResponse> responseObserver) {
+        String username = request.getUsername();
+        String password = request.getPassword();
+
+        UserRecord user = users.get(username);
+        if (user == null || !user.password().equals(password)) {
+            responseObserver.onError(
+                    Status.UNAUTHENTICATED.withDescription("Bad credentials").asRuntimeException()
+            );
+            return;
+        }
+
+        long expiresInSec = 3600; // 1 hour
+        String token = jwtService.generateToken(username, user.roles(), expiresInSec);
+
+        AuthResponse response = AuthResponse.newBuilder()
+                .setToken(token)
+                .setTokenType("Bearer")
+                .setExpiresInSec(expiresInSec)
+                .addAllRoles(user.roles())
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    private record UserRecord(String password, List<String> roles) {}
+}
+
+9. Create EmployeeGrpcService (Secured RPC) which reads the authenticated user from the gRPC Context.
+
+@Service
+public class EmployeeGrpcService extends EmployeeServiceImplBase {
+
+    @Override
+    public void getEmployeeInfo(EmployeeRequest request, StreamObserver<EmployeeResponse> responseObserver) {
+
+        String requestedBy = GrpcJwtServerInterceptor.CTX_USER.get();
+
+        EmployeeResponse response = EmployeeResponse.newBuilder()
+                .setEmployeeId(request.getEmployeeId())
+                .setName("John Doe")
+                .setRole("USER")
+                .setRequestedBy(requestedBy == null ? "unknown" : requestedBy)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+}
+
+10. Start the appl
+
+11. Test the appl using grpccurl
+
+- Generate the token with username and pwd
+C:\Microservice\gRPC-JWT>grpcurl -plaintext -d "{\"username\":\"user1\",\"password\":\"pass1\"}" localhost:9000 com.pack.AuthService/Login
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsInJvbGVzIjpbIlVTRVIiXSwiaWF0IjoxNzc0NTM3NjE3LCJleHAiOjE3NzQ1NDEyMTd9.547BTDxPxXTUBAX8AKoyj7O5krh4jbGG9i1sKxV2uFo",
+  "tokenType": "Bearer",
+  "expiresInSec": "3600",
+  "roles": [
+    "USER"
+  ]
+}
+
+- Call secured method WITHOUT JWT, it would fail
+
+C:\Microservice\gRPC-JWT>grpcurl -plaintext -d "{\"employeeId\":1}" localhost:9000 com.pack.EmployeeService/GetEmployeeInfo
+ERROR:
+  Code: Unauthenticated
+  Message: Missing Bearer token
+
+-  Call secured method WITH JWT (should pass)
+
+C:\Microservice\gRPC-JWT>grpcurl -plaintext -H "authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsInJvbGVzIjpbIlVTRVIiXSwiaWF0IjoxNzc0NTM3NjE3LCJleHAiOjE3NzQ1NDEyMTd9.547BTDxPxXTUBAX8AKoyj7O5krh4jbGG9i1sKxV2uFo" -d "{\"employeeId\":1}" localhost:9000 com.pack.EmployeeService/GetEmployeeInfo
+{
+  "employeeId": 1,
+  "name": "John Doe",
+  "role": "USER",
+  "requestedBy": "user1"
+}
+
+
+---------------------------------------------------------------------------------
+Previously we used Interceptor-based JWT auth, since 
+
+Spring gRPC version         Method‑level security API
+1.0.x                         ❌ NOT AVAILABLE
+1.1.x+                        ✅ Introduced
+1.2.x+                        ✅ Stable
+
+We are using Spring Boot 4.0.4 + Spring gRPC 1.0.2, but Spring gRPC 1.0.x DOES NOT contain GrpcSecurityMetadataSource for method level security, so  in order to use we will use grpc server from google
+
+Spring gRPC 1.0.x (including 1.0.2) is documented to support Spring Boot 4.1.x, not Spring Boot 3.x. 
+For Spring Boot 3.4/3.5, the commonly referenced Spring gRPC line is 0.8.x … 0.12.x.
+
+
+gRPC JWT Authentication using GrpcSecurityMetadataSource 
+
+1. Create gRPC-JWT1 project with spring security, jwt token dependency, with springboot 3.5.13 version
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.5.13</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.pack</groupId>
+	<artifactId>gRPC-JWT1</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name />
+	<description />
+	<url />
+	<licenses>
+		<license />
+	</licenses>
+	<developers>
+		<developer />
+	</developers>
+	<scm>
+		<connection />
+		<developerConnection />
+		<tag />
+		<url />
+	</scm>
+	<properties>
+		<java.version>21</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-services</artifactId>
+			<version>1.63.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.devh</groupId>
+			<artifactId>grpc-server-spring-boot-starter</artifactId>
+			<version>3.1.0.RELEASE</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.5</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.annotation</groupId>
+			<artifactId>javax.annotation-api</artifactId>
+			<version>1.3.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<extensions>
+			<extension>
+				<groupId>kr.motd.maven</groupId>
+				<artifactId>os-maven-plugin</artifactId>
+				<version>1.6.1</version>
+			</extension>
+		</extensions>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.xolstice.maven.plugins</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+				<version>0.6.1</version>
+				<configuration>
+					<protocArtifact>
+						com.google.protobuf:protoc:3.22.3:exe:${os.detected.classifier}
+					</protocArtifact>
+					<pluginId>grpc-java</pluginId>
+					<pluginArtifact>
+						io.grpc:protoc-gen-grpc-java:1.54.0:exe:${os.detected.classifier}
+					</pluginArtifact>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compile</goal>
+							<goal>compile-custom</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+In rest based JWT auth and authorization so we used to have an endpoint called register where we used to save the user in the DB  and then we have endpoint called authenticate
+to return the JWT to the user. So using this JWT the user would call the secured apis like getEmployee or createEmployee. So JWT needs to be passed in the header for the secured apis in order to do a secured authentication and authorization 
+
+2. Create proto folder and inside that create file called schema.proto
+
+-First start with syntax as  Proto3 
+syntax = "proto3";
+
+- Next we add an option to generate multiple Java classes so all the classes would be in the independent file 
+option java_multiple_files = true;
+
+- create package name where all the classes will be generated 
+package com.pack;
+
+- create service with the name authservice  where we pass one JWT request which contain username and password and return one jwt token
+
+service AuthService {
+  rpc authenticate(JwtRequest) returns(JwtToken){}
+}
+
+- create the structure for JwtRequest with username and password
+
+message JwtRequest {
+  string userName = 1;
+  string password = 2;
+}
+
+- create a structure for JwtToken with token name
+
+message JwtToken {
+  string jwtToken = 1;
+}
+
+- create service called EmployeeService which has getEmployeeInfo() which has no arguments so we pass an empty object and return Employee
+
+import "google/protobuf/empty.proto";
+
+service EmployeeService {
+  rpc getEmployeeInfo(google.protobuf.Empty) returns(Employee){}
+}
+
+- Create Employee message
+
+message Employee {
+  string name = 1;
+  int32 salary = 2;
+}
+
+so Employeeservice is going to be a secured service and this service will return one JWT to the user 
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.pack";
+import "google/protobuf/empty.proto";
+
+package com.pack;
+
+message JwtRequest {
+  string userName = 1;
+  string password = 2;
+}
+
+message JwtToken {
+  string jwtToken = 1;
+}
+
+message Employee {
+  string name = 1;
+  int32 salary = 2;
+}
+
+service AuthService {
+  rpc authenticate(JwtRequest) returns(JwtToken){}
+}
+
+service EmployeeService {
+  rpc getEmployeeInfo(google.protobuf.Empty) returns(Employee){}
+}
+
+3. Generate the Java classes based on proto file
+
+>mvn clean install
+
+It will generate classes in target - generated-sources - protoBuf
+
+- Right click grpc-java folder - Build Path - Use as Source folder
+- Right click java folder - Build Path - Use as Source folder
+
+
+4. Create service class AuthGrpcService with @GrpcService so it will exposed as grpc server which extends AuthServiceImplBase from generate class and override authenticate()
+
+@GrpcService
+public class AuthGrpcService extends AuthServiceImplBase {
+
+	@Override
+	public void authenticate(JwtRequest request, StreamObserver<JwtToken> responseObserver) {
+		
+	}
+}
+
+- Create EmployeeGrpcService 
+
+@GrpcService
+public class EmployeeGrpcService extends EmployeeServiceImplBase{
+
+	@Override
+	public void getEmployeeInfo(Empty request, StreamObserver<Employee> responseObserver) {
+//so whoever have access to this endpoint they get information about one employees, so we create Employee object
+responseObserver.onNext(Employee.newBuilder().setName("Ram").setSalary(1233).build());
+        //complete the flow
+        responseObserver.onCompleted();
+	}
+}
+
+5. In order to mention the rules that only the user with role admin can able to access this particular service method, so to declare those kind of rules we have to create
+securityconfig class with @Configuration
+   create bean called GrbcSecurityMetadataSource where we create the
+object of securitymetadatasource and define some rules to access all the service methods by setDefault() and we write our own rule for the employeegrpcservice that it should only be accessed by a user which has a role admin.
+
+
+@Configuration
+public class SecurityConfig {
+
+	@Bean
+	GrpcSecurityMetadataSource grpcSecurityMetadataSource() {
+
+	    ManualGrpcSecurityMetadataSource source = new ManualGrpcSecurityMetadataSource();
+
+	    // ✅ Allow grpcurl to query descriptors via reflection
+	    source.set(ServerReflectionGrpc.getServiceDescriptor(), AccessPredicate.permitAll());
+
+	    // Default policy
+	    source.setDefault(AccessPredicate.permitAll());
+
+	    // Secure your business method (remember: hasRole("USER") not ROLE_USER)
+	    source.set(EmployeeServiceGrpc.getGetEmployeeInfoMethod(), AccessPredicate.hasAuthority(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+	    return source;
+	}
+}
+
+- create one more bean called AccessDecisionManager which is mandatory if you want to do a security for grpc, because in the rest based microservice we never create the bean of this type because it is handled internally, but the grpc dependencies that we have added in the pom.xml that is grpc-server-spring-boot-starter would require to have this particular bean declared in the config 
+
+ @Bean
+	 AccessDecisionManager accessDecisionManager() {
+	        List<AccessDecisionVoter<?>> accessDecisionVoters = new ArrayList<>();
+	        accessDecisionVoters.add(new AccessPredicateVoter());
+	        return new UnanimousBased(accessDecisionVoters);
+	 }
+
+- Spring Security also need the bean AuthenticationManager where we have to return providermanager and we need to pass one authenticationprovider, since we don't have a default authentication for JWT inside the spring security, we have it for a Dao but we don't have it for JWT so for that we have to create our own JWTAuthProvider
+
+    @Bean
+    AuthenticationManager authenticationManager () {
+       
+    }
+
+- Create JwtAuthProvider class which implements AuthenticationProvider and override 2 methods
+
+@Component
+public class JwtAuthProvider implements AuthenticationProvider {
+
+	@Override
+	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean supports(Class<?> authentication) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+}
+
+- Now inject this class in SecurityConfig class and create AuthenticationManager bean
+
+    @Autowired
+	JwtAuthProvider jwtAuthProvider;
+	
+	@Bean
+    AuthenticationManager authenticationManager () {
+        return new ProviderManager(jwtAuthProvider);
+    }
+
+6. We need to generate JWT token, for that we need secret key, to generate Base64 HS512 key
+
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
+import java.util.Base64;
+
+public class JwtKeyGenerator {
+    public static void main(String[] args) {
+        var key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        String base64Key = Base64.getEncoder().encodeToString(key.getEncoded());
+        System.out.println(base64Key);
+    }
+}
+
+Just run java prg, we will get the secret key
+
+- Copy secret key in application.properties
+
+jwt.secret.key=vf08gsTKhwU7JtELQBj8A5aT3qPdKpGlacwK6pcC3Qml+Aw7Sy5CeoCBgJvnwWeyDr/+NdOY3imYG2VU6y+/JA==
+
+- Create signing key 
+
+@Component
+public class JwtKeyProvider {
+
+    private final SecretKey signingKey;
+
+    public JwtKeyProvider(@Value("${jwt.secret.key}") String base64Secret) {
+        // Base64 secret -> bytes -> SecretKey
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
+    }
+
+    public SecretKey signingKey() {
+        return signingKey;
+    }
+
+    public SignatureAlgorithm alg() {
+        return SignatureAlgorithm.HS512;
+    }
+}
+
+
+7. First we create JWT token inside authenticate(), so whenever the user is calling this particular method he will get the JWT 
+
+@GrpcService
+public class AuthGrpcService extends AuthServiceImplBase {
+
+    @Autowired
+    JwtKeyProvider jwtKeyProvider;
+	 
+	@Override
+	public void authenticate(JwtRequest request, StreamObserver<JwtToken> responseObserver) {
+		
+		//step 2
+		Instant now = Instant.now();
+        Instant expiration = now.plus(1, ChronoUnit.HOURS); //keep expiration of jwt as 1 hr
+        
+        //step 1
+		Jwts.builder()
+		    .setSubject("") //set subject empty
+		    .claim("auth", "") //claim is nothing but the authorities or the roles of the user so we keep it empty
+		    .setIssuedAt(Date.from(now))
+		    .setExpiration(Date.from(expiration))
+		    .signWith(jwtKeyProvider.signingKey(), jwtKeyProvider.alg())
+		    .compact();
+	}
+
+- Now we have to return the JWT token in the response, so we have to create the object of this 
+
+ JwtToken.newBuilder().setJwtToken(Jwts.builder()
+		    .setSubject("") //set subject empty
+		    .claim("auth", "") //claim is nothing but the authorities or the roles of the user so we keep it empty
+		    .setIssuedAt(Date.from(now))
+		    .setExpiration(Date.from(expiration))
+		    .signWith(jwtKeyProvider.signingKey(), jwtKeyProvider.alg())
+		    .compact()).build();
+
+- Since we are giving the response (ie) JWT token in grpc we have to wrap it in the onnext() and next we call onCompleted()
+
+    responseObserver.onNext(JwtToken.newBuilder().setJwtToken(Jwts.builder()
+		    .setSubject("") //set subject empty
+		    .claim("auth", "") //claim is nothing but the authorities or the roles of the user so we keep it empty
+		    .setIssuedAt(Date.from(now))
+		    .setExpiration(Date.from(expiration))
+		    .signWith(jwtKeyProvider.signingKey(), jwtKeyProvider.alg())
+		    .compact()).build());
+
+    responseObserver.onCompleted();
+
+- But we haven't given the information of the user (ie) the name of the user and the authorities or the roles the user carry, we have do it using JWTAuthProvider
+   We have to autowire JwtAuthProvider and call authenticate() which takes an instance of Authentication which is the interface, so there is one class UsernamePasswordAuthenticationToken in which we have to pass the username and password.
+   Next we extract authorities from Authentication object and pass to the subject and claims
+
+   @Autowired
+	 JwtAuthProvider jwtAuthProvider;
+	 
+	@Override
+	public void authenticate(JwtRequest request, StreamObserver<JwtToken> responseObserver) {
+		
+		 Authentication auth = jwtAuthProvider.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword())
+        );
+
+        String authorities = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+		 
+		Instant now = Instant.now();
+        Instant expiration = now.plus(1, ChronoUnit.HOURS); //keep expiration of jwt as 1 hr
+        
+        responseObserver.onNext(JwtToken.newBuilder().setJwtToken(Jwts.builder()
+		    .setSubject(auth.getName()) 
+		    .claim("auth", authorities) 
+		    .setIssuedAt(Date.from(now))
+		    .setExpiration(Date.from(expiration))
+		    .signWith(SignatureAlgorithm.HS512, jwtSecretKey)
+		    .compact()).build());
+        
+        responseObserver.onCompleted();
+	}
+
+
+@GrpcService
+public class AuthGrpcService extends AuthServiceImplBase {
+
+    @Autowired
+    JwtAuthProvider jwtAuthProvider;
+
+    @Autowired
+    JwtKeyProvider jwtKeyProvider;
+
+    @Override
+    public void authenticate(JwtRequest request, StreamObserver<JwtToken> responseObserver) {
+
+        Authentication auth = jwtAuthProvider.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword())
+        );
+
+        String authorities = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
+        Instant now = Instant.now();
+        Instant expiration = now.plus(1, ChronoUnit.HOURS);
+
+        String token = Jwts.builder()
+                .setSubject(auth.getName())              // safer than casting principal
+                .claim("auth", authorities)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiration))
+                .signWith(jwtKeyProvider.signingKey(), jwtKeyProvider.alg())
+                .compact();
+
+        responseObserver.onNext(JwtToken.newBuilder().setJwtToken(token).build());
+        responseObserver.onCompleted();
+    }
+}
+
+
+7. We need to write logic for jwtAuthProvider.authenticate() method 
+
+@Component
+public class JwtAuthProvider implements AuthenticationProvider {
+
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+      //1. if the user is not authenticated, we have to get user and their roles
+        if(!authentication.isAuthenticated()) {
+//6.create an instant of this DomainUserDetailsService class and call loaduserbyusername 
+            UserDetails userDetails = new DomainUserDetailsService().loadUserByUsername(authentication.getName());
+//7. use UserDetails reference to make the user as authenticated
+            return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
+        }
+        return authentication;
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+//8.
+        return authentication.equals(UsernamePasswordAuthenticationToken.class);
+    }
+
+//2. In the rest based microservices we have to implement an interface UserDetailsService to load the user from the database, so here we not integrate any database here 
+    static class DomainUserDetailsService implements UserDetailsService {
+
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+          //3. hardcore few of the users so if username is Sarang we give him a role called admin
+and if the user is anyother then we will give a role called user
+            String role = username.equals("sarang") ? "ROLE_ADMIN" : "ROLE_USER";
+         //4. convert this role to SimpleGrantedAuthorities
+            List<SimpleGrantedAuthority> simpleGrantedAuthorities = Collections.singletonList(new SimpleGrantedAuthority(role));
+           //5. return username and roles to User class
+            return new User(username, "", simpleGrantedAuthorities);
+
+        }
+    }
+}
+
+8. So when the user wants to create a JWT, at that time if the user is  not authenticated  so I'll go to the AuthServiceGrpc and calls authenticate() which give a JWT token by wrapping all the roles. In case when the user is already having a JWT, we have to read that JWT and validate whether it is valid or not, so for that we have to create another bean GrpcAuthenticationReader 
+in SecurityConfig class
+
+@Value("${jwt.secret.key}")
+	 String jwtSecretKey;
+	 
+	 @Bean
+	 GrpcAuthenticationReader authenticationReader(JwtKeyProvider jwtKeyProvider) {
+         //get a token
+	     return new BearerAuthenticationReader(token -> {
+      //claims will be embedded in JWT token so we get the claims
+	         Claims claims = Jwts.parserBuilder()
+	                 .setSigningKey(jwtKeyProvider.signingKey())
+	                 .build()
+	                 .parseClaimsJws(token)
+	                 .getBody();
+       //extract the roles of the user in list
+	         List<SimpleGrantedAuthority> authorities =
+	                 Arrays.stream(claims.get("auth", String.class).split(","))
+	                         .map(SimpleGrantedAuthority::new)
+	                         .collect(Collectors.toList());
+            //create the user
+	         User user = new User(claims.getSubject(), "", authorities);
+	         return new UsernamePasswordAuthenticationToken(user, token, authorities);
+	     });
+	 }
+
+
+so when the token comes we will pass the token and we extract the claims from the JWT and then we'll create an object of the user and just pass it to usernamepasswordauthentication. So
+when we return this usernamepasswordauthentication token, it will go inside JwtAuthProvider
+and since here we have used the constructor which has three parameters so the user would be authenticated and just return the authentication, if the user is not then we will go and get the roles of the user
+
+@Configuration
+public class SecurityConfig {
+	
+	@Autowired
+	JwtAuthProvider jwtAuthProvider;
+	
+	@Bean
+    AuthenticationManager authenticationManager () {
+        return new ProviderManager(jwtAuthProvider);
+    }
+
+	@Bean
+	GrpcSecurityMetadataSource grpcSecurityMetadataSource() {
+
+	    ManualGrpcSecurityMetadataSource source = new ManualGrpcSecurityMetadataSource();
+
+	    // ✅ Allow grpcurl to query descriptors via reflection
+	    source.set(ServerReflectionGrpc.getServiceDescriptor(), AccessPredicate.permitAll());
+
+	    // Default policy
+	    source.setDefault(AccessPredicate.permitAll());
+
+	    // Secure your business method (remember: hasRole("USER") not ROLE_USER)
+	    source.set(EmployeeServiceGrpc.getGetEmployeeInfoMethod(), AccessPredicate.hasAuthority(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+	    return source;
+	}
+	 
+	 @Bean
+	 AccessDecisionManager accessDecisionManager() {
+	        List<AccessDecisionVoter<?>> accessDecisionVoters = new ArrayList<>();
+	        accessDecisionVoters.add(new AccessPredicateVoter());
+	        return new UnanimousBased(accessDecisionVoters);
+	 }
+	 
+	 @Value("${jwt.secret.key}")
+	 String jwtSecretKey;
+	 
+	 @Bean
+	 GrpcAuthenticationReader authenticationReader(JwtKeyProvider jwtKeyProvider) {
+
+	     return new BearerAuthenticationReader(token -> {
+	         Claims claims = Jwts.parserBuilder()
+	                 .setSigningKey(jwtKeyProvider.signingKey())
+	                 .build()
+	                 .parseClaimsJws(token)
+	                 .getBody();
+
+	         List<SimpleGrantedAuthority> authorities =
+	                 Arrays.stream(claims.get("auth", String.class).split(","))
+	                         .map(SimpleGrantedAuthority::new)
+	                         .collect(Collectors.toList());
+
+	         User user = new User(claims.getSubject(), "", authorities);
+	         return new UsernamePasswordAuthenticationToken(user, token, authorities);
+	     });
+	 }
+
+}
+
+
+9. Start the appl
+
+10. Test the appl using grpc curl command
+
+C:\Microservice\gRPC-JWT1>grpcurl -plaintext -d "{\"userName\":\"sarang\",\"password\":\"test\"}" localhost:9090 com.pack.AuthService/authenticate
+{
+  "jwtToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzYXJhbmciLCJhdXRoIjoiUk9MRV9BRE1JTiIsImlhdCI6MTc3NDYwMTEzNywiZXhwIjoxNzc0NjA0NzM3fQ.5sqHqEHv-sF0DKBsP67rWWnMV0PTHdFSkvj0GlaiWqwKKzNSUEe6_68aCexs94e3xG7LiigsYLHD0tGAvXY-HQ"
+}
+
+C:\Microservice\gRPC-JWT1>grpcurl -plaintext -H "Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzYXJhbmciLCJhdXRoIjoiUk9MRV9BRE1JTiIsImlhdCI6MTc3NDYwMTEzNywiZXhwIjoxNzc0NjA0NzM3fQ.5sqHqEHv-sF0DKBsP67rWWnMV0PTHdFSkvj0GlaiWqwKKzNSUEe6_68aCexs94e3xG7LiigsYLHD0tGAvXY-HQ" localhost:9090 com.pack.EmployeeService/getEmployeeInfo
+{
+  "name": "Ram",
+  "salary": 1233
+}
+
+C:\Microservice\gRPC-JWT1>grpcurl -plaintext -d "{\"userName\":\"tinku\",\"password\":\"test\"}" localhost:9090 com.pack.AuthService/authenticate
+{
+  "jwtToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0aW5rdSIsImF1dGgiOiJST0xFX1VTRVIiLCJpYXQiOjE3NzQ2MDMyNzQsImV4cCI6MTc3NDYwNjg3NH0.P-Hd-fTMHAmVmiAH3mn4ELLHA4zE6a2sbZLC_e_SSrphs_eJ-GRClS7J-odxG6ttwHFDFCNf_LUzHLHjwxrjug"
+}
+
+C:\Microservice\gRPC-JWT1>grpcurl -plaintext -H "Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0aW5rdSIsImF1dGgiOiJST0xFX1VTRVIiLCJpYXQiOjE3NzQ2MDMyNzQsImV4cCI6MTc3NDYwNjg3NH0.P-Hd-fTMHAmVmiAH3mn4ELLHA4zE6a2sbZLC_e_SSrphs_eJ-GRClS7J-odxG6ttwHFDFCNf_LUzHLHjwxrjug" localhost:9090 com.pack.EmployeeService/getEmployeeInfo
+ERROR:
+  Code: PermissionDenied
+  Message: Access denied
+
+
+Reactive gRPC Spring Boot Microservice
+    In the non-reactive applications we we developed the stub which are non-reactive, in the
+reactive application we'll generate stuB which are reactive,for example in the previous proto file
+the methods generated are non-reactive since it doesn't have Mono and flux in the
+method signature so it's a non-reactive, so to generate the reactive stub we have to add a plugin
+
+1. Create gRPC-Reactive project with spring-grpc server and reactive grpc dependency
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.5</version>
+	</parent>
+
+	<groupId>com.pack</groupId>
+	<artifactId>grpc-reactive</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
+		<java.version>21</java.version>
+		<spring-grpc.version>1.0.2</spring-grpc.version>
+		<grpc.version>1.77.1</grpc.version>
+		<protobuf.version>4.33.4</protobuf.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.grpc</groupId>
+				<artifactId>spring-grpc-dependencies</artifactId>
+				<version>${spring-grpc.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<!-- Spring gRPC server starter -->
+		<dependency>
+			<groupId>org.springframework.grpc</groupId>
+			<artifactId>spring-grpc-server-spring-boot-starter</artifactId>
+		</dependency>
+
+		<!-- Reactor (Mono/Flux) -->
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.salesforce.servicelibs</groupId>
+			<artifactId>reactor-grpc-stub</artifactId>
+			<version>1.2.4</version>
+		</dependency>
+		<!-- (Optional) gRPC reflection/health etc are BindableServices -->
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-services</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.grpc</groupId>
+			<artifactId>spring-grpc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>io.github.ascopes</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+				<version>4.0.3</version>
+
+				<configuration>
+					<!-- protoc version -->
+					<protoc>${protobuf.version}</protoc>
+
+					<!-- Standard gRPC Java generator -->
+					<binaryMavenPlugins>
+						<binaryMavenPlugin>
+							<groupId>io.grpc</groupId>
+							<artifactId>protoc-gen-grpc-java</artifactId>
+							<version>${grpc.version}</version>
+							<options>@generated=omit</options>
+						</binaryMavenPlugin>
+					</binaryMavenPlugins>
+
+					<!-- ✅ Reactor gRPC generator -->
+					<jvmMavenPlugins>
+						<jvmMavenPlugin>
+							<groupId>com.salesforce.servicelibs</groupId>
+							<artifactId>reactor-grpc</artifactId>
+							<version>1.2.4</version>
+							<mainClass>com.salesforce.reactorgrpc.ReactorGrpcGenerator</mainClass>
+						</jvmMavenPlugin>
+					</jvmMavenPlugins>
+
+				</configuration>
+
+				<executions>
+					<execution>
+						<id>generate</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+2. Create proto file
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+package com.devProblems.grpc.reactivegrpcdemo;
+
+message Book {
+  int32 book_id = 1;
+  string title = 2;
+  float price = 3;
+  int32 pages = 4;
+  int32 author_id = 5;
+}
+
+message Author {
+  int32 author_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string gender = 4;
+  int32 book_id = 5;
+}
+
+service BookAuthorService {
+
+  //unary
+  //client will send one request and server will respond with one response.
+  rpc getAuthor(Author) returns(Author){}
+
+  //sever streaming
+  //client will send one request and server will send stream of response to the client.
+  rpc getBooksByAuthor(Author) returns(stream Book){}
+
+}
+
+- Generate java classes for proto file
+
+>mvn clean install
+
+It will generate class and also ReactorBookAuthorServiceGrpc so we have to override the methods of  this particular class,  the method signature generated by this class are reactive since we can see mono and flux. We can see getAuthor is wrapped with Mono and getAuthorByBook is wrapped with flux 
+
+2. Create service class BookAuthorReactiveService with @GrpcService extends BookAuthorServiceImplBase and override service methods
+
+@GrpcService
+public class BookAuthorReactiveService extends ReactorBookAuthorServiceGrpc.BookAuthorServiceImplBase {
+
+    @Override
+    public Mono<Author> getAuthor(Mono<Author> request) {
+        
+    }
+     
+	@Override
+	public Flux<Book> getBooksByAuthor(Mono<Author> request) {
+		
+	}
+}
+
+The plugin in the dependency has generated two methods for each RPC type
+Mono<Author> getAuthor(Author request), Mono<Author> getAuthor(Mono<Author> request)
+Flux<Book> getBooksByAuthor(Author request), Flux<Book> getBooksByAuthor(Mono<Author> request) 
+ which methods you want to override you can decide and override
+
+3. Create TempDB which contains dummy books and authors
+
+public class TempDB {
+
+    public static List<Author> getAuthorsFromTempDb() {
+        return new ArrayList<Author>() {
+            {
+                add(Author.newBuilder().setAuthorId(1).setBookId(1).setFirstName("Charles").setLastName("Dickens").setGender("male").build());
+                add(Author.newBuilder().setAuthorId(2).setFirstName("William").setLastName("Shakespeare").setGender("male").build());
+                add(Author.newBuilder().setAuthorId(3).setFirstName("JK").setLastName("Rowling").setGender("female").build());
+                add(Author.newBuilder().setAuthorId(4).setFirstName("Virginia").setLastName("Woolf").setGender("female").build());
+            }
+        };
+    }
+
+
+    public static List<Book> getBooksFromTempDb() {
+        return new ArrayList<Book>() {
+            {
+                add(Book.newBuilder().setBookId(1).setAuthorId(1).setTitle("Oliver Twist").setPrice(123.3f).setPages(100).build());
+                add(Book.newBuilder().setBookId(2).setAuthorId(1).setTitle("A Christmas Carol").setPrice(223.3f).setPages(150).build());
+                add(Book.newBuilder().setBookId(3).setAuthorId(2).setTitle("Hamlet").setPrice(723.3f).setPages(250).build());
+                add(Book.newBuilder().setBookId(4).setAuthorId(3).setTitle("Harry Potter").setPrice(423.3f).setPages(350).build());
+                add(Book.newBuilder().setBookId(5).setAuthorId(3).setTitle("The Casual Vacancy").setPrice(523.3f).setPages(450).build());
+                add(Book.newBuilder().setBookId(6).setAuthorId(4).setTitle("Mrs. Dalloway").setPrice(623.3f).setPages(550).build());
+            }
+        };
+    }
+}
+
+4. Now we write logic for getAuthor() which is unary type, where we send an authorID and return the one of author in the response
+
+@Override
+    public Mono<Author> getAuthor(Mono<Author> request) {
+        return request
+                .map(Author::getAuthorId) //get an id
+                  ////get author from db and filter with authorid 
+                .map(authorId -> TempDB.getAuthorsFromTempDb() 
+                        .stream()
+                        .filter(author -> author.getAuthorId() == authorId)
+                        .findFirst()
+                        .orElseThrow(() -> new StatusRuntimeException(Status.NOT_FOUND.withDescription("authorId not found in DB"))));
+    }
+
+
+- Next we implement getBooksByAuthor() which is server streaming, where we get the author ID
+and respond with list of books
+
+@Override
+    public Flux<Book> getBooksByAuthor(Mono<Author> request) {
+        return request
+                .map(Author::getAuthorId)
+                .map(authorId -> TempDB.getBooksFromTempDb()
+                        .stream()
+                        .filter(author -> author.getAuthorId() == authorId)
+                        .collect(Collectors.toList()))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+@GrpcService
+public class BookAuthorReactiveService extends BookAuthorServiceImplBase {
+
+	@Override
+    public Mono<Author> getAuthor(Mono<Author> request) {
+        return request
+                .map(Author::getAuthorId) //get an id
+                  ////get author from db and filter with authorid 
+                .map(authorId -> TempDB.getAuthorsFromTempDb() 
+                        .stream()
+                        .filter(author -> author.getAuthorId() == authorId)
+                        .findFirst()
+                        .orElseThrow(() -> new StatusRuntimeException(Status.NOT_FOUND.withDescription("authorId not found in DB"))));
+    }
+     
+	@Override
+    public Flux<Book> getBooksByAuthor(Mono<Author> request) {
+        return request
+                .map(Author::getAuthorId)
+                .map(authorId -> TempDB.getBooksFromTempDb()
+                        .stream()
+                        .filter(author -> author.getAuthorId() == authorId)
+                        .collect(Collectors.toList()))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+}
+
+6. You cannot run this reactive grpc service with grpcurl, since grpcurl only speaks standard gRPC, not Reactor‑gRPC. So we can use Postman to check it 
+
+- So we go for another option, where we create a Reactor client which uses ReactorBookAuthorServiceGrpc (Salesforce Reactor‑gRPC generated stub) to call the server and print results.
+
+@Configuration
+public class ReactorClientRunner {
+
+    @Bean
+    ApplicationRunner runReactorClient() {
+        return args -> {
+
+            ManagedChannel channel = ManagedChannelBuilder
+                    .forAddress("localhost", 9090)
+                    .usePlaintext()
+                    .build();
+
+            try {
+                var stub = ReactorBookAuthorServiceGrpc.newReactorStub(channel);
+
+                var req = Author.newBuilder().setAuthorId(1).build();
+
+                // ✅ Unary call (Mono<Author>)
+                var author = stub.getAuthor(Mono.just(req))
+                        .doOnNext(a -> System.out.println("UNARY RESPONSE: " + a))
+                        .block();  // block only for demo
+
+                // ✅ Server-streaming (Flux<Book>)
+                stub.getBooksByAuthor(Mono.just(req))
+                        .doOnNext(b -> System.out.println("STREAM ITEM: " + b))
+                        .blockLast(); // block only for demo
+
+            } finally {
+                channel.shutdownNow();
+            }
+        };
+    }
+}
+
+7. Start the appl, we cn see the output in console
+
+
+Error Handling in gRPC Spring Boot Microservice
+
+1. Create gRPC-ErrorHandling with spring grpc server dependency
+
+2. Create proto file 
+
+syntax="proto3";
+
+option java_multiple_files=true;
+
+package com.pack;
+
+message Customer {
+   int32 id = 1;
+   string name = 2;
+   string email = 3;
+}
+
+service CustomerService {
+   rpc getCustomer(Customer) returns (Customer);
+}
+
+3. Generate java class for proto file
+>mvn clean install
+
+Right click protoBuf - Build path - Use as source folder
+
+4. Create service class and write implementation for service method with @GrpcService
+
+@GrpcService
+public class CustomerService extends CustomerServiceImplBase{
+
+	@Override
+	public void getCustomer(Customer request, StreamObserver<Customer> responseObserver) {
+		
+	}
+}
+
+So in grpc microservices, we have three kind of channels (ie) data Channel, error Channel and complete Channe. So whenever you want to send the data to the client you have to send object in the data Channel and if you want to generate errors or if you have errors in your server and you want to send it to the client then you have to send the error in the errors Channel, and if all the data has been sent to the client then you have to call the oncomplete method 
+
+- I will just get the ID and if the ID is 2 then I will just throw an error using onError() which accepts a Throwable 
+
+@Override
+	public void getCustomer(Customer request, StreamObserver<Customer> responseObserver) {
+		if(request.getId() == 2) {
+          responseObserver.onError();
+        }
+	}
+
+so we use Status class which has few standards status like. How we have in the rest HTTP status like  200 and 500, that in grpc we don't have such kind of things instead we have the Status class where we have few standard status or we can create our own exception
+
+- We create our own exception
+
+public class CustomerNotFoundException extends RuntimeException {
+
+	public CustomerNotFoundException(String message) {
+		super(message);
+	}
+
+}
+
+- Now we call this exception in onError()
+
+@Override
+	public void getCustomer(Customer request, StreamObserver<Customer> responseObserver) {
+		if(request.getId() == 2) {
+	          responseObserver.onError(Status.NOT_FOUND.withDescription("Customer with id: 2 was not found").withCause(new CustomerNotFoundException("Ensure the customer provided the request is correct")).asRuntimeException());
+	    }
+	}
+
+
+So if the client wants the detail of the customer which has id=2, then we throw an error using this onerror Channel and we first mention the status that the customer is not found and we're gonna give a description saying that customer ID 2 is not found. 
+  
+- If there is any other ID or any other customer information that the client wants then we write onnext method and build the customer 
+
+@Override
+	public void getCustomer(Customer request, StreamObserver<Customer> responseObserver) {
+		if(request.getId() == 2) {
+	          responseObserver.onError(Status.NOT_FOUND.withDescription("Customer with id: 2 was not found").withCause(new CustomerNotFoundException("Ensure the customer provided the request is correct")).asRuntimeException());
+	    } else {
+	    	responseObserver.onNext(Customer.newBuilder().setName("Ram").setEmail("ram@gmail.com").build());
+	    	responseObserver.onCompleted();
+	    }
+	}
+
+
+5. Create grpc-ErrorHandling-client with grpc client dependency
+
+6. Copy proto file, generate the class file and add as source folder
+
+7. In client microservice we try to invoke this service that we have created on the server by implementing ApplicationRunner and override run()
+    We inject the blocking stub that got generated and call the service method
+
+@SpringBootApplication
+public class GRpcErrorHandlingClientApplication implements ApplicationRunner {
+
+	@Autowired
+	CustomerServiceBlockingStub customerBlockingStub;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(GRpcErrorHandlingClientApplication.class, args);
+	}
+
+	@Override
+	public void run(ApplicationArguments args) throws Exception {
+		Customer customer=customerBlockingStub.getCustomer(Customer.newBuilder().setId(1).build());
+		System.out.println(customer);
+	}
+
+}
+
+8. Now we inform client where the server is running, so we create a channel
+
+@Configuration
+public class CustomerGrpcClientConfig {
+
+    @Bean
+    public CustomerServiceGrpc.CustomerServiceBlockingStub customerBlockingStub(
+            GrpcChannelFactory channels) {
+        // "bookAuthor" must match the name used in properties: spring.grpc.client.channels.bookAuthor.*
+        return CustomerServiceGrpc.newBlockingStub(channels.createChannel("errorHandling"));
+    }
+
+}
+
+9. Configure channel in application.properties
+
+spring.grpc.client.channels.errorHandling.address=static://localhost:9090
+spring.grpc.client.channels.errorHandling.negotiation-type=plaintext
+
+10. Start both the appl, we got the customer information name and the email address
+
+Now we change id = 2 inside run(), when we start the appl, now we get io.grpc.StatusRuntimeException: NOT_FOUND: Customer with id: 2 was not found
+
+so on the server side when the customer ID is two, we throw the exception and sending in the onerror Channel. So now on the client side we use of try and catch and caught a StatusRuntimeException which is the standard exception that is thrown from the server. But on server we are sending the CustomerNotFoundException which gets wrapped with the StatusRuntimeException 
+   So when you throw any of your custom exception and the StatusRuntimeException will wrap 
+those exceptions and on the client side catch block we will get that exception
+
+
+	@Override
+	public void run(ApplicationArguments args) throws Exception {
+		try {
+		   Customer customer=customerBlockingStub.getCustomer(Customer.newBuilder().setId(2).build());
+		   System.out.println(customer);
+		} catch(StatusRuntimeException s) {
+			Status status=s.getStatus();
+			System.out.println(status.getDescription());
+           System.out.println(status.getCause());
+		}
+	}
+
+11. Start both appl, now we get the description that we have sent from the server 
+
+Now on client side we can see the description and cause will be null, the reason is the cause will
+not be sent from server to the client, so we have to sure that the actual cause will not be sent. The cause over here it's exception, so the exception will not be given to the client from the server
+
+
+second way of handling the error in the grpc microservice 
+    In the first way we have send a standard status (ie) not_found which is relevant to our use case like customer id is not found. If u added with cause it has no meaning on the client side because all the exceptions that are thrown from the server side will be a
+StatusRuntimeException 
+    In the rest we usually give the custom error objects in the response with an error type
+and the message which contain the reason of the error that has been occurred. 
+    
+1. To do so in grpc we edit the schema.proto file in both appl and create a new message
+
+message CustomError {
+   string errorType = 1;
+   string message = 2;
+}
+
+- Generate Java class using mvn clean install for both the appl
+
+2. In the server (ie) CustomerService class we create a Status. 
+
+Status status = Status.NOT_FOUND;
+
+- So to send the custom error we have to use Metadata, where we create a key which hold a custom error and pass that status to onError
+
+   @Override
+	public void getCustomer(Customer request, StreamObserver<Customer> responseObserver) {
+		
+		if(request.getId() == 2) {
+			Status status = Status.NOT_FOUND;
+			Metadata metadata=new Metadata();
+			Metadata.Key<CustomError> errorKey=ProtoUtils.keyForProto(CustomError.getDefaultInstance());
+			metadata.put(errorKey, CustomError.newBuilder()
+					      .setMessage("Customer with id: 2 was not found")
+					      .setErrorType("NOT_FOUND")
+					      .build());
+	          responseObserver.onError(status.asRuntimeException(metadata));
+	    } else {
+	    	responseObserver.onNext(Customer.newBuilder().setName("Ram").setEmail("ram@gmail.com").build());
+	    	responseObserver.onCompleted();
+	    }
+	}
+
+3. In the client we get the metadata
+
+   @Override
+	public void run(ApplicationArguments args) throws Exception {
+		try {
+		   Customer customer=customerBlockingStub.getCustomer(Customer.newBuilder().setId(2).build());
+		   System.out.println(customer);
+		} catch(StatusRuntimeException s) {
+			//Status status=s.getStatus();
+			//System.out.println(status.getDescription());
+			//System.out.println(status.getCause());
+			
+			//get the metadata
+			Metadata metadata=Status.trailersFromThrowable(s);
+			//get custom error from metadata
+			Metadata.Key<CustomError> errorKey=ProtoUtils.keyForProto(CustomError.getDefaultInstance());
+			//to get the value we have to pass that relevant key
+			CustomError error=metadata.get(errorKey);
+			System.out.println(error);
+			
+		}
+
+4. Start both the appl, we can see the output on client side as
+
+errorType: "NOT_FOUND"
+message: "Customer with id: 2 was not found"
+
+So when we are sending ID as 2, we'll get an exception called StatusRuntimeException and we are extracting the metadata out of the exception that we have thrown and print the custom error object that got from the server
+
+This was one of the way that you can handle errors in grpc using metadata and you can pass on your custom error object and you can just inform your client that something is wrong
+
+
+Centralized Error Handling
+   Since we are spring boot right so there should be a way to centralize all your error handling, so in the REST we have a @ControllerAdvice and in the grpc we have a @GrpcAdvice 
+
+We are using Spring Boot 4.x + spring-grpc-server-spring-boot-starter, which belongs to:
+org.springframework.grpc
+
+1. @GrpcAdvice belongs to net.devh.grpc
+2. It is NOT part of Spring gRPC
+
+1. In Server appl, we create centralized class for generating metadata so that it can resusable for all exception
+
+public final class CustomMetadataUtil {
+
+    private static final Metadata.Key<CustomError> ERROR_KEY =
+            ProtoUtils.keyForProto(CustomError.getDefaultInstance());
+
+    private CustomMetadataUtil() {}
+
+    public static Metadata customerNotFound(String message) {
+        Metadata metadata = new Metadata();
+        metadata.put(
+                ERROR_KEY,
+                CustomError.newBuilder()
+                        .setMessage(message)
+                        .setErrorType("NOT_FOUND")
+                        .build()
+        );
+        return metadata;
+    }
+}
+
+2. Create central error mapper class
+
+public final class GrpcErrorMapper {
+
+    private GrpcErrorMapper() {}
+
+    public static StatusRuntimeException map(Throwable error) {
+
+        if (error instanceof CustomerNotFoundException ex) {
+            Metadata metadata =
+                    CustomMetadataUtil.customerNotFound(ex.getMessage());
+
+            return Status.NOT_FOUND
+                    .withDescription(ex.getMessage())
+                    .asRuntimeException(metadata);
+        }
+
+        if (error instanceof IllegalArgumentException ex) {
+            return Status.INVALID_ARGUMENT
+                    .withDescription(ex.getMessage())
+                    .asRuntimeException();
+        }
+
+        // fallback
+        return Status.INTERNAL
+                .withDescription("Internal server error")
+                .withCause(error)
+                .asRuntimeException();
+    }
+}
+
+3. Create service implementation
+
+
+@Override
+    public void getCustomer(
+            Customer request,
+            StreamObserver<Customer> responseObserver) {
+
+        try {
+            if (request.getId() == 2) {
+                throw new CustomerNotFoundException(
+                        "Customer with id: 2 was not found"
+                );
+            }
+
+            responseObserver.onNext(
+                    Customer.newBuilder()
+                            .setName("Ram")
+                            .setEmail("ram@gmail.com")
+                            .build()
+            );
+            responseObserver.onCompleted();
+
+        } catch (Throwable ex) {
+            responseObserver.onError(GrpcErrorMapper.map(ex));
+        }
+    }
+
+4. Start both the appl, we get 
+
+errorType: "NOT_FOUND"
+message: "Customer with id: 2 was not found"
+
+
+Error Handling for Server streaming
+
+1. Create rpc service in proto file
+
+message Empty {
+
+}
+
+message CustomerDetails {
+   oneof message {
+     Customer customer = 1;
+     CustomError customError = 2;
+   }
+}
+service CustomerService {
+   rpc getCustomer(Customer) returns (Customer);
+   rpc getCustomers(Empty) returns (stream CustomerDetails);
+}
+
+Created service getcustomers which not take any request so we write as empty and then returns the the customerdetails. 
+  In customerdetails we have added oneof is we are just trying to say that the client will get this customer details in the return and inside this there could be a customer or there could be an error
+   when you're trying to invoke the streaming service and  in between you're throwing the error then the connection between the client and the server will be closed. So
+in this streaming services it's good to treat the error as an data not to onerror 
+    when the server is streaming the data to the
+client, the data could have the customer data or there could be a custom error as well, so the client have to  write a switch statement to decide if it is a custom error then what action needs to be taken and when the data is customer then what action needs to be taken.
+
+- Generate the java classes using mvn clean install
+
+2. Create implementation of getCustomers in CustomerService class
+ create a range from 1 to 10 using IntStream and for each number we check if it is not even then create a customerdetails object and then set the customerror and if it is even we set customerdetails 
+
+@Override
+    public void getCustomers(Empty request, StreamObserver<CustomerDetails> responseObserver) {
+    	//create a range from 1 to 10 using IntStream
+    	IntStream.range(1, 10)
+    	         .forEach(number -> {
+    	        	 //we check if it is not even then create a customerdetails object and then set the customerror
+    	        	 if(!(number%2==0)) {
+    	        		 CustomerDetails notfound=CustomerDetails.newBuilder()
+    	        		      .setCustomError(CustomError.newBuilder()
+    	        		    		      .setErrorType("NOT_FOUND")
+    	        		    		      .setMessage(String.format("Customer with id:%d not found",number)).build())
+    	        		      .build();
+    	        		 //since we are treating the error as a data we send to onnext
+    	        		 responseObserver.onNext(notfound); 
+    	       } //if it is even we set customerdetails 
+    	        	 else {
+    	        		 CustomerDetails customer=CustomerDetails.newBuilder()
+	        		      .setCustomer(Customer.newBuilder()
+	                              .setName("Ram")
+	                              .setEmail("ram@gmail.com")
+	                              .build())
+	        		      .build();
+    	        		 responseObserver.onNext(customer);
+    	        	 }
+    	         });
+    	responseObserver.onCompleted();
+    }
+
+3. In client appl, copy the proto file and generate the java classes
+
+4. Now on client side we want to invoke getCustomers() using async stub
+
+@Autowired
+CustomerServiceStub asyncStub;
+
+5. Create a channel to inform client where server is running
+
+@Bean
+    public CustomerServiceGrpc.CustomerServiceStub customerStub(
+            GrpcChannelFactory channels) {
+        // "bookAuthor" must match the name used in properties: spring.grpc.client.channels.bookAuthor.*
+        return CustomerServiceGrpc.newStub(channels.createChannel("asyncerrorHandling"));
+    }
+
+6. Configure channel in application.properties
+
+spring.grpc.client.channels.asyncerrorHandling.address=static://localhost:9090
+spring.grpc.client.channels.asyncerrorHandling.negotiation-type=plaintext
+
+7. Now define the implementation in run()
+
+@Override
+	public void run(ApplicationArguments args) throws Exception {
+		asyncStub.getCustomers(Empty.newBuilder().build(), new StreamObserver<CustomerDetails>() {
+
+			//We know that on the server side all the data and errors is treated as the data so all the information would come on the onnext and nothing will come on onerror
+			@Override
+			public void onNext(CustomerDetails value) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onCompleted() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+	}
+
+- We use countdownlatch so that the main thread waits until all getdown 
+
+@Override
+	public void run(ApplicationArguments args) throws Exception {
+		final CountDownLatch countDownLatch=new CountDownLatch(1);
+		asyncStub.getCustomers(Empty.newBuilder().build(), new StreamObserver<CustomerDetails>() {
+
+			//We know that on the server side all the data and errors is treated as the data so all the information would come on the onnext and nothing will come on onerror
+			@Override
+			public void onNext(CustomerDetails value) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onCompleted() {
+				countDownLatch.countDown();
+			}
+		});
+		//ask the main thread to wait until it's until that counts are zero
+		countDownLatch.await();
+	}
+
+- Now create switch case in onNext,  if the customer error is the case then we get the custom error if the customer is the case then we'll get the get customer
+
+@Override
+	public void run(ApplicationArguments args) throws Exception {
+		final CountDownLatch countDownLatch=new CountDownLatch(1);
+		asyncStub.getCustomers(Empty.newBuilder().build(), new StreamObserver<CustomerDetails>() {
+
+			//We know that on the server side all the data and errors is treated as the data so all the information would come on the onnext and nothing will come on onerror
+			@Override
+			public void onNext(CustomerDetails value) {
+				switch(value.getMessageCase()) {
+				case CUSTOMERROR:
+					System.out.println(value.getCustomError());
+				case CUSTOMER:
+				    System.out.println(value.getCustomer());
+				}
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onCompleted() {
+				countDownLatch.countDown();
+			}
+		});
+		//ask the main thread to wait until it's until that counts are zero
+		countDownLatch.await();
+	}
+
+
+So in streaming type you can just read your error as a data only and send it to the client, the client will decide what's needs to be done
+
+8. Start both the appl
+
+So we can see logs with customer id 1,3,5,7,9 we will be getting customer id not found and for even numbers we will get customer info
+
+
+
