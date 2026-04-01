@@ -1,0 +1,2421 @@
+What is Message queue?
+    Message queuing allows applications to communicate by sending messages to each other. The
+message queue provides a temporary message storage when the destination program is busy or not connected 
+   So message queue is nothing but a queue it provides a temporary storage for the messages. The message queue is made up of producer, broker and consumer, where the producer will produce the message and it will send that message to the message broker and consumer will consume that message from the message broker. We can use a message queue for the asynchronous communication between
+multiple applications 
+   So here asynchronous communication meaning, consider the producer is sending message to the message broker then producers don't have to wait for the response, it can proceed with other remaining tasks. A producer can be a different application and consumer can be a different application and basically we use a message queue for asynchronous communication between multiple
+applications
+
+What is RabbitMQ ?
+    Rabbit mq is nothing but a message queue that acts as a intermediary platform where different
+applications can send and receive messages. It originally implements the advanced messaging queuing protocol(AMQP), but now rabbit MK also supports several other API protocols such as
+STOMP, MQTT and HTTP. 
+
+How RabbitMQ works
+    Here producer basically produce the message and it will send that message to the exchange and then exchange will basically use that message along with some setup rules to you route that
+message to the queue and then consumer will basically consume that message from the queue 
+    So exchange and queue are the two components which are part of rabbitmq broker but
+producer and consumer can be different applications, so producer is application that sends a message to the rabbitmq broker and consumer is the application that reads the message from
+the rabbitmq broker 
+
+Why use RabbitMQ in a Microservices
+   Rabbit mq is one of the simplest freely available option for implementing messaging queues in your micro Services architecture. RabbitMQ is one of the popular messaging queue system that we can use in a micro services for our synchronous communication between multiple microservices 
+   For example, we have three micro services like orderservice, stockservice and emailservice
+and these microservices will communicate with each other using message broker, so message broker can be a rabbitmq or Apache Kappa or any other message queues 
+
+RabbitMQ Core Concepts
+1. Producer
+      Producer is basically application that sends a messages, it does not send a messages directly to the consumer, it sends a message only to the rabbit mq broker w
+
+2. Consumer 
+    Consumer is application that reads and messages from the rabbitmq broker, there can be a multiple consumers that subscribe to the rabbitmq broker, for example there are three consumers have subscribed to the rabbitmq broker and whenever a producer will send a message to the rabbit mq broker then all these consumers will read that message from the rabbitmq broker 
+
+3. Queue
+      It is basically buffer or a storage in a rabbitmq broker to store the messages. So whenever producer sends a message to the rabbitmq broker that message will be first stored in a queue and then the consumer will read that message from the queue which is in a rabbit mq broker. We can
+create any number of queues in a rabbit mq broker 
+      Once the message is read, it is consumed and removed from the queue, a message can be processed exactly only once
+
+4. Message
+     Message is nothing but the information that is sent from producer to the consumer through a rabbit mq, it can be any type like string format or json or byte array or plain text or HTML 
+
+5. Exchange
+     Exchange it acts as an intermediary between producer and queue, instead of sending a message directly to the queue, a producer can send those messages directly to the exchange first
+and then exchange will basically route those message to the respective queues
+
+6. Routing Key
+     Routing key is a key that exchange basically uses to route a message to the respective queues. It is like address for the message. Consider in a complex applications we have to use
+a multiple queues in a rabbitmq broker and we have 2queues q1 and q2, so whenever producer sends a
+message to the exchange, then exchange basically don't know in which queue the message should be route, in that case we use a routing key to route that message to the particular queue 
+    So producer will basically send a message along with the routing key, so that exchange will
+use that routing key to route that message to the respective queues 
+
+7. Binding
+     Binding is a link between queue and exchange, exchange basically use a routing key to route a
+message to the respective queues  and this is nothing but a binding, there should be a binding between exchange and queue then only the exchange can able to route a message to the respective queues 
+
+RabbitMQ Architecture
+   In a typical messaging system architecture, we have producer and we have a consumer, in between producer and consumer we have a message broker, so producer will basically send a message to the message broker and consumer will basically read those messages from the message broker 
+   In case of rabbit mq messaging system architecture you can see there is a one more component called exchange so producer will basically send a message first to The Exchange and then exchange
+will route that message to the queue and then consumer will basically consume or read that message from the queue 
+   In case of a complex application we need to create a multiple queues in a rabbit mq broker, so the producer will basically send a message to the Exchange first and then exchange will basically use a routing key to route that message to the respective queues and then consumer will
+basically consume or read the message from the respective queues  
+   Consider we have multiple queues in a rabbit MQ architecture, for example Q1,Q2,Q3 and whenever producer want to send a message to the Q3 then it will send a message along with the routing key to the exchange and then exchange will basically use that routing key to identify in which queue
+the message should be route. Consider we have a routing key 3 then exchange will basically send that message to the Q3 and consider producer want to send a message to the Q1 then  it will pass a
+message along with the routing key 1, then exchange will use that routing key and it will route that message to the Q1. So in this way the Binding or link should be established between exchange
+and queue by using routing key 
+
+Installation and setup
+
+1. Download RabbitMQ from https://www.rabbitmq.com/docs/install-windows
+
+2. So the basic dependency of rabbitmq installation is erlang, so you need to have a Erlong
+installed on your system because Rabbitmq is based on Erlang language
+
+3. Download Erlang - https://www.erlang.org/downloads - Download Windows Installer
+
+4. First install Erlang then we install RabbitMQ
+
+5. RabbitMQ by default runs on 15672 port no, so run localhost:15672 with default username and password as "guest" and "guest" which opens RabbitMQ Dashboard
+
+
+Explore RabbitMQ using RabbitMQ Management UI
+    In this user interface for rabbitmq management we can go and create the queue and create the exchange and we can bind the Exchange and queue using routing key 
+
+1. The connections tab - so in a connections we can see all the TCP connections, so whenever we connect our application with the rabbitmq server that entry we can see in the connections tab 
+
+2. channels - basically the producer and consumer will exchange a message over a channel, so whenever we establish a connection that is TCP connection between producer and consumer using rabbitmq that entry you can able to see under channels tab 
+
+3. Exchange Tab - we create a new exchange 
+
+a. Click "Add new exchange" 
+
+Name: exchange_demo
+
+Click "Add Exchange" button
+
+As soon as you click on ADD exchange a new entry will be added in table
+
+b. Click on "exchange_demo" where we basically bind a exchange with the queue by using routing
+key 
+
+4. Now we have to create a queue - Goto Queues tab
+
+a. Click "Add new Queue"
+
+Name: queue_demo
+
+Click "Add Queue" button
+
+So a new entry queue_demo will be added in a table
+
+b. Click "queue_demo" we can explore more about this queue
+
+5. Goto Exchanges tab, now we need to bind exchange with queue by using routing key 
+
+a. Click "exchange_demo" - Expand Bindings
+
+To queue: queue_demo
+Routing key: routing_key_demo
+
+Click "Bind"
+
+We can see a new entry will be added in a table which means exchange is successfully bind to this
+queue by using this routing key. If you want to unbind this link we can go and click on unbind button
+
+b. Goto Queues tab - Click "queue_demo" - Expand "Bindings" - we can able to see binding, so now we have successfully bind this exchange with this particular queue using this routing key
+
+5. So whenever a producer sends a message to the Exchange, then exchange willbasically use this binding to route that message to the respective queue
+
+a. Goto Exchanges tab - Click "exchange_demo" - Expand "Publish Messages"
+
+Routing key: routing_key_demo
+Payload: welcome to rabbitmq
+
+Click "Publish Message" button
+
+b. To verify this message is successfully routed to the queue or not
+
+Goto Queues tab - Click "queue_demo" - Expand "Get Messages" - Click "Get Message" button
+
+Now it will show the messages in a queue for example "welcome to rabbitmq"
+
+So the producer will basically send a message along with the routing key to the exchange and then
+exchange will use that routing key to route that message to the respective queue 
+
+Springboot with RabbitMQ
+1. Create SpringBoot-RabbitMQ project with spring for rabbitmq, web, lombok dependency
+
+2. Now we need to connect our Springboot application with the rabbitmq server, once we do that then we can go and create a queue, exchange and binding in a spring boot application
+   So we have to configure rabbitmq details in application.properties
+
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=guest
+spring.rabbitmq.password=guest
+
+If you have spring-boot-starter-amqp on the classpath, Spring Boot auto-configures a ConnectionFactory and tries to connect using default RabbitMQ settings when you don’t set those information in application.properties.
+  If your rabbit mq broker is running on different machine then we have to provide these properties and we have to provide that machine IP address or the host name
+
+3. Configure exchange, queue and binding in springboot appl
+
+a. First configure names for exchange, queue and routing key in application.properties
+
+rabbitmq.queue.name=mq_queue
+rabbitmq.exchange.name=mq_exchange
+rabbitmq.routing.key=mq_routing_key
+
+b. Configure spring beans for exchange, queue and binding
+
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+
+
+@Configuration
+public class RabbitMQConfig {
+
+     @Value("${rabbitmq.queue.name}")
+     private String queue;
+
+     @Value("${rabbitmq.exchange.name}")
+     private String exchange;
+
+     @Value("${rabbitmq.routing.key}")
+     private String routingKey;
+
+     //spring bean for rabbitmq queue
+     @Bean
+     public Queue queue() {
+        return new Queue(queue);
+     }
+
+     //spring bean for rabbitmq exchange
+     @Bean
+     public TopicExchange exchange() {
+        return new TopicExchange(exchange);
+     }
+
+     //spring bean for binding queue and exchange using routing key
+     @Bean
+     public Binding binding() {
+          return BindingBuilder.bind(queue()).to(exchange()).with(routingKey);
+      }
+}
+
+so we have created a queue, exchange and then we bind this queue with the exchange using this
+routing key. Apart from these three beans we need to also configure ConnectionFactory, RabbitTemplate, RabbitAdmin so these are the basically infrastructure beans that required our
+Springboot application to work with rabbitmq broker, but springboot Autoconfiguration will automatically configure these three beans for us, we don't have to explicitly create spring
+bean or configuration for these three classes 
+
+4. Create RabbitMQ Producer to send a message to the rabbitmq broker using RabbitTemplate which is automatically configured by Springboot
+
+@Service
+@Slf4j
+public class RabbitMQProducer {
+
+	@Value("${rabbitmq.exchange.name}")
+    private String exchange;
+
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
+    
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+    
+    public void sendMessage(String message) {
+    	log.info("Message sent: "+message);
+        //send this message to this exchange and then exchange will basically use this routing
+key to Route this message to the queue
+    	rabbitTemplate.convertAndSend(exchange, routingKey, message);
+    }
+
+}
+
+5. Build REST API to Send Message and Test RabbitMQ Producer
+
+@RestController
+@RequestMapping("/api/v1")
+public class RabbitMQController {
+
+	@Autowired
+	RabbitMQProducer producer;
+	
+	@GetMapping("/publish")
+	public ResponseEntity<String> sendMessage(@RequestParam("message") String message){
+		producer.sendMessage(message);
+		return ResponseEntity.ok("Message sent to RabbitMQ..");
+	}
+}
+
+6. Start the appl and run http://localhost:1000/api/v1/publish?message=helloworld
+
+In a console we can see message sent hello world 
+
+7.  let's verify whether this message is stored in a rabbit mq queue or not, goto rabbitmq dashboard - Exchnage tab - we can see our mq_exchange
+
+Goto Queues tab - Click mq_queue - Expand Get Message - Click Get Message button and we can see the output Helloworld is successfully stored in this rabbit mqq the queue name
+
+As we send the message to the queue, we can also see that message data in a chart as ready msg and total msg
+
+8. Create RabbitMQ Consumer to read or consume the messages from the queue using @RabbitListener, so whenever there is a new message comes into this queue then we will consume that message from this particular queue
+
+@Service
+@Slf4j
+public class RabbitMQConsumer {
+
+	@RabbitListener(queues= {"${rabbitmq.queue.name}"})
+	public void consume(String message) {
+		log.info("Message received: "+message);
+	}
+}
+
+9. Start the appl and run http://localhost:1000/api/v1/publish?message=hello rabbitmq
+
+In a console we can see message sent as well as message received
+
+10. Configure RabbitMQ for JSON Message Communication
+        Here we are going to create a one more queue called mq_queue_json to store only the Json
+messages and we are going to bind this queue with the exchange using the
+routing key called mq_routing_key_json
+
+- In config class we create one more queue to store json message
+
+    @Value("${rabbitmq.queue.json.name}")
+     private String jsonqueue;
+     
+     @Value("${rabbitmq.routing.json.key}")
+     private String routingjsonKey;
+
+     //create queue for json
+     @Bean
+     public Queue jsonqueue() {
+        return new Queue(jsonqueue);
+     }
+
+     //bind a queue with a exchange using routing key
+      @Bean
+     public Binding jsonBinding() {
+          return BindingBuilder.bind(jsonqueue()).to(exchange()).with(routingjsonKey);
+      }
+
+      //create a spring bean for a message converter 
+     @Bean
+     public MessageConverter converter() {
+    	 return new Jackson2JsonMessageConverter();
+     }
+     
+     //set that message converter to the rabbit template
+     @Bean
+     public AmqpTemplate amqpTemplate(ConnectionFactory factory) {
+    	 RabbitTemplate rTemplate=new RabbitTemplate(factory);
+    	 rTemplate.setMessageConverter(converter());
+    	 return rTemplate;
+    	 
+     }
+
+11. create one dto class for serialization and deserialization 
+
+@Data
+public class User {
+    private Integer id;
+    private String firstName;
+    private String lastName;
+}
+
+12. Create RabbitMQ JSON Producer
+
+@Service
+@Slf4j
+public class RabbitMQJsonProducer {
+
+	@Value("${rabbitmq.exchange.name}")
+    private String exchange;
+	
+	@Value("${rabbitmq.routing.json.key}")
+    private String routingjsonKey;
+	
+	@Autowired
+    RabbitTemplate rabbitTemplate;
+    
+	//we send user object using RabbitTemplate and then rabbittemplate internally uses
+	//message converter to convert this user object into Json 
+    public void sendMessage(User user) {
+    	log.info("Json message sent: {}", user);
+    	rabbitTemplate.convertAndSend(exchange, routingjsonKey, user);
+    }
+}
+
+13. Create REST API to Send JSON Object to RabbitMQ Producer
+
+@RestController
+@RequestMapping("/api/v1")
+public class RabbitMQJsonController {
+
+	@Autowired
+	RabbitMQJsonProducer producer;
+	
+	@PostMapping("/publish")
+	public ResponseEntity<String> sendJsonMessage(@RequestBody User user){
+		producer.sendMessage(user);
+		return ResponseEntity.ok("Json Message sent to RabbitMQ..");
+	}
+}
+
+14. Start the appl
+
+C:\Users\senthil.kumart>curl -X POST "http://localhost:1000/api/v1/publish" -H "Content-Type: application/json" -d "{\"id\":1,\"firstName\":\"Senthil\",\"lastName\":\"kumar\"}"
+Json Message sent to RabbitMQ..
+
+To verify whether this exchange has routed this message to the queue or not - goto rabbitmq dashboard - Exchnage tab - we can see our mq_exchange
+
+Goto Queues tab - Click mq_json_queue - Expand Get Message - Click Get Message button and we can see the output Helloworld is successfully stored in this rabbit mqq the queue name
+
+If the message is not display, u just purge the messages in queue, we can see the output
+
+15. Create RabbitMQ Consumer to Consume JSON Message
+
+@Service
+@Slf4j
+public class RabbitMQJsonConsumer {
+
+	@RabbitListener(queues= {"${rabbitmq.queue.json.name}"})
+	public void consume(User user) {
+		log.info("JSON Message received: "+user.toString());
+	}
+}
+
+16. Start the appl
+
+C:\Users\senthil.kumart>curl -X POST "http://localhost:1000/api/v1/publish" -H "Content-Type: application/json" -d "{\"id\":1,\"firstName\":\"Senthil\",\"lastName\":\"kumar\"}"
+Json Message sent to RabbitMQ..
+
+In a console we can see message sent as well as message received
+
+
+-----------------------------------------------------------------------------------------------
+          Imagine that you have an E-Commerce application and when the user places the order in it, you want notifications to go through the email, inventory update, payment. So if you think that all these things are done synchronously (ie) that the user has to wait for everything
+at the same moment when he placed the order (ie) until the email is sent or the inventory update is not done, he is waiting so this would be such a bad experience 
+       But this does not happen we do these things asynchronously, in which we get event driven architecture, we get message queues like those things. So when we talk about message queue our most popular message queue is Rabbit MQ 
+
+What is RabbitMQ?
+   RabbitMQ is an open source message broker or a message queue which helps different parts of the system to communicate with each other asynchronously, and decouple producers and consumers 
+    Suppose we have a post office, so there will be a producer who will keep the letter in the post box (ie) our queue and our letter will be a message, so our post office is Rabbit MQ
+which ensure that your letter is delivered and there is some other person which we can call as consumer who will pick it up
+    So the main job of Rabbit MQ is, it will receive the messages from the producer will route them to the place where the message has to be delivered and will store it temporarily until it is consumed and will deliver it to the consumers
+
+Why RabbitMQ ?
+    Consider we have an appl like Amazon, whenever our order is placed then we have to confirm the order through email (ie) we have to sent a notification that your order confirmed, then we will update the inventory and we will do payment processing and notify delivery service 
+    If we do all these things synchronously means in one request then it will be very slow 
+and error can also come, instead whenever order is placed our order service will publish the events on Rabbit MQ which is our message queue, then the other services like email, inventory, payment, delivery will consume the message asynchronously and also if any service is down Rabbit MQ will keep that message safe, when our service is up then it will pick 
+
+Benefits
+1. Decoupling - our services are not directly depending on each other means there is no tight coupling, all service can work separately 
+
+2. Scalability - If we want to scale up then whatever service we have, we 
+can easily add multiple consumers 
+
+3. Reliability - our messages will persist in our MQ, even if our services crash 
+
+4. Asynchronous processing - whatever task or service we are doing we will do it in background so our processing is asynchronous 
+
+5. Load balancing - suppose our appl have a lot of users while placing the order and we have emailservice to pick order message and send email, so now imagine we have 10 consumers where emailservice is running and our message queue from here message has to go to services, so RabbitMQ will ensure that the messages going to consumers should be balanced their load (ie) if we have 10 consumers then all the messages will not go to one consumer or two consumers, it will manage the load evenly so that my consumers can manage the load properly when they consume the message so that all our consumers can be utilized properly 
+
+6. Retry and dead lettering support - If we have delivered the message and for some reason it was not consumed by consumers then we can retry it and send it again
+   If our messages are failing then after multiple retries we can put them in dead letter queue
+
+
+Core components of RabbitMQ 
+1. Producer
+      It will publish messages to exchange, it doesn't do it directly in queue, it does it in exchange and from exchange it goes to queue
+
+Technical behavior 
+1. open the connection and channel from RabbitMQ 
+2. publish the message using name of the exchange, routing key  message body, properties like headers means on the basis of headers we have some routing, flag of persistence means if you want our message to persist in queue, if you want to give priority that we have to send this message first 
+    Every message our producer will send, it will reach our exchange in binary form and after exchange when it goes to queue it remains in binary form
+    So whatever client libraries your service is written, it can be javascript, python,java etc
+it will transmits the message in binary because our rabbitmq works on amqp protocol
+which is our binary protocol,  so the messages which we send are transmitted in binary form. In case if my message is in json then it is the responsibility of the developer to serialize the data in bytes before sending
+
+2. Exchange
+     Our exchange is the brain of rabbitmq routing system, it decides how messages flow from producers to one or more queues 
+    When a message arrives from producer, the exchange look at its type and the bindings and decide which queue should receive the message 
+
+Responsiblities
+1. Receive messages from producer
+2. Match routing keys against bindings
+3. Route the messages into the correct queue
+
+Exchange type 
+1. Direct exchange - Exact routing key match - which will match directly with our routing key. If we have logs or we have to do routing in any target base in that case we use this
+2. Fanout exchange - Broadcast to all queues bound - suppose we have multiple queues and we need to send to all queues. This is used in notifications and broadcast system it is used there ok now 
+3. Topic exchange - Pattern based routing (ie) uses wildcard patterns (*), suppose we have multiple service like user.created, order.created so now if we want to route the message to those services we can use *.created 
+4. Headers - Route based on headers - advanced filtering
+
+
+3. Queue 
+      It is a message buffer. It is a storage unit that holds message until they are consumed, by default this is like FIFO means first in first out, the message that came first will go first
+      Messages stay in the queue until
+1. A consumer retrieves and acknowledge it
+2. The message expires (TTL) time to live, then the message will not expire 
+3. If our queue is deleted
+
+Key Properties
+1. durable=true -  if our broker, i.e. RabbitMQ is restarted, then also our queue will not be deleted, it will survive
+2. exclusive=false,  it will be used through the same connection which has created it, 
+3. autodelete=false, suppose if my queue does not have any consumer, then it will be deleted by itself
+4. TTL, if we give TTL in the messages means message expired time, then our message will expire
+5. DLX(dead letter exchange), DLX used for failed messages 
+6. lazy mode - our queue stores the messages in RAM but if we give lazy mode, then it will store in disk 
+
+Responsibility 
+1. Hold the message safely, until it is processed
+2. Manage the order of the message and deliver the order
+3. support the reliability means it takes an acknowledgement from the consumer and it persists the message, dead letter queue for our failed messages
+4. supports scaling, means if our message is of one type, and there are multiple consumers, then it can deal with them, so our scale up is done
+
+
+Queue behavior based on arguments 
+1.Standard Queue (default queue) 
+    - most common type of queue, in which we have first in first out, except if we are using priority
+    - our messages can be stored in our memory or disk, depending on the   
+    - can have multiple consumers and they also do load balancing, 
+
+use case
+1. General background jobs, that we have put a message our work will continue in the background, like notification
+2. In microservices
+
+2. Priority Queue
+     - Messages can have priority level, an integer value 
+     - Higher priority messages are delivered first, even if others arrived earlier
+
+use case 
+- Payment alerts, urgent notification,critical updates
+
+3. Dead Letter Queue
+      - It stores failed messages which we could not process successfully, we may think that we can retry the messages, if the message fails
+
+Why dead letter queue? 
+     Consider there is some problem in payload, because of which the message is failing again and again means it is retrying, sending to the consumer, but still it is failing, in that case we don't want that infinite loop (ie) msg is failing, and then again it is retrying. So after a limit, we want to put that failed message in dead letter queue and we debug it
+
+use case, 
+- error handling, retries, message auditing
+
+4. Lazy Queue
+     - Store messages on disk immediately instead of memory. 
+     - Reduces RAM usage when message volume is high
+     - Slightly slower but very memory efficient
+
+use case
+- Large queues, background workloads, high backlog systems
+
+5. Time To Live(TTL) queue
+      Messages automatically expire after a certain time
+
+use case
+- Temporary notification, caching, expiring tasks
+
+6. Single Active Consumer Queue
+       If we have multiple consumers then at one time only one consumer is active, and when it is disconnected then it will take over the next consumer, so if we want our message to be processed in sequence then it will be used
+
+use case
+- Task is to be done on a strict order
+
+7. Stream Queue - For event processing
+
+4. Binding
+     Binding is basically connection between the exchange and the queue. When the message comes from the producer to the exchange, then from the exchange to the binding, it connects to the queue. So basically it defines which message goes into which queue based on routing keys, headers. If bindings are not there, then our exchange can't route the message, they will just drop messages
+     One exchange bound to many queues. One queue bound to many messages.
+
+
+5. Consumer
+     Consumer is our application or service, which reads the message from queue and processes it. It will connect with RabbitMQ, it will subscribe to queue and  waits for new message to come
+
+Consumers can:
+1. It can auto acknowledge messages 
+2. It can also manually acknowledge after processing
+3  It can also send negative ACK, it can send to requeue or send to dead letter queue 
+
+Responsibilities
+1. It retrieves the message from queue and processes it 
+2. sends ACK and NACK
+3. It can be retry, or it can go to dead letter queue
+4. scale horizontally for parallel processing (ie) emailservice has one consumer and it is not able to handle the load since lot of messages coming to emailservice, then we can
+scale horizontally (ie) we put multiple worker nodes, so that it can work in parallel
+
+6.  Channel
+      It is lightweight virtual connection inside a TCP connection, we can have multiple channels per connection. Used for publishing, consuming messages and to manage queues
+
+why?
+- opening and closing it is expensive but channels are cheap
+for example if you have an application, we have one TCP connection in this system, but for producers and consumers in one connection we can use multiple channels
+
+7. Connection
+      A real TCP connection between your app and RabbitMQ broker, which is established with the help of our AMQP protocol
+
+
+Direct and Topic exchange example
+1. Create SpringBoot-RabbitMQ-DirectTopicExchange with web, lombok, spring for rabbitmq dependency
+
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.17.0</version> <!-- Use the latest stable version -->
+</dependency>
+
+
+2. Configure rabbitmq properties in application.properties
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+server:
+  port: 8000
+
+3. DIRECT EXCHANGE — exact routing key match
+
+a. Create configuration class for exchange, queue and routing key
+
+@Configuration
+public class DirectExchangeConfig {
+
+    public static final String EXCHANGE = "ex.order.direct";
+
+    public static final String Q_CREATED = "q.order.created";
+    public static final String Q_CANCELLED = "q.order.cancelled";
+
+    public static final String RK_CREATED = "order.created";
+    public static final String RK_CANCELLED = "order.cancelled";
+
+    @Bean
+    public DirectExchange orderDirectExchange() {
+        return new DirectExchange(EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue orderCreatedQueue() {
+        return QueueBuilder.durable(Q_CREATED).build();
+    }
+
+    @Bean
+    public Queue orderCancelledQueue() {
+        return QueueBuilder.durable(Q_CANCELLED).build();
+    }
+
+    @Bean
+    public Binding createdBinding(DirectExchange orderDirectExchange, Queue orderCreatedQueue) {
+        return BindingBuilder.bind(orderCreatedQueue).to(orderDirectExchange).with(RK_CREATED);
+    }
+
+    @Bean
+    public Binding cancelledBinding(DirectExchange orderDirectExchange, Queue orderCancelledQueue) {
+        return BindingBuilder.bind(orderCancelledQueue).to(orderDirectExchange).with(RK_CANCELLED);
+    }
+}
+
+b. Create publisher
+
+@Service
+public class OrderDirectPublisher {
+
+	@Autowired
+    RabbitTemplate rabbitTemplate;
+
+    public void publishCreated(String msg) {
+        rabbitTemplate.convertAndSend(DirectExchangeConfig.EXCHANGE, DirectExchangeConfig.RK_CREATED, msg);
+    }
+
+    public void publishCancelled(String msg) {
+        rabbitTemplate.convertAndSend(DirectExchangeConfig.EXCHANGE, DirectExchangeConfig.RK_CANCELLED, msg);
+    }
+}
+
+c. Create controller
+
+@RestController
+@RequestMapping("/direct")
+public class DirectDemoController {
+
+	@Autowired
+    OrderDirectPublisher publisher;
+
+    @PostMapping("/created")
+    public String created(@RequestParam String msg) {
+        publisher.publishCreated(msg);
+        return "Sent to DirectExchange with routingKey=order.created => " + msg;
+    }
+
+    @PostMapping("/cancelled")
+    public String cancelled(@RequestParam String msg) {
+        publisher.publishCancelled(msg);
+        return "Sent to DirectExchange with routingKey=order.cancelled => " + msg;
+    }
+}
+
+d. Start the appl
+
+curl -X POST "http://localhost:8000/direct/created?msg=O-101%20created"
+curl -X POST "http://localhost:8000/direct/cancelled?msg=O-101%20cancelled"
+
+Now we can see msg are sent to queue
+
+e. Create consumer to consume the messages
+
+@Component
+public class OrderCreatedConsumer {
+
+    @RabbitListener(queues = DirectExchangeConfig.Q_CREATED)
+    public void onMessage(String payload) {
+        System.out.println("[DIRECT][CREATED] " + payload);
+    }
+}
+
+@Component
+public class OrderCancelledConsumer {
+
+    @RabbitListener(queues = DirectExchangeConfig.Q_CANCELLED)
+    public void onMessage(String payload) {
+        System.out.println("[DIRECT][CANCELLED] " + payload);
+    }
+}
+
+f. Start the appl
+
+curl -X POST "http://localhost:8000/direct/created?msg=O-101%20created"
+curl -X POST "http://localhost:8000/direct/cancelled?msg=O-101%20cancelled"
+
+Now we can see msg are sent to queue and we consume the messages
+
+
+4. Topic Exchange demo (wildcard routing patterns)
+
+a. Create configuration class for exchange, queue and routing key
+
+@Configuration
+public class TopicExchangeConfig {
+
+    public static final String EXCHANGE = "ex.logs.topic";
+
+    public static final String Q_ALL = "q.logs.all";
+    public static final String Q_ERROR = "q.logs.error";
+
+    // Binding patterns
+    public static final String BK_ALL = "log.#";         // matches log.anything.anydepth
+    public static final String BK_ERROR = "log.error.*"; // matches log.error.<oneword>
+
+    @Bean
+    public TopicExchange logsTopicExchange() {
+        return new TopicExchange(EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue allLogsQueue() {
+        return QueueBuilder.durable(Q_ALL).build();
+    }
+
+    @Bean
+    public Queue errorLogsQueue() {
+        return QueueBuilder.durable(Q_ERROR).build();
+    }
+
+    @Bean
+    public Binding bindAll(TopicExchange logsTopicExchange, Queue allLogsQueue) {
+        return BindingBuilder.bind(allLogsQueue).to(logsTopicExchange).with(BK_ALL);
+    }
+
+    @Bean
+    public Binding bindError(TopicExchange logsTopicExchange, Queue errorLogsQueue) {
+        return BindingBuilder.bind(errorLogsQueue).to(logsTopicExchange).with(BK_ERROR);
+    }
+}
+
+b. Create publisher
+
+@Service
+public class TopicLogPublisher {
+
+	@Autowired
+    RabbitTemplate rabbitTemplate;
+
+    public void publish(String routingKey, String msg) {
+        rabbitTemplate.convertAndSend(TopicExchangeConfig.EXCHANGE, routingKey, msg);
+    }
+}
+
+c. Create controller
+
+@RestController
+@RequestMapping("/topic")
+public class TopicDemoController {
+
+	@Autowired
+    TopicLogPublisher publisher;
+
+
+    @PostMapping("/publish")
+    public String publish(@RequestParam String rk, @RequestParam String msg) {
+        publisher.publish(rk, msg);
+        return "Sent to TopicExchange with routingKey=" + rk + " => " + msg;
+    }
+}
+
+d. Start the appl 
+
+# Goes to BOTH q.logs.all and q.logs.error
+curl -X POST "http://localhost:8000/topic/publish?rk=log.error.payment&msg=Payment failed"
+
+# Goes ONLY to q.logs.all
+curl -X POST "http://localhost:8000/topic/publish?rk=log.info.payment&msg=Payment initiated"
+
+# Still goes to q.logs.all (because log.# matches deep paths)
+curl -X POST "http://localhost:8000/topic/publish?rk=log.warn.db.connection&msg=DB connection slow"
+
+e. Create consumer
+
+@Component
+public class AllLogsConsumer {
+
+    @RabbitListener(queues = TopicExchangeConfig.Q_ALL)
+    public void onMessage(String payload) {
+        System.out.println("[TOPIC][ALL] " + payload);
+    }
+}
+
+@Component
+public class ErrorLogsConsumer {
+
+    @RabbitListener(queues = TopicExchangeConfig.Q_ERROR)
+    public void onMessage(String payload) {
+        System.out.println("[TOPIC][ERROR] " + payload);
+    }
+}
+
+f. Start the appl
+
+ 
+JSON payloads using Jackson converter + DTO classes - DLQ + Retry + TTL (queue-level TTL + dead-lettering + listener retry) - Publisher confirms + mandatory returns (confirm/return callbacks + unroutable demo)
+
+5. Updated application.yml (adds confirms/returns + retry + requeue behavior)
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+    # Publisher side
+    publisher-confirm-type: correlated     # enables confirms 
+    publisher-returns: true               # enables returns 
+
+    template:
+      mandatory: true                     # mandatory publish -> returns callback [1]
+      retry:
+        enabled: true                     # publishing retry [1]
+        initial-interval: 1s
+        multiplier: 2
+        max-attempts: 3
+        max-interval: 10s
+
+    listener:
+      simple:
+        default-requeue-rejected: false   # do NOT requeue on failure; helps DLQ 
+        retry:
+          enabled: true                  # listener retry 
+          initial-interval: 1s
+          multiplier: 2
+          max-attempts: 3
+          max-interval: 10s
+          stateless: true               
+
+server:
+  port: 8000
+
+6. Add DTOs (JSON payload objects)
+
+public record OrderEvent(
+        String orderId,
+        String eventType,
+        String description,
+        Instant createdAt
+) {}
+
+public record LogEvent(
+        String level,
+        String service,
+        String message,
+        Instant timestamp
+) {}
+
+7. Add Common Rabbit Config (Jackson JSON converter + confirms/returns callbacks)
+
+
+@Configuration
+public class RabbitCommonConfig {
+
+   //JSON Converter (Jackson) for message body serialization/deserialization.
+    @Bean
+    public MessageConverter jacksonMessageConverter(ObjectMapper objectMapper) {
+        return new Jackson2JsonMessageConverter(objectMapper);
+    }
+
+    //Custom RabbitTemplate to wire - converter,confirms callback,returns callback (mandatory)
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+                                         MessageConverter messageConverter) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(messageConverter);
+
+        // Confirms callback (publisher-confirm-type=correlated) 
+        template.setConfirmCallback((CorrelationData correlationData, boolean ack, String cause) -> {
+            String id = (correlationData != null ? correlationData.getId() : "null");
+            if (ack) {
+                System.out.println("[PUBLISHER-CONFIRM][ACK] correlationId=" + id);
+            } else {
+                System.out.println("[PUBLISHER-CONFIRM][NACK] correlationId=" + id + " cause=" + cause);
+            }
+        });
+
+        // Returns callback (publisher-returns=true and template.mandatory=true)
+        template.setReturnsCallback(returned -> {
+            Message msg = returned.getMessage();
+            System.out.println("[PUBLISHER-RETURN] replyCode=" + returned.getReplyCode()
+                    + " replyText=" + returned.getReplyText()
+                    + " exchange=" + returned.getExchange()
+                    + " routingKey=" + returned.getRoutingKey()
+                    + " body=" + new String(msg.getBody()));
+        });
+
+        return template;
+    }
+}
+
+
+8. DLQ + TTL (Direct Exchange Demo)
+
+@Configuration
+public class DirectExchangeConfig {
+
+    public static final String EXCHANGE = "ex.order.direct";
+
+    public static final String Q_CREATED = "q.order.created";
+    public static final String Q_CANCELLED = "q.order.cancelled";
+
+    public static final String RK_CREATED = "order.created";
+    public static final String RK_CANCELLED = "order.cancelled";
+
+    // DLX / DLQ
+    public static final String DLX = "ex.dlx";
+    public static final String Q_CREATED_DLQ = "q.order.created.dlq";
+    public static final String Q_CANCELLED_DLQ = "q.order.cancelled.dlq";
+    public static final String RK_CREATED_DLQ = "dlq.order.created";
+    public static final String RK_CANCELLED_DLQ = "dlq.order.cancelled";
+
+    // TTL for main queues (ms)
+    public static final int TTL_MS = 15000;
+
+    @Bean
+    public DirectExchange orderDirectExchange() {
+        return new DirectExchange(EXCHANGE, true, false);
+    }
+
+    @Bean
+    public DirectExchange deadLetterExchange() {
+        return new DirectExchange(DLX, true, false);
+    }
+
+    @Bean
+    public Queue orderCreatedQueue() {
+        return QueueBuilder.durable(Q_CREATED)
+                .withArgument("x-dead-letter-exchange", DLX)
+                .withArgument("x-dead-letter-routing-key", RK_CREATED_DLQ)
+                .withArgument("x-message-ttl", TTL_MS)
+                .build();
+    }
+
+    @Bean
+    public Queue orderCancelledQueue() {
+        return QueueBuilder.durable(Q_CANCELLED)
+                .withArgument("x-dead-letter-exchange", DLX)
+                .withArgument("x-dead-letter-routing-key", RK_CANCELLED_DLQ)
+                .withArgument("x-message-ttl", TTL_MS)
+                .build();
+    }
+
+    @Bean
+    public Queue createdDlq() {
+        return QueueBuilder.durable(Q_CREATED_DLQ).build();
+    }
+
+    @Bean
+    public Queue cancelledDlq() {
+        return QueueBuilder.durable(Q_CANCELLED_DLQ).build();
+    }
+
+    @Bean
+    public Binding createdBinding(DirectExchange orderDirectExchange, Queue orderCreatedQueue) {
+        return BindingBuilder.bind(orderCreatedQueue).to(orderDirectExchange).with(RK_CREATED);
+    }
+
+    @Bean
+    public Binding cancelledBinding(DirectExchange orderDirectExchange, Queue orderCancelledQueue) {
+        return BindingBuilder.bind(orderCancelledQueue).to(orderDirectExchange).with(RK_CANCELLED);
+    }
+
+    @Bean
+    public Binding createdDlqBinding(DirectExchange deadLetterExchange, Queue createdDlq) {
+        return BindingBuilder.bind(createdDlq).to(deadLetterExchange).with(RK_CREATED_DLQ);
+    }
+
+    @Bean
+    public Binding cancelledDlqBinding(DirectExchange deadLetterExchange, Queue cancelledDlq) {
+        return BindingBuilder.bind(cancelledDlq).to(deadLetterExchange).with(RK_CANCELLED_DLQ);
+    }
+}
+
+
+9. Direct Publisher (JSON + CorrelationData)
+
+@Service
+public class OrderDirectPublisher {
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+    
+    public void publishCreated(OrderEvent event) {
+        CorrelationData cd = new CorrelationData(UUID.randomUUID().toString());
+        rabbitTemplate.convertAndSend(DirectExchangeConfig.EXCHANGE,
+                DirectExchangeConfig.RK_CREATED, event, cd);
+    }
+
+    public void publishCancelled(OrderEvent event) {
+        CorrelationData cd = new CorrelationData(UUID.randomUUID().toString());
+        rabbitTemplate.convertAndSend(DirectExchangeConfig.EXCHANGE,
+                DirectExchangeConfig.RK_CANCELLED, event, cd);
+    }
+
+    // unroutable demo -> triggers RETURNS callback because mandatory=true [1](https://hclo365-my.sharepoint.com/personal/senthil_kumart_hcltech_com/Documents/Spring/SpringBootAssistant/src/main/resources/pdf/spring-boot-reference.pdf?web=1)
+    public void publishUnroutable(OrderEvent event) {
+        CorrelationData cd = new CorrelationData(UUID.randomUUID().toString());
+        rabbitTemplate.convertAndSend(DirectExchangeConfig.EXCHANGE,
+                "order.unknown", event, cd);
+    }
+}
+
+10. Direct Consumers (DTO + forced failure to test retry→DLQ)
+
+@Component
+public class OrderCreatedConsumer  {
+
+    @RabbitListener(queues = DirectExchangeConfig.Q_CREATED)
+    public void onMessage(OrderEvent event) {
+        System.out.println("[DIRECT][CREATED] " + event);
+
+        // Force failure if description contains "fail" -> triggers retry, then DLQ
+        if (event.description() != null && event.description().toLowerCase().contains("fail")) {
+            throw new RuntimeException("Simulated failure for retry/DLQ demo");
+        }
+    }
+}
+
+
+@Component
+public class OrderCancelledConsumer {
+
+    @RabbitListener(queues = DirectExchangeConfig.Q_CANCELLED)
+    public void onMessage(OrderEvent event) {
+        System.out.println("[DIRECT][CANCELLED] " + event);
+    }
+}
+
+
+11. DLQ Consumers (watch dead-lettered messages)
+
+@Component
+public class OrderDlqConsumers {
+
+    @RabbitListener(queues = DirectExchangeConfig.Q_CREATED_DLQ)
+    public void createdDlq(OrderEvent event) {
+        System.out.println("[DLQ][CREATED] " + event);
+    }
+
+    @RabbitListener(queues = DirectExchangeConfig.Q_CANCELLED_DLQ)
+    public void cancelledDlq(OrderEvent event) {
+        System.out.println("[DLQ][CANCELLED] " + event);
+    }
+}
+
+12. Create controller
+
+@RestController
+@RequestMapping("/direct")
+public class DirectDemoController {
+
+    private final OrderDirectPublisher publisher;
+
+    public DirectDemoController(OrderDirectPublisher publisher) {
+        this.publisher = publisher;
+    }
+
+    @PostMapping("/created")
+    public String created(@RequestParam String orderId,
+                          @RequestParam(defaultValue = "created") String desc) {
+        OrderEvent event = new OrderEvent(orderId, "CREATED", desc, Instant.now());
+        publisher.publishCreated(event);
+        return "Sent CREATED event: " + event;
+    }
+
+    @PostMapping("/cancelled")
+    public String cancelled(@RequestParam String orderId,
+                            @RequestParam(defaultValue = "cancelled") String desc) {
+        OrderEvent event = new OrderEvent(orderId, "CANCELLED", desc, Instant.now());
+        publisher.publishCancelled(event);
+        return "Sent CANCELLED event: " + event;
+    }
+
+    // Demonstrates mandatory returns callback (unroutable routing key)
+    @PostMapping("/unroutable")
+    public String unroutable(@RequestParam String orderId) {
+        OrderEvent event = new OrderEvent(orderId, "UNKNOWN", "unroutable-test", Instant.now());
+        publisher.publishUnroutable(event);
+        return "Sent UNROUTABLE event (check console for returns callback): " + event;
+    }
+}
+
+13. Start  the appl, make sure u delete q.order.created and q.order.cancelled queue if it is already present in dashboard
+
+
+C:\Users\senthil.kumart>curl -X POST "http://localhost:8000/direct/created?orderId=O-100&desc=normal-json"
+Sent CREATED event: OrderEvent[orderId=O-100, eventType=CREATED, description=normal-json, createdAt=2026-03-31T06:07:01.282176Z]
+
+You’ll see consumer prints a DTO (deserialized from JSON).
+
+C:\Users\senthil.kumart>curl -X POST "http://localhost:8000/direct/created?orderId=O-101&desc=please-fail"
+Sent CREATED event: OrderEvent[orderId=O-101, eventType=CREATED, description=please-fail, createdAt=2026-03-31T06:17:45.960256700Z]
+
+A message NEVER goes directly to the DLQ.
+It is always delivered to the main queue first, consumed, fails, and only then routed to the DLQ after rejection / retries / TTL expiry. So yes — your message must hit q.order.created first.
+
+Now Consumer receives the message
+
+@RabbitListener(queues = "q.order.created")
+public void onMessage(OrderEvent event) {
+    System.out.println("[DIRECT][CREATED] " + event);
+
+    if (event.description().contains("fail")) {
+        throw new RuntimeException("Simulated failure");
+    }
+}
+
+In Console we see: [DIRECT][CREATED] OrderEvent(... please-fail ...)
+
+- DLQ logic only starts after consumer failure
+
+What happens internally:
+1. Spring AMQP catches the exception
+2. Message is NACKed
+Because:
+ - Queue has x-dead-letter-exchange
+ - And default behavior is reject (requeue=false)
+
+.withArgument("x-dead-letter-exchange", "ex.dlx")
+.withArgument("x-dead-letter-routing-key", "dlq.order.created")
+
+✅ Message is now eligible for DLQ routing
+
+Why it does NOT appear in DLQ immediately
+     You have configured TTL on the main queue
+        .withArgument("x-message-ttl", 15000) // 15 seconds
+
+That means:
+  Message sits in q.order.created - Waits 15 seconds - Then RabbitMQ expires it
+
+Only then it is forwarded to DLX → DLQ. DLQ delivery is delayed by TTL
+
+- After ~15 seconds → DLQ consumer fires
+
+@RabbitListener(queues = "q.order.created.dlq")
+public void createdDlq(OrderEvent event) {
+    System.out.println("[DLQ][CREATED] " + event);
+}
+
+In Console (after 15 seconds): [DLQ][CREATED] OrderEvent(... please-fail ...)
+
+✅ This proves DLQ is working correctly.
+
+
+Explanation
+
+
+1) JSON payloads (Jackson converter) + DTO classes
+✅ What problem this solves
+By default, RabbitMQ messages are bytes. Without a converter, you end up manually serializing/deserializing JSON strings.
+With a Jackson message converter, Spring automatically:
+a. Converts Java DTO → JSON when publishing
+b. Converts JSON → Java DTO when consuming (in @RabbitListener)
+
+✅ What in the code does this?
+A) DTOs (records)
+
+Example:
+public record OrderEvent(String orderId, String eventType, String description, Instant createdAt) {}
+
+Meaning: this is the message payload (structured data).
+Spring will serialize it to JSON when you publish, and reconstruct it back when you consume.
+
+B) RabbitCommonConfig.jacksonMessageConverter()
+
+@Bean
+public MessageConverter jacksonMessageConverter(ObjectMapper objectMapper) {
+  return new Jackson2JsonMessageConverter(objectMapper);
+}
+
+Meaning: you register a MessageConverter bean.
+
+Why this matters in Spring Boot: the Spring Boot reference says that when a MessageConverter bean is defined, it is associated automatically with the auto-configured messaging template.
+
+So, this single bean makes your RabbitTemplate.convertAndSend() send JSON automatically and your @RabbitListener methods receive DTOs automatically.
+
+C) Using DTOs in publisher and listener
+Publisher:
+  rabbitTemplate.convertAndSend(exchange, routingKey, event, correlationData);
+
+Listener:
+  @RabbitListener(queues = "q.order.created")
+  public void onMessage(OrderEvent event) { ... }
+
+Meaning: The converter is applied on both sides.
+
+2) DLQ + Retry + TTL (how it works in your code)
+There are two ways a message can end up in DLQ:
+✅ A) Message expires (TTL)
+If a message sits too long in queue, TTL triggers → message is dead-lettered.
+✅ B) Message fails processing
+Consumer throws exception → Spring retries → if still failing, message is rejected → dead-lettered.
+
+2.1 DLQ setup in code (Queue arguments)
+In DirectExchangeConfig, you did:
+
+QueueBuilder.durable(Q_CREATED)
+  .withArgument("x-dead-letter-exchange", DLX)
+  .withArgument("x-dead-letter-routing-key", RK_CREATED_DLQ)
+  .withArgument("x-message-ttl", TTL_MS)
+  .build();
+
+Meaning of each:
+
+x-dead-letter-exchange: where RabbitMQ should re-publish failed/expired messages
+x-dead-letter-routing-key: routing key RabbitMQ uses when sending to DLX
+x-message-ttl: if message stays longer than TTL in queue → expire → send to DLX
+
+Then you created DLQ queue and bound it:
+BindingBuilder.bind(createdDlq).to(deadLetterExchange).with(RK_CREATED_DLQ);
+
+So the pipeline becomes:
+Main Queue → (fail/expire) → DLX → DLQ Queue
+
+2.2 Retry (Listener retry) — what triggers it
+In application.yml you set:
+
+spring.rabbitmq.listener.simple.retry.enabled: true
+spring.rabbitmq.listener.simple.retry.max-attempts: 3
+...
+
+Spring Boot explicitly lists these listener.simple.retry.* properties, including max attempts and intervals. 
+
+So what happens at runtime:
+1. Consumer receives message
+2. Consumer throws exception (RuntimeException)
+3. Spring retries the listener according to those properties
+4. After max attempts, Spring rejects message (and because default-requeue-rejected=false, it won’t requeue)
+
+This default-requeue-rejected property is also listed in Spring Boot’s rabbit properties table.
+
+2.3 Why you set default-requeue-rejected: false
+
+spring.rabbitmq.listener.simple.default-requeue-rejected: false
+
+Meaning: If after retries the message is still failing, it should be rejected (not put back again into the same queue).
+If it were true, you can get an infinite loop: fail → requeue → fail → requeue…
+So false is the recommended approach when you use DLQ.
+
+2.4 How you purposely triggered failure (for DLQ demo)
+In listener:
+
+if (event.description().contains("fail")) {
+  throw new RuntimeException("Simulated failure");
+}
+
+So you can test DLQ easily by publishing an event with "fail" in description.
+
+2.5 Template retry vs listener retry (important distinction)
+Your application.yml also enables:
+   spring.rabbitmq.template.retry.enabled: true
+
+Spring Boot explicitly documents this property and gives an example enabling retry on AmqpTemplate (publisher side).
+
+So:
+template retry = retry publishing if connection issues happen
+listener retry = retry consuming if processing fails
+
+They solve different reliability problems.
+
+3) Publisher confirms + mandatory returns (what they mean)
+This is about publisher reliability.
+✅ 3.1 Publisher confirms (ACK/NACK from broker)
+
+You enabled:
+spring.rabbitmq.publisher-confirm-type: correlated
+
+Spring Boot reference lists spring.rabbitmq.publisher-confirm-type. 
+
+Meaning: RabbitMQ will acknowledge whether it accepted the message into the broker.
+ACK: broker received message
+NACK: broker rejected message (rare but possible)
+
+In code you handle confirms:
+template.setConfirmCallback((correlationData, ack, cause) -> {...});
+
+And you create correlation id:
+new CorrelationData(UUID.randomUUID().toString())
+
+
+Meaning: correlation id helps match “this confirm belongs to that publish”.
+
+✅ 3.2 Mandatory flag + returns (message could not be routed)
+You enabled:
+spring.rabbitmq.publisher-returns: true
+spring.rabbitmq.template.mandatory: true
+
+Spring Boot explicitly lists publisher-returns and template.mandatory. 
+
+Meaning:
+
+If a message is published to an exchange but no queue binding matches the routing key, then RabbitMQ can either:
+
+silently drop it (bad)
+or return it back to publisher (good)
+
+With mandatory=true + returns enabled, RabbitMQ will return unroutable messages back to the publisher, and you handle them using:
+
+template.setReturnsCallback(returned -> {...});
+
+✅ 3.3 Why you added /direct/unroutable
+You publish with routing key "order.unknown" that has no binding:
+
+rabbitTemplate.convertAndSend(EXCHANGE, "order.unknown", event, cd);
+
+So:
+1. RabbitMQ accepts message → confirm ACK
+2. But message can’t be routed → returns callback fires
+
+This demo is excellent for training because it shows:
+
+“Broker accepted message” ≠ “message routed to a queue”
+-----------------------------------------------------------------------------------------------
+
+Header exchange with RabbitMQ 
+    We will create a headers exchange named demo.headers.ex with two queues:
+
+1. PDF Queue (demo.q.pdf) – receives messages where format=pdf AND type=report (x-match=all)
+2. Priority Queue (demo.q.priority) – receives messages where priority=high OR department=finance (x-match=any)
+
+Important: x-match is part of the binding arguments (exchange→queue binding)
+
+1. Create Springboot-RabbitMQ-HeaderExchange with web, spring for rabbitmq dependency
+
+2. Configure RabbitMQ properties
+
+3. Define Headers Exchange + Queues + Bindings 
+             RabbitMQ supports a Headers exchange type.  In a headers exchange binding, you specify x-match and header criteria. x-match=all means AND; x-match=any means OR. 
+Also: x-match belongs on the binding, not on the message. 
+
+@Configuration
+public class RabbitTopologyConfig {
+
+    public static final String HEADERS_EXCHANGE = "demo.headers.ex";
+
+    public static final String Q_PDF = "demo.q.pdf";
+    public static final String Q_PRIORITY = "demo.q.priority";
+
+    @Bean
+    public HeadersExchange headersExchange() {
+        // durable=true, autoDelete=false
+        return new HeadersExchange(HEADERS_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue pdfQueue() {
+        return new Queue(Q_PDF, true);
+    }
+
+    @Bean
+    public Queue priorityQueue() {
+        return new Queue(Q_PRIORITY, true);
+    }
+
+    @Bean
+    public Binding pdfBinding() {
+        // x-match=all => ALL headers must match
+        // format=pdf AND type=report
+        Map<String, Object> args = Map.of(
+                "x-match", "all",
+                "format", "pdf",
+                "type", "report"
+        );
+
+        // For headers exchange, routingKey is ignored; keep it empty string.
+        return new Binding(Q_PDF, DestinationType.QUEUE, HEADERS_EXCHANGE, "", args);
+    }
+
+    @Bean
+    public Binding priorityBinding() {
+        // x-match=any => ANY header match is enough
+        // priority=high OR department=finance
+        Map<String, Object> args = Map.of(
+                "x-match", "any",
+                "priority", "high",
+                "department", "finance"
+        );
+
+        return new Binding(Q_PRIORITY, DestinationType.QUEUE, HEADERS_EXCHANGE, "", args);
+    }
+}
+
+
+
+4. Create request which publish  to  the  headers  exchange and attach headers on the message. Headers exchange ignores routing keys and uses message headers for routing.
+
+@Data
+public class PublishRequest {
+    private String message;
+    private Map<String, Object> headers;
+}
+
+5. Create controller
+
+@RestController
+@RequestMapping("/api")
+public class PublisherController {
+
+	@Autowired
+	RabbitTemplate rabbitTemplate;
+
+	@PostMapping("/publish")
+	public ResponseEntity<Map<String, Object>> publish(@RequestBody PublishRequest req) {
+		Map<String, Object> headers = (req.getHeaders() == null) ? Map.of() : new HashMap<>(req.getHeaders());
+
+		rabbitTemplate.convertAndSend(RabbitTopologyConfig.HEADERS_EXCHANGE, "", // routing key ignored for headers																					// exchange
+				req.getMessage(), message -> {
+					headers.forEach((k, v) -> message.getMessageProperties().setHeader(k, v));
+					return message;
+				});
+
+		return ResponseEntity.ok(Map.of("exchange", RabbitTopologyConfig.HEADERS_EXCHANGE, "sentMessage",
+				req.getMessage(), "headers", headers));
+	}
+}
+
+6. Create  Consumer: Listen to queues and read headers
+@RabbitListener methods can receive payload plus access headers (e.g., via @Header or @Headers).
+
+@Component
+public class Consumers {
+
+    @RabbitListener(queues = RabbitTopologyConfig.Q_PDF)
+    public void onPdfQueue(String payload, @Headers Map<String, Object> headers) {
+        System.out.println("[PDF QUEUE] payload=" + payload + " headers=" + headers);
+    }
+
+    @RabbitListener(queues = RabbitTopologyConfig.Q_PRIORITY)
+    public void onPriorityQueue(String payload, @Headers Map<String, Object> headers) {
+        System.out.println("[PRIORITY QUEUE] payload=" + payload + " headers=" + headers);
+    }
+}
+
+7. Start the appl
+
+Test 1: Should go to PDF queue (format=pdf AND type=report)
+
+C:\Users\senthil.kumart>curl -X POST http://localhost:1000/api/publish -H "Content-Type: application/json" -d "{\"message\": \"monthly report v1\",\"headers\": { \"format\": \"pdf\", \"type\": \"report\" }}"
+{"sentMessage":"monthly report v1","headers":{"format":"pdf","type":"report"},"exchange":"demo.headers.ex"}
+
+Test 2: Should go to Priority queue (priority=high OR department=finance)
+
+C:\Users\senthil.kumart>curl -X POST http://localhost:1000/api/publish -H "Content-Type: application/json" -d "{\"message\": \"urgent approval needed\",\"headers\": { \"priority\": \"high\" }}"
+{"sentMessage":"urgent approval needed","headers":{"priority":"high"},"exchange":"demo.headers.ex"}
+
+Test 3: Matches both (will be delivered to both queues)
+
+curl -X POST http://localhost:8080/api/publish \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "finance pdf report - urgent",
+    "headers": { "format": "pdf", "type": "report", "department": "finance" }
+  }'
+
+Tips
+1) Don’t set x-match on the message expecting it to work.
+x-match decides how the binding evaluates headers; putting it as a message header is a common misunderstanding.
+2) Headers exchange ignores routing keys. So convertAndSend(exchange, "", payload) is normal. 
+3) “x-” prefixed headers may need special match modes in RabbitMQ. Some RabbitMQ behavior excludes headers that start with x- unless using variants like any-with-x / all-with-x (not needed in our demo because we used normal header names).
+
+--------------------------------------------------------------------------------------------------
+
+Consumer  retry  with  backoff  delays  using RabbitMQ  TTL  +  Dead‑Lettering (DLX).
+      RabbitMQ  can  dead‑letter  a  message  when  it  is  rejected/nacked  with  requeue=false  or  when  it  expires  due  to  TTL.   You  can  build  delayed  retries  by  publishing  the  failed  message  to  a  retry  queue  that  has:
+
+1. x-message-ttl = delayMs
+2. x-dead-letter-exchange = mainExchange
+3. x-dead-letter-routing-key = mainRoutingKey
+
+After  TTL,  the  message  expires  and  is  dead‑lettered  back  to  the  main  queue  for  reprocessing. 
+
+1. Create  Springboot-RabbitMQ-RetryTTL with web, spring for RabbitMQ dependency
+
+2. Configure RabbitMQ properties in application.properties
+
+3.  Define  topology:  main queue + retry  queues (TTL)
+
+Queues:
+- demo.work.q  (consumer listens here)
+- demo.retry.5s.q  (TTL 5s, DLX back to main)
+- demo.retry.30s.q  (TTL 30s, DLX back to main)
+- demo.retry.2m.q  (TTL 120s, DLX back to main)
+- demo.parking.q  (final failed messages)
+
+Why  this  works: Messages  can  be  dead‑lettered  when  their  TTL  expires  and  a  delayed  system  can  be  built  by  combining  x-message-ttl  with  x-dead-letter-exchange. 
+
+@Configuration
+public class RabbitRetryTopology {
+
+    // Exchanges
+    public static final String MAIN_EXCHANGE = "demo.main.x";
+    public static final String RETRY_EXCHANGE = "demo.retry.x";
+    public static final String PARKING_EXCHANGE = "demo.parking.x";
+
+    // Routing keys
+    public static final String WORK_RK = "work";
+    public static final String RETRY_5S_RK = "retry.5s";
+    public static final String RETRY_30S_RK = "retry.30s";
+    public static final String RETRY_2M_RK = "retry.2m";
+    public static final String PARKING_RK = "parking";
+
+    // Queues
+    public static final String WORK_Q = "demo.work.q";
+    public static final String RETRY_5S_Q = "demo.retry.5s.q";
+    public static final String RETRY_30S_Q = "demo.retry.30s.q";
+    public static final String RETRY_2M_Q = "demo.retry.2m.q";
+    public static final String PARKING_Q = "demo.parking.q";
+
+    @Bean
+    public DirectExchange mainExchange() {
+        return new DirectExchange(MAIN_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public DirectExchange retryExchange() {
+        return new DirectExchange(RETRY_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public DirectExchange parkingExchange() {
+        return new DirectExchange(PARKING_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue workQueue() {
+        return QueueBuilder.durable(WORK_Q).build();
+    }
+
+    // Retry queues: TTL + DLX back to main exchange
+    @Bean
+    public Queue retry5sQueue() {
+        return QueueBuilder.durable(RETRY_5S_Q)
+                .withArguments(Map.of(
+                        "x-message-ttl", 5000,
+                        "x-dead-letter-exchange", MAIN_EXCHANGE,
+                        "x-dead-letter-routing-key", WORK_RK
+                ))
+                .build();
+    }
+
+    @Bean
+    public Queue retry30sQueue() {
+        return QueueBuilder.durable(RETRY_30S_Q)
+                .withArguments(Map.of(
+                        "x-message-ttl", 30000,
+                        "x-dead-letter-exchange", MAIN_EXCHANGE,
+                        "x-dead-letter-routing-key", WORK_RK
+                ))
+                .build();
+    }
+
+    @Bean
+    public Queue retry2mQueue() {
+        return QueueBuilder.durable(RETRY_2M_Q)
+                .withArguments(Map.of(
+                        "x-message-ttl", 120000,
+                        "x-dead-letter-exchange", MAIN_EXCHANGE,
+                        "x-dead-letter-routing-key", WORK_RK
+                ))
+                .build();
+    }
+
+    @Bean
+    public Queue parkingQueue() {
+        return QueueBuilder.durable(PARKING_Q).build();
+    }
+
+    // Bindings
+    @Bean
+    public Binding workBinding(Queue workQueue, DirectExchange mainExchange) {
+        return BindingBuilder.bind(workQueue).to(mainExchange).with(WORK_RK);
+    }
+
+    @Bean
+    public Binding retry5sBinding(Queue retry5sQueue, DirectExchange retryExchange) {
+        return BindingBuilder.bind(retry5sQueue).to(retryExchange).with(RETRY_5S_RK);
+    }
+
+    @Bean
+    public Binding retry30sBinding(Queue retry30sQueue, DirectExchange retryExchange) {
+        return BindingBuilder.bind(retry30sQueue).to(retryExchange).with(RETRY_30S_RK);
+    }
+
+    @Bean
+    public Binding retry2mBinding(Queue retry2mQueue, DirectExchange retryExchange) {
+        return BindingBuilder.bind(retry2mQueue).to(retryExchange).with(RETRY_2M_RK);
+    }
+
+    @Bean
+    public Binding parkingBinding(Queue parkingQueue, DirectExchange parkingExchange) {
+        return BindingBuilder.bind(parkingQueue).to(parkingExchange).with(PARKING_RK);
+    }
+}
+
+
+4. Configure  listener  container  to  MANUAL  ack. Spring AMQP containers support acknowledgeMode = MANUAL (listener calls basicAck). 
+
+@Configuration
+public class RabbitListenerConfig {
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory cf) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(cf);
+        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+        // Concurrency optional:
+        factory.setConcurrentConsumers(1);
+        factory.setMaxConcurrentConsumers(5);
+        return factory;
+    }
+}
+
+5. Create request to publish messages to main exchange
+
+@Data
+public class PublishRequest {
+    private String payload;
+}
+
+6.  Create controller
+
+@RestController
+@RequestMapping("/api")
+public class PublisherController {
+
+	@Autowired
+    RabbitTemplate rabbitTemplate;
+
+    @PostMapping("/publish")
+    public ResponseEntity<Map<String, Object>> publish(@RequestBody PublishRequest req) {
+        String id = UUID.randomUUID().toString();
+        String body = "id=" + id + " payload=" + req.getPayload();
+
+        rabbitTemplate.convertAndSend(
+                RabbitRetryTopology.MAIN_EXCHANGE,
+                RabbitRetryTopology.WORK_RK,
+                body,
+                msg -> {
+                    msg.getMessageProperties().setHeader("x-retry-count", 0);
+                    msg.getMessageProperties().setHeader("x-msg-id", id);
+                    return msg;
+                }
+        );
+
+        return ResponseEntity.ok(Map.of("sent", true, "id", id, "payload", req.getPayload()));
+    }
+}
+
+7. Create  Consumer  with  Retry + Backoff + TTL routing
+      When  processing  fails,  we  republish  the  message  to  the  correct  retry  queue  route (5s → 30s → 2m). Those  queues  hold  the  message until  TTL  expires,  then  they  DLX  it  back  to  the  main  queue.
+
+@Component
+public class WorkConsumer {
+
+	@Autowired
+	RabbitTemplate rabbitTemplate;
+
+	// Backoff schedule (ms): 5s, 30s, 2m
+	private final List<Integer> delays = List.of(5000, 30000, 120000);
+
+	@RabbitListener(queues = RabbitRetryTopology.WORK_Q, containerFactory = "rabbitListenerContainerFactory")
+	public void onMessage(Message message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag)
+			throws IOException {
+
+		String body = new String(message.getBody(), StandardCharsets.UTF_8);
+		Integer retryCount = (Integer) message.getMessageProperties().getHeaders().getOrDefault("x-retry-count", 0);
+
+		try {
+			// ---- Simulated business logic ----
+			System.out.println("[WORK] Received: " + body + " retryCount=" + retryCount);
+
+			// Example: fail first 2 attempts if payload contains "fail"
+			if (body.contains("fail") && retryCount < 2) {
+				throw new RuntimeException("Simulated processing failure");
+			}
+
+			// SUCCESS
+			channel.basicAck(tag, false);
+			System.out.println("[WORK] ACK success: " + body);
+
+		} catch (Exception ex) {
+			System.out.println("[WORK] ERROR: " + ex.getMessage() + " body=" + body);
+
+			// Decide: retry or park
+			if (retryCount < delays.size()) {
+				// Route to a retry queue with increasing delay
+				String rk = routingKeyFor(retryCount);
+
+				int nextRetry = retryCount + 1;
+
+				rabbitTemplate.convertAndSend(RabbitRetryTopology.RETRY_EXCHANGE, rk, body, msg -> {
+					msg.getMessageProperties().getHeaders().putAll(message.getMessageProperties().getHeaders());
+					msg.getMessageProperties().setHeader("x-retry-count", nextRetry);
+					msg.getMessageProperties().setHeader("x-last-error", ex.getClass().getSimpleName());
+					return msg;
+				});
+
+				// ACK original so it doesn't loop immediately
+				channel.basicAck(tag, false);
+				System.out.println("[WORK] Sent to retry (" + rk + ") nextRetry=" + nextRetry);
+
+			} else {
+				// Exhausted retries -> parking lot
+				rabbitTemplate.convertAndSend(RabbitRetryTopology.PARKING_EXCHANGE, RabbitRetryTopology.PARKING_RK,
+						body, msg -> {
+							msg.getMessageProperties().getHeaders().putAll(message.getMessageProperties().getHeaders());
+							msg.getMessageProperties().setHeader("x-final-failure", true);
+							msg.getMessageProperties().setHeader("x-last-error", ex.getClass().getSimpleName());
+							return msg;
+						});
+
+				channel.basicAck(tag, false);
+				System.out.println("[WORK] Parked message after retries exhausted: " + body);
+			}
+		}
+	}
+
+	private String routingKeyFor(int retryCount) {
+		// retryCount=0 => first failure => 5s queue
+		// retryCount=1 => second failure => 30s queue
+		// retryCount=2 => third failure => 2m queue
+		return switch (retryCount) {
+		case 0 -> RabbitRetryTopology.RETRY_5S_RK;
+		case 1 -> RabbitRetryTopology.RETRY_30S_RK;
+		default -> RabbitRetryTopology.RETRY_2M_RK;
+		};
+	}
+}
+
+8. Start the appl
+
+Test 1: Send a message that succeeds
+C:\Users\senthil.kumart>curl -X POST http://localhost:1000/api/publish -H "Content-Type: application/json" -d "{\"payload\":\"hello\"}"
+{"payload":"hello","id":"7357a58f-5747-435e-999b-d4df2e691381","sent":true}
+
+Test 2: Send a message that fails twice, then succeeds (shows retry/backoff)
+
+C:\Users\senthil.kumart>curl -X POST http://localhost:1000/api/publish -H "Content-Type: application/json" -d "{\"payload\":\"please fail\"}"
+{"payload":"please fail","id":"30369fb3-61e6-4f19-9714-f75c16ae97c4","sent":true}
+
+[WORK] Received: id=30369fb3-61e6-4f19-9714-f75c16ae97c4 payload=please fail retryCount=0
+[WORK] ERROR: Simulated processing failure body=id=30369fb3-61e6-4f19-9714-f75c16ae97c4 payload=please fail
+[WORK] Sent to retry (retry.5s) nextRetry=1
+[WORK] Received: id=30369fb3-61e6-4f19-9714-f75c16ae97c4 payload=please fail retryCount=1
+[WORK] ERROR: Simulated processing failure body=id=30369fb3-61e6-4f19-9714-f75c16ae97c4 payload=please fail
+[WORK] Sent to retry (retry.30s) nextRetry=2
+[WORK] Received: id=30369fb3-61e6-4f19-9714-f75c16ae97c4 payload=please fail retryCount=2
+[WORK] ACK success: id=30369fb3-61e6-4f19-9714-f75c16ae97c4 payload=please fail
+
+
+You will see logs like:
+1. First attempt fails → goes to retry.5s queue → comes back after TTL
+2. Second attempt fails → goes to retry.30s
+3. Third attempt succeeds → ACK
+
+-----------------------------------------------------------------------------------------------
+Reliability & Fault Tolerance module for Spring Boot + Messaging 
+
+A. Message Durability
+What problem it solves
+   - What happens to messages if RabbitMQ crashes or restarts?
+
+Without durability
+1. Messages live only in memory
+2. Broker restart ⇒ messages lost
+
+With durability
+1. Messages written to disk
+2. Survive broker restarts
+
+How durability works (3 things must align)
+✅ Durable Exchange
+          new DirectExchange("order.exchange", true, false);
+
+✅ Durable Queue
+  QueueBuilder.durable("order.queue").build(); 
+
+✅ Persistent Message
+rabbitTemplate.convertAndSend(
+    "order.exchange",
+    "order.created",
+    payload,
+    msg -> {
+        msg.getMessageProperties()
+           .setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+        return msg;
+    }
+);
+
+Durable exchange + durable queue + persistent message = durability
+
+Real‑world example
+✅ Order creation
+✅ Payment events
+✅ Financial transactions
+
+B. Publisher Confirms
+What problem it solves
+    How do I know RabbitMQ actually received my message?
+
+Without confirms:
+1. You publish
+2. Network glitch happens
+3. You think message is sent
+4. Broker never got it ❌
+
+How Publisher Confirms work
+1. RabbitMQ sends an ACK / NACK back to the producer.
+
+Spring Boot example
+1. Enable confirms
+
+spring:
+  rabbitmq:
+    publisher-confirm-type: correlated
+
+2. Publisher with confirm callback
+
+@Component
+public class OrderPublisher {
+
+    private final RabbitTemplate rabbitTemplate;
+
+    public OrderPublisher(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+
+        rabbitTemplate.setConfirmCallback((correlation, ack, cause) -> {
+            if (ack) {
+                System.out.println("✅ Message delivered");
+            } else {
+                System.out.println("❌ Failed: " + cause);
+            }
+        });
+    }
+
+    public void publish(OrderEvent event) {
+        rabbitTemplate.convertAndSend("order.exchange", "order.created", event);
+    }
+}
+
+Real‑world example
+✅ Financial systems
+✅ Audited events
+✅ Guaranteed delivery pipelines
+
+C. Consumer Acknowledgements
+What problem it solves
+    When should RabbitMQ remove a message from the queue?”
+
+Three acknowledgement modes
+1. AUTO(default) -  Message delivered → immediately ACKed
+
+2. MANUAL (recommended)
+✅ Full control
+✅ Required for retries, DLQ, idempotency
+
+@RabbitListener(queues = "order.queue")
+public void onMessage(OrderEvent event,
+                      Message message,
+                      Channel channel) throws Exception {
+
+    try {
+        process(event);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    } catch (Exception e) {
+        channel.basicNack(
+            message.getMessageProperties().getDeliveryTag(),
+            false,
+            false // requeue?
+        );
+    }
+}
+
+3. NONE (fire and forget)
+
+Real‑world example
+✅ Payment processing
+✅ Inventory updates
+✅ Exactly‑once‑ish flows
+
+D. Retry & Backoff Strategies
+What problem it solves
+    What if a consumer fails temporarily?
+
+Examples:
+1. Database down
+2. External API timeout
+3. Network glitch
+
+Retry strategies
+Strategy 1: TTL‑based Retry Queue (most common)
+
+Main Queue
+  ↓ fail
+Retry Queue (TTL = 10s)
+  ↓
+Main Queue
+
+Spring Boot queue config
+
+QueueBuilder.durable("order.retry")
+  .withArgument("x-message-ttl", 10000)
+  .withArgument("x-dead-letter-exchange", "")
+  .withArgument("x-dead-letter-routing-key", "order.main")
+  .build();
+
+✅ Broker‑controlled
+✅ Predictable
+✅ Production standard
+
+Strategy 2: Multiple retry queues (exponential backoff)
+Retry‑1 (10s) → Retry‑2 (30s) → Retry‑3 (1m) → DLQ
+
+Used by:
+Payment gateways
+Event pipelines
+
+
+Strategy 3: Spring RetryInterceptor
+✅ Simple
+❌ No delay
+✅ CPU‑based retry
+
+E. Idempotent Consumers
+What problem it solves
+   “What if the same message is delivered more than once?”
+
+Messaging systems guarantee:
+At‑least‑once delivery
+
+So duplicates will happen.
+
+Example failure scenario
+Consumer processes message
+DB commit succeeds
+ACK fails
+Message redelivered
+
+Idempotency pattern
+Step 1: Unique message ID
+    eventId = UUID 
+Step 2: Store processed IDs
+    processed_events(event_id) 
+Step 3: Check before processing
+ if (repository.existsByEventId(event.getId())) {    
+        return; // ignore duplicate
+ }
+ process(event);
+ repository.save(event.getId());
+
+Real‑world example
+✅ Payment processing
+✅ Email notifications
+✅ Order fulfillment
+
+F. Poison Message Handling
+What problem it solves
+    What if a message will NEVER succeed?”
+
+Examples:
+1. Invalid JSON
+2. Missing mandatory field
+3. Corrupted payload
+4. Bug in code
+
+
+❌ Without poison handling
+1. Infinite retry
+2. Queue blocked
+3. System degradation
+
+
+✅ Correct approach: DLQ
+DLQ flow
+Main Queue
+  ↓ retry N times
+DLQ
+
+DLQ configuration
+QueueBuilder.durable("order.main")
+  .withArgument("x-dead-letter-exchange", "order.dlx")
+  .build();
+
+DLQ consumer (manual handling)
+@RabbitListener(queues = "order.dlq")
+public void onDlq(OrderEvent event) {
+    log.error("Poison message: {}", event);
+    // alert / store / manual fix
+}
+
+1. Create springboot-rabbitmq-reliability project with web, spring for rabbitmq, data jpa, h2 dependency
+
+2. Configure rabbitmq and db properties in application.yml
+
+spring:
+  rabbitmq:
+    publisher-confirm-type: correlated
+    listener:
+      simple:
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: sa
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+3. Create model object
+
+public record OrderEvent(
+        String eventId,
+        String orderId,
+        String description
+) {}
+
+4. Create processed event for idempotency
+
+@Entity
+public class ProcessedEvent {
+
+    @Id
+    private String eventId;
+
+    protected ProcessedEvent() {}
+
+    public ProcessedEvent(String eventId) {
+        this.eventId = eventId;
+    }
+}
+
+public interface ProcessedEventRepository
+        extends JpaRepository<ProcessedEvent, String> {}
+
+
+5. Create  Exchange configuration for message Durablability
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.amqp.core.*;
+
+@Configuration
+public class ExchangeConfig {
+
+    @Bean
+    public DirectExchange orderExchange() {
+ return new DirectExchange("order.exchange", true, false);
+    }
+
+    @Bean
+    public DirectExchange dlx() {
+        return new DirectExchange("order.dlx", true, false);
+    }
+}
+
+- Create Queue configuration for (Retry + DLQ)
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.amqp.core.*;
+
+@Configuration
+public class QueueConfig {
+
+    @Bean
+    public Queue mainQueue() {
+        return QueueBuilder.durable("order.main")
+                .withArgument("x-dead-letter-exchange", "order.dlx")
+                .withArgument("x-dead-letter-routing-key", "retry")
+                .build();
+    }
+
+    @Bean
+    public Queue retryQueue() {
+        return QueueBuilder.durable("order.retry")
+                .withArgument("x-message-ttl", 10000) // 10 seconds
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", "order.main")
+                .build();
+    }
+
+    @Bean
+    public Queue dlq() {
+        return QueueBuilder.durable("order.dlq").build();
+    }
+}
+
+- Create Bindings
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.amqp.core.*;
+
+@Configuration
+public class BindingConfig {
+
+    @Bean
+    public Binding mainBinding(Queue mainQueue, DirectExchange orderExchange) {
+        return BindingBuilder.bind(mainQueue)
+                .to(orderExchange)
+                .with("order.created");
+    }
+
+    @Bean
+    public Binding retryBinding(Queue retryQueue, DirectExchange dlx) {
+        return BindingBuilder.bind(retryQueue)
+                .to(dlx)
+                .with("retry");
+    }
+
+    @Bean
+    public Binding dlqBinding(Queue dlq, DirectExchange dlx) {
+        return BindingBuilder.bind(dlq)
+                .to(dlx)
+                .with("dlq");
+    }
+}
+
+- Create RabbitMQ Configuration
+
+@Configuration
+public class RabbitCommonConfig {
+
+	@Bean
+    public MessageConverter jsonMessageConverter() {
+        // Jackson 3 style mapper
+        JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
+        return new JacksonJsonMessageConverter(mapper);
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+                                         MessageConverter messageConverter) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(messageConverter);
+        return template;
+    }
+}
+
+
+6. Create publisher  (Durability + Confirms)
+
+@Component
+public class OrderPublisher {
+
+    private final RabbitTemplate rabbitTemplate;
+
+    public OrderPublisher(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+
+        rabbitTemplate.setConfirmCallback((corr, ack, cause) -> {
+            if (ack) {
+                System.out.println("✅ Broker confirmed message");
+            } else {
+                System.out.println("❌ Publish failed: " + cause);
+            }
+        });
+    }
+
+    public void publish(OrderEvent event) {
+        rabbitTemplate.convertAndSend(
+                "order.exchange",
+                "order.created",
+                event,
+                msg -> {
+                    msg.getMessageProperties()
+                       .setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+                    msg.getMessageProperties()
+                       .setHeader("x-retry-count", 0);
+                    return msg;
+                }
+        );
+    }
+}
+
+7. Create Consumer (ACK + Retry + Idempotency)
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.stereotype.Component;
+
+import com.pack.Springboot_Rabbitmq_Reliability.domain.OrderEvent;
+import com.pack.Springboot_Rabbitmq_Reliability.domain.ProcessedEvent;
+import com.pack.Springboot_Rabbitmq_Reliability.domain.ProcessedEventRepository;
+import com.rabbitmq.client.Channel;
+
+@Component
+public class OrderConsumer {
+
+    private final RabbitTemplate rabbitTemplate;
+    private final ProcessedEventRepository repo;
+
+    public OrderConsumer(RabbitTemplate rabbitTemplate,
+                         ProcessedEventRepository repo) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.repo = repo;
+    }
+
+    @RabbitListener(queues = "order.main")
+    public void consume(OrderEvent event,
+                        Message message,
+                        Channel channel) throws Exception {
+
+        long tag = message.getMessageProperties().getDeliveryTag();
+        int retryCount = (int) message.getMessageProperties()
+                .getHeaders()
+                .getOrDefault("x-retry-count", 0);
+
+        System.out.println("[MAIN] orderId=" + event.orderId()
+                + " retryCount=" + retryCount);
+
+        // Idempotency
+        if (repo.existsById(event.eventId())) {
+            channel.basicAck(tag, false);
+            return;
+        }
+
+        try {
+            if (retryCount < 3) {
+                throw new RuntimeException("Simulated failure");
+            }
+
+            repo.save(new ProcessedEvent(event.eventId()));
+            channel.basicAck(tag, false);
+
+        } catch (Exception e) {
+
+            if (retryCount < 3) {
+                rabbitTemplate.convertAndSend(
+                        "order.dlx",
+                        "retry",
+                        event,
+                        msg -> {
+                            msg.getMessageProperties()
+                               .getHeaders()
+                               .put("x-retry-count", retryCount + 1);
+                            return msg;
+                        }
+                );
+            } else {
+                rabbitTemplate.convertAndSend("order.dlx", "dlq", event);
+            }
+
+            channel.basicAck(tag, false);
+        }
+    }
+}
+
+8. Create DLQ Consumer (Poison Messages)
+
+@Component
+public class DlqConsumer {
+
+    @RabbitListener(queues = "order.dlq")
+    public void onDlq(OrderEvent event) {
+        System.err.println(" POISON MESSAGE: " + event);
+    }
+}
+
+9. Create controller
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+	@Autowired
+    OrderPublisher publisher;
+
+    @PostMapping
+    public String send(@RequestParam String orderId) {
+
+        publisher.publish(
+                new OrderEvent(
+                        UUID.randomUUID().toString(),
+                        orderId,
+                        "simulate-failure"
+                )
+        );
+        return "Order sent";
+    }
+}
+
+10. Start the appl
+
+C:\Users\senthil.kumart>curl -X POST "http://localhost:1000/orders?orderId=O-101"
+Order sent
+
+In Console:
+
+? Broker confirmed message
+[MAIN] orderId=O-101 retryCount=0
+? Broker confirmed message
+[MAIN] orderId=O-101 retryCount=1
+? Broker confirmed message
+[MAIN] orderId=O-101 retryCount=2
+? Broker confirmed message
+[MAIN] orderId=O-101 retryCount=3
+
+That’s because:
+
+Publish happens
+Confirm callback runs
+Consumer processes message
+Retry republish happens
+Confirm callback runs again
+
+Explanation:
+1. Broker confirmed message
+Which component printed this? OrderPublisher
+
+rabbitTemplate.setConfirmCallback(...)
+
+Meaning
+1. Message reached RabbitMQ broker
+2. Exchange exists
+3. Routing key is valid
+4. Message is persisted (because delivery mode is PERSISTENT)
+
+✅ Publisher Confirm concept is working
+
+2. [MAIN] orderId=O-101 retryCount=0
+Which component? OrderConsumer
+
+@RabbitListener(queues = "order.main")
+
+Meaning
+1. Message arrived in main queue
+2. First processing attempt
+3. Header x-retry-count = 0
+
+✅ Durability: message survived publish
+✅ Manual ACK: message not removed yet
+✅ Idempotency check: not processed earlier
+
+3. Consumer throws simulated failure
+
+if (retryCount < 3) {
+    throw new RuntimeException("Simulated failure");
+}
+
+What happens internally
+Exception occurs
+→ Consumer catches it
+→ Message is ACKed manually
+→ Message is republished to retry queue
+
+✅ No requeue
+✅ No infinite loop
+
+4. (wait 10s) — WHY THIS PAUSE?
+
+This delay is NOT from Spring
+This delay is NOT from the consumer
+
+It is caused by:
+   QueueBuilder.durable("order.retry")
+  .withArgument("x-message-ttl", 10000)
+
+Meaning
+- Message sits in order.retry queue
+- Broker holds it for 10 seconds
+- No CPU usage
+- No consumer running
+
+✅ Retry + Backoff strategy working
+
+5. [MAIN] retryCount=1, then 2, then 3
+Each cycle:
+Retry queue TTL expires
+→ message dead‑lettered back to order.main
+→ retryCount incremented
+→ consumer tries again
+
+✅ Retry count is preserved
+✅ Retry is deterministic
+✅ Backoff is broker‑controlled
+
+6. POISON MESSAGE
+Printed by:
+@RabbitListener(queues = "order.dlq")
+
+Meaning
+retryCount reached MAX_RETRIES (3)
+Message is considered poison
+Sent to DLQ
+No further retries
+
+✅ Poison message handling
+✅ System protected from infinite retries
+
+
+Flow:
+
+Publisher
+  ↓ (confirmed)
+Main Queue
+  ↓ fail
+Retry Queue (10s TTL)
+  ↓
+Main Queue
+  ↓ fail
+Retry Queue
+  ↓
+Main Queue
+  ↓ max retry
+DLQ
+
